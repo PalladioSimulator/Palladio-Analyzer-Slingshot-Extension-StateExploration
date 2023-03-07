@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Util
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.behavior.util
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.behavior.util
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: org.apache.log4j,
+ org.palladiosimulator.analyzer.slingshot,
+ org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
+ org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.data,
+ org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
+ org.palladiosimulator.pcm;bundle-version="5.1.0",
+ de.uka.ipd.sdq.simucomframework.variables;bundle-version="5.1.0"
+Export-Package: org.palladiosimulator.analyzer.slingshot.behavior.util
