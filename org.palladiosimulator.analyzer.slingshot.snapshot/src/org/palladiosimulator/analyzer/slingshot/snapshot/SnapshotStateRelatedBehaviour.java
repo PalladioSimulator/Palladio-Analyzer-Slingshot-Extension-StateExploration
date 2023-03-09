@@ -7,16 +7,17 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
-import org.palladiosimulator.analyzer.slingshot.monitor.data.CalculatorRegistered;
-import org.palladiosimulator.analyzer.slingshot.simulation.core.events.ConfigurationStarted;
-import org.palladiosimulator.analyzer.slingshot.simulation.core.events.SimulationFinished;
-import org.palladiosimulator.analyzer.slingshot.simulation.core.events.SimulationStarted;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.AbstractEntityChangedEvent;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.SimulationBehaviorExtension;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.annotations.EventCardinality;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.annotations.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.results.ResultEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
+import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
+import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
+import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
+import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
@@ -28,8 +29,6 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.Repository.Repository;
 
-import com.google.common.eventbus.Subscribe;
-
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
 /**
@@ -40,10 +39,11 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
  *
  */
 @OnEvent(when = SimulationFinished.class, then = {})
+@OnEvent(when = CalculatorRegistered.class, then = {})
 @OnEvent(when = SimulationStarted.class, then = AbstractEntityChangedEvent.class, cardinality = EventCardinality.MANY)
 // less specific, but also less dependecies.
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
-@OnEvent(when = ConfigurationStarted.class, then = SnapshotInitiated.class)
+@OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class)
 public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtension {
 
 	private final SnapshotConfiguration snapshotConfig;
@@ -62,10 +62,6 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 		this.simuComConfig = simuComConfig;
 	}
 
-	@Override
-	public void init() {
-	}
-
 	/**
 	 *
 	 * TODO
@@ -74,8 +70,8 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 	 * @return
 	 */
 	@Subscribe
-	public ResultEvent<?> onConfigurationStarted(final ConfigurationStarted configurationStarted) {
-		return ResultEvent.of(new SnapshotInitiated(this.snapshotConfig.getSnapinterval()));
+	public Result<?> onConfigurationStarted(final PreSimulationConfigurationStarted configurationStarted) {
+		return Result.of(new SnapshotInitiated(this.snapshotConfig.getSnapinterval()));
 	}
 
 	/**
@@ -86,12 +82,12 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 	 * @return
 	 */
 	@Subscribe
-	public ResultEvent<?> onSimulationStarted(final SimulationStarted simulationStarted) {
+	public Result<?> onSimulationStarted(final SimulationStarted simulationStarted) {
 		if (!snapshotConfig.isStartFromSnapshot()) {
-			return ResultEvent.empty();
+			return Result.empty();
 		}
 		final Set<DESEvent> initialEvents = this.snapToInitOn.getEvents();
-		return ResultEvent.of(initialEvents);
+		return Result.of(initialEvents);
 	}
 
 	/**
@@ -104,7 +100,7 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 	 * @return
 	 */
 	@Subscribe
-	public ResultEvent<?> onCalculatorRegistered(final CalculatorRegistered calculatorRegistered) {
+	public void onCalculatorRegistered(final CalculatorRegistered calculatorRegistered) {
 
 		final List<Repository> repos = RepositoryManager.getCentralRepository().getAvailableRepositories();
 
@@ -133,8 +129,6 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 		}
 
 		this.halfDoneState.setExperimentSetting(settings.get(0));
-
-		return ResultEvent.empty();
 	}
 
 	/**
@@ -145,11 +139,11 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 	 * @return
 	 */
 	@Subscribe
-	public ResultEvent<?> onSnapshotFinished(final SnapshotFinished event) {
+	public Result<?> onSnapshotFinished(final SnapshotFinished event) {
 		halfDoneState.setSnapshot(event.getEntity());
 		halfDoneState.setDuration(event.time());
 		// Do not add the state anywhere, just finalise it. Assumption is, it already is
 		// in the graph.
-		return ResultEvent.of(new SimulationFinished());
+		return Result.of(new SimulationFinished());
 	}
 }

@@ -9,12 +9,12 @@ import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.MeasurementMade;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.SlingshotMeasuringValue;
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.data.events.ModelAdjusted;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.SimulationBehaviorExtension;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.annotations.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.results.ResultEvent;
+import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
+import org.palladiosimulator.analyzer.slingshot.monitor.data.entities.SlingshotMeasuringValue;
+import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementMade;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -25,8 +25,6 @@ import org.palladiosimulator.edp2.models.ExperimentData.MeasurementRange;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
 import org.palladiosimulator.edp2.util.MeasurementsUtility;
 
-import com.google.common.eventbus.Subscribe;
-
 /**
  *
  * TODO
@@ -35,7 +33,7 @@ import com.google.common.eventbus.Subscribe;
  *
  */
 @OnEvent(when = MeasurementMade.class, then = SnapshotInitiated.class)
-@OnEvent(when = ModelAdjusted.class, then = SnapshotInitiated.class)
+//@OnEvent(when = ModelAdjusted.class, then = SnapshotInitiated.class)
 public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotTriggeringBehavior.class);
 
@@ -49,21 +47,21 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 
 	@Subscribe
-	public ResultEvent<?> onMeasurementMade(final MeasurementMade event) {
+	public Result<SnapshotInitiated> onMeasurementMade(final MeasurementMade event) {
 		if (this.signicifantChange(event.getEntity())){
 			state.setReasonToLeave(ReasonToLeave.significantChange);
-			return ResultEvent.of(new SnapshotInitiated());
+			return Result.of(new SnapshotInitiated());
 		}
-		return ResultEvent.empty();
+		return Result.empty();
 	}
 
-	@Subscribe
-	public ResultEvent<?> onModelAdjusted(final ModelAdjusted event) {
-		// not yet sure about this one, it causes lots of complications.
-		// Cannot go for "SnapshotInitiated", cause the snapshot must happen right now at this very moment.
-		// With the PreInterception form the new framework, i'd intercept the ModelAdjusted,
-		return ResultEvent.empty();
-	}
+//	@Subscribe
+//	public Result<?> onModelAdjusted(final ModelAdjusted event) {
+//		// not yet sure about this one, it causes lots of complications.
+//		// Cannot go for "SnapshotInitiated", cause the snapshot must happen right now at this very moment.
+//		// With the PreInterception form the new framework, i'd intercept the ModelAdjusted,
+//		return Result.empty();
+//	}
 
 
 	/**

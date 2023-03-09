@@ -2,22 +2,10 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         point="org.palladiosimulator.analyzer.slingshot.extensionpoint.behavior">
-      <behavior-provider
-            baseClass="org.palladiosimulator.analyzer.slingshot.snapshot.SnapshotRecordingBehavior">
-      </behavior-provider>
-         
+         point="org.palladiosimulator.analyzer.slingshot">
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.snapshot.SnapshotModule">
+      </slingshot-extension>
    </extension>
-   <extension
-         point="org.palladiosimulator.analyzer.slingshot.extensionpoint.behavior">
-      <behavior-provider
-            baseClass="org.palladiosimulator.analyzer.slingshot.snapshot.SnapshotStateRelatedBehaviour">
-      </behavior-provider>
-   </extension>
-   <extension
-         point="org.palladiosimulator.analyzer.slingshot.extensionpoint.behavior">
-      <behavior-provider
-            baseClass="org.palladiosimulator.analyzer.slingshot.snapshot.SnapshotTriggeringBehavior">
-      </behavior-provider>
-   </extension>
+
 </plugin>

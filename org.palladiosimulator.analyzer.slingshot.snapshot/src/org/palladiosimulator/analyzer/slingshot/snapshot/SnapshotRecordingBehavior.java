@@ -3,11 +3,12 @@ package org.palladiosimulator.analyzer.slingshot.snapshot;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.simulation.api.SimulationEngine;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.AbstractEntityChangedEvent;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.SimulationBehaviorExtension;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.annotations.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.simulation.extensions.behavioral.results.ResultEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
+import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
@@ -17,8 +18,6 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
-
-import com.google.common.eventbus.Subscribe;
 
 /**
  *
@@ -44,9 +43,9 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	@Subscribe
-	public ResultEvent<?> onAbstractEntityChangedEvent(final AbstractEntityChangedEvent<?> event) {
+	public Result<?> onAbstractEntityChangedEvent(final AbstractEntityChangedEvent<?> event) {
 		recorder.updateRecord(event);
-		return ResultEvent.empty();
+		return Result.empty();
 	}
 
 	/**
@@ -55,8 +54,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	@Subscribe
-	public ResultEvent<?> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
+	public Result<?> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
 		final Snapshot snapshot = camera.takeSnapshot(snapshotTaken.time());
-		return ResultEvent.of(new SnapshotFinished(snapshot));
+		return Result.of(new SnapshotFinished(snapshot));
 	}
 }

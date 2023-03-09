@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,9 +18,9 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.Usage
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelperWithVisitor;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
-import org.palladiosimulator.analyzer.slingshot.simulation.api.SimulationEngine;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
@@ -67,10 +68,10 @@ public final class InMemoryCamera implements Camera {
 	}
 
 	private DESEvent clone(final UsageModelPassedElement<?> event) {
-		return (new CloneHelper()).clone(event, engine.getTime());
+		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 	private DESEvent clone(final ClosedWorkloadUserInitiated event) {
-		return (new CloneHelper()).clone(event, engine.getTime());
+		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
 	/**
@@ -80,7 +81,9 @@ public final class InMemoryCamera implements Camera {
 	 * @return
 	 */
 	private Set<DESEvent> snapEvents() {
-		final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
+		LOGGER.error("TODO : adapt engine to access FEL");
+		//final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
+		final Set<DESEvent> relevantEvents = new HashSet<>();
 		relevantEvents.addAll(record.getRecord());
 
 		final Set<DESEvent> offsettedEvents = relevantEvents.stream().map(adjustOffset).collect(Collectors.toSet());
@@ -89,6 +92,7 @@ public final class InMemoryCamera implements Camera {
 		return clonedEvents;
 	}
 
+	@Deprecated
 	private MonitorRepository snapMonitorRepository(final String idSegment) {
 		return this.monitorRepository;
 	}
@@ -98,6 +102,7 @@ public final class InMemoryCamera implements Camera {
 	 * @param idSegment
 	 * @return
 	 */
+	@Deprecated
 	private Allocation snapAllocation(final String idSegment) {
 		// ONLY WORKS AFTER PROXIE RESOLUTION.
 		Preconditions.checkState(this.resourceEnvironment.equals(this.allocation.getTargetResourceEnvironment_Allocation()), "inconsistent camera wrt. res env.");
@@ -150,6 +155,7 @@ public final class InMemoryCamera implements Camera {
 	 * @param idSegment
 	 * @return
 	 */
+	@Deprecated
 	private Allocation snapAllocationWithCopy(final String idSegment) {
 		Preconditions.checkState(this.resourceEnvironment.equals(this.allocation.getTargetResourceEnvironment_Allocation()), "inconsistent camera wrt. res env.");
 		Preconditions.checkState(this.system.equals(this.allocation.getSystem_Allocation()), "inconsistent camera wrt. system.");
@@ -182,14 +188,11 @@ public final class InMemoryCamera implements Camera {
 	 * @param set
 	 * @param copy
 	 */
+	@Deprecated
 	private void saveCopy(final URI originalUri, final String id, final ResourceSet set, final EObject copy) {
 		final URI uri = ResourceUtils.insertFragment(originalUri, id, originalUri.segmentCount()-1);
 		final Resource res = set.createResource(uri);
 		res.getContents().add(copy);
 		ResourceUtils.saveResource(res);
 	}
-
-	//private MonitorRepsitory snapMonitorRepository() {
-	//	return null;
-	//}
 }

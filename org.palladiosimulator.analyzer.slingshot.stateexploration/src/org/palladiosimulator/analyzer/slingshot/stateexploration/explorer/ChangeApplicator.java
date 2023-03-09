@@ -1,34 +1,14 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.data.AdjustmentExecutor;
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.data.ScalingTriggerPredicate;
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.data.TriggerContext;
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.data.result.AdjustmentResult;
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.data.result.ModelChange;
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.interpreter.AdjustmentTypeInterpreter;
-import org.palladiosimulator.analyzer.slingshot.simulation.core.entities.SimulationInformation;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationInformation;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ModelElementDifference;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
-import org.palladiosimulator.monitorrepository.MonitorRepository;
-import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
-import org.palladiosimulator.pcm.core.entity.Entity;
 import org.palladiosimulator.pcm.usagemodel.UsageModel;
 import org.palladiosimulator.pcm.usagemodel.Workload;
-import org.palladiosimulator.spd.ScalingPolicy;
-import org.palladiosimulator.spd.targets.ElasticInfrastructure;
-import org.palladiosimulator.spd.targets.TargetsFactory;
-
-import com.google.common.base.Preconditions;
-
 import de.uka.ipd.sdq.simucomframework.usage.ClosedWorkload;
 import de.uka.ipd.sdq.simucomframework.usage.OpenWorkload;
 
@@ -60,40 +40,42 @@ public class ChangeApplicator {
 			// Bullshit, there are nop transitions in the fringe.
 			if (todochange.getChange().get() instanceof Reconfiguration) {
 
-				final Reconfiguration change = (Reconfiguration) todochange.getChange().get();
+				throw new UnsupportedOperationException("cannot executre Reconfiguration, as we are still missing the SPD extension");
 
-				final TriggerContext triggerContext = this.createTriggerContext(newArchConfig.getAllocation(),
-						newArchConfig.getMonitorRepository(), change.getScalingPolicy());
-
-				final AdjustmentResult result = triggerContext.executeTrigger();
-
-				change.setResult(result);
+//				final Reconfiguration change = (Reconfiguration) todochange.getChange().get();
+//
+//				final TriggerContext triggerContext = this.createTriggerContext(newArchConfig.getAllocation(),
+//						newArchConfig.getMonitorRepository(), change.getScalingPolicy());
+//
+//				final AdjustmentResult result = triggerContext.executeTrigger();
+//
+//				change.setResult(result);
 			}
 		}
 		return newArchConfig;
 	}
 
-	private Set<ModelElementDifference<Entity>> buildDifferences(final AdjustmentResult result) {
-		final Set<ModelElementDifference<Entity>> diff = new HashSet<>();
-
-		for (final ModelChange modelChange : result.getChanges()) {
-
-			switch (modelChange.getModelChangeAction()) {
-			case ADDITION:
-				diff.add(new ModelElementDifference<Entity>(Optional.empty(),
-						Optional.of((Entity) modelChange.getModelElement())));
-				break;
-			case DELETION:
-				diff.add(new ModelElementDifference<Entity>(Optional.of((Entity) modelChange.getModelElement()),
-						Optional.empty()));
-				break;
-			default:
-				break;
-			}
-		}
-
-		return diff;
-	}
+//	private Set<ModelElementDifference<Entity>> buildDifferences(final AdjustmentResult result) {
+//		final Set<ModelElementDifference<Entity>> diff = new HashSet<>();
+//
+//		for (final ModelChange modelChange : result.getChanges()) {
+//
+//			switch (modelChange.getModelChangeAction()) {
+//			case ADDITION:
+//				diff.add(new ModelElementDifference<Entity>(Optional.empty(),
+//						Optional.of((Entity) modelChange.getModelElement())));
+//				break;
+//			case DELETION:
+//				diff.add(new ModelElementDifference<Entity>(Optional.of((Entity) modelChange.getModelElement()),
+//						Optional.empty()));
+//				break;
+//			default:
+//				break;
+//			}
+//		}
+//
+//		return diff;
+//	}
 
 	public UsageModel changeLoad(final UsageModel usageModel) {
 
@@ -140,45 +122,45 @@ public class ChangeApplicator {
 	 *                          triggerContext
 	 * @return a new trigger context.
 	 */
-	private TriggerContext createTriggerContext(final Allocation allocation, final MonitorRepository monitorRepository,
-			final ScalingPolicy scalingPolicy) {
-		Preconditions.checkArgument(scalingPolicy.getTargetGroup() instanceof ElasticInfrastructure,
-				"Unsupported TargetGroup");
-		// sadly, there is no id for ResourceEnvironments :(
-		Preconditions.checkArgument(allocation.getTargetResourceEnvironment_Allocation().getEntityName().equals(
-				((ElasticInfrastructure) scalingPolicy.getTargetGroup()).getPCM_ResourceEnvironment().getEntityName()));
-
-		final TriggerContext.Builder triggerContextBuilder = TriggerContext.builder();
-
-		/* Adjustment Type */
-		final AdjustmentTypeInterpreter adjustmentTypeInterpreter = new AdjustmentTypeInterpreter(
-				this.createEmptySimulationInformation(), allocation, monitorRepository);
-
-		final AdjustmentExecutor adjustmentExecutor = adjustmentTypeInterpreter
-				.doSwitch(scalingPolicy.getAdjustmentType());
-
-		/* create new TargetGroup */
-		final ElasticInfrastructure newTargetGroup = TargetsFactory.eINSTANCE.createElasticInfrastructure();
-		newTargetGroup.setName(scalingPolicy.getTargetGroup().getName());
-		newTargetGroup.setPCM_ResourceEnvironment(allocation.getTargetResourceEnvironment_Allocation());
-
-		/* New Trigger */
-		final ScalingTriggerPredicate scalingTriggerPredicate = ScalingTriggerPredicate.ALWAYS;
-
-		final TriggerContext.Builder contextBuilder = triggerContextBuilder.withAdjustmentExecutor(adjustmentExecutor)
-				.withAdjustmentType(scalingPolicy.getAdjustmentType()).withTargetGroup(newTargetGroup)
-				.withScalingTriggerPredicate(scalingTriggerPredicate)
-				.withScalingTrigger(scalingPolicy.getScalingTrigger());
-
-		/* TODO : Constraints */
-		// final ConstraintInterpreter policyConstraintInterpreter = new
-		// ConstraintInterpreter();
-		// scalingPolicy.getPolicyConstraints().stream()
-		// .map(constraint -> policyConstraintInterpreter.doSwitch(constraint))
-		// .forEach(triggerContextBuilder::withConstraint);
-
-		return contextBuilder.build();
-	}
+//	private TriggerContext createTriggerContext(final Allocation allocation, final MonitorRepository monitorRepository,
+//			final ScalingPolicy scalingPolicy) {
+//		Preconditions.checkArgument(scalingPolicy.getTargetGroup() instanceof ElasticInfrastructure,
+//				"Unsupported TargetGroup");
+//		// sadly, there is no id for ResourceEnvironments :(
+//		Preconditions.checkArgument(allocation.getTargetResourceEnvironment_Allocation().getEntityName().equals(
+//				((ElasticInfrastructure) scalingPolicy.getTargetGroup()).getPCM_ResourceEnvironment().getEntityName()));
+//
+//		final TriggerContext.Builder triggerContextBuilder = TriggerContext.builder();
+//
+//		/* Adjustment Type */
+//		final AdjustmentTypeInterpreter adjustmentTypeInterpreter = new AdjustmentTypeInterpreter(
+//				this.createEmptySimulationInformation(), allocation, monitorRepository);
+//
+//		final AdjustmentExecutor adjustmentExecutor = adjustmentTypeInterpreter
+//				.doSwitch(scalingPolicy.getAdjustmentType());
+//
+//		/* create new TargetGroup */
+//		final ElasticInfrastructure newTargetGroup = TargetsFactory.eINSTANCE.createElasticInfrastructure();
+//		newTargetGroup.setName(scalingPolicy.getTargetGroup().getEntityName());
+//		newTargetGroup.setPCM_ResourceEnvironment(allocation.getTargetResourceEnvironment_Allocation());
+//
+//		/* New Trigger */
+//		final ScalingTriggerPredicate scalingTriggerPredicate = ScalingTriggerPredicate.ALWAYS;
+//
+//		final TriggerContext.Builder contextBuilder = triggerContextBuilder.withAdjustmentExecutor(adjustmentExecutor)
+//				.withAdjustmentType(scalingPolicy.getAdjustmentType()).withTargetGroup(newTargetGroup)
+//				.withScalingTriggerPredicate(scalingTriggerPredicate)
+//				.withScalingTrigger(scalingPolicy.getScalingTrigger());
+//
+//		/* TODO : Constraints */
+//		// final ConstraintInterpreter policyConstraintInterpreter = new
+//		// ConstraintInterpreter();
+//		// scalingPolicy.getPolicyConstraints().stream()
+//		// .map(constraint -> policyConstraintInterpreter.doSwitch(constraint))
+//		// .forEach(triggerContextBuilder::withConstraint);
+//
+//		return contextBuilder.build();
+//	}
 
 	/**
 	 * Creates an empty simulation information, as the AdjustmentExecutors need the
@@ -190,17 +172,12 @@ public class ChangeApplicator {
 	private SimulationInformation createEmptySimulationInformation() {
 		return new SimulationInformation() {
 			@Override
-			public int compareTo(final SimulationInformation o) {
-				return 0;
-			}
-
-			@Override
 			public double currentSimulationTime() {
 				return 0;
 			}
 
 			@Override
-			public int currentNumberOfProcessedEvents() {
+			public int consumedEvents() {
 				return 0;
 			}
 		};

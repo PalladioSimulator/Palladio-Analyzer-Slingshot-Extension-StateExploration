@@ -1,6 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.change.api;
 
-import org.palladiosimulator.analyzer.slingshot.scalingpolicy.data.result.AdjustmentResult;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -35,8 +34,8 @@ public class Reconfiguration implements Change {
 
 
 	private final ScalingPolicy policy;
-	private AdjustmentResult result;
-
+//	private AdjustmentResult result;
+//
 	public Reconfiguration(final ScalingPolicy policy) {
 		super();
 		this.policy = policy;
@@ -45,12 +44,12 @@ public class Reconfiguration implements Change {
 	public ScalingPolicy getScalingPolicy() {
 		return policy;
 	}
-
-	public AdjustmentResult getResult() {
-		return result;
-	}
-
-	public void setResult(final AdjustmentResult result) {
-		this.result = result;
-	}
+//
+//	public AdjustmentResult getResult() {
+//		return result;
+//	}
+//
+//	public void setResult(final AdjustmentResult result) {
+//		this.result = result;
+//	}
 }

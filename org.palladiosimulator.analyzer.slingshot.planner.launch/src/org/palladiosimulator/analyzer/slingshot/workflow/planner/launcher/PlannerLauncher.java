@@ -9,73 +9,52 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
-import org.palladiosimulator.analyzer.slingshot.common.constants.model.ModelFileTypeConstants;
+import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
+import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
+import org.palladiosimulator.analyzer.slingshot.workflow.events.WorkflowLaunchConfigurationBuilderInitialized;
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.ArchitecturalModelsConfiguration;
-import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.SimulationWorkflowConfiguration;
+import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.PlannerWorkflowConfiguration;
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.SlingshotSpecificWorkflowConfiguration;
-import org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher.jobs.SimulationRootJob;
+import org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher.jobs.PlannerRootJob;
 import org.palladiosimulator.analyzer.workflow.configurations.AbstractPCMLaunchConfigurationDelegate;
 
+import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.jobs.IJob;
 import de.uka.ipd.sdq.workflow.logging.console.LoggerAppenderStruct;
 
-public class PlannerLauncher extends AbstractPCMLaunchConfigurationDelegate<SimulationWorkflowConfiguration> {
+public class PlannerLauncher extends AbstractPCMLaunchConfigurationDelegate<PlannerWorkflowConfiguration> {
 
 	private final Logger LOGGER = Logger.getLogger(PlannerLauncher.class);
 
+	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
+
 	@Override
-	protected SimulationWorkflowConfiguration deriveConfiguration(final ILaunchConfiguration configuration,
+	protected IJob createWorkflowJob(final PlannerWorkflowConfiguration config, final ILaunch launch)
+			throws CoreException {
+		return new PlannerRootJob(config, launch);
+	}
+
+	@Override
+	protected PlannerWorkflowConfiguration deriveConfiguration(final ILaunchConfiguration configuration,
 			final String mode)
 					throws CoreException {
 
 		LOGGER.info("PlannerLauncher.deriveConfiguration");
 
-		return this.buildWorkflowConfiguration(configuration, mode);
-	}
+		final SimuComConfig config = new SimuComConfig(configuration.getAttributes(), true);
+		final PlannerWorkflowConfiguration simulationWorkflowConfiguration = new PlannerWorkflowConfiguration(config, configuration.getAttributes());
 
-	@Override
-	protected IJob createWorkflowJob(final SimulationWorkflowConfiguration config, final ILaunch launch)
-			throws CoreException {
-		return new SimulationRootJob(config, launch);
-	}
+		final WorkflowLaunchConfigurationBuilderInitialized builderEvent = new WorkflowLaunchConfigurationBuilderInitialized(configuration, simulationWorkflowConfiguration);
+		systemDriver.postEvent(builderEvent);
 
-	private SimulationWorkflowConfiguration buildWorkflowConfiguration(final ILaunchConfiguration configuration,
-			final String mode) {
-
-		SimulationWorkflowConfiguration workflowConfiguration = null;
-		try {
-			final Map<String, Object> launchConfigurationParams = configuration.getAttributes();
-
-			if (LOGGER.isDebugEnabled()) {
-				for (final Entry<String, Object> entry : launchConfigurationParams.entrySet()) {
-					LOGGER.debug(
-							String.format("planner launch configuration param ['%s':'%s']", entry.getKey(), entry.getValue()));
-				}
-			}
-
-			final ArchitecturalModelsConfiguration architecturalModels = new ArchitecturalModelsConfiguration(
-					(String) launchConfigurationParams.get(ModelFileTypeConstants.USAGE_FILE),
-					(String) launchConfigurationParams.get(ModelFileTypeConstants.ALLOCATION_FILE),
-					(String) launchConfigurationParams.get(ModelFileTypeConstants.MONITOR_REPOSITORY_FILE),
-					(String) launchConfigurationParams.get(ModelFileTypeConstants.SCALING_POLICY_DEFINITION_FILE));
-
-			final SlingshotSpecificWorkflowConfiguration slingshotConfig = SlingshotSpecificWorkflowConfiguration.builder()
-					.withLogFile((String) launchConfigurationParams.get(ModelFileTypeConstants.LOG_FILE))
-					.withSnaptime((String) launchConfigurationParams.get(ModelFileTypeConstants.SNAPTIME))
-					.build();
-			// something something continue here to get the snapshot field into the configuration
-
-			//final SimuComConfig config = new SimuComConfig(launchConfigurationParams, true);
-
-			workflowConfiguration = new SimulationWorkflowConfiguration(architecturalModels, null, slingshotConfig, launchConfigurationParams);
-
-		} catch (final CoreException e) {
-			LOGGER.error(
-					"Failed to read workflow configuration from passed launch configuration. Please check the provided launch configuration",
-					e);
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("The workfloww launch configurations are:");
+			builderEvent.forEach().forEach((key, obj) -> {
+				LOGGER.debug("Key: " + key + ", Object: " + obj + "<" + obj.getClass().getName() + ">");
+			});
 		}
 
-		return workflowConfiguration;
+		return simulationWorkflowConfiguration;
 	}
 
 	@Override

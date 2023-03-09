@@ -1,12 +1,15 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.simulation.api.PCMPartitionManager;
-import org.palladiosimulator.analyzer.slingshot.simulation.core.SlingshotComponent;
-import org.palladiosimulator.analyzer.slingshot.simulation.core.SlingshotModel;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.emf.ecore.EObject;
+import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
+import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
@@ -15,12 +18,15 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplor
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
+import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
 import org.palladiosimulator.spd.SPD;
+import org.palladiosimulator.spd.SpdFactory;
 import org.palladiosimulator.spd.targets.ElasticInfrastructure;
 import org.palladiosimulator.spd.targets.TargetGroup;
 
@@ -29,7 +35,6 @@ import com.google.inject.Provides;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.jobs.JobFailedException;
-import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
 /**
  * Core Component of the Exploration.
@@ -43,8 +48,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private static final Logger LOGGER = Logger.getLogger(DefaultGraphExplorer.class.getName());
 
-	private final SlingshotModel initModels;
-	private final MDSDBlackboard blackboard;
+	final PCMResourceSetPartition initModels;
 
 	private final Map<String, Object> launchConfigurationParams;
 
@@ -52,16 +56,32 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final RawStateGraph graph;
 
-	public DefaultGraphExplorer(final SlingshotModel model, final MDSDBlackboard blackboard,
-			final Map<String, Object> launchConfigurationParams) {
+	private final SimulationDriver driver;
+	private final IProgressMonitor monitor;
+
+	public DefaultGraphExplorer(final PCMResourceSetPartition partition, final SimulationDriver driver,
+			final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor) {
 		super();
-		this.initModels = model;
-		this.blackboard = blackboard;
+		this.initModels = partition;
 		this.launchConfigurationParams = launchConfigurationParams;
+		this.driver = driver; // TODO : could also get this from the Slingshot instance...
+		this.monitor = monitor;
+
+		// TODO
+		// cannot yet grab the models at the providers, or can i?
+		// get monitor Repo
+		final List<EObject> monitors = initModels.getElement(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository());
+		if (monitors.size() == 0) {
+			throw new IllegalStateException("Monitor not present: List size is 0.");
+		}
 
 		this.graph = new DefaultGraph(
-				this.createRoot(this.initModels.getAllocationModel(), this.initModels.getMonitorRepository()));
-		this.blackbox = new DefaultExplorationPlanner(this.initModels.getSpd(), (DefaultGraph) this.graph);
+				this.createRoot(this.initModels.getAllocation(), (MonitorRepository) monitors.get(0)));
+
+		// TODO
+		this.blackbox = new DefaultExplorationPlanner(SpdFactory.eINSTANCE.createSPD(), (DefaultGraph) this.graph);
+		//this.blackbox = new DefaultExplorationPlanner(this.initModels.getSpd(), (DefaultGraph) this.graph);
+
 	}
 
 	@Override
@@ -70,18 +90,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		for (int i = 0; i < 8; i++) { // just random.
 			final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
-
-			try {
-				this.exploreBranch(config);
-			} catch (final JobFailedException e) {
-				LOGGER.info(String.format("Exploration of branch %s failed ", config.getStateToExplore()
-						.getArchitecureConfiguration().getAllocation().eResource().toString()));
-				e.printStackTrace();
-			}
+			this.exploreBranch(config);
 		}
 		LOGGER.info("********** DefaultGraphExplorer is done :) **********");
-		this.graph.getStates().forEach(s -> LOGGER.info(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(), s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
-		this.graph.getTransitions().stream().forEach(t -> LOGGER.info(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType().toString())));
+		this.graph.getStates()
+				.forEach(s -> LOGGER.info(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
+						s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
+		this.graph.getTransitions().stream().forEach(t -> LOGGER
+				.info(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType().toString())));
 		return this.graph;
 	}
 
@@ -108,76 +124,72 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config
 	 * @throws JobFailedException
 	 */
-	private void exploreBranch(final SimulationInitConfiguration config) throws JobFailedException {
-		final SlingshotModel slingshotModel = createSlingshotModel(initModels,
-				config.getStateToExplore().getArchitecureConfiguration().getAllocation(),
+	private void exploreBranch(final SimulationInitConfiguration config) {
+		// update provided models
+		this.updatePCMPartitionProvider(config.getStateToExplore().getArchitecureConfiguration().getAllocation(),
 				config.getStateToExplore().getArchitecureConfiguration().getMonitorRepository());
-
+		// update simucomconfig
 		final SimuComConfig simuComConfig = prepareSimuComConfig(config.getStateToExplore()
 				.getArchitecureConfiguration().getAllocation().eResource().getURI().toString());
+		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config.getExplorationDuration(),
 				!config.getSnapToInitOn().getEvents().isEmpty());
-		final SlingshotComponent component = createSlingshotComponent(slingshotModel, simuComConfig, snapConfig,
-				config.getStateToExplore(), config.getSnapToInitOn());
 
-		try {
-			component.getSimulation().init();
-			component.getSimulation().startSimulation();
-		} catch (final Exception e) {
-			throw new JobFailedException("Simulation Could Not Be Created", e);
-		}
+		// TODO *somehow* get this submodule into the driver, such that it will be provided D:
+		final SubModule submodule =  new SubModule(config.getSnapToInitOn(),config.getStateToExplore(), snapConfig);
+
+
+		final AbstractModule simComConfigProvider = new AbstractModule() {
+			@Provides
+			public IProgressMonitor monitor() {
+				return monitor;
+			}
+
+			@Provides
+			public SimuComConfig config() {
+				return simuComConfig;
+			}
+		};
+
+		this.driver.init(Set.of(submodule, simComConfigProvider), simuComConfig);
+		this.driver.start();
+
 	}
 
-	/**
-	 *
-	 *
-	 * Creates the beast (SlingshotComponent) that provides all the Stuff we want to
-	 * get into the simulation for injection.
-	 *
-	 * @param slingshotModel        Container for PCM instances
-	 * @param simuComConfig         Config for Calculators and such
-	 * @param snapshotConfiguration Config for Snapshotting
-	 * @param currentPartialState   State the run simulates
-	 * @param snapToInitOn          Snapshot from previous state
-	 * @return
-	 */
-	private SlingshotComponent createSlingshotComponent(final SlingshotModel slingshotModel,
-			final SimuComConfig simuComConfig, final SnapshotConfiguration snapshotConfiguration,
-			final DefaultState currentPartialState, final Snapshot snapToInitOn) {
-		final SlingshotComponent.Builder builder = SlingshotComponent.builder().withModule(slingshotModel)
-				.withModule(new AbstractModule() {
+	private class SubModule extends AbstractModule {
 
-					@Provides
-					public InMemorySnapshot snapToInitOn() {
-						return (InMemorySnapshot) snapToInitOn;
-					}
+		private final InMemorySnapshot snapToInitOn;
+		private final DefaultState currentPartialState;
+		private final SnapshotConfiguration snapshotConfiguration;
 
-					@Provides
-					public DefaultState builder() {
-						return currentPartialState;
-					}
+		public SubModule(final Snapshot snapToInitOn,
+		final DefaultState currentPartialState,
+		final SnapshotConfiguration snapshotConfiguration) {
+			this.snapToInitOn = (InMemorySnapshot) snapToInitOn;
+			this.currentPartialState = currentPartialState;
+			this.snapshotConfiguration = snapshotConfiguration;
+		}
 
-					@Provides
-					public SimuComConfig config() {
-						return simuComConfig;
-					}
+		// PCM instance and SimuComConfig already provided via other means.
+		@Provides
+		public InMemorySnapshot snapToInitOn() {
+			return snapToInitOn;
+		}
 
-					@Provides
-					public SnapshotConfiguration snapshotConfig() {
-						return snapshotConfiguration;
-					}
+		@Provides
+		public DefaultState builder() {
+			return currentPartialState;
+		}
 
-					@Provides
-					public PCMPartitionManager partitionManager() {
-						return new PCMPartitionManager(DefaultGraphExplorer.this.blackboard);
-					}
+		@Provides
+		public SnapshotConfiguration snapshotConfig() {
+			return snapshotConfiguration;
+		}
 
-					@Override
-					protected void configure() {
-					}
+		@Override
+		protected void configure() {
+		}
 
-				});
-		return builder.build();
 	}
 
 	/**
@@ -220,21 +232,18 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Create the Slingshot model required to start a new simulation run.
 	 *
-	 * @param oldModel
 	 * @param allocation
 	 * @param monitorRepository
-	 * @return
 	 */
-	private SlingshotModel createSlingshotModel(final SlingshotModel oldModel, final Allocation allocation,
-			final MonitorRepository monitorRepository) {
-		final SlingshotModel model = SlingshotModel.builder().withAllocationModel(allocation)
-				.withUsageModel(oldModel.getUsageModel()).withMonitorinRepositoryFile(monitorRepository)
-				.withSpdFile(updateSPD(oldModel.getSpd(), allocation.getTargetResourceEnvironment_Allocation()))
-				.build();
+	private void updatePCMPartitionProvider(final Allocation allocation, final MonitorRepository monitorRepository) {
 
-		return model;
+		// TODO : update alloc and monitoring
+		final PCMResourceSetPartition newPartition = this.initModels;
+
+		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
+				.getInstance(PCMResourceSetPartitionProvider.class);
+		provider.set(newPartition);
 	}
 
 	/**

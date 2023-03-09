@@ -1,22 +1,17 @@
 package org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher.jobs;
 
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.palladiosimulator.analyzer.slingshot.simulation.core.SlingshotModel;
+import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
+import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
-import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.SimulationWorkflowConfiguration;
+import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.PlannerWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
-import org.palladiosimulator.monitorrepository.MonitorRepository;
-import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
-import org.palladiosimulator.spd.SPD;
-import org.palladiosimulator.spd.SpdPackage;
-
+import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.jobs.CleanupFailedException;
 import de.uka.ipd.sdq.workflow.jobs.IBlackboardInteractingJob;
 import de.uka.ipd.sdq.workflow.jobs.JobFailedException;
@@ -34,47 +29,54 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 	private MDSDBlackboard blackboard;
 
-	private final SimulationWorkflowConfiguration configuration;
+	private final SimulationDriver simulationDriver;
+	private final PCMResourceSetPartitionProvider pcmResourceSetPartition;
+	private final SimuComConfig simuComConfig;
 
-	public InitialPlannerJob(final SimulationWorkflowConfiguration config) {
+	private final PlannerWorkflowConfiguration configuration;
+
+	public InitialPlannerJob(final PlannerWorkflowConfiguration config) {
 		this.configuration = config;
+
+		this.simulationDriver = Slingshot.getInstance().getSimulationDriver();
+		this.pcmResourceSetPartition = Slingshot.getInstance().getInstance(PCMResourceSetPartitionProvider.class);
+		this.simuComConfig = config.getSimuComConfig();
 	}
 
 	@Override
 	public void execute(final IProgressMonitor monitor) throws JobFailedException, UserCanceledException {
 		LOGGER.info("**** SimulationJob.execute ****");
+		final PCMResourceSetPartition partition = (PCMResourceSetPartition)
+				this.blackboard.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID);
 
-		final SlingshotModel model = this.loadModelFromBlackboard();
+		this.pcmResourceSetPartition.set(partition);
+		LOGGER.debug("Current partition: ");
+		partition.getResourceSet().getResources().forEach(resource -> LOGGER.debug("Resource: " + resource.getURI().path()));
 
+		LOGGER.debug("monitor: " + monitor.getClass().getName());
+		monitor.beginTask("Start Simulation", 3);
 
-		// i'd prefer to have the actual GraphExplorer Implementation hidden and provided via Injection, but am not yet sufficiently proficient with the Injection Mechanism. Will probably only fix this in the new framework.
-		final GraphExplorer explorer = new DefaultGraphExplorer(model, this.blackboard, configuration.getlaunchConfigParams());
+		monitor.subTask("Initialize driver");
 
+		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver, this.configuration.getlaunchConfigParams(), monitor);
 		final RawStateGraph rawGraph =  explorer.start();
-		// return the raw graph
 
+		// TODO : decent injection, such that i can hide the implementation class of the explorer.
 
-		final Set<RawTransition> transitions = rawGraph.getRoot().getOutTransitions();
+		// PS: i actually end up here :)
+//		simulationDriver.init(simuComConfig, monitor);
+		monitor.worked(1);
 
-		for (final RawTransition transition : transitions) {
-			//transition.get...
-		}
+		monitor.subTask("Start simulation");
+//		simulationDriver.start();
+		monitor.worked(1);
 
+		monitor.subTask("Restore");
+		monitor.worked(1);
 
-
+		monitor.done();
 
 		LOGGER.info("**** SimulationJob.execute  - Done ****");
-	}
-
-	private SlingshotModel loadModelFromBlackboard() {
-		final PCMResourceSetPartition partition = (PCMResourceSetPartition) this.blackboard
-				.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID);
-		final SlingshotModel model = SlingshotModel.builder().withAllocationModel(partition.getAllocation())
-				.withUsageModel(partition.getUsageModel())
-				.withMonitorinRepositoryFile((MonitorRepository) partition
-						.getElement(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository()).get(0))
-				.withSpdFile((SPD) partition.getElement(SpdPackage.eINSTANCE.getSPD()).get(0)).build();
-		return model;
 	}
 
 	@Override

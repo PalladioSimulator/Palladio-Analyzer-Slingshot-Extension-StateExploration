@@ -8,7 +8,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInterpretationProgressed;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 
 public class SEFFInterpretedVisitor {
 	private final Function<DESEvent, DESEvent> cloneFactory;
@@ -25,7 +25,7 @@ public class SEFFInterpretedVisitor {
 	private DESEvent clone(final SEFFInterpretationProgressed clonee) {
 		return new SEFFInterpretationProgressed(helper.cloneContext(clonee.getEntity()));
 	}
-	
+
 	private DESEvent clone(final SEFFInterpretationFinished clonee) {
 		return new SEFFInterpretationFinished(helper.cloneContext(clonee.getEntity()));
 	}
@@ -38,7 +38,7 @@ public class SEFFInterpretedVisitor {
 		return new SEFFExternalActionCalled(helper.cloneGeneralEntryRequest(clonee.getEntity()));
 	}
 
-	public DESEvent visit(DESEvent e) {
+	public DESEvent visit(final DESEvent e) {
 		return this.cloneFactory.apply(e);
 	}
 }

@@ -11,8 +11,8 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.even
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.User;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.AbstractEntityChangedEvent;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.ModelPassedEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
+import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.pcm.usagemodel.Start;
 import org.palladiosimulator.pcm.usagemodel.Stop;
@@ -24,8 +24,8 @@ public class InMemoryRecord implements EventRecord {
 		this.openCalculators = new HashMap<>();
 		this.openJob = new HashMap<>();
 	}
-	
-	
+
+
 	/* states that still change due to running simulation */
 	private final Map<User, ArrayDeque<ModelPassedEvent<?>>> openCalculators;
 	private final Map<User, JobInitiated> openJob;
@@ -76,7 +76,7 @@ public class InMemoryRecord implements EventRecord {
 	public void addInitiatedJob (final JobInitiated event) {
 		openJob.put(event.getEntity().getRequest().getUser(), event);
 	}
-	
+
 
 	public void removeFinishedJob (final JobFinished event) {
 		openJob.remove(event.getEntity().getRequest().getUser());
@@ -88,16 +88,16 @@ public class InMemoryRecord implements EventRecord {
 	}
 
 	@Override
-	public void updateRecord(AbstractEntityChangedEvent<?> event) {
+	public void updateRecord(final AbstractEntityChangedEvent<?> event) {
 		this.internalUpdateRecord(event);
-		
+
 		if (event instanceof JobInitiated) {
 			this.addInitiatedJob((JobInitiated)event);
 		} else if (event instanceof JobFinished) {
 			this.removeFinishedJob((JobFinished)event);
 		} else if (event instanceof UsageModelPassedElement<?>) {
-			Object modelElement = ((UsageModelPassedElement<?>) event).getModelElement();
-			
+			final Object modelElement = ((UsageModelPassedElement<?>) event).getModelElement();
+
 			if (modelElement instanceof Start) {
 				this.addInitiatedCalculator((UsageModelPassedElement<Start>) event);
 			} else if (modelElement instanceof Stop) {
@@ -108,7 +108,7 @@ public class InMemoryRecord implements EventRecord {
 
 	@Override
 	public Set<AbstractEntityChangedEvent<?>> getRecord() {
-		Set<AbstractEntityChangedEvent<?>> rval = new HashSet<>();
+		final Set<AbstractEntityChangedEvent<?>> rval = new HashSet<>();
 		openCalculators.values().stream().forEach(adq -> rval.addAll(adq));
 		rval.addAll(openJob.values());
 		return rval;

@@ -9,7 +9,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserF
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserStarted;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 
@@ -26,10 +26,10 @@ public class UserChangedEventVisitor {
 
 	private DESEvent clone(final ClosedWorkloadUserInitiated clonee) {
 		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getEntity());
-		double remainingthinktime = ((ClosedWorkloadUserInitiated) clonee).time();
+		final double remainingthinktime = clonee.time();
 
-		CoreFactory coreFactory = CoreFactory.eINSTANCE;
-		PCMRandomVariable var = coreFactory.createPCMRandomVariable();
+		final CoreFactory coreFactory = CoreFactory.eINSTANCE;
+		final PCMRandomVariable var = coreFactory.createPCMRandomVariable();
 		var.setSpecification(String.valueOf(remainingthinktime));
 
 		final ThinkTime newThinktime = new ThinkTime(var);
@@ -52,7 +52,7 @@ public class UserChangedEventVisitor {
 	public DESEvent visit(final DESEvent e) {
 		return this.jobCloneFactory.apply(e);
 	}
-	
+
 	public static DESEvent visit(final DESEvent e, final double offset) {
 		return null;
 	}

@@ -25,7 +25,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.int
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.scenariobehavior.UsageScenarioBehaviorContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 import org.palladiosimulator.pcm.core.composition.AssemblyContext;
@@ -76,11 +76,14 @@ public final class CloneHelper {
 	 * @return
 	 */
 	public DESEvent clone(final UsageModelPassedElement<?> event, final double simulationTime) {
-		final Object modelElement = ((UsageModelPassedElement<?>) event).getModelElement();
+
+		final Object modelElement = event.getModelElement();
 		if (modelElement instanceof Start && event.time() >= 0) {
 			final double offset = simulationTime - event.time();
-			return new UsageModelPassedElement<Start>((Start) modelElement,
-					cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()), offset);
+			throw new UnsupportedOperationException("TODO : adapt UsageModelPassed Element to make cloning them work");
+			// TODO that's broken because i added an additional constructor to the UsageModelPassedElement
+			//return new UsageModelPassedElement<Start>((Start) modelElement,
+			//		cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()), offset);
 		}
 		return event;
 	}

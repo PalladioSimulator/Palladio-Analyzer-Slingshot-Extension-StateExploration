@@ -2,7 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
 import java.util.Set;
 
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 
 /**
  * TODO

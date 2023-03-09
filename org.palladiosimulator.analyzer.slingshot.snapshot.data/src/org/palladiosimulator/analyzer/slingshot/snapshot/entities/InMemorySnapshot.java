@@ -3,7 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelperWithVisitor;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 
 /**
@@ -18,7 +18,7 @@ public final class InMemorySnapshot implements Snapshot {
 	public InMemorySnapshot() {
 		this.events = Set.of();
 	}
-	
+
 	public InMemorySnapshot(final Set<DESEvent> events) {
 		this.events = events;
 	}

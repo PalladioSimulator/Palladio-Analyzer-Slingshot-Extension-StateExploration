@@ -5,8 +5,6 @@ import org.eclipse.debug.ui.CommonTab;
 import org.eclipse.debug.ui.ILaunchConfigurationDialog;
 import org.eclipse.debug.ui.ILaunchConfigurationTab;
 import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.launcher.tabs.SimulationArchitectureModelsTab;
-import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.launcher.tabs.SlingshotSpecificTab;
-
 import de.uka.ipd.sdq.codegen.simucontroller.runconfig.SimuComConfigurationTab;
 import de.uka.ipd.sdq.codegen.simucontroller.runconfig.SimuConfigurationTab;
 import de.uka.ipd.sdq.workflow.launchconfig.tabs.DebugEnabledCommonTab;
@@ -15,7 +13,7 @@ import de.uka.ipd.sdq.workflow.launchconfig.tabs.DebugEnabledCommonTab;
  * This creates a launch simulation with tabs. As of now, this creates the
  * {@link SimulationArchitectureModelsTab} along with Eclipse's
  * {@link CommonTab}.
- * 
+ *
  * @author Julijan Katic
  */
 public class LaunchSimulationTabGroup extends AbstractLaunchConfigurationTabGroup {
@@ -29,7 +27,6 @@ public class LaunchSimulationTabGroup extends AbstractLaunchConfigurationTabGrou
 		// Assemble the tab pages:
 		final ILaunchConfigurationTab[] tabs = new ILaunchConfigurationTab[] {
 				new SimulationArchitectureModelsTab(),
-				new SlingshotSpecificTab(),
 				new SimuComConfigurationTab(),
 				new SimuConfigurationTab(),
 				new DebugEnabledCommonTab()

@@ -19,20 +19,20 @@ import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.JobEventV
 import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.ModelElementPassedVisitor;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.SEFFInterpretedVisitor;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.UserChangedEventVisitor;
-import org.palladiosimulator.analyzer.slingshot.simulation.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 
 public class CloneHelperWithVisitor {
-	
+
 	private static final Logger LOGGER = Logger.getLogger(CloneHelperWithVisitor.class);
-	
+
 	CloneHelper helper = new CloneHelper();
 
 
     private final Function<DESEvent, DESEvent> cloneFactory;
-        
+
     public CloneHelperWithVisitor() {
     	 super();
-         
+
          cloneFactory = new LambdaVisitor<DESEvent, DESEvent>().
         		 on(UsageModelPassedElement.class).then(e->(new ModelElementPassedVisitor()).visit(e)).
         		 on(AbstractUserChangedEvent.class).then(e->(new UserChangedEventVisitor()).visit(e)).
@@ -49,15 +49,15 @@ public class CloneHelperWithVisitor {
 		LOGGER.warn(String.format("forgot about how to clone %s of type %s ", event.toString(), event.getClass().getCanonicalName()));
 		return null;
 	}
-    
+
 	public DESEvent clone (final DESEvent event) {
 		return cloneFactory.apply(event);
 	}
-	
+
 	public Set<DESEvent> clone (final Set<DESEvent> events) {
 		return events.stream().map(cloneFactory).filter(event -> event != null).collect(Collectors.toSet());
 	}
-	
+
 //	public DESEvent cloneWithOffset(final UsageModelPassedElement<Start> event, final double simulationTime) {
 //		if (!(event.getEntity() instanceof Start)) {
 //			throw new IllegalArgumentException("Only Starts have offset!");
@@ -71,23 +71,23 @@ public class CloneHelperWithVisitor {
 //					helper.cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()), offset);
 //
 //	}
-		
+
 	private DESEvent clone(final ResourceDemandRequested clonee) {
-		return new ResourceDemandRequested(helper.clone(clonee.getEntity()), clonee.getDelay());
+		return new ResourceDemandRequested(helper.clone(clonee.getEntity()), clonee.delay());
 	}
 	private DESEvent clone(final ActiveResourceFinished clonee) {
-		return new ActiveResourceFinished(helper.clone(clonee.getEntity()), clonee.getDelay());
+		return new ActiveResourceFinished(helper.clone(clonee.getEntity()), clonee.delay());
 	}
-    
+
 	private DESEvent clone(final UserEntryRequested clonee) {
 		final UserRequest clonedRequest = helper.cloneUserRequest(clonee.getEntity());
 		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getUserInterpretationContext());
-		return new UserEntryRequested(clonedRequest, clonedContext, clonee.getDelay());
+		return new UserEntryRequested(clonedRequest, clonedContext, clonee.delay());
 	}
 
 	private DESEvent clone(final UserRequestFinished clonee) {
 		final UserRequest clonedRequest = helper.cloneUserRequest(clonee.getEntity());
 		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getUserContext());
 		return new UserRequestFinished(clonedRequest, clonedContext);
-	}   
+	}
 }

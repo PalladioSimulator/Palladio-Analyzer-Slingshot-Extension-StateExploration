@@ -6,7 +6,6 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.snapshot
 Require-Bundle: org.apache.log4j,
- org.palladiosimulator.analyzer.slingshot,
  org.palladiosimulator.pcm;bundle-version="5.1.0",
  org.palladiosimulator.analyzer.slingshot.monitor.data,
  ca.umontreal.iro.simul.ssj;bundle-version="3.3.1",
@@ -14,7 +13,9 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.monitorrepository;bundle-version="5.1.0",
  org.palladiosimulator.probeframework,
  de.uka.ipd.sdq.simucomframework,
- org.palladiosimulator.analyzer.slingshot.scalingpolicy.data,
  org.palladiosimulator.analyzer.slingshot.stateexploration,
- org.palladiosimulator.edp2.util;bundle-version="5.1.0"
+ org.palladiosimulator.edp2.util;bundle-version="5.1.0",
+ org.palladiosimulator.analyzer.slingshot.eventdriver,
+ org.palladiosimulator.analyzer.slingshot.common,
+ org.palladiosimulator.analyzer.slingshot.core
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot
