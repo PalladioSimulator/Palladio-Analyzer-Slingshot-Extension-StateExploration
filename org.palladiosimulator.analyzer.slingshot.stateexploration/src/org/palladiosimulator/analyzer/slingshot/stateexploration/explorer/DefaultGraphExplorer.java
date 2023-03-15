@@ -56,7 +56,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final RawStateGraph graph;
 
-	private final SimulationDriver driver;
 	private final IProgressMonitor monitor;
 
 	public DefaultGraphExplorer(final PCMResourceSetPartition partition, final SimulationDriver driver,
@@ -64,7 +63,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		super();
 		this.initModels = partition;
 		this.launchConfigurationParams = launchConfigurationParams;
-		this.driver = driver; // TODO : could also get this from the Slingshot instance...
 		this.monitor = monitor;
 
 		// TODO
@@ -151,9 +149,10 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			}
 		};
 
-		this.driver.init(Set.of(submodule, simComConfigProvider), simuComConfig);
-		this.driver.start();
+		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
 
+		driver.init(Set.of(submodule, simComConfigProvider), simuComConfig);
+		driver.start();
 	}
 
 	private class SubModule extends AbstractModule {

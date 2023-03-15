@@ -26,7 +26,7 @@ public class UserChangedEventVisitor {
 
 	private DESEvent clone(final ClosedWorkloadUserInitiated clonee) {
 		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getEntity());
-		final double remainingthinktime = clonee.time();
+		final double remainingthinktime = clonee.delay();
 
 		final CoreFactory coreFactory = CoreFactory.eINSTANCE;
 		final PCMRandomVariable var = coreFactory.createPCMRandomVariable();

@@ -39,6 +39,8 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 	private final DefaultState state;
 
+	private final int minNumberOfMeasurementsForAvg = 5;
+
 
 	@Inject
 	public SnapshotTriggeringBehavior(final DefaultState state) {
@@ -75,6 +77,9 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 		if (measurementMatch.isEmpty()) {
 			return false;
 		}
+		if (!this.canAverage(measurementMatch.get())) {
+			return false;
+		}
 
 		final Double firstValue = this.extractFirstValue(measurementMatch.get());
 
@@ -102,6 +107,18 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 		return averageFirstValue;
 	}
 
+
+	private boolean canAverage(final Measurement measurement) {
+		final List<MeasurementRange> range = measurement.getMeasurementRanges();
+		if (range.size() != 1) {
+			throw new IllegalArgumentException("i fucked up");
+		}
+
+		final DataSeries series = range.get(0).getRawMeasurements().getDataSeries().get(0);
+
+		return MeasurementsUtility.<Duration> getMeasurementsDao(series).getMeasurements().size() > this.minNumberOfMeasurementsForAvg;
+	}
+
 	/**
 	 *
 	 * @param point
@@ -119,6 +136,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
+	 *	let's average the first 5 values..
 	 *
 	 * @param time
 	 * @param value
@@ -126,17 +144,17 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 	 */
 	private double averageOrSomething(final DataSeries time, final DataSeries value) {
 
-		final List<Measure<Double, Duration>> times = ((MeasurementsDao<Double, Duration>) MeasurementsUtility.<Duration> getMeasurementsDao(time)).getMeasurements();
+		//final List<Measure<Double, Duration>> times = ((MeasurementsDao<Double, Duration>) MeasurementsUtility.<Duration> getMeasurementsDao(time)).getMeasurements();
 		final List<Measure<Double, Duration>> values = ((MeasurementsDao<Double, Duration>) MeasurementsUtility.<Duration> getMeasurementsDao(value)).getMeasurements();
 
-		final double minTime = times.stream().mapToDouble(t -> t.doubleValue(t.getUnit())).min().getAsDouble();
-		final long minTimeCount = times.stream().mapToDouble(t -> t.doubleValue(t.getUnit())).filter(t -> t == minTime).count();
+		//final double minTime = times.stream().mapToDouble(t -> t.doubleValue(t.getUnit())).min().getAsDouble();
+		//final long minTimeCount = times.stream().mapToDouble(t -> t.doubleValue(t.getUnit())).filter(t -> t == minTime).count();
 
 		double sum = 0.0;
-		for (int i = 0; i < minTimeCount; i++) {
+		for (int i = 0; i < minNumberOfMeasurementsForAvg; i++) {
 			sum += values.get(i).doubleValue(values.get(i).getUnit());
 		}
-		final double average = sum / minTimeCount;
+		final double average = sum / minNumberOfMeasurementsForAvg;
 
 		return average;
 	}

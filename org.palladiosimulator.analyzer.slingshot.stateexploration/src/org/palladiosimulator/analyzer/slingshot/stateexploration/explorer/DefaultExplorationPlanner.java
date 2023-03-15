@@ -44,8 +44,6 @@ public class DefaultExplorationPlanner {
 	 * @return Configuration for the next simulation run
 	 */
 	public SimulationInitConfiguration createConfigForNextSimualtionRun() {
-
-
 		final ToDoChange next = this.rawgraph.getNext();
 
 		final DefaultState start = next.getStart();
@@ -109,7 +107,7 @@ public class DefaultExplorationPlanner {
 	 */
 	private double calculateRunDuration(final DefaultState previous) {
 		if (previous.getDuration() == 0 || previous.isDecreaseInterval()) {
-			return 30.0; // Evil. Should be something scraped from launch configuration
+			return 21.5; // Evil. Should be something scraped from launch configuration
 		}
 		return previous.getDuration();
 	}

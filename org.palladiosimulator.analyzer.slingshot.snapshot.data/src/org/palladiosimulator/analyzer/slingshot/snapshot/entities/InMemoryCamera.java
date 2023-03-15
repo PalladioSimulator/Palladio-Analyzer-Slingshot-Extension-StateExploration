@@ -1,7 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +12,10 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobProgressed;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ProcessorSharingJobProgressed;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
@@ -81,16 +84,44 @@ public final class InMemoryCamera implements Camera {
 	 * @return
 	 */
 	private Set<DESEvent> snapEvents() {
-		LOGGER.error("TODO : adapt engine to access FEL");
-		//final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
-		final Set<DESEvent> relevantEvents = new HashSet<>();
+		final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
+		relevantEvents.stream().filter(e -> (e instanceof JobProgressed) && !(e instanceof ProcessorSharingJobProgressed)).map(e -> (JobProgressed) e).forEach(this::updateJobDemand);
+
 		relevantEvents.addAll(record.getRecord());
+
+		relevantEvents.forEach(e -> LOGGER.warn(e.getName() +  " " + e.getId()));
 
 		final Set<DESEvent> offsettedEvents = relevantEvents.stream().map(adjustOffset).collect(Collectors.toSet());
 		final Set<DESEvent> clonedEvents = (new CloneHelperWithVisitor()).clone(offsettedEvents);
 
+		this.log(clonedEvents);
+
 		return clonedEvents;
 	}
+
+	private void log(final Set<DESEvent> evt) {
+		LOGGER.warn("DEMANDS");
+		evt.stream().filter(e -> (e instanceof JobInitiated)).map(e -> (JobInitiated) e).forEach(e -> LOGGER.warn(e.getEntity().getDemand()));
+		LOGGER.warn("OFFSETS");
+		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e).forEach(e -> LOGGER.warn(e.getOffset()));
+		LOGGER.warn("CWUI");
+		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e).forEach(e -> LOGGER.warn(e.delay() + " " + e.time()));
+	}
+
+	/**
+	 * This is only work around. i dont even know whether it still works in case of a FCFS resource with two parallel processing units.
+	 *
+	 * @param progress
+	 */
+	private void updateJobDemand(final JobProgressed progress) {
+			final double progressTime = progress.time();
+			final Job job = progress.getEntity();
+
+			final double remainingDemand = progressTime - engine.getSimulationInformation().currentSimulationTime();
+
+			job.updateDemand(remainingDemand);
+	}
+
 
 	@Deprecated
 	private MonitorRepository snapMonitorRepository(final String idSegment) {

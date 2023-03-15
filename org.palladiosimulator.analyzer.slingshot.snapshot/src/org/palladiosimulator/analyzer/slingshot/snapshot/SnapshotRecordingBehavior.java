@@ -43,9 +43,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	@Subscribe
-	public Result<?> onAbstractEntityChangedEvent(final AbstractEntityChangedEvent<?> event) {
+	public void onAbstractEntityChangedEvent(final AbstractEntityChangedEvent<?> event) {
 		recorder.updateRecord(event);
-		return Result.empty();
 	}
 
 	/**
@@ -54,7 +53,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	@Subscribe
-	public Result<?> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
+	public Result<SnapshotFinished> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
 		final Snapshot snapshot = camera.takeSnapshot(snapshotTaken.time());
 		return Result.of(new SnapshotFinished(snapshot));
 	}

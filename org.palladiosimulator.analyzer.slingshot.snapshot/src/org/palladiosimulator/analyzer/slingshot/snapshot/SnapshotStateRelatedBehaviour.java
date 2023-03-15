@@ -87,7 +87,7 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 			return Result.empty();
 		}
 		final Set<DESEvent> initialEvents = this.snapToInitOn.getEvents();
-		return Result.of(initialEvents);
+		return Result.from(initialEvents);
 	}
 
 	/**

@@ -78,16 +78,45 @@ public final class CloneHelper {
 	public DESEvent clone(final UsageModelPassedElement<?> event, final double simulationTime) {
 
 		final Object modelElement = event.getModelElement();
-		if (modelElement instanceof Start && event.time() >= 0) {
+		if (modelElement instanceof Start && event.time() <= simulationTime) {
 			final double offset = simulationTime - event.time();
-			throw new UnsupportedOperationException("TODO : adapt UsageModelPassed Element to make cloning them work");
-			// TODO that's broken because i added an additional constructor to the UsageModelPassedElement
-			//return new UsageModelPassedElement<Start>((Start) modelElement,
-			//		cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()), offset);
+			return new UsageModelPassedElement<Start>((Start) modelElement,
+					cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()), offset);
 		}
 		return event;
 	}
 
+
+	/**
+	 *
+	 * TODO ??
+	 *
+	 * @param event
+	 * @return
+	 */
+	public DESEvent clone(final UsageModelPassedElement<?> event) {
+		final Object modelElement = event.getModelElement();
+		return  new UsageModelPassedElement<Start>((Start) modelElement,
+						cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()));
+	}
+
+	/**
+	 * TODO ??
+	 *
+	 * @param event
+	 * @return
+	 */
+	public DESEvent clone(final ClosedWorkloadUserInitiated event) {
+		final double remainingthinktime = event.delay();
+
+		final CoreFactory coreFactory = CoreFactory.eINSTANCE;
+		final PCMRandomVariable var = coreFactory.createPCMRandomVariable();
+		var.setSpecification(String.valueOf(remainingthinktime));
+
+		final ThinkTime newThinktime = new ThinkTime(var);
+		return new ClosedWorkloadUserInitiated(
+				cloneUserInterpretationContext(event.getEntity()), newThinktime);
+	}
 
 
 	// getter for various entity clones
