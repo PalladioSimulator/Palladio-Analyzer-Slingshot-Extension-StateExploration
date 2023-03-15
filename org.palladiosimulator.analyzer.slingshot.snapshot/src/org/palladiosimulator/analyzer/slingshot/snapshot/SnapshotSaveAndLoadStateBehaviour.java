@@ -44,7 +44,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 // less specific, but also less dependecies.
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class)
-public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtension {
+public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExtension {
 
 	private final SnapshotConfiguration snapshotConfig;
 	private final SimuComConfig simuComConfig;
@@ -54,7 +54,7 @@ public class SnapshotStateRelatedBehaviour implements SimulationBehaviorExtensio
 	private final Snapshot snapToInitOn;
 
 	@Inject
-	public SnapshotStateRelatedBehaviour(final DefaultState halfDoneState, final InMemorySnapshot snapToInitOn,
+	public SnapshotSaveAndLoadStateBehaviour(final DefaultState halfDoneState, final InMemorySnapshot snapToInitOn,
 			final SnapshotConfiguration snapshotConfig, final SimuComConfig simuComConfig) {
 		this.halfDoneState = halfDoneState;
 		this.snapToInitOn = snapToInitOn;
