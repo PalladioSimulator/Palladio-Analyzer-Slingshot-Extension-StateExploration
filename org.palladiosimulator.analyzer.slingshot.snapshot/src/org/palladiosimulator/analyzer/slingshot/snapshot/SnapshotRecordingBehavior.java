@@ -7,8 +7,9 @@ import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
-import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
+import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
@@ -37,7 +38,8 @@ import org.palladiosimulator.pcm.allocation.AllocationContext;
  * @author stiesssh
  *
  */
-@OnEvent(when = AbstractEntityChangedEvent.class, then = {})
+@OnEvent(when = ModelPassedEvent.class, then = {})
+@OnEvent(when = JobFinished.class, then = {})
 @OnEvent(when = SnapshotTaken.class, then = SnapshotFinished.class)
 @OnEvent(when = SnapshotInitiated.class, then = SnapshotTaken.class)
 public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
@@ -62,14 +64,18 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	@Subscribe
-	public void onAbstractEntityChangedEvent(final AbstractEntityChangedEvent<?> event) {
+	public void onModelPassedEvent(final ModelPassedEvent<?> event) {
+		recorder.updateRecord(event);
+	}
+
+	@Subscribe
+	public void onJobFinished(final JobFinished event) {
 		recorder.updateRecord(event);
 	}
 
 	@PreIntercept
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
 			final JobInitiated event) {
-
 		recorder.updateRecord(event);
 		return InterceptionResult.success();
 	}
@@ -96,7 +102,6 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 
 	@Subscribe
 	public Result<SnapshotTaken> onSnapshotInitiatedEvent(final SnapshotInitiated snapshotInitiated) {
-		// only now, because i know that theres only procsharing in there:
 		this.scheduleProcSharingUpdatesHelper(
 				recorder.getProcSharingJobRecords().stream().map(record -> record.getJob()).collect(Collectors.toSet()));
 

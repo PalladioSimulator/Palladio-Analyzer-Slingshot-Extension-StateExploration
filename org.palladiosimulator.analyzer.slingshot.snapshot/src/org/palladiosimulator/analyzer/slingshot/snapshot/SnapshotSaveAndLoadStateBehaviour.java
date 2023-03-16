@@ -96,12 +96,10 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 	 */
 	@Subscribe
 	public Result<?> onSimulationStarted(final SimulationStarted simulationStarted) {
-		if (!snapshotConfig.isStartFromSnapshot()) {
-			return Result.empty();
-		}
+		assert snapshotConfig.isStartFromSnapshot();
+
 		final Set<DESEvent> initialEvents = this.snapToInitOn.getEvents();
 		this.initOffsets(initialEvents);
-
 		return Result.from(initialEvents);
 	}
 

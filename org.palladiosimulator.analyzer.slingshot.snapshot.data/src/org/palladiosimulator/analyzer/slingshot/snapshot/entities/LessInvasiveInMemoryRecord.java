@@ -39,6 +39,8 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 		if (!openCalculators.containsKey(user)) {
 			openCalculators.put(user, new ArrayDeque<>());
 		}
+		assert !openCalculators.get(user).contains(event);
+
 		openCalculators.get(user).push(event);
 	}
 
