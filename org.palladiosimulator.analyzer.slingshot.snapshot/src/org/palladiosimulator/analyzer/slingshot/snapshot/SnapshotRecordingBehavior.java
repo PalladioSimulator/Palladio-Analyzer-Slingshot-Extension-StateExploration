@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
-import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
@@ -30,6 +30,8 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
+import org.palladiosimulator.pcm.usagemodel.Start;
+import org.palladiosimulator.pcm.usagemodel.Stop;
 
 /**
  *
@@ -38,12 +40,14 @@ import org.palladiosimulator.pcm.allocation.AllocationContext;
  * @author stiesssh
  *
  */
-@OnEvent(when = ModelPassedEvent.class, then = {})
+@OnEvent(when = UsageModelPassedElement.class, then = {})
 @OnEvent(when = JobFinished.class, then = {})
 @OnEvent(when = SnapshotTaken.class, then = SnapshotFinished.class)
 @OnEvent(when = SnapshotInitiated.class, then = SnapshotTaken.class)
 public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotRecordingBehavior.class);
+	private static final String FAKE = "fakeID";
+
 
 	private final LessInvasiveInMemoryRecord recorder;
 	private final Camera camera;
@@ -55,41 +59,48 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 			final MonitorRepository monitorRepository, final SimulationScheduling scheduling) {
 		// can i somehow include this in the injection part?
 		// should work with this Model an the 'bind' instruction.
-		// this.recorder = new InMemoryRecord();
-		// this.camera = new InMemoryCamera(recorder, engine, allocation,
-		// monitorRepository);
 		this.recorder = new LessInvasiveInMemoryRecord();
 		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine);
 		this.scheduling = scheduling;
 	}
 
-	@Subscribe
-	public void onModelPassedEvent(final ModelPassedEvent<?> event) {
-		recorder.updateRecord(event);
+
+
+	@Subscribe(reified = Start.class)
+	public void onUsageScenarioStarted(final UsageModelPassedElement<Start> event) {
+		this.recorder.addInitiatedCalculator(event);
+
+	}
+	@Subscribe(reified = Stop.class)
+	public void onUsageScenarioStoped(final UsageModelPassedElement<Stop> event) {
+		this.recorder.removeFinishedCalculator(event);
 	}
 
 	@Subscribe
-	public void onJobFinished(final JobFinished event) {
-		recorder.updateRecord(event);
+	public void removeJobRecord(final JobFinished event) {
+		recorder.removeJobRecord(event);
 	}
 
 	@PreIntercept
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
 			final JobInitiated event) {
-		recorder.updateRecord(event);
+		if (!event.getEntity().getId().equals(FAKE)) {
+			recorder.createJobRecord(event);
+		}
 		return InterceptionResult.success();
 	}
 
 	@PostIntercept
 	public InterceptionResult postInterceptSimulationStarted(final InterceptorInformation information,
 			final JobInitiated event, final Result<?> result) {
-		// not needed, if i could guarantee, that resource simulation get's the job
-		// first.
-		recorder.updateRecord(event);
+		if (!event.getEntity().getId().equals(FAKE)) {
+			recorder.updateJobRecord(event);
+		}
 		return InterceptionResult.success();
 	}
 
 	/**
+	 * The actual snapping.
 	 *
 	 * @param snapshotTaken
 	 * @return
@@ -100,6 +111,13 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		return Result.of(new SnapshotFinished(snapshot));
 	}
 
+	/**
+	 *
+	 * Trigger updates to  all processor sharing resource states.
+	 *
+	 * @param snapshotInitiated
+	 * @return
+	 */
 	@Subscribe
 	public Result<SnapshotTaken> onSnapshotInitiatedEvent(final SnapshotInitiated snapshotInitiated) {
 		this.scheduleProcSharingUpdatesHelper(
@@ -108,6 +126,13 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		return Result.of(new SnapshotTaken());
 	}
 
+	/**
+	 * Schedule exactly on fake {@link JobInitiated} to each {@link AllocationContext} with a processor sharing resource.
+	 *
+	 * They are scheduled directly to the {@ SimulationScheduling}, to have them posted before the {@link SnapshotTaken}.
+	 *
+	 * @param procSharingJobs
+	 */
 	private void scheduleProcSharingUpdatesHelper(final Set<Job> procSharingJobs) {
 		// these are the resource containers i must update
 		final Set<AllocationContext> allocationContexts = procSharingJobs.stream()
@@ -120,8 +145,18 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 			}
 			allocationContexts.remove(context);
 
-			final Job updateJob = recorder.getUpdateJob(job);
+			final Job updateJob = this.createFakeJob(job);
 			scheduling.scheduleEvent(new JobInitiated(updateJob));
 		}
+	}
+
+	/**
+	 *
+	 * @param job blueprint to copy from
+	 * @return fake job
+	 */
+	private Job createFakeJob(final Job job) {
+		return Job.builder().withAllocationContext(job.getAllocationContext()).withDemand(0).withId(FAKE)
+				.withProcessingResourceType(job.getProcessingResourceType()).build();
 	}
 }

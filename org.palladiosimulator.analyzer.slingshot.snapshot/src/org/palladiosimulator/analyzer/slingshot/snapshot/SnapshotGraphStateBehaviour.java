@@ -27,7 +27,6 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -40,32 +39,33 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
 /**
  *
- * The ugly snapshot related stuff. i need to reconsider much of this, i guess.
+ * Behavioural Extension to handle everything related to the  RawGraphState.
  *
  * @author stiesssh
  *
  */
-@OnEvent(when = SimulationFinished.class, then = {})
 @OnEvent(when = CalculatorRegistered.class, then = {})
 @OnEvent(when = SimulationStarted.class, then = AbstractEntityChangedEvent.class, cardinality = EventCardinality.MANY)
-// less specific, but also less dependecies.
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class)
-public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExtension {
+public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension {
 
-	private final Logger LOGGER = Logger.getLogger(SnapshotSaveAndLoadStateBehaviour.class);
+	private final Logger LOGGER = Logger.getLogger(SnapshotGraphStateBehaviour.class);
 
+	/* Configurations */
 	private final SnapshotConfiguration snapshotConfig;
 	private final SimuComConfig simuComConfig;
 
+	/*State representing current simulation run*/
 	private final DefaultState halfDoneState;
-
+	/*Snapshot taken from earlier simulation run*/
 	private final Snapshot snapToInitOn;
 
+	/* helper */
 	private final Map<UsageModelPassedElement<?>, Double> event2offset;
 
 	@Inject
-	public SnapshotSaveAndLoadStateBehaviour(final DefaultState halfDoneState, final InMemorySnapshot snapToInitOn,
+	public SnapshotGraphStateBehaviour(final DefaultState halfDoneState, final Snapshot snapToInitOn,
 			final SnapshotConfiguration snapshotConfig, final SimuComConfig simuComConfig) {
 		this.halfDoneState = halfDoneState;
 		this.snapToInitOn = snapToInitOn;
@@ -76,26 +76,30 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 	}
 
 	/**
-	 *
-	 * TODO
+	 * Schedule {@link SnapshotInitiated} at maximum duration of the current
+	 * simulation run.
 	 *
 	 * @param configurationStarted
 	 * @return
 	 */
 	@Subscribe
-	public Result<?> onConfigurationStarted(final PreSimulationConfigurationStarted configurationStarted) {
+	public Result<SnapshotInitiated> onConfigurationStarted(
+			final PreSimulationConfigurationStarted configurationStarted) {
 		return Result.of(new SnapshotInitiated(this.snapshotConfig.getSnapinterval()));
 	}
 
 	/**
 	 *
-	 * TODO
+	 * Start the simulation run with the snapshotted events from an earlier
+	 * simulation run.
+	 *
+	 * Return (and thereby submit for scheduling the snapshotted events from
 	 *
 	 * @param simulationStarted
 	 * @return
 	 */
 	@Subscribe
-	public Result<?> onSimulationStarted(final SimulationStarted simulationStarted) {
+	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
 		assert snapshotConfig.isStartFromSnapshot();
 
 		final Set<DESEvent> initialEvents = this.snapToInitOn.getEvents();
@@ -103,35 +107,49 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 		return Result.from(initialEvents);
 	}
 
+	/**
+	 * Route the {@link SimulationStarted} event to either start from snapshotted
+	 * events, or with an clean simulator. This is mutually exclusive, it's never
+	 * both.
+	 *
+	 * TODO in case we get mutual exclusiveness for Subscribers as a Slingshot
+	 * feature this operation will probably be obsolete.
+	 *
+	 * @param information interception information
+	 * @param event       intercepted event
+	 * @return
+	 */
 	@PreIntercept
-	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information, final SimulationStarted event) {
-	    LOGGER.info("Method is " + information.getMethod().getName());
-	    LOGGER.info("Target is " + information.getTarget().toString());
+	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
+			final SimulationStarted event) {
+		if ((snapshotConfig.isStartFromSnapshot() && information.getTarget().equals(this))
+				|| (!snapshotConfig.isStartFromSnapshot() && !information.getTarget().equals(this))) {
+			LOGGER.debug(String.format("Route %s to %s", event.getName(),
+					information.getTarget().getClass().getSimpleName()));
+			return InterceptionResult.success();
+		}
 
-	    // route SimulationStarted event either to this behavior or to the usage simulation one, but never both.
-	    if (snapshotConfig.isStartFromSnapshot() && information.getTarget().equals(this)) {
-	    	return InterceptionResult.success();
-	    }
-	    if (!snapshotConfig.isStartFromSnapshot() && !information.getTarget().equals(this)) {
-	    	return InterceptionResult.success();
-	    }
-	    return InterceptionResult.abort(); // won't be delivered.
+		return InterceptionResult.abort(); // won't be delivered.
 	}
 
+	/**
+	 * Catch ModelPassedEvent from the snapshot and offset them into the past.
+	 *
+	 * @param information interception information
+	 * @param event       intercepted event
+	 * @return always success
+	 */
 	@PreIntercept
-	public InterceptionResult preInterceptSomeEvent(final InterceptorInformation information, final UsageModelPassedElement<?> event) {
-	    LOGGER.info("Method is " + information.getMethod().getName());
-	    LOGGER.info("Target is " + information.getTarget().toString());
-
-	    if (event2offset.containsKey(event)) {
-	    	final double offset = event2offset.remove(event);
-	    	event.setTime(-offset);
-	    	// adjust time for fakes - it's already past scheduling,  thus no one really cares.
-	    }
-
-	    return InterceptionResult.success();
+	public InterceptionResult preInterceptModelPassedEvent(final InterceptorInformation information,
+			final UsageModelPassedElement<?> event) {
+		if (event2offset.containsKey(event)) {
+			final double offset = event2offset.remove(event);
+			event.setTime(-offset);
+			// adjust time for fakes - it's already past scheduling, thus no one really
+			// cares.
+		}
+		return InterceptionResult.success();
 	}
-
 
 	/**
 	 * Add the measurements to the raw state.
@@ -140,7 +158,6 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 	 * are created during calculator registration.
 	 *
 	 * @param calculatorRegistered
-	 * @return
 	 */
 	@Subscribe
 	public void onCalculatorRegistered(final CalculatorRegistered calculatorRegistered) {
@@ -153,16 +170,17 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 			throw new IllegalStateException("Repository is missing.");
 		}
 
-		final List<ExperimentGroup> groups = repo.get().getExperimentGroups().stream().filter(g -> g.getPurpose().equals(this.simuComConfig.getNameExperimentRun())).collect(Collectors.toList());
+		final List<ExperimentGroup> groups = repo.get().getExperimentGroups().stream()
+				.filter(g -> g.getPurpose().equals(this.simuComConfig.getNameExperimentRun()))
+				.collect(Collectors.toList());
 
 		if (groups.size() != 1) {
-			throw new IllegalStateException(String.format(
-					"Wrong number of matching Experiment Groups. should be 1 but is %d",
-					groups.size()));
+			throw new IllegalStateException(
+					String.format("Wrong number of matching Experiment Groups. should be 1 but is %d", groups.size()));
 		}
 
-		final List<ExperimentSetting> settings = groups.get(0).getExperimentSettings()
-				.stream().filter(s -> s.getDescription().equals(this.simuComConfig.getVariationId()))
+		final List<ExperimentSetting> settings = groups.get(0).getExperimentSettings().stream()
+				.filter(s -> s.getDescription().equals(this.simuComConfig.getVariationId()))
 				.collect(Collectors.toList());
 
 		if (settings.size() != 1) {
@@ -182,7 +200,7 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 	 * @return
 	 */
 	@Subscribe
-	public Result<?> onSnapshotFinished(final SnapshotFinished event) {
+	public Result<SimulationFinished> onSnapshotFinished(final SnapshotFinished event) {
 		halfDoneState.setSnapshot(event.getEntity());
 		halfDoneState.setDuration(event.time());
 		// Do not add the state anywhere, just finalise it. Assumption is, it already is
@@ -190,9 +208,17 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 		return Result.of(new SimulationFinished());
 	}
 
-
+	/**
+	 *
+	 * Extract offset (encoded into the time field of the events) from the events
+	 * into a map and set the event's time to 0.
+	 *
+	 * @param events events ot extract offset from.
+	 */
 	private void initOffsets(final Set<DESEvent> events) {
-		// time or delay? --> time
-		events.stream().filter(event -> event instanceof UsageModelPassedElement<?>).forEach(event -> { event2offset.put((UsageModelPassedElement<?>) event, event.time()); event.setTime(0);});
+		events.stream().filter(event -> event instanceof UsageModelPassedElement<?>).forEach(event -> {
+			event2offset.put((UsageModelPassedElement<?>) event, event.time());
+			event.setTime(0);
+		});
 	}
 }

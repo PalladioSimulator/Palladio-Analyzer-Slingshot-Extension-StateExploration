@@ -7,7 +7,7 @@ public class SnapshotModule extends AbstractSlingshotExtension {
 	@Override
 	protected void configure() {
 		install(SnapshotRecordingBehavior.class);
-		install(SnapshotSaveAndLoadStateBehaviour.class);
+		install(SnapshotGraphStateBehaviour.class);
 		install(SnapshotTriggeringBehavior.class);
 	}
 }

@@ -34,7 +34,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
-import de.uka.ipd.sdq.workflow.jobs.JobFailedException;
 
 /**
  * Core Component of the Exploration.
@@ -120,7 +119,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * start a simulation run.
 	 *
 	 * @param config
-	 * @throws JobFailedException
 	 */
 	private void exploreBranch(final SimulationInitConfiguration config) {
 		// update provided models
@@ -157,21 +155,21 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private class SubModule extends AbstractModule {
 
-		private final InMemorySnapshot snapToInitOn;
+		private final Snapshot snapToInitOn;
 		private final DefaultState currentPartialState;
 		private final SnapshotConfiguration snapshotConfiguration;
 
 		public SubModule(final Snapshot snapToInitOn,
 		final DefaultState currentPartialState,
 		final SnapshotConfiguration snapshotConfiguration) {
-			this.snapToInitOn = (InMemorySnapshot) snapToInitOn;
+			this.snapToInitOn = snapToInitOn;
 			this.currentPartialState = currentPartialState;
 			this.snapshotConfiguration = snapshotConfiguration;
 		}
 
 		// PCM instance and SimuComConfig already provided via other means.
 		@Provides
-		public InMemorySnapshot snapToInitOn() {
+		public Snapshot snapToInitOn() {
 			return snapToInitOn;
 		}
 
