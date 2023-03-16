@@ -1,21 +1,28 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.InterceptorInformation;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
@@ -46,12 +53,16 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 @OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class)
 public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExtension {
 
+	private final Logger LOGGER = Logger.getLogger(SnapshotSaveAndLoadStateBehaviour.class);
+
 	private final SnapshotConfiguration snapshotConfig;
 	private final SimuComConfig simuComConfig;
 
 	private final DefaultState halfDoneState;
 
 	private final Snapshot snapToInitOn;
+
+	private final Map<UsageModelPassedElement<?>, Double> event2offset;
 
 	@Inject
 	public SnapshotSaveAndLoadStateBehaviour(final DefaultState halfDoneState, final InMemorySnapshot snapToInitOn,
@@ -60,6 +71,8 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 		this.snapToInitOn = snapToInitOn;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
+
+		this.event2offset = new HashMap<>();
 	}
 
 	/**
@@ -87,8 +100,40 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 			return Result.empty();
 		}
 		final Set<DESEvent> initialEvents = this.snapToInitOn.getEvents();
+		this.initOffsets(initialEvents);
+
 		return Result.from(initialEvents);
 	}
+
+	@PreIntercept
+	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information, final SimulationStarted event) {
+	    LOGGER.info("Method is " + information.getMethod().getName());
+	    LOGGER.info("Target is " + information.getTarget().toString());
+
+	    // route SimulationStarted event either to this behavior or to the usage simulation one, but never both.
+	    if (snapshotConfig.isStartFromSnapshot() && information.getTarget().equals(this)) {
+	    	return InterceptionResult.success();
+	    }
+	    if (!snapshotConfig.isStartFromSnapshot() && !information.getTarget().equals(this)) {
+	    	return InterceptionResult.success();
+	    }
+	    return InterceptionResult.abort(); // won't be delivered.
+	}
+
+	@PreIntercept
+	public InterceptionResult preInterceptSomeEvent(final InterceptorInformation information, final UsageModelPassedElement<?> event) {
+	    LOGGER.info("Method is " + information.getMethod().getName());
+	    LOGGER.info("Target is " + information.getTarget().toString());
+
+	    if (event2offset.containsKey(event)) {
+	    	final double offset = event2offset.remove(event);
+	    	event.setTime(-offset);
+	    	// adjust time for fakes - it's already past scheduling,  thus no one really cares.
+	    }
+
+	    return InterceptionResult.success();
+	}
+
 
 	/**
 	 * Add the measurements to the raw state.
@@ -145,5 +190,11 @@ public class SnapshotSaveAndLoadStateBehaviour implements SimulationBehaviorExte
 		// Do not add the state anywhere, just finalise it. Assumption is, it already is
 		// in the graph.
 		return Result.of(new SimulationFinished());
+	}
+
+
+	private void initOffsets(final Set<DESEvent> events) {
+		// time or delay? --> time
+		events.stream().filter(event -> event instanceof UsageModelPassedElement<?>).forEach(event -> { event2offset.put((UsageModelPassedElement<?>) event, event.time()); event.setTime(0);});
 	}
 }

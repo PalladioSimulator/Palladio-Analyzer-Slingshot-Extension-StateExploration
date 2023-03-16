@@ -80,8 +80,11 @@ public final class CloneHelper {
 		final Object modelElement = event.getModelElement();
 		if (modelElement instanceof Start && event.time() <= simulationTime) {
 			final double offset = simulationTime - event.time();
-			return new UsageModelPassedElement<Start>((Start) modelElement,
-					cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()), offset);
+			final UsageModelPassedElement<Start> clonedEvent = new UsageModelPassedElement<Start>((Start) modelElement,
+					cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()));
+
+			clonedEvent.setTime(offset);
+			return clonedEvent;
 		}
 		return event;
 	}

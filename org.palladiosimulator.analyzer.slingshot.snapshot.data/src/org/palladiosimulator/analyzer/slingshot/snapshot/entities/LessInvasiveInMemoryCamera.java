@@ -3,15 +3,15 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.AbstractJobEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobProgressed;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ProcessorSharingJobProgressed;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
@@ -21,7 +21,6 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.pcm.resourceenvironment.ProcessingResourceSpecification;
 
 public final class LessInvasiveInMemoryCamera implements Camera {
 	private static final Logger LOGGER = Logger.getLogger(LessInvasiveInMemoryCamera.class);
@@ -64,10 +63,10 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
 
 
-		final Set<JobRecord> fcfsRecords = record.getJobRecords().stream().filter(record -> this.isFCFS(record.getJob())).collect(Collectors.toSet());
-		final Set<JobRecord> procsharingRecords = record.getJobRecords().stream().filter(record -> this.isProcSharing(record.getJob())).collect(Collectors.toSet());
+		final Set<JobRecord> fcfsRecords = record.getFCFSJobRecords();
+		final Set<JobRecord> procsharingRecords = record.getProcSharingJobRecords();
 
-		final Set<JobProgressed> progressedFcfs = relevantEvents.stream().filter(e -> (e instanceof JobProgressed) && !(e instanceof ProcessorSharingJobProgressed)).map(e -> (JobProgressed) e).collect(Collectors.toSet());
+		final Set<AbstractJobEvent> progressedFcfs = relevantEvents.stream().filter(e -> (e instanceof JobProgressed) || (e instanceof JobFinished)).map(e -> (AbstractJobEvent) e).collect(Collectors.toSet());
 
 		final Set<JobInitiated> initJobs = new HashSet<>();
 		initJobs.addAll(this.handlePFCFSJobs(fcfsRecords, progressedFcfs));
@@ -112,15 +111,15 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	 * @param fcfsProgressed
 	 * @return
 	 */
-	private Set<JobInitiated> handlePFCFSJobs(final Set<JobRecord> jobrecords, final Set<JobProgressed> fcfsProgressed) {
+	private Set<JobInitiated> handlePFCFSJobs(final Set<JobRecord> jobrecords, final Set<AbstractJobEvent> fcfsProgressed) {
 		final Set<JobInitiated> rval = new HashSet<>();
 
-		final Map<Job, JobProgressed> job2event = new HashMap<>();
+		final Map<Job, AbstractJobEvent> job2event = new HashMap<>();
 		fcfsProgressed.stream().forEach(event -> job2event.put(event.getEntity(), event));
 
 		for (final JobRecord record : jobrecords) {
 			if (job2event. keySet().contains(record.getJob()))  {
-				final JobProgressed event = job2event.get(record.getJob());
+				final AbstractJobEvent event = job2event.get(record.getJob());
 				// time equals remaining demand because of normalization.
 				final double remainingDemand = event.time() -  engine.getSimulationInformation().currentSimulationTime();
 				final double factor = record.getRequestedDemand() / record.getNormalizedDemand();
@@ -135,40 +134,6 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	}
 
 	/**
-	 *
-	 * @param job
-	 * @return true iff job is processed by an FCFS processing recource.
-	 */
-	private boolean isFCFS(final Job job) {
-		final Optional<ProcessingResourceSpecification> optSpec = job.getAllocationContext().getResourceContainer_AllocationContext().getActiveResourceSpecifications_ResourceContainer().stream()
-			.filter(spec -> spec instanceof ProcessingResourceSpecification)
-			.map(spec -> spec).findFirst();
-
-		if (optSpec.isEmpty()) {
-			LOGGER.debug(String.format("not a processing resource"));
-			return false;
-		}
-		return optSpec.get().getSchedulingPolicy().getId().equals("FCFS");
-	}
-
-	/**
-	 *
-	 * @param job
-	 * @return true iff job is processed by an processor sharing processing resource
-	 */
-	private boolean isProcSharing(final Job job) {
-		final Optional<ProcessingResourceSpecification> optSpec = job.getAllocationContext().getResourceContainer_AllocationContext().getActiveResourceSpecifications_ResourceContainer().stream()
-			.filter(spec -> spec instanceof ProcessingResourceSpecification)
-			.map(spec -> spec).findFirst();
-
-		if (optSpec.isEmpty()) {
-			LOGGER.debug(String.format("not a processing resource"));
-			return false;
-		}
-		return optSpec.get().getSchedulingPolicy().getId().equals("ProcessorSharing");
-	}
-
-	/**
 	 * print information about given set of events.
 	 *
 	 * @param evt
@@ -176,8 +141,8 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	private void log(final Set<DESEvent> evt) {
 		LOGGER.warn("DEMANDS");
 		evt.stream().filter(e -> (e instanceof JobInitiated)).map(e -> (JobInitiated) e).forEach(e -> LOGGER.warn(e.getEntity().getDemand()));
-		LOGGER.warn("OFFSETS");
-		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e).forEach(e -> LOGGER.warn(e.getOffset()));
+		LOGGER.warn("TIMES");
+		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e).forEach(e -> LOGGER.warn(e.time()));
 		LOGGER.warn("CWUI");
 		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e).forEach(e -> LOGGER.warn(e.delay() + " " + e.time()));
 	}

@@ -20,18 +20,18 @@ public class ModelElementPassedVisitor {
 	}
 
 	private DESEvent clone(final UsageModelPassedElement<?> event) {
+		UsageModelPassedElement<?> clonedEvent = null;
+
 		if (Start.class.isAssignableFrom(event.getGenericType())) {
-//			throw new UnsupportedOperationException("TODO : adapt UsageModelPassed Element to make cloning them work");
-			return new UsageModelPassedElement<Start>((Start) event.getEntity(),
-					helper.cloneUserInterpretationContext(event.getContext()), event.getOffset());
+			clonedEvent = new UsageModelPassedElement<Start>((Start) event.getEntity(),
+					helper.cloneUserInterpretationContext(event.getContext()));
+			clonedEvent.setTime(event.time());
 		}
 		if (Stop.class.isAssignableFrom(event.getGenericType())) {
-//			throw new UnsupportedOperationException("TODO : adapt UsageModelPassed Element to make cloning them work");
-			return new UsageModelPassedElement<Stop>((Stop) event.getEntity(),
-					helper.cloneUserInterpretationContext(event.getContext()), event.getOffset());
+			clonedEvent = new UsageModelPassedElement<Stop>((Stop) event.getEntity(),
+					helper.cloneUserInterpretationContext(event.getContext()));
 		}
-		// TODO throw new .....
-		return null;
+		return clonedEvent;
 	}
 
 	public DESEvent visit(final DESEvent e) {

@@ -103,7 +103,7 @@ public final class InMemoryCamera implements Camera {
 		LOGGER.warn("DEMANDS");
 		evt.stream().filter(e -> (e instanceof JobInitiated)).map(e -> (JobInitiated) e).forEach(e -> LOGGER.warn(e.getEntity().getDemand()));
 		LOGGER.warn("OFFSETS");
-		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e).forEach(e -> LOGGER.warn(e.getOffset()));
+		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e).forEach(e -> LOGGER.warn(e.time()));
 		LOGGER.warn("CWUI");
 		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e).forEach(e -> LOGGER.warn(e.delay() + " " + e.time()));
 	}
