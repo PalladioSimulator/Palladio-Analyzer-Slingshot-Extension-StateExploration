@@ -67,13 +67,17 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 
 	@Override
 	public void createJobRecord(final JobInitiated event) {
-		assert !(openJob.containsKey(event.getEntity().getRequest().getUser()));
+		if (openJob.containsKey(event.getEntity().getRequest().getUser())) {
+			throw new IllegalArgumentException(String.format("Cannot create Record for %s, a Record already exsits.", event.getEntity().toString()));
+		}
 
 		openJob.put(event.getEntity().getRequest().getUser(), new JobRecord(event.getEntity()));
 	}
 	@Override
 	public void updateJobRecord(final JobInitiated event) {
-		assert openJob.containsKey(event.getEntity().getRequest().getUser());
+		if (!openJob.containsKey(event.getEntity().getRequest().getUser())) {
+			throw new IllegalArgumentException(String.format("Cannot update %s, missing Record.", event.getEntity().toString()));
+		}
 
 		openJob.get(event.getEntity().getRequest().getUser()).setNormalizedDemand(event.getEntity().getDemand());
 	}

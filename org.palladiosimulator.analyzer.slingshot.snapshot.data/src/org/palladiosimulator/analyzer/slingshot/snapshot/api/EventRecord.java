@@ -52,19 +52,43 @@ public interface EventRecord {
 	public Set<JobRecord> getProcSharingJobRecords();
 
 
+	/**
+	 * Store the given event, as it started a calculation at a calculator.
+	 *
+	 * @param event event that started a calculation.
+	 */
 	public void addInitiatedCalculator(final UsageModelPassedElement<Start> event);
 
 
+	/**
+	 * Remove event that started the calculation finished by the given event from the record.
+	 *
+	 * @param event event that finishd a calculation.
+	 */
 	public void removeFinishedCalculator(final UsageModelPassedElement<Stop> event);
 
-
-	public void removeJobRecord(final JobFinished event);
-
-
+	/**
+	 * Create and store record for the job entity in the given event.
+	 *
+	 * @param event event holding the job entity
+	 * @throws IllegalArgumentException
+	 */
 	public void createJobRecord(final JobInitiated event);
 
-
+	/**
+	 * Update an existing record for the job entity in the given event.
+	 *
+	 * @param event event holding the job entity
+	 * @throws IllegalArgumentException
+	 */
 	public void updateJobRecord(final JobInitiated event);
 
+
+	/**
+	 * Remove the record of the job entity in the given event, if it exists.
+	 *
+	 * @param event event holding the job entity
+	 */
+	public void removeJobRecord(final JobFinished event);
 
 }
