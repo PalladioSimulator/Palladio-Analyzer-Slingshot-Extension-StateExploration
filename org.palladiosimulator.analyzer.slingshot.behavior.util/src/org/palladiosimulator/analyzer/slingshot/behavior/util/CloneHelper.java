@@ -24,6 +24,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.int
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.UserInterpretationContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.scenariobehavior.UsageScenarioBehaviorContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InterArrivalUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.pcm.core.CoreFactory;
@@ -51,7 +52,10 @@ public final class CloneHelper {
 
 	public static final Logger LOGGER = Logger.getLogger(CloneHelper.class);
 
+
+
 	/**
+	 * TODO on a closer look : what is this does not belong here, iirc o_O
 	 *
 	 * @param event
 	 * @param simulationTime
@@ -70,6 +74,18 @@ public final class CloneHelper {
 	}
 
 	/**
+	 * TODO on a closer look : what is this does not belong here, iirc o_O
+	 *
+	 * @param event
+	 * @param simulationTime
+	 * @return
+	 */
+	public DESEvent clone(final InterArrivalUserInitiated event, final double simulationTime) {
+		return new InterArrivalUserInitiated(event.time() - simulationTime);
+	}
+
+	/**
+	 * TODO on a closer look : what is this does not belong here, iirc o_O
 	 *
 	 * @param event
 	 * @param simulationTime

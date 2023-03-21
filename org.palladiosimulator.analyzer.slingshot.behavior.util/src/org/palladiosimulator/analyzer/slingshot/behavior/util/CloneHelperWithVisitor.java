@@ -12,6 +12,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.UserRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.UserInterpretationContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.AbstractUserChangedEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InterArrivalUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserEntryRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserRequestFinished;
@@ -42,11 +43,12 @@ public class CloneHelperWithVisitor {
         		 on(ActiveResourceFinished.class).then(this::clone).
         		 on(UserRequestFinished.class).then(this::clone).
          		 on(UserEntryRequested.class).then(this::clone).
+         		 on(InterArrivalUserInitiated.class).then(this::clone).
          		 on(DESEvent.class).then(this::log);
 	}
 
 	private DESEvent log(final DESEvent event) {
-		LOGGER.warn(String.format("forgot about how to clone %s of type %s ", event.toString(), event.getClass().getCanonicalName()));
+		LOGGER.warn(String.format("Did not clone %s. Missing visitor for type %s.", event.toString(), event.getClass().getCanonicalName()));
 		return null;
 	}
 
@@ -58,19 +60,9 @@ public class CloneHelperWithVisitor {
 		return events.stream().map(cloneFactory).filter(event -> event != null).collect(Collectors.toSet());
 	}
 
-//	public DESEvent cloneWithOffset(final UsageModelPassedElement<Start> event, final double simulationTime) {
-//		if (!(event.getEntity() instanceof Start)) {
-//			throw new IllegalArgumentException("Only Starts have offset!");
-//		}
-//		//TODO .. we dont need this anymore?
-//		double offset = (event.time() == 0 ? 0 : simulationTime - event.time());
-//
-//		final Start modelElement = (Start)((UsageModelPassedElement<?>) event).getModelElement();
-//
-//		return new UsageModelPassedElement<Start>(modelElement,
-//					helper.cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()), offset);
-//
-//	}
+	private DESEvent clone(final InterArrivalUserInitiated clonee) {
+		return new InterArrivalUserInitiated(clonee.delay());
+	}
 
 	private DESEvent clone(final ResourceDemandRequested clonee) {
 		return new ResourceDemandRequested(helper.clone(clonee.getEntity()), clonee.delay());

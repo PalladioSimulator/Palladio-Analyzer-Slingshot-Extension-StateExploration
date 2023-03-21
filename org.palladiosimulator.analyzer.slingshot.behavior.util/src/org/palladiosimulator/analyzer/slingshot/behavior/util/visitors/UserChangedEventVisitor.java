@@ -14,11 +14,11 @@ import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 
 public class UserChangedEventVisitor {
-	private final Function<DESEvent, DESEvent> jobCloneFactory;
+	private final Function<DESEvent, DESEvent> visitor;
 	private final CloneHelper helper = new CloneHelper();
 
 	public UserChangedEventVisitor() {
-		jobCloneFactory = new LambdaVisitor<DESEvent, DESEvent>()
+		this.visitor = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(ClosedWorkloadUserInitiated.class).then(this::clone)
 				.on(UserFinished.class).then(this::clone)
 				.on(UserStarted.class).then(this::clone);
@@ -50,7 +50,7 @@ public class UserChangedEventVisitor {
 	// InnerScenarioBehaviorInitiated
 
 	public DESEvent visit(final DESEvent e) {
-		return this.jobCloneFactory.apply(e);
+		return this.visitor.apply(e);
 	}
 
 	public static DESEvent visit(final DESEvent e, final double offset) {

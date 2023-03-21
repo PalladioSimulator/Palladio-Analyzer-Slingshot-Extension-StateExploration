@@ -13,6 +13,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.even
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobProgressed;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InterArrivalUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelperWithVisitor;
@@ -37,6 +38,7 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(UsageModelPassedElement.class).then(this::clone)
 				.on(ClosedWorkloadUserInitiated.class).then(this::clone)
+				.on(InterArrivalUserInitiated.class).then(this::clone)
 				.on(DESEvent.class).then(e -> e);
 	}
 
@@ -50,6 +52,9 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 	private DESEvent clone(final ClosedWorkloadUserInitiated event) {
+		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
+	}
+	private DESEvent clone(final InterArrivalUserInitiated event) {
 		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
