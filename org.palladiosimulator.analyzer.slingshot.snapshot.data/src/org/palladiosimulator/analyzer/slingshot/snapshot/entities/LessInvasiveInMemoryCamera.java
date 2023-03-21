@@ -43,7 +43,7 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	}
 
 	@Override
-	public Snapshot takeSnapshot(final double pointInTime) {
+	public Snapshot takeSnapshot() {
 		final Snapshot snapshot = new InMemorySnapshot(snapEvents());
 		return snapshot;
 	}

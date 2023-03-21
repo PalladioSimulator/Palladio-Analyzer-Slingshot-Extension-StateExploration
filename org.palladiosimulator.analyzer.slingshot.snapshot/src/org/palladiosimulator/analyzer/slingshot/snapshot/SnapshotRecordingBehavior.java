@@ -107,7 +107,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 */
 	@Subscribe
 	public Result<SnapshotFinished> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
-		final Snapshot snapshot = camera.takeSnapshot(snapshotTaken.time());
+		final Snapshot snapshot = camera.takeSnapshot();
 		return Result.of(new SnapshotFinished(snapshot));
 	}
 
