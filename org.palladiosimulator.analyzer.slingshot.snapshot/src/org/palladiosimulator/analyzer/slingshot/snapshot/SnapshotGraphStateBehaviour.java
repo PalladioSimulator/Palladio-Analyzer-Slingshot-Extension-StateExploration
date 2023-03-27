@@ -122,10 +122,12 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	@PreIntercept
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
 			final SimulationStarted event) {
-		if ((snapshotConfig.isStartFromSnapshot() && information.getTarget().equals(this))
-				|| (!snapshotConfig.isStartFromSnapshot() && !information.getTarget().equals(this))) {
+
+
+		if (information.getEnclosingType().isPresent() && ((snapshotConfig.isStartFromSnapshot() && information.getEnclosingType().get().equals(this.getClass()))
+				|| (!snapshotConfig.isStartFromSnapshot() && !information.getEnclosingType().get().equals(this.getClass())))) {
 			LOGGER.debug(String.format("Route %s to %s", event.getName(),
-					information.getTarget().getClass().getSimpleName()));
+					information.getEnclosingType().get().getSimpleName()));
 			return InterceptionResult.success();
 		}
 
