@@ -9,9 +9,14 @@ import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.InterceptorInformation;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.entities.SlingshotMeasuringValue;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementMade;
@@ -33,18 +38,19 @@ import org.palladiosimulator.edp2.util.MeasurementsUtility;
  *
  */
 @OnEvent(when = MeasurementMade.class, then = SnapshotInitiated.class)
-//@OnEvent(when = ModelAdjusted.class, then = SnapshotInitiated.class)
 public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotTriggeringBehavior.class);
 
 	private final DefaultState state;
+	private final SimulationScheduling scheduling;
 
 	private final int minNumberOfMeasurementsForAvg = 5;
 
 
 	@Inject
-	public SnapshotTriggeringBehavior(final DefaultState state) {
+	public SnapshotTriggeringBehavior(final DefaultState state, final SimulationScheduling scheduling) {
 		this.state = state;
+		this.scheduling = scheduling;
 	}
 
 
@@ -57,13 +63,20 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 		return Result.empty();
 	}
 
-//	@Subscribe
-//	public Result<?> onModelAdjusted(final ModelAdjusted event) {
-//		// not yet sure about this one, it causes lots of complications.
-//		// Cannot go for "SnapshotInitiated", cause the snapshot must happen right now at this very moment.
-//		// With the PreInterception form the new framework, i'd intercept the ModelAdjusted,
-//		return Result.empty();
-//	}
+	@PreIntercept
+	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
+			final AdjustorBasedEvent event) {
+		// only intercept triggered adjustments. do not intercept snapped adjustments..
+		// assumption: do not copy adjustor events from the FEL, i.e. the "first" adjustor is always from the snapshot.
+		if (event.time() == 0) {
+			return InterceptionResult.success();
+		}
+
+		state.setReasonToLeave(ReasonToLeave.reactiveReconfiguration);
+		scheduling.scheduleEvent(new SnapshotInitiated(0, event));
+
+		return InterceptionResult.abort();
+	}
 
 
 	/**

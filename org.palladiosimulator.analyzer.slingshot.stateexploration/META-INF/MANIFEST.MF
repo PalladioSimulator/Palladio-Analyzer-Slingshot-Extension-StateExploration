@@ -19,4 +19,5 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.common.utils,
  org.palladiosimulator.analyzer.slingshot.common,
  org.palladiosimulator.analyzer.slingshot.core,
- org.palladiosimulator.analyzer.workflow
+ org.palladiosimulator.analyzer.workflow,
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data

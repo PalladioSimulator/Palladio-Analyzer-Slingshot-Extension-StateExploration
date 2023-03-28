@@ -3,7 +3,10 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 import java.util.ArrayDeque;
 import java.util.Optional;
 
+import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -16,10 +19,14 @@ import org.palladiosimulator.spd.ScalingPolicy;
  *
  * The ExplorationPlanner decides on the direction of the exploration.
  *
+ * Handles fringe.
+ *
  * @author stiesssh
  *
  */
 public class DefaultExplorationPlanner {
+
+	private static final Logger LOGGER = Logger.getLogger(DefaultExplorationPlanner.class.getName());
 
 	private final DefaultGraph rawgraph;
 	private final ArrayDeque<ScalingPolicy> policies;
@@ -32,10 +39,7 @@ public class DefaultExplorationPlanner {
 
 		final DefaultState root = graph.getRoot();
 
-		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), root));
-		for (final ScalingPolicy scalingPolicy : policies) {
-			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), root));
-		}
+		this.updateGraphFringe(root);
 	}
 
 	/**
@@ -52,9 +56,28 @@ public class DefaultExplorationPlanner {
 		this.updateGraphFringe(end);
 
 		final double duration = calculateRunDuration(start);
-		final SimulationInitConfiguration config = new SimulationInitConfiguration(start.getSnapshot(), end, duration);
 
-		return config;
+
+		// different handling depending of type of change.
+		if (next.getChange().isEmpty()) {
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, null);
+		}
+
+		if (next.getChange().get() instanceof final ReactiveReconfiguration reactiveReconf) {
+			LOGGER.debug("Reactive Reconfiguration : Update Target Group");
+
+			final DESEvent initEvent = this.changeApplicator.updateTargetGroup(reactiveReconf.getReactiveReconfigurationEvent(), end.getArchitecureConfiguration());
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent);
+		}
+
+		if (next.getChange().get() instanceof final Reconfiguration reconf) {
+			LOGGER.debug("Proactive Reconfiguration : create scalingpolicy for one time usage");
+
+			final ScalingPolicy initPolicy = this.changeApplicator.createOneTimeUsageScalingPolicy(reconf.getScalingPolicy(), end.getArchitecureConfiguration());
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initPolicy, null);
+		}
+
+		throw new UnsupportedOperationException("Environment Change not yet supported.");
 	}
 
 	/**
@@ -70,8 +93,23 @@ public class DefaultExplorationPlanner {
 	 */
 	private void updateGraphFringe(final DefaultState start) {
 		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
-		for (final ScalingPolicy scalingPolicy : policies) {
-			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
+		// TODO For now : skip proactive reconfigurations.
+//		for (final ScalingPolicy scalingPolicy : policies) {
+//			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
+//		}
+	}
+
+	/**
+	 * Temporary helper
+	 *
+	 * TODO : restructure
+	 *
+	 * @param start
+	 */
+	public void updateGraphFringePostSimulation(final DefaultState start) {
+		if (start.getSnapshot().getAdjustorEvent().isPresent()) {
+			final DESEvent event = start.getSnapshot().getAdjustorEvent().get();
+			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
 	}
 
@@ -86,9 +124,10 @@ public class DefaultExplorationPlanner {
 	private DefaultState createNewGraphNode(final ToDoChange next) {
 		final DefaultState start = next.getStart();
 
-		final ArchitectureConfiguration newConfig = this.changeApplicator.createNewArchConfig(next.getStart(), next);
+		final ArchitectureConfiguration newConfig = start.getArchitecureConfiguration().copy();
 
 		final DefaultState end = new DefaultState(start.getEndTime(), newConfig);
+
 		this.rawgraph.addNode(end);
 
 		final DefaultTransition nextTransition = new DefaultTransition(next.getChange(), start, end);

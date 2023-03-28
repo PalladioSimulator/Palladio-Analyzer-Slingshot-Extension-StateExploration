@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -12,18 +13,18 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
  */
 public interface Snapshot {
 
-	//public String getId();
-
+	/**
+	 * Event to initialize the next simulation run on.
+	 *
+	 * @return
+	 */
 	public Set<DESEvent> getEvents();
 
-	//public void setEvents(final Set<DESEvent> events);
-
-	//public Allocation getAllocation();
-
-	//public void setAllocation(final Allocation allocation);
-
-	//public MonitorRepository getMonitorRepository();
-
-	//public void setMonitorRepository(final MonitorRepository monitorRepository);
-
+	/**
+	 * Adjustor of the reactive reconfiguration, if a reactive reconfiguration happened to end the state.
+	 *
+	 * @return
+	 */
+	public Optional<DESEvent> getAdjustorEvent();
+	public void setAdjustorEvent(DESEvent event);
 }

@@ -27,31 +27,87 @@ import org.palladiosimulator.spd.targets.ElasticInfrastructure;
  * @author stiesssh
  *
  */
-public class DefaultArchitectureConfiguration implements ArchitectureConfiguration {
+public class UriBasedArchitectureConfiguration implements ArchitectureConfiguration {
 
-	private final Allocation allocation;
-	private final MonitorRepository monitorRepository;
-	private final SPD spd;
+	private final URI allocation;
+	private final URI monitorRepository;
+	private final URI spd;
 
-	public DefaultArchitectureConfiguration(final Allocation allocation, final MonitorRepository monitorRepository, final SPD spd) {
-		this.allocation = allocation;
-		this.monitorRepository = monitorRepository;
-		this.spd = spd;
+	private ResourceSet set = null;
+
+	public UriBasedArchitectureConfiguration(final Allocation allocation, final MonitorRepository monitorRepository, final SPD spd) {
+		this.allocation = allocation.eResource().getURI();
+		this.monitorRepository = monitorRepository.eResource().getURI();
+		this.spd = spd.eResource().getURI();
 	}
 
 	@Override
 	public Allocation getAllocation() {
-		return this.allocation;
+		if (set == null) {
+			this.load();
+		}
+		if (set.getResource(allocation, false).getContents().isEmpty()) {
+			final Resource tmp = set.getResource(allocation, false);
+			try {
+				tmp.unload();
+				tmp.load(((XMLResource) tmp).getDefaultLoadOptions());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return (Allocation) set.getResource(allocation, false).getContents().get(0);
 	}
 
 	@Override
 	public MonitorRepository getMonitorRepository() {
-		return this.monitorRepository;
+		if (set == null) {
+			this.load();
+		}
+		if (set.getResource(monitorRepository, false).getContents().isEmpty()) {
+			final Resource tmp = set.getResource(monitorRepository, false);
+			try {
+				tmp.unload();
+				tmp.load(((XMLResource) tmp).getDefaultLoadOptions());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return (MonitorRepository) set.getResource(monitorRepository, false).getContents().get(0);
 	}
 
 	@Override
 	public SPD getSPD() {
-		return this.spd;
+		if (set == null) {
+			this.load();
+		}
+		if (set.getResource(spd, false).getContents().isEmpty()) {
+			final Resource tmp = set.getResource(spd, false);
+			try {
+				tmp.unload();
+				tmp.load(((XMLResource) tmp).getDefaultLoadOptions());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return (SPD) set.getResource(spd, false).getContents().get(0);
+	}
+
+	/**
+	 * create resource set and load alloc, spd, and monitor
+	 */
+	private void load() {
+		this.set = new ResourceSetImpl();
+		final Resource res = set.createResource(allocation);
+		final Resource spdres = set.createResource(spd);
+		final Resource monitorres = set.createResource(monitorRepository);
+
+		try {
+			res.load(((XMLResource) res).getDefaultLoadOptions());
+			spdres.load(((XMLResource) spdres).getDefaultLoadOptions());
+			monitorres.load(((XMLResource) monitorres).getDefaultLoadOptions());
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/** TODO : I was doing stuff here --- yeah, okey, but what stuff? O_o **/
@@ -60,11 +116,11 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 		this.resolveProxies();
 		final String idSegment = UUID.randomUUID().toString();
 
-		final Builder builder = DefaultArchitectureConfiguration.builder();
+		final Builder builder = UriBasedArchitectureConfiguration.builder();
 
 		this.copyAlloc(builder, idSegment);
 
-		final DefaultArchitectureConfiguration copy = builder.build();
+		final UriBasedArchitectureConfiguration copy = builder.build();
 		// copy.resolveProxies(); // Yes, Alloc and SPD reference the same Res.Env once resolved.
 
 		return copy;
@@ -77,12 +133,13 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 	 */
 	private void copyAlloc(final Builder builder, final String idSegment) {
 
-		final ResourceEnvironment resourceEnvironment = allocation.getTargetResourceEnvironment_Allocation();
-		final System system = allocation.getSystem_Allocation();
+		final SPD spdModel = this.getSPD();
+		final Allocation allocModel = this.getAllocation();
+		final ResourceEnvironment resourceEnvironment = allocModel.getTargetResourceEnvironment_Allocation();
+		final System system = allocModel.getSystem_Allocation();
 
-		final URI oldAllocUri = allocation.eResource().getURI(); // no resource because i (1) moved it to the partition resource and then (2) removed it there.
-		final URI newAllocUri = ResourceUtils.insertFragment(oldAllocUri, idSegment, oldAllocUri.segmentCount() - 1);
-		allocation.eResource().setURI(newAllocUri);
+		final URI newAllocUri = ResourceUtils.insertFragment(allocation, idSegment, allocation.segmentCount() - 1);
+		allocModel.eResource().setURI(newAllocUri);
 
 		final URI oldResUri = resourceEnvironment.eResource().getURI();
 		final URI newResUri = ResourceUtils.insertFragment(oldResUri, idSegment, oldResUri.segmentCount() - 1);
@@ -92,14 +149,13 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 		final URI newSysUri = ResourceUtils.insertFragment(oldSysUri, idSegment, oldSysUri.segmentCount() - 1);
 		system.eResource().setURI(newSysUri);
 
-		final URI oldSPDUri = spd.eResource().getURI();
-		final URI newSPDUri = ResourceUtils.insertFragment(oldSPDUri, idSegment, oldSPDUri.segmentCount() - 1);
-		spd.eResource().setURI(newSPDUri);
+		final URI newSPDUri = ResourceUtils.insertFragment(spd, idSegment, spd.segmentCount() - 1);
+		spdModel.eResource().setURI(newSPDUri);
 
 		ResourceUtils.saveResource(resourceEnvironment.eResource());
 		ResourceUtils.saveResource(system.eResource());
-		ResourceUtils.saveResource(allocation.eResource());
-		ResourceUtils.saveResource(spd.eResource());
+		ResourceUtils.saveResource(allocModel.eResource());
+		ResourceUtils.saveResource(spdModel.eResource());
 
 
 
@@ -114,15 +170,15 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 		//			ResourceUtils.saveResource(res);
 		//		}
 
-		allocation.eResource().setURI(oldAllocUri);
+		allocModel.eResource().setURI(allocation);
 		system.eResource().setURI(oldSysUri);
 		resourceEnvironment.eResource().setURI(oldResUri);
-		spd.eResource().setURI(oldSPDUri);
+		spdModel.eResource().setURI(spd);
 
 
-		final ResourceSet set = new ResourceSetImpl();
-		final Resource res = set.createResource(newAllocUri);
-		final Resource spdres = set.createResource(newSPDUri);
+		final ResourceSet newset = new ResourceSetImpl();
+		final Resource res = newset.createResource(newAllocUri);
+		final Resource spdres = newset.createResource(newSPDUri);
 
 		try {
 			res.load(((XMLResource) res).getDefaultLoadOptions());
@@ -131,15 +187,15 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 			e.printStackTrace();
 		}
 
-		final String allocFragment = res.getURIFragment(allocation);
+		final String allocFragment = res.getURIFragment(allocModel);
 		final Allocation copyAlloc = (Allocation) res.getEObject(allocFragment);
 
-		final String spdFragment = spdres.getURIFragment(spd);
+		final String spdFragment = spdres.getURIFragment(spdModel);
 		final SPD copySpd = (SPD) spdres.getEObject(spdFragment);
 
 		builder.withAllocation(copyAlloc);
 		builder.withSPD(copySpd);
-		builder.withMonitorRepository(this.monitorRepository); //TODO : copy monitoring
+		builder.withMonitorRepository(this.getMonitorRepository()); //TODO : copy monitoring
 	}
 
 	/**
@@ -152,13 +208,13 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 	 * @param allocation to be resolved
 	 */
 	public void resolveProxies() {
-		this.allocation.getTargetResourceEnvironment_Allocation();
-		this.allocation.getAllocationContexts_Allocation().stream()
+		this.getAllocation().getTargetResourceEnvironment_Allocation();
+		this.getAllocation().getAllocationContexts_Allocation().stream()
 		.forEach(allocContext -> allocContext.getResourceContainer_AllocationContext());
-		this.allocation.getAllocationContexts_Allocation().stream()
+		this.getAllocation().getAllocationContexts_Allocation().stream()
 		.forEach(allocContext -> allocContext.getAssemblyContext_AllocationContext());
 
-		this.spd.getTargetGroups().stream().filter(tg -> (tg instanceof ElasticInfrastructure)).map(tg -> (ElasticInfrastructure) tg).forEach(tg -> tg.getPCM_ResourceEnvironment());
+		this.getSPD().getTargetGroups().stream().filter(tg -> (tg instanceof ElasticInfrastructure)).map(tg -> (ElasticInfrastructure) tg).forEach(tg -> tg.getPCM_ResourceEnvironment());
 	}
 
 	public static Builder builder() {
@@ -166,7 +222,7 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 	}
 
 	/**
-	 * Builder to build {@link DefaultArchitectureConfiguration}.
+	 * Builder to build {@link UriBasedArchitectureConfiguration}.
 	 */
 	@Generated("SparkTools")
 	public static final class Builder {
@@ -192,8 +248,8 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 			return this;
 		}
 
-		public DefaultArchitectureConfiguration build() {
-			return new DefaultArchitectureConfiguration(alloc, monitorRepository, spd);
+		public UriBasedArchitectureConfiguration build() {
+			return new UriBasedArchitectureConfiguration(alloc, monitorRepository, spd);
 		}
 	}
 

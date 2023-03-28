@@ -1,82 +1,110 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import org.palladiosimulator.analyzer.slingshot.core.api.SimulationInformation;
+import org.apache.log4j.Logger;
+import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.StepBasedAdjustor;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 import org.palladiosimulator.pcm.usagemodel.UsageModel;
 import org.palladiosimulator.pcm.usagemodel.Workload;
+import org.palladiosimulator.spd.ScalingPolicy;
+import org.palladiosimulator.spd.targets.ElasticInfrastructure;
+import org.palladiosimulator.spd.targets.TargetGroup;
+import org.palladiosimulator.spd.triggers.RelationalOperator;
+import org.palladiosimulator.spd.triggers.SimpleFireOnValue;
+import org.palladiosimulator.spd.triggers.TriggersFactory;
+import org.palladiosimulator.spd.triggers.expectations.ExpectationsFactory;
+import org.palladiosimulator.spd.triggers.expectations.ExpectedTime;
+import org.palladiosimulator.spd.triggers.stimuli.SimulationTime;
+import org.palladiosimulator.spd.triggers.stimuli.StimuliFactory;
+
 import de.uka.ipd.sdq.simucomframework.usage.ClosedWorkload;
 import de.uka.ipd.sdq.simucomframework.usage.OpenWorkload;
 
 /**
- * Applies change. Currently all change must be Scaling Policies, but might
- * change later on, i guess.
+ *
+ *
  *
  * @author stiesssh
  *
  */
 public class ChangeApplicator {
 
+	private static final Logger LOGGER = Logger.getLogger(ChangeApplicator.class.getName());
+
+
 	/**
-	 * Create a new architecture Configuration.
+	 * Create copy of the given event and update TargetGroup to reference the new copy of the architecture.
 	 *
-	 * The new configuration is same as the old one after applying the given policy.
-	 *
-	 * @param oldConfig previous architecture configuration
-	 * @param policy    reconfiguration to be applied
-	 * @return a new architecture configuration
+	 * @param event event to be copied
+	 * @param config architecture to be referenced
+	 * @return copy of event
 	 */
-	public ArchitectureConfiguration createNewArchConfig(final RawModelState oldState, final ToDoChange todochange) {
-		final ArchitectureConfiguration newArchConfig = oldState.getArchitecureConfiguration().copy();
+	public DESEvent updateTargetGroup(final DESEvent event, final ArchitectureConfiguration config){
 
-		if (todochange.getChange().isPresent()) {
+		if (event instanceof final AdjustorBasedEvent adjustor) {
+			final TargetGroup tg = adjustor.getTargetGroup();
 
-			// TODO : maybe i should not use the RawTransitions here, because i *know* for
-			// sure that there's no nop transition in the fringe.
-			// Bullshit, there are nop transitions in the fringe.
-			if (todochange.getChange().get() instanceof Reconfiguration) {
+			/* Update Target Group */
+			if (tg instanceof final ElasticInfrastructure ei) {
+				ei.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
+			} else {
+				throw new IllegalArgumentException(String.format("Target Group of type %s not yet supported", tg.getClass().getSimpleName()));
+			}
 
-				throw new UnsupportedOperationException("cannot executre Reconfiguration, as we are still missing the SPD extension");
-
-//				final Reconfiguration change = (Reconfiguration) todochange.getChange().get();
-//
-//				final TriggerContext triggerContext = this.createTriggerContext(newArchConfig.getAllocation(),
-//						newArchConfig.getMonitorRepository(), change.getScalingPolicy());
-//
-//				final AdjustmentResult result = triggerContext.executeTrigger();
-//
-//				change.setResult(result);
+			/*Create Event copy*/
+			if (event instanceof final StepBasedAdjustor specificAdjustor) {
+				return new StepBasedAdjustor(tg, specificAdjustor.getStepCount());
+			} else {
+				throw new IllegalArgumentException(String.format("Adjustor event of type %s not yet supported", event.getClass().getSimpleName()));
 			}
 		}
-		return newArchConfig;
+		throw new IllegalArgumentException(String.format("Expected DESEvent of type %s, but got %s", AdjustorBasedEvent.class.getSimpleName(), event.getClass().getSimpleName()));
 	}
 
-//	private Set<ModelElementDifference<Entity>> buildDifferences(final AdjustmentResult result) {
-//		final Set<ModelElementDifference<Entity>> diff = new HashSet<>();
-//
-//		for (final ModelChange modelChange : result.getChanges()) {
-//
-//			switch (modelChange.getModelChangeAction()) {
-//			case ADDITION:
-//				diff.add(new ModelElementDifference<Entity>(Optional.empty(),
-//						Optional.of((Entity) modelChange.getModelElement())));
-//				break;
-//			case DELETION:
-//				diff.add(new ModelElementDifference<Entity>(Optional.of((Entity) modelChange.getModelElement()),
-//						Optional.empty()));
-//				break;
-//			default:
-//				break;
-//			}
-//		}
-//
-//		return diff;
-//	}
+	/**
+	 * create new scaling policy with trigger on simulation time value.
+	 * triggers (proactive) reconfiguration at t = 0.
+	 *
+	 * @param template
+	 * @param config
+	 * @return
+	 */
+	public ScalingPolicy createOneTimeUsageScalingPolicy(final ScalingPolicy template, final ArchitectureConfiguration config){
+		final ScalingPolicy oneTrickPony = EcoreUtil.copy(template);//SpdFactory.eINSTANCE.createScalingPolicy();
 
+
+		final ExpectedTime time = ExpectationsFactory.eINSTANCE.createExpectedTime();
+		time.setValue(0.0);
+		final SimulationTime stimulus = StimuliFactory.eINSTANCE.createSimulationTime();
+
+		final SimpleFireOnValue trigger = TriggersFactory.eINSTANCE.createSimpleFireOnValue();
+		trigger.setExpectedValue(time);
+		trigger.setStimulus(stimulus);
+		trigger.setRelationalOperator(RelationalOperator.GREATER_THAN_OR_EQUAL_TO);
+
+
+		oneTrickPony.setScalingTrigger(trigger);
+
+		if (oneTrickPony.getTargetGroup() instanceof final ElasticInfrastructure ei) {
+			ei.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
+		} else {
+			throw new IllegalArgumentException(String.format("Target Group of type %s not yet supported", oneTrickPony.getTargetGroup().getClass().getSimpleName()));
+		}
+
+		return oneTrickPony;
+	}
+
+
+	/**
+	 * what is this even ????
+	 *
+	 * @param usageModel
+	 * @return
+	 */
 	public UsageModel changeLoad(final UsageModel usageModel) {
 
 		final Workload workload = usageModel.getUsageScenario_UsageModel().get(0).getWorkload_UsageScenario();
@@ -95,91 +123,5 @@ public class ChangeApplicator {
 		}
 
 		return usageModel;
-	}
-
-	/**
-	 *
-	 * create a new TriggerContext for the given allocation, monitoring and scaling
-	 * policy.
-	 *
-	 * must not use the resource environment from the policy, as that is the
-	 * environment on the initial architecture configuration. instead it uses the
-	 * environment of the current configuration, accessible through the allocation.
-	 *
-	 * TODO i'd love to check that the resource environment in the target group of
-	 * the scaling rule and the resource environment referenced by the allocation
-	 * match. Match as in the allocation resource environment was somehow derived
-	 * from the base resource environment from the scaling policy. Match as in, if
-	 * the resource environments had ids, the ids would be equal. However, resource
-	 * environments have no id, thus i cannot match them by id and i am angray about
-	 * that.
-	 *
-	 * @param allocation        allocation to be reconfigured with the new
-	 *                          triggerContext
-	 * @param monitorRepository monitoring to be reconfigured with the new
-	 *                          triggerContext
-	 * @param scalingPolicy     reconfiguration to be applied via the new
-	 *                          triggerContext
-	 * @return a new trigger context.
-	 */
-//	private TriggerContext createTriggerContext(final Allocation allocation, final MonitorRepository monitorRepository,
-//			final ScalingPolicy scalingPolicy) {
-//		Preconditions.checkArgument(scalingPolicy.getTargetGroup() instanceof ElasticInfrastructure,
-//				"Unsupported TargetGroup");
-//		// sadly, there is no id for ResourceEnvironments :(
-//		Preconditions.checkArgument(allocation.getTargetResourceEnvironment_Allocation().getEntityName().equals(
-//				((ElasticInfrastructure) scalingPolicy.getTargetGroup()).getPCM_ResourceEnvironment().getEntityName()));
-//
-//		final TriggerContext.Builder triggerContextBuilder = TriggerContext.builder();
-//
-//		/* Adjustment Type */
-//		final AdjustmentTypeInterpreter adjustmentTypeInterpreter = new AdjustmentTypeInterpreter(
-//				this.createEmptySimulationInformation(), allocation, monitorRepository);
-//
-//		final AdjustmentExecutor adjustmentExecutor = adjustmentTypeInterpreter
-//				.doSwitch(scalingPolicy.getAdjustmentType());
-//
-//		/* create new TargetGroup */
-//		final ElasticInfrastructure newTargetGroup = TargetsFactory.eINSTANCE.createElasticInfrastructure();
-//		newTargetGroup.setName(scalingPolicy.getTargetGroup().getEntityName());
-//		newTargetGroup.setPCM_ResourceEnvironment(allocation.getTargetResourceEnvironment_Allocation());
-//
-//		/* New Trigger */
-//		final ScalingTriggerPredicate scalingTriggerPredicate = ScalingTriggerPredicate.ALWAYS;
-//
-//		final TriggerContext.Builder contextBuilder = triggerContextBuilder.withAdjustmentExecutor(adjustmentExecutor)
-//				.withAdjustmentType(scalingPolicy.getAdjustmentType()).withTargetGroup(newTargetGroup)
-//				.withScalingTriggerPredicate(scalingTriggerPredicate)
-//				.withScalingTrigger(scalingPolicy.getScalingTrigger());
-//
-//		/* TODO : Constraints */
-//		// final ConstraintInterpreter policyConstraintInterpreter = new
-//		// ConstraintInterpreter();
-//		// scalingPolicy.getPolicyConstraints().stream()
-//		// .map(constraint -> policyConstraintInterpreter.doSwitch(constraint))
-//		// .forEach(triggerContextBuilder::withConstraint);
-//
-//		return contextBuilder.build();
-//	}
-
-	/**
-	 * Creates an empty simulation information, as the AdjustmentExecutors need the
-	 * SimulationInformation to access the simulation time when building their
-	 * adjustment results.
-	 *
-	 * @return an empty SimulationInformation.
-	 */
-	private SimulationInformation createEmptySimulationInformation() {
-		return new SimulationInformation() {
-			@Override
-			public double currentSimulationTime() {
-				return 0;
-			}
-
-			@Override
-			public int consumedEvents() {
-				return 0;
-			}
-		};
 	}
 }

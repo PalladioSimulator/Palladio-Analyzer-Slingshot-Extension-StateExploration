@@ -7,6 +7,9 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
@@ -24,12 +27,8 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
 import org.palladiosimulator.pcm.allocation.Allocation;
-import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
 import org.palladiosimulator.spd.SPD;
-import org.palladiosimulator.spd.SpdFactory;
-import org.palladiosimulator.spd.targets.ElasticInfrastructure;
-import org.palladiosimulator.spd.targets.TargetGroup;
-
+import org.palladiosimulator.spd.SpdPackage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -47,6 +46,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private static final Logger LOGGER = Logger.getLogger(DefaultGraphExplorer.class.getName());
 
+	/** gotta keep this one clean and unchanged! */
 	final PCMResourceSetPartition initModels;
 
 	private final Map<String, Object> launchConfigurationParams;
@@ -66,33 +66,38 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// TODO
 		// cannot yet grab the models at the providers, or can i?
-		// get monitor Repo
+		// get monitor Repo + spds.
 		final List<EObject> monitors = initModels.getElement(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository());
 		if (monitors.size() == 0) {
-			throw new IllegalStateException("Monitor not present: List size is 0.");
+			LOGGER.info("Monitor not present: List size is 0.");
 		}
 
-		this.graph = new DefaultGraph(
-				this.createRoot(this.initModels.getAllocation(), (MonitorRepository) monitors.get(0)));
+		final List<EObject> spds = initModels.getElement(SpdPackage.eINSTANCE.getSPD());
+		if (spds.size() == 0) {
+			LOGGER.info("SDP not present: List size is 0.");
+		}
 
-		// TODO
-		this.blackbox = new DefaultExplorationPlanner(SpdFactory.eINSTANCE.createSPD(), (DefaultGraph) this.graph);
-		//this.blackbox = new DefaultExplorationPlanner(this.initModels.getSpd(), (DefaultGraph) this.graph);
+		this.graph = new DefaultGraph(this.createRoot(this.initModels.getAllocation(),
+				(MonitorRepository) monitors.get(0), (SPD) spds.get(0)));
 
+		this.blackbox = new DefaultExplorationPlanner((SPD) spds.get(0), (DefaultGraph) this.graph);
 	}
 
 	@Override
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 8; i++) { // just random.
+		for (int i = 0; i < 3; i++) { // just random.
 			final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
+
 			this.exploreBranch(config);
 		}
 		LOGGER.info("********** DefaultGraphExplorer is done :) **********");
+		LOGGER.info("********** States : ");
 		this.graph.getStates()
 				.forEach(s -> LOGGER.info(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
 						s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
+		LOGGER.info("********** Transitions : ");
 		this.graph.getTransitions().stream().forEach(t -> LOGGER
 				.info(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType().toString())));
 		return this.graph;
@@ -102,8 +107,10 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Create root node for the graph. Sadly, ExperimentSettings for root are null
 	 * :/
 	 */
-	private DefaultState createRoot(final Allocation alloc, final MonitorRepository monitoring) {
-		final ArchitectureConfiguration rootConfig = new DefaultArchitectureConfiguration(alloc, monitoring);
+	private DefaultState createRoot(final Allocation alloc, final MonitorRepository monitoring, final SPD spd) {
+		// final ArchitectureConfiguration rootConfig = new
+		// DefaultArchitectureConfiguration(alloc, monitoring, spd);
+		final ArchitectureConfiguration rootConfig = new UriBasedArchitectureConfiguration(alloc, monitoring, spd);
 
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
@@ -122,8 +129,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 */
 	private void exploreBranch(final SimulationInitConfiguration config) {
 		// update provided models
-		this.updatePCMPartitionProvider(config.getStateToExplore().getArchitecureConfiguration().getAllocation(),
-				config.getStateToExplore().getArchitecureConfiguration().getMonitorRepository());
+		this.updatePCMPartitionProvider(config);
 		// update simucomconfig
 		final SimuComConfig simuComConfig = prepareSimuComConfig(config.getStateToExplore()
 				.getArchitecureConfiguration().getAllocation().eResource().getURI().toString());
@@ -131,9 +137,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final SnapshotConfiguration snapConfig = createSnapConfig(config.getExplorationDuration(),
 				!config.getSnapToInitOn().getEvents().isEmpty());
 
-		// TODO *somehow* get this submodule into the driver, such that it will be provided D:
-		final SubModule submodule =  new SubModule(config.getSnapToInitOn(),config.getStateToExplore(), snapConfig);
-
+		// TODO *somehow* get this submodule into the driver, such that it will be
+		// provided D:
+		final SubModule submodule = new SubModule(config, snapConfig);
 
 		final AbstractModule simComConfigProvider = new AbstractModule() {
 			@Provides
@@ -151,26 +157,47 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		driver.init(Set.of(submodule, simComConfigProvider), simuComConfig);
 		driver.start();
+
+		// Post processing :
+		final DefaultState current = submodule.builder();
+		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 
+	/**
+	 *
+	 * @author stiesssh
+	 *
+	 */
 	private class SubModule extends AbstractModule {
 
 		private final Snapshot snapToInitOn;
 		private final DefaultState currentPartialState;
 		private final SnapshotConfiguration snapshotConfiguration;
 
-		public SubModule(final Snapshot snapToInitOn,
-		final DefaultState currentPartialState,
-		final SnapshotConfiguration snapshotConfiguration) {
-			this.snapToInitOn = snapToInitOn;
-			this.currentPartialState = currentPartialState;
+		private final Set<DESEvent> eventToInitOn;
+
+		public SubModule(final SimulationInitConfiguration config, final SnapshotConfiguration snapshotConfiguration) {
+
+			this.snapToInitOn = config.getSnapToInitOn();
+			this.currentPartialState = config.getStateToExplore();
 			this.snapshotConfiguration = snapshotConfiguration;
+
+			this.eventToInitOn = snapToInitOn.getEvents();
+
+			if (config.getEvent().isPresent()) {
+				this.eventToInitOn.add(config.getEvent().get());
+			}
 		}
 
 		// PCM instance and SimuComConfig already provided via other means.
 		@Provides
 		public Snapshot snapToInitOn() {
 			return snapToInitOn;
+		}
+
+		@Provides
+		public Set<DESEvent> EventToInitOn() {
+			return eventToInitOn;
 		}
 
 		@Provides
@@ -229,33 +256,76 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
+	 * Put the copied models into the {@link PCMResourceSetPartitionProvider}.
+	 *
+	 * I'm pretty sure the current implementation is pretty illegal, cause it
+	 * updates alloc, monitor and spd only but disregards the other models.
+	 *
+	 * Does this implementatin fuck with proxies?
+	 *
+	 * Currently, injection only works because slingshot always injects allocation.
+	 *
+	 * It's broken :(
+	 *
 	 *
 	 * @param allocation
 	 * @param monitorRepository
 	 */
-	private void updatePCMPartitionProvider(final Allocation allocation, final MonitorRepository monitorRepository) {
+	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
 
-		// TODO : update alloc and monitoring
+		final Allocation allocation = config.getStateToExplore().getArchitecureConfiguration().getAllocation();
+		final MonitorRepository monitorRepository = config.getStateToExplore().getArchitecureConfiguration()
+				.getMonitorRepository();
+		final SPD spd = config.getStateToExplore().getArchitecureConfiguration().getSPD();
+
 		final PCMResourceSetPartition newPartition = this.initModels;
+		final ResourceSet rs = newPartition.getResourceSet();
+
+		/* remove old models... */
+		// rs.getResources().remove(newPartition.getAllocation().eResource());
+
+		final List<EObject> monitors = initModels.getElement(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository());
+		if (monitors.size() == 0) {
+			LOGGER.info("Monitor not present: List size is 0.");
+		}
+		// rs.getResources().remove(monitors.get(0).eResource());
+
+		final List<EObject> spds = initModels.getElement(SpdPackage.eINSTANCE.getSPD());
+		if (spds.size() == 0) {
+			LOGGER.info("SDP not present: List size is 0.");
+		}
+		// rs.getResources().remove(spds.get(0).eResource());
+
+		/* load new models */
+		/*
+		 * newPartition.loadModel(allocation.eResource().getURI());
+		 * newPartition.loadModel(monitorRepository.eResource().getURI());
+		 * newPartition.loadModel(spd.eResource().getURI());
+		 */
+
+		{
+			final Resource r = rs.getResource(newPartition.getAllocation().eResource().getURI(), false);
+			r.getContents().clear();
+			r.getContents().add(allocation); // unroot it from it's original resource...
+		}
+		{
+			final Resource r = rs.getResource(monitors.get(0).eResource().getURI(), false);
+			r.getContents().clear();
+			r.getContents().add(monitorRepository);
+		}
+		{
+			final Resource r = rs.getResource(spds.get(0).eResource().getURI(), false);
+			r.getContents().clear();
+			r.getContents().add(spd);
+		}
+
+		/* add initial ScalingPolicy, if present */
+		if (config.getPolicy().isPresent()) {
+			spd.getScalingPolicies().add(config.getPolicy().get());
+		}
 
 		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
 				.getInstance(PCMResourceSetPartitionProvider.class);
 		provider.set(newPartition);
-	}
-
-	/**
-	 * idk, why did i write this??? o_O
-	 *
-	 * @param spd
-	 * @param env
-	 * @return
-	 */
-	private SPD updateSPD(final SPD spd, final ResourceEnvironment env) {
-		for (final TargetGroup tg : spd.getTargetGroups()) {
-			if (tg instanceof ElasticInfrastructure) {
-				((ElasticInfrastructure) tg).setPCM_ResourceEnvironment(env);
-			}
-		}
-		return spd;
 	}
 }

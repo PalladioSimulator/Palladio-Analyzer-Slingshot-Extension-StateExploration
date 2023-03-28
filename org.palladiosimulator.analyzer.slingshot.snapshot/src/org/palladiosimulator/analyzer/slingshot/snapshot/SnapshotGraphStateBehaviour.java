@@ -10,9 +10,11 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
@@ -25,10 +27,10 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
-import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
@@ -39,7 +41,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
 /**
  *
- * Behavioural Extension to handle everything related to the  RawGraphState.
+ * Behavioural Extension to handle everything related to the RawGraphState.
  *
  * @author stiesssh
  *
@@ -48,6 +50,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 @OnEvent(when = SimulationStarted.class, then = AbstractEntityChangedEvent.class, cardinality = EventCardinality.MANY)
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class)
+@OnEvent(when = ModelAdjusted.class, then = {})
 public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension {
 
 	private final Logger LOGGER = Logger.getLogger(SnapshotGraphStateBehaviour.class);
@@ -56,21 +59,21 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	private final SnapshotConfiguration snapshotConfig;
 	private final SimuComConfig simuComConfig;
 
-	/*State representing current simulation run*/
+	/* State representing current simulation run */
 	private final DefaultState halfDoneState;
-	/*Snapshot taken from earlier simulation run*/
-	private final Snapshot snapToInitOn;
+	/* Snapshotted events taken from earlier simulation run */
+	private final Set<DESEvent> eventsToInitOn;
 
 	/* helper */
 	private final Map<UsageModelPassedElement<?>, Double> event2offset;
 
 	@Inject
-	public SnapshotGraphStateBehaviour(final DefaultState halfDoneState, final Snapshot snapToInitOn,
-			final SnapshotConfiguration snapshotConfig, final SimuComConfig simuComConfig) {
+	public SnapshotGraphStateBehaviour(final DefaultState halfDoneState, final SnapshotConfiguration snapshotConfig,
+			final SimuComConfig simuComConfig, final Set<DESEvent> eventsToInitOn) {
 		this.halfDoneState = halfDoneState;
-		this.snapToInitOn = snapToInitOn;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
+		this.eventsToInitOn = eventsToInitOn;
 
 		this.event2offset = new HashMap<>();
 	}
@@ -102,9 +105,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
 		assert snapshotConfig.isStartFromSnapshot();
 
-		final Set<DESEvent> initialEvents = this.snapToInitOn.getEvents();
-		this.initOffsets(initialEvents);
-		return Result.from(initialEvents);
+		this.initOffsets(this.eventsToInitOn);
+		return Result.from(this.eventsToInitOn);
 	}
 
 	/**
@@ -123,9 +125,10 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
 			final SimulationStarted event) {
 
-
-		if (information.getEnclosingType().isPresent() && ((snapshotConfig.isStartFromSnapshot() && information.getEnclosingType().get().equals(this.getClass()))
-				|| (!snapshotConfig.isStartFromSnapshot() && !information.getEnclosingType().get().equals(this.getClass())))) {
+		if (information.getEnclosingType().isPresent() && ((snapshotConfig.isStartFromSnapshot()
+				&& information.getEnclosingType().get().equals(this.getClass()))
+				|| (!snapshotConfig.isStartFromSnapshot()
+						&& !information.getEnclosingType().get().equals(this.getClass())))) {
 			LOGGER.debug(String.format("Route %s to %s", event.getName(),
 					information.getEnclosingType().get().getSimpleName()));
 			return InterceptionResult.success();
@@ -208,6 +211,23 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		// Do not add the state anywhere, just finalise it. Assumption is, it already is
 		// in the graph.
 		return Result.of(new SimulationFinished());
+	}
+
+	/**
+	 * Save state to file, because reconfiguration now happens at runtime, i.e. not
+	 * yet propagated to file.
+	 *
+	 * @param modelAdjusted
+	 */
+	@Subscribe
+	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
+		final ArchitectureConfiguration archconfig = this.halfDoneState.getArchitecureConfiguration();
+
+		ResourceUtils.saveResource(archconfig.getMonitorRepository().eResource());
+		ResourceUtils.saveResource(archconfig.getAllocation().eResource());
+		ResourceUtils.saveResource(archconfig.getAllocation().getTargetResourceEnvironment_Allocation().eResource());
+		ResourceUtils.saveResource(archconfig.getAllocation().getSystem_Allocation().eResource());
+
 	}
 
 	/**

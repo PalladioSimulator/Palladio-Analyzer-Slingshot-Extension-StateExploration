@@ -1,5 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.events;
 
+import java.util.Optional;
+
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulationEvent;
 
 /**
@@ -14,11 +17,23 @@ import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulation
  */
 public class SnapshotInitiated extends AbstractSimulationEvent{
 
+	private final Optional<AdjustorBasedEvent> triggeringEvent;
+
 	public SnapshotInitiated() {
 		this(0);
 	}
 
 	public SnapshotInitiated(final double delay) {
 		super("TODO", delay);
+		this.triggeringEvent = Optional.empty();
+	}
+
+	public SnapshotInitiated(final double delay, final AdjustorBasedEvent event) {
+		super("TODO", delay);
+		this.triggeringEvent = Optional.of(event);
+	}
+
+	public Optional<AdjustorBasedEvent> getTriggeringEvent() {
+		return triggeringEvent;
 	}
 }

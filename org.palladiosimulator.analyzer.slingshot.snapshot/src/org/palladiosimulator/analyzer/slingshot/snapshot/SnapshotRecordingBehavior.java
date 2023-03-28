@@ -10,6 +10,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
@@ -108,6 +109,12 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	@Subscribe
 	public Result<SnapshotFinished> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
 		final Snapshot snapshot = camera.takeSnapshot();
+
+		if (snapshotTaken.getTriggeringEvent().isPresent()) {
+			final DESEvent triggeringeEvent =  snapshotTaken.getTriggeringEvent().get();
+			snapshot.setAdjustorEvent(triggeringeEvent);
+		}
+
 		return Result.of(new SnapshotFinished(snapshot));
 	}
 
@@ -123,7 +130,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.scheduleProcSharingUpdatesHelper(
 				recorder.getProcSharingJobRecords().stream().map(record -> record.getJob()).collect(Collectors.toSet()));
 
-		return Result.of(new SnapshotTaken());
+		return Result.of(new SnapshotTaken(0, snapshotInitiated.getTriggeringEvent()));
 	}
 
 	/**
