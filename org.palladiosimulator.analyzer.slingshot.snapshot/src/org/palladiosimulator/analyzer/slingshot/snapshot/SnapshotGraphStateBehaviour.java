@@ -228,6 +228,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		ResourceUtils.saveResource(archconfig.getAllocation().getTargetResourceEnvironment_Allocation().eResource());
 		ResourceUtils.saveResource(archconfig.getAllocation().getSystem_Allocation().eResource());
 
+		// Do NOT save the ScalingPolicyies, cause that would get the oneTrickPony into the persisted Rules.
+
 	}
 
 	/**

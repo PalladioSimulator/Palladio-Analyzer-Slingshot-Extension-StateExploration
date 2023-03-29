@@ -306,17 +306,17 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		{
 			final Resource r = rs.getResource(newPartition.getAllocation().eResource().getURI(), false);
 			r.getContents().clear();
-			r.getContents().add(allocation); // unroot it from it's original resource...
+			r.getContents().add(allocation); // uproots model from it's original resource...
 		}
 		{
 			final Resource r = rs.getResource(monitors.get(0).eResource().getURI(), false);
 			r.getContents().clear();
-			r.getContents().add(monitorRepository);
+			r.getContents().add(monitorRepository); // uproots model from it's original resource...
 		}
 		{
 			final Resource r = rs.getResource(spds.get(0).eResource().getURI(), false);
 			r.getContents().clear();
-			r.getContents().add(spd);
+			r.getContents().add(spd); // uproots model from it's original resource...
 		}
 
 		/* add initial ScalingPolicy, if present */

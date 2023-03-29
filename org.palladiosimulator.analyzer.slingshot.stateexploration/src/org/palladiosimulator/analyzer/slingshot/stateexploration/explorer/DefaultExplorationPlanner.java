@@ -93,10 +93,9 @@ public class DefaultExplorationPlanner {
 	 */
 	private void updateGraphFringe(final DefaultState start) {
 		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
-		// TODO For now : skip proactive reconfigurations.
-//		for (final ScalingPolicy scalingPolicy : policies) {
-//			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
-//		}
+		for (final ScalingPolicy scalingPolicy : policies) {
+			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
+		}
 	}
 
 	/**
