@@ -65,6 +65,7 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	 * @return
 	 */
 	private Set<DESEvent> snapEvents() {
+		// i think this is not smart.
 		final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
 
 

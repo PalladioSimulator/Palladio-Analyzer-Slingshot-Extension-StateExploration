@@ -215,8 +215,15 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		.forEach(allocContext -> allocContext.getAssemblyContext_AllocationContext());
 
 		this.getSPD().getTargetGroups().stream().filter(tg -> (tg instanceof ElasticInfrastructure)).map(tg -> (ElasticInfrastructure) tg).forEach(tg -> tg.getPCM_ResourceEnvironment());
+
+		// resolve all proxies via resource set partition:
+		//(new ResourceSetPartition()).resolveAllProxies();
 	}
 
+	/**
+	 *
+	 * @return Builder.
+	 */
 	public static Builder builder() {
 		return new Builder();
 	}
