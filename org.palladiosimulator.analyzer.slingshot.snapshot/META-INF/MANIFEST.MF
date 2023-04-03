@@ -13,7 +13,6 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.monitorrepository;bundle-version="5.1.0",
  org.palladiosimulator.probeframework,
  de.uka.ipd.sdq.simucomframework,
- org.palladiosimulator.analyzer.slingshot.stateexploration,
  org.palladiosimulator.edp2.util;bundle-version="5.1.0",
  org.palladiosimulator.analyzer.slingshot.eventdriver,
  org.palladiosimulator.analyzer.slingshot.common,
@@ -23,5 +22,6 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.common.utils,
  org.palladiosimulator.analyzer.slingshot.behavior.util,
  org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.data,
- org.palladiosimulator.analyzer.slingshot.behavior.spd.data
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.data
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot

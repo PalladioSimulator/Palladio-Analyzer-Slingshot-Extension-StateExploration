@@ -5,10 +5,7 @@ Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.api,
- org.palladiosimulator.analyzer.slingshot.stateexploration.change.api,
- org.palladiosimulator.analyzer.slingshot.stateexploration.explorer,
- org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph
+Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.explorer
 Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.snapshot.data,
  org.apache.log4j,
@@ -20,4 +17,5 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.common,
  org.palladiosimulator.analyzer.slingshot.core,
  org.palladiosimulator.analyzer.workflow,
- org.palladiosimulator.analyzer.slingshot.behavior.spd.data
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.data

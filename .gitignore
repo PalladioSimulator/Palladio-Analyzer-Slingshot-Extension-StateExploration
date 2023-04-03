@@ -4,6 +4,8 @@
 **/src-gen/
 **/xtend-gen/
 
+**/.DS_Store
+
 # Package Files #
 *.jar
 *.war
