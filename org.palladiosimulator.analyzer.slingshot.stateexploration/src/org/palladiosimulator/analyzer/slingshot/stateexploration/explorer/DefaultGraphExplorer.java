@@ -94,7 +94,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 3; i++) { // just random.
+		for (int i = 0; i < 4; i++) { // just random.
 			final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
 
 			this.exploreBranch(config);

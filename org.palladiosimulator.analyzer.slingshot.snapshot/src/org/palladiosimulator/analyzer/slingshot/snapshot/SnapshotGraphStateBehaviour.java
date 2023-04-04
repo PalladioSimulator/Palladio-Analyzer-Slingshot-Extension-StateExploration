@@ -106,7 +106,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		assert snapshotConfig.isStartFromSnapshot();
 
 		this.initOffsets(this.eventsToInitOn);
-		return Result.from(this.eventsToInitOn);
+		return Result.of(this.eventsToInitOn);
 	}
 
 	/**
