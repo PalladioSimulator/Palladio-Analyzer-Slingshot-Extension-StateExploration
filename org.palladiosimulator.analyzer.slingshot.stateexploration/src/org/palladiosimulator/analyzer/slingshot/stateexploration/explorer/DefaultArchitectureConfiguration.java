@@ -15,6 +15,7 @@ import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
 import org.palladiosimulator.pcm.system.System;
+import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.targets.ElasticInfrastructure;
 
@@ -27,6 +28,7 @@ import org.palladiosimulator.spd.targets.ElasticInfrastructure;
  * @author stiesssh
  *
  */
+@Deprecated
 public class DefaultArchitectureConfiguration implements ArchitectureConfiguration {
 
 	private final Allocation allocation;
@@ -52,6 +54,11 @@ public class DefaultArchitectureConfiguration implements ArchitectureConfigurati
 	@Override
 	public SPD getSPD() {
 		return this.spd;
+	}
+
+	@Override
+	public ServiceLevelObjectiveRepository getSLOs() {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	/** TODO : I was doing stuff here --- yeah, okey, but what stuff? O_o **/

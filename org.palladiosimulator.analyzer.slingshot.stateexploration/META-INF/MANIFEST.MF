@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Stateexploration
-Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration
 Bundle-RequiredExecutionEnvironment: JavaSE-11
@@ -18,4 +18,7 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.core,
  org.palladiosimulator.analyzer.workflow,
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
- org.palladiosimulator.analyzer.slingshot.stateexploration.data
+ org.palladiosimulator.analyzer.slingshot.stateexploration.data,
+ org.palladiosimulator.servicelevelobjective;bundle-version="5.1.0",
+ org.palladiosimulator.analyzer.slingshot.ui.events,
+ org.palladiosimulator.analyzer.slingshot.workflow.events

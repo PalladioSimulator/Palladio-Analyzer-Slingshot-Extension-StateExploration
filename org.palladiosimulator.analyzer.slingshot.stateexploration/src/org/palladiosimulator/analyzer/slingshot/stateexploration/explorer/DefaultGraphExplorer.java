@@ -27,6 +27,8 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
 import org.palladiosimulator.pcm.allocation.Allocation;
+import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
+import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.SpdPackage;
 import com.google.inject.AbstractModule;
@@ -77,8 +79,13 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			LOGGER.info("SDP not present: List size is 0.");
 		}
 
+		final List<EObject> slo = initModels.getElement(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository());
+		if (slo.size() == 0) {
+			LOGGER.info("SLOS are not present: List size is 0.");
+		}
+
 		this.graph = new DefaultGraph(this.createRoot(this.initModels.getAllocation(),
-				(MonitorRepository) monitors.get(0), (SPD) spds.get(0)));
+				(MonitorRepository) monitors.get(0), (SPD) spds.get(0), (ServiceLevelObjectiveRepository) slo.get(0)));
 
 		this.blackbox = new DefaultExplorationPlanner((SPD) spds.get(0), (DefaultGraph) this.graph);
 	}
@@ -107,10 +114,15 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Create root node for the graph. Sadly, ExperimentSettings for root are null
 	 * :/
 	 */
-	private DefaultState createRoot(final Allocation alloc, final MonitorRepository monitoring, final SPD spd) {
+	private DefaultState createRoot(final Allocation alloc, final MonitorRepository monitoring, final SPD spd,
+			final ServiceLevelObjectiveRepository slo) {
 		// final ArchitectureConfiguration rootConfig = new
 		// DefaultArchitectureConfiguration(alloc, monitoring, spd);
-		final ArchitectureConfiguration rootConfig = new UriBasedArchitectureConfiguration(alloc, monitoring, spd);
+		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration.builder()
+				.withAllocation(alloc)
+				.withMonitorRepository(monitoring)
+				.withSPD(spd)
+				.withSLO(slo).build();
 
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 

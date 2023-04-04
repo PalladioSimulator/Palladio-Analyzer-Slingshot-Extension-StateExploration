@@ -15,6 +15,7 @@ import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
 import org.palladiosimulator.pcm.system.System;
+import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.targets.ElasticInfrastructure;
 
@@ -32,13 +33,15 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	private final URI allocation;
 	private final URI monitorRepository;
 	private final URI spd;
+	private final URI slo;
 
 	private ResourceSet set = null;
 
-	public UriBasedArchitectureConfiguration(final Allocation allocation, final MonitorRepository monitorRepository, final SPD spd) {
+	private UriBasedArchitectureConfiguration(final Allocation allocation, final MonitorRepository monitorRepository, final SPD spd, final ServiceLevelObjectiveRepository slo) {
 		this.allocation = allocation.eResource().getURI();
 		this.monitorRepository = monitorRepository.eResource().getURI();
 		this.spd = spd.eResource().getURI();
+		this.slo = slo.eResource().getURI();
 	}
 
 	@Override
@@ -92,19 +95,39 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		return (SPD) set.getResource(spd, false).getContents().get(0);
 	}
 
+	@Override
+	public ServiceLevelObjectiveRepository getSLOs() {
+		if (set == null) {
+			this.load();
+		}
+		if (set.getResource(slo, false).getContents().isEmpty()) {
+			final Resource tmp = set.getResource(slo, false);
+			try {
+				tmp.unload();
+				tmp.load(((XMLResource) tmp).getDefaultLoadOptions());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return (ServiceLevelObjectiveRepository) set.getResource(slo, false).getContents().get(0);
+
+	}
+
 	/**
-	 * create resource set and load alloc, spd, and monitor
+	 * create resource set and load alloc, spd, and monitor + slo
 	 */
 	private void load() {
 		this.set = new ResourceSetImpl();
 		final Resource res = set.createResource(allocation);
 		final Resource spdres = set.createResource(spd);
 		final Resource monitorres = set.createResource(monitorRepository);
+		final Resource slores = set.createResource(slo);
 
 		try {
 			res.load(((XMLResource) res).getDefaultLoadOptions());
 			spdres.load(((XMLResource) spdres).getDefaultLoadOptions());
 			monitorres.load(((XMLResource) monitorres).getDefaultLoadOptions());
+			slores.load(((XMLResource) slores).getDefaultLoadOptions());
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
@@ -121,7 +144,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		this.copyAlloc(builder, idSegment);
 
 		final UriBasedArchitectureConfiguration copy = builder.build();
-		// copy.resolveProxies(); // Yes, Alloc and SPD reference the same Res.Env once resolved.
+		// copy.resolveProxies(); // For test reasons : Yes, Alloc and SPD reference the same Res.Env once resolved.
 
 		return copy;
 	}
@@ -134,6 +157,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	private void copyAlloc(final Builder builder, final String idSegment) {
 
 		final SPD spdModel = this.getSPD();
+		final ServiceLevelObjectiveRepository sloModel = this.getSLOs();
 		final Allocation allocModel = this.getAllocation();
 		final ResourceEnvironment resourceEnvironment = allocModel.getTargetResourceEnvironment_Allocation();
 		final System system = allocModel.getSystem_Allocation();
@@ -152,10 +176,14 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		final URI newSPDUri = ResourceUtils.insertFragment(spd, idSegment, spd.segmentCount() - 1);
 		spdModel.eResource().setURI(newSPDUri);
 
+		final URI newSLOUri = ResourceUtils.insertFragment(slo, idSegment, slo.segmentCount() - 1);
+		sloModel.eResource().setURI(newSLOUri);
+
 		ResourceUtils.saveResource(resourceEnvironment.eResource());
 		ResourceUtils.saveResource(system.eResource());
 		ResourceUtils.saveResource(allocModel.eResource());
 		ResourceUtils.saveResource(spdModel.eResource());
+		ResourceUtils.saveResource(sloModel.eResource());
 
 
 
@@ -174,15 +202,19 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		system.eResource().setURI(oldSysUri);
 		resourceEnvironment.eResource().setURI(oldResUri);
 		spdModel.eResource().setURI(spd);
+		sloModel.eResource().setURI(slo);
 
 
 		final ResourceSet newset = new ResourceSetImpl();
+
 		final Resource res = newset.createResource(newAllocUri);
 		final Resource spdres = newset.createResource(newSPDUri);
+		final Resource slores = newset.createResource(newSLOUri);
 
 		try {
 			res.load(((XMLResource) res).getDefaultLoadOptions());
 			spdres.load(((XMLResource) spdres).getDefaultLoadOptions());
+			slores.load(((XMLResource) slores).getDefaultLoadOptions());
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
@@ -193,8 +225,15 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		final String spdFragment = spdres.getURIFragment(spdModel);
 		final SPD copySpd = (SPD) spdres.getEObject(spdFragment);
 
+
+		// SLO Repositories have no ID and thus no fragment
+		// final String sloFragment = spdres.getURIFragment(sloModel);
+		// final ServiceLevelObjectiveRepository copySlo = (ServiceLevelObjectiveRepository) slores.getEObject(sloFragment);
+		final ServiceLevelObjectiveRepository copySlo = (ServiceLevelObjectiveRepository) slores.getContents().get(0);
+
 		builder.withAllocation(copyAlloc);
 		builder.withSPD(copySpd);
+		builder.withSLO(copySlo); // TODO : copy slo
 		builder.withMonitorRepository(this.getMonitorRepository()); //TODO : copy monitoring
 	}
 
@@ -216,6 +255,9 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 		this.getSPD().getTargetGroups().stream().filter(tg -> (tg instanceof ElasticInfrastructure)).map(tg -> (ElasticInfrastructure) tg).forEach(tg -> tg.getPCM_ResourceEnvironment());
 
+		//TODO resolve monitoring +  MPs
+		//TODO resolve SLOs
+
 		// resolve all proxies via resource set partition:
 		//(new ResourceSetPartition()).resolveAllProxies();
 	}
@@ -236,6 +278,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		private Allocation alloc;
 		private MonitorRepository monitorRepository;
 		private SPD spd;
+		private ServiceLevelObjectiveRepository slo;
 
 		private Builder() {
 		}
@@ -255,9 +298,13 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 			return this;
 		}
 
+		public Builder withSLO(final ServiceLevelObjectiveRepository slo) {
+			this.slo = slo;
+			return this;
+		}
+
 		public UriBasedArchitectureConfiguration build() {
-			return new UriBasedArchitectureConfiguration(alloc, monitorRepository, spd);
+			return new UriBasedArchitectureConfiguration(alloc, monitorRepository, spd, slo);
 		}
 	}
-
 }
