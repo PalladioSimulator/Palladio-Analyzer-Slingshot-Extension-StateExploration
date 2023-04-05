@@ -19,4 +19,9 @@ public class ReactiveReconfiguration implements Change {
 	public DESEvent getReactiveReconfigurationEvent() {
 		return event;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("%s-reconfiguration", event.getName());
+	}
 }

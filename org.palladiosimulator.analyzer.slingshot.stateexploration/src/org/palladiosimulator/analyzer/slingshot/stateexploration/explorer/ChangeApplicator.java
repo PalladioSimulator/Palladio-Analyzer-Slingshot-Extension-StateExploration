@@ -11,8 +11,12 @@ import org.palladiosimulator.pcm.core.PCMRandomVariable;
 import org.palladiosimulator.pcm.usagemodel.UsageModel;
 import org.palladiosimulator.pcm.usagemodel.Workload;
 import org.palladiosimulator.spd.ScalingPolicy;
+import org.palladiosimulator.spd.SpdFactory;
+import org.palladiosimulator.spd.adjustments.AdjustmentsFactory;
+import org.palladiosimulator.spd.adjustments.StepAdjustment;
 import org.palladiosimulator.spd.targets.ElasticInfrastructure;
 import org.palladiosimulator.spd.targets.TargetGroup;
+import org.palladiosimulator.spd.targets.TargetsFactory;
 import org.palladiosimulator.spd.triggers.RelationalOperator;
 import org.palladiosimulator.spd.triggers.SimpleFireOnValue;
 import org.palladiosimulator.spd.triggers.TriggersFactory;
@@ -96,6 +100,44 @@ public class ChangeApplicator {
 		} else {
 			throw new IllegalArgumentException(String.format("Target Group of type %s not yet supported", oneTrickPony.getTargetGroup().getClass().getSimpleName()));
 		}
+
+		return oneTrickPony;
+	}
+
+	/**
+	 * creates a scaling policy from nothing.
+	 *
+	 * target group is not set.
+	 *
+	 * @return
+	 */
+	public static ScalingPolicy createScalingPolicyFromNothing(){
+		final ScalingPolicy oneTrickPony = SpdFactory.eINSTANCE.createScalingPolicy();
+
+		/* create AdjustmentType */
+		final StepAdjustment adjustment = AdjustmentsFactory.eINSTANCE.createStepAdjustment();
+		adjustment.setStepValue(1);
+
+		/* create CreateTrigger */
+		final ExpectedTime time = ExpectationsFactory.eINSTANCE.createExpectedTime();
+		time.setValue(0.0);
+		final SimulationTime stimulus = StimuliFactory.eINSTANCE.createSimulationTime();
+
+		final SimpleFireOnValue trigger = TriggersFactory.eINSTANCE.createSimpleFireOnValue();
+		trigger.setExpectedValue(time);
+		trigger.setStimulus(stimulus);
+		trigger.setRelationalOperator(RelationalOperator.EQUAL_TO);
+
+
+		/* create TargetGroup */
+		final ElasticInfrastructure targetGroup = TargetsFactory.eINSTANCE.createElasticInfrastructure();
+		//targetGroup.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
+
+		oneTrickPony.setEntityName("TemplatePolicy");
+		oneTrickPony.setActive(true);
+		oneTrickPony.setAdjustmentType(adjustment);
+		oneTrickPony.setScalingTrigger(trigger);
+		oneTrickPony.setTargetGroup(targetGroup);
 
 		return oneTrickPony;
 	}

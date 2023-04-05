@@ -2,8 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.util.ArrayDeque;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
+import java.util.Set;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
@@ -38,13 +37,15 @@ public class DefaultExplorationPlanner {
 	private final ChangeApplicator changeApplicator;
 
 	public DefaultExplorationPlanner(final SPD spd, final DefaultGraph graph) {
-		this.policies = new ArrayDeque<>(spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).collect(Collectors.toList()));
+		//this.policies = new ArrayDeque<>(spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).collect(Collectors.toList()));
+		this.policies = new ArrayDeque<>(Set.of(ChangeApplicator.createScalingPolicyFromNothing()));
+
 		this.rawgraph = graph;
 		this.changeApplicator = new ChangeApplicator();
 
 		final DefaultState root = graph.getRoot();
 
-		this.updateGraphFringe(root);
+		this.updateGraphFringePostSimulation(root);
 	}
 
 	/**
@@ -57,8 +58,6 @@ public class DefaultExplorationPlanner {
 
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
-
-		this.updateGraphFringe(end);
 
 		final double duration = calculateRunDuration(start);
 
@@ -89,24 +88,6 @@ public class DefaultExplorationPlanner {
 	}
 
 	/**
-	 * Insert possible changes, out going from the given node into the fringe.
-	 *
-	 * Currently, insert an NOP and one todo for each known scaling policy
-	 *
-	 * Actually, i've always wondered how to get reactive reconfiguration out of the
-	 * simulation, and this kinda connects to this fringe thing...and i have
-	 * thoughts but cant find the words right now.
-	 *
-	 * @param start
-	 */
-	private void updateGraphFringe(final DefaultState start) {
-		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
-		for (final ScalingPolicy scalingPolicy : policies) {
-			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
-		}
-	}
-
-	/**
 	 * Temporary helper
 	 *
 	 * TODO : restructure
@@ -114,34 +95,39 @@ public class DefaultExplorationPlanner {
 	 * @param start
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
+		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
 		if (start.getSnapshot().getAdjustorEvent().isPresent()) {
 			final DESEvent event = start.getSnapshot().getAdjustorEvent().get();
 			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+		}
+		for (final ScalingPolicy scalingPolicy : policies) {
+			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
 		}
 	}
 
 	/**
 	 * Create a new graph note with a new arch configuration.
 	 *
-	 * Also add the new node to the graph and set the transitions that lead into the
-	 * new node.
+	 * creating a fully connected Graph node encompasses :
+	 * - copying architecture configuration from preceding state.
+	 * - setting the start time of the new node wrt. global time.
+	 * - adding the node to the graph's node list.
+	 * - creating transition to connect new node t predecessor.
 	 *
-	 * @return a new node, already connected to the graph.
+	 * @return a new node, connected to its predecessor in graph.
 	 */
 	private DefaultState createNewGraphNode(final ToDoChange next) {
-		final DefaultState start = next.getStart();
+		final DefaultState predecessor = next.getStart();
 
-		final ArchitectureConfiguration newConfig = start.getArchitecureConfiguration().copy();
+		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
+		final DefaultState newNode = new DefaultState(predecessor.getEndTime(), newConfig);
 
-		final DefaultState end = new DefaultState(start.getEndTime(), newConfig);
+		this.rawgraph.addNode(newNode);
 
-		this.rawgraph.addNode(end);
+		final DefaultTransition nextTransition = new DefaultTransition(next.getChange(), predecessor, newNode);
+		predecessor.addOutTransition(nextTransition);
 
-		final DefaultTransition nextTransition = new DefaultTransition(next.getChange(), start, end);
-
-		start.addOutTransition(nextTransition);
-
-		return end;
+		return newNode;
 	}
 
 	/**

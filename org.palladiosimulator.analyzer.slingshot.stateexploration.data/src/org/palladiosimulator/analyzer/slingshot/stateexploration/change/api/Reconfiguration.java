@@ -52,4 +52,9 @@ public class Reconfiguration implements Change {
 //	public void setResult(final AdjustmentResult result) {
 //		this.result = result;
 //	}
+
+	@Override
+	public String toString() {
+		return String.format("%s-reconfiguration", policy.getEntityName());
+	}
 }

@@ -19,4 +19,13 @@ public class ToDoChange {
 	public Optional<Change> getChange() {
 		return change;
 	}
+
+	@Override
+	public String toString() {
+		if (change.isEmpty()) {
+			return "NOP for " + start.getId();
+		} else {
+			return String.format("%s for %s", change.get().toString(), start.getId());
+		}
+	}
 }
