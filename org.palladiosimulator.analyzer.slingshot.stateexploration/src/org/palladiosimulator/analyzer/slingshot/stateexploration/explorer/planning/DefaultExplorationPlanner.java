@@ -1,14 +1,13 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
-import java.util.ArrayDeque;
 import java.util.Optional;
-import java.util.Set;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultTransition;
@@ -33,19 +32,17 @@ public class DefaultExplorationPlanner {
 	private static final Logger LOGGER = Logger.getLogger(DefaultExplorationPlanner.class.getName());
 
 	private final DefaultGraph rawgraph;
-	private final ArrayDeque<ScalingPolicy> policies;
-	private final ChangeApplicator changeApplicator;
+	private final ScalingPolicyConcerns changeApplicator;
+	private final AdjustorEventConcerns adjustorEventConcerns;
+	private final CutOffConcerns cutOffConcerns;
 
 	public DefaultExplorationPlanner(final SPD spd, final DefaultGraph graph) {
-		//this.policies = new ArrayDeque<>(spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).collect(Collectors.toList()));
-		this.policies = new ArrayDeque<>(Set.of(ChangeApplicator.createScalingPolicyFromNothing()));
-
 		this.rawgraph = graph;
-		this.changeApplicator = new ChangeApplicator();
+		this.changeApplicator = new ScalingPolicyConcerns();
+		this.adjustorEventConcerns = new AdjustorEventConcerns();
+		this.cutOffConcerns = new CutOffConcerns();
 
-		final DefaultState root = graph.getRoot();
-
-		this.updateGraphFringePostSimulation(root);
+		this.updateGraphFringePostSimulation(graph.getRoot());
 	}
 
 	/**
@@ -54,7 +51,15 @@ public class DefaultExplorationPlanner {
 	 * @return Configuration for the next simulation run
 	 */
 	public SimulationInitConfiguration createConfigForNextSimualtionRun() {
-		final ToDoChange next = this.rawgraph.getNext();
+		assert this.rawgraph.hasNext();
+
+		ToDoChange next = this.rawgraph.getNext();
+
+		while (!this.cutOffConcerns.shouldExplore(next)) {
+			LOGGER.debug(String.format("Future %s is bad, wont explore.", next.toString()));
+			// TODO : Exception if the entire fringe is bad.
+			next = this.rawgraph.getNext();
+		}
 
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
@@ -71,7 +76,7 @@ public class DefaultExplorationPlanner {
 		if (next.getChange().get() instanceof final ReactiveReconfiguration reactiveReconf) {
 			LOGGER.debug("Reactive Reconfiguration : Update Target Group");
 
-			final DESEvent initEvent = this.changeApplicator.updateTargetGroup(
+			final DESEvent initEvent = this.adjustorEventConcerns.copyForTargetGroup(
 					reactiveReconf.getReactiveReconfigurationEvent(), end.getArchitecureConfiguration());
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent);
 		}
@@ -88,19 +93,22 @@ public class DefaultExplorationPlanner {
 	}
 
 	/**
-	 * Temporary helper
+	 * Add new exploration directions to the graph fringe.
 	 *
-	 * TODO : restructure
+	 * To be called after the given state was simulated.
 	 *
 	 * @param start
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
+		// NOP
 		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
+		// Reactive Reconfiguration
 		if (start.getSnapshot().getAdjustorEvent().isPresent()) {
 			final DESEvent event = start.getSnapshot().getAdjustorEvent().get();
 			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
-		for (final ScalingPolicy scalingPolicy : policies) {
+		// Proactive Reconfiguration
+		for (final ScalingPolicy scalingPolicy : this.changeApplicator.getExplorationPolicyTemplates()) {
 			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
 		}
 	}

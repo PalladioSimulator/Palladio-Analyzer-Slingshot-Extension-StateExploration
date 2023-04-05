@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration;
 
 import java.io.IOException;
 import java.util.UUID;

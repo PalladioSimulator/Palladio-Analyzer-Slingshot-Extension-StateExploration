@@ -18,6 +18,9 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapsh
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -51,7 +54,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final DefaultExplorationPlanner blackbox;
 
-	private final RawStateGraph graph;
+	private final DefaultGraph graph;
 
 	private final IProgressMonitor monitor;
 
@@ -73,14 +76,18 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.graph = new DefaultGraph(
 				this.createRoot(this.initModels.getAllocation(), monitorRepository, spd, sloRepository));
 
-		this.blackbox = new DefaultExplorationPlanner(spd, (DefaultGraph) this.graph);
+		this.blackbox = new DefaultExplorationPlanner(spd, this.graph);
 	}
 
 	@Override
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 8; i++) { // just random.
+		for (int i = 0; i < 10; i++) { // just random.
+			if (!this.graph.hasNext()) {
+				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
+				break;
+			}
 			final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
 
 			this.exploreBranch(config);
@@ -92,7 +99,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 						s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
 		LOGGER.info("********** Transitions : ");
 		this.graph.getTransitions().stream().forEach(t -> LOGGER
-				.info(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType().toString())));
+				.info(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
 		return this.graph;
 	}
 
