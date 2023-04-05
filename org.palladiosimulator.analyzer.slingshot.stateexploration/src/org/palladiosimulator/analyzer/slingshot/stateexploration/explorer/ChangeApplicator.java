@@ -76,6 +76,8 @@ public class ChangeApplicator {
 	public ScalingPolicy createOneTimeUsageScalingPolicy(final ScalingPolicy template, final ArchitectureConfiguration config){
 		final ScalingPolicy oneTrickPony = EcoreUtil.copy(template);//SpdFactory.eINSTANCE.createScalingPolicy();
 
+		oneTrickPony.setEntityName("OneTrickPonyPolicy");
+
 
 		final ExpectedTime time = ExpectationsFactory.eINSTANCE.createExpectedTime();
 		time.setValue(0.0);
@@ -84,7 +86,7 @@ public class ChangeApplicator {
 		final SimpleFireOnValue trigger = TriggersFactory.eINSTANCE.createSimpleFireOnValue();
 		trigger.setExpectedValue(time);
 		trigger.setStimulus(stimulus);
-		trigger.setRelationalOperator(RelationalOperator.GREATER_THAN_OR_EQUAL_TO);
+		trigger.setRelationalOperator(RelationalOperator.EQUAL_TO);
 
 
 		oneTrickPony.setScalingTrigger(trigger);

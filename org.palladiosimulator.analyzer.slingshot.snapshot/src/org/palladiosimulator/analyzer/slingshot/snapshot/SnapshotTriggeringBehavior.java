@@ -69,12 +69,14 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 		// only intercept triggered adjustments. do not intercept snapped adjustments..
 		// assumption: do not copy adjustor events from the FEL, i.e. the "first" adjustor is always from the snapshot.
 		if (event.time() == 0) {
+			LOGGER.debug(String.format("Succesfully route %s to %s", event.getName(), information.getEnclosingType().get().getSimpleName()));
 			return InterceptionResult.success();
 		}
 
 		state.setReasonToLeave(ReasonToLeave.reactiveReconfiguration);
 		scheduling.scheduleEvent(new SnapshotInitiated(0, event));
 
+		LOGGER.debug(String.format("Abort routing %s to %s", event.getName(), information.getEnclosingType().get().getSimpleName()));
 		return InterceptionResult.abort();
 	}
 

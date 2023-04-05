@@ -6,6 +6,7 @@ import java.util.Set;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ModelElementDifference;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.pcm.core.entity.Entity;
 
@@ -59,6 +60,8 @@ public interface RawTransition {
 	default TransitionType getType() {
 		if (this.getChange().isEmpty()) {
 			return TransitionType.NOP;
+		} else if (this.getChange().get() instanceof ReactiveReconfiguration) {
+			return TransitionType.reactiveReconfiguration;
 		} else if (this.getChange().get() instanceof Reconfiguration) {
 			return TransitionType.reconfiguration;
 		} else if (this.getChange().get() instanceof EnvironmentChange) {

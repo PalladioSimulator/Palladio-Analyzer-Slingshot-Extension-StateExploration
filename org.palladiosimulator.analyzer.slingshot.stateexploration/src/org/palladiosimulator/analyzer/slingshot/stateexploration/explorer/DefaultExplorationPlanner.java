@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.util.ArrayDeque;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -37,7 +38,7 @@ public class DefaultExplorationPlanner {
 	private final ChangeApplicator changeApplicator;
 
 	public DefaultExplorationPlanner(final SPD spd, final DefaultGraph graph) {
-		this.policies = new ArrayDeque<>(spd.getScalingPolicies());
+		this.policies = new ArrayDeque<>(spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).collect(Collectors.toList()));
 		this.rawgraph = graph;
 		this.changeApplicator = new ChangeApplicator();
 

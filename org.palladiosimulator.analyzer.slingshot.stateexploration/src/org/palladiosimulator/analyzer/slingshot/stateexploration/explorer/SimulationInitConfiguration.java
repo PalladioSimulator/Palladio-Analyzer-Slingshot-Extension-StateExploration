@@ -7,6 +7,12 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.spd.ScalingPolicy;
 
+/**
+ *
+ *
+ * @author stiesssh
+ *
+ */
 public class SimulationInitConfiguration {
 
 	private final Snapshot snapToInitOn;
@@ -35,9 +41,20 @@ public class SimulationInitConfiguration {
 		return this.explorationDuration;
 	}
 
+	/**
+	 * Get policy for proactive reconfiguration transition.
+	 *
+	 * @return the policy
+	 */
 	public Optional<ScalingPolicy> getPolicy() {
 		return this.policy;
 	}
+
+	/**
+	 * Get ScalingEvent for reactive reconfiguration transition
+	 *
+	 * @return the event
+	 */
 	public Optional<DESEvent> getEvent() {
 		return this.event;
 	}
