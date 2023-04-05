@@ -1,15 +1,14 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
@@ -25,12 +24,9 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
-import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
-import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 import org.palladiosimulator.spd.SPD;
-import org.palladiosimulator.spd.SpdPackage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -69,25 +65,15 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// TODO
 		// cannot yet grab the models at the providers, or can i?
 		// get monitor Repo + spds.
-		final List<EObject> monitors = initModels.getElement(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository());
-		if (monitors.size() == 0) {
-			LOGGER.info("Monitor not present: List size is 0.");
-		}
 
-		final List<EObject> spds = initModels.getElement(SpdPackage.eINSTANCE.getSPD());
-		if (spds.size() == 0) {
-			LOGGER.info("SDP not present: List size is 0.");
-		}
+		final MonitorRepository monitorRepository = PCMResourcePartitionHelper.getMonitorRepository(partition);
+		final SPD spd = PCMResourcePartitionHelper.getSPD(partition);
+		final ServiceLevelObjectiveRepository sloRepository = PCMResourcePartitionHelper.getSLORepository(partition);
 
-		final List<EObject> slo = initModels.getElement(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository());
-		if (slo.size() == 0) {
-			LOGGER.info("SLOS are not present: List size is 0.");
-		}
+		this.graph = new DefaultGraph(
+				this.createRoot(this.initModels.getAllocation(), monitorRepository, spd, sloRepository));
 
-		this.graph = new DefaultGraph(this.createRoot(this.initModels.getAllocation(),
-				(MonitorRepository) monitors.get(0), (SPD) spds.get(0), (ServiceLevelObjectiveRepository) slo.get(0)));
-
-		this.blackbox = new DefaultExplorationPlanner((SPD) spds.get(0), (DefaultGraph) this.graph);
+		this.blackbox = new DefaultExplorationPlanner(spd, (DefaultGraph) this.graph);
 	}
 
 	@Override
@@ -118,11 +104,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			final ServiceLevelObjectiveRepository slo) {
 		// final ArchitectureConfiguration rootConfig = new
 		// DefaultArchitectureConfiguration(alloc, monitoring, spd);
-		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration.builder()
-				.withAllocation(alloc)
-				.withMonitorRepository(monitoring)
-				.withSPD(spd)
-				.withSLO(slo).build();
+		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration.builder().withAllocation(alloc)
+				.withMonitorRepository(monitoring).withSPD(spd).withSLO(slo).build();
 
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
@@ -277,7 +260,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 *
 	 * Currently, injection only works because slingshot always injects allocation.
 	 *
-	 * It's broken :(
+	 * It's broken :( --  is it though?
 	 *
 	 *
 	 * @param allocation
@@ -296,16 +279,10 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		/* remove old models... */
 		// rs.getResources().remove(newPartition.getAllocation().eResource());
 
-		final List<EObject> monitors = initModels.getElement(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository());
-		if (monitors.size() == 0) {
-			LOGGER.info("Monitor not present: List size is 0.");
-		}
+		final MonitorRepository currentMonitor = PCMResourcePartitionHelper.getMonitorRepository(initModels);
 		// rs.getResources().remove(monitors.get(0).eResource());
 
-		final List<EObject> spds = initModels.getElement(SpdPackage.eINSTANCE.getSPD());
-		if (spds.size() == 0) {
-			LOGGER.info("SDP not present: List size is 0.");
-		}
+		final SPD currentSpd = PCMResourcePartitionHelper.getSPD(initModels);
 		// rs.getResources().remove(spds.get(0).eResource());
 
 		/* load new models */
@@ -321,12 +298,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			r.getContents().add(allocation); // uproots model from it's original resource...
 		}
 		{
-			final Resource r = rs.getResource(monitors.get(0).eResource().getURI(), false);
+			final Resource r = rs.getResource(currentMonitor.eResource().getURI(), false);
 			r.getContents().clear();
 			r.getContents().add(monitorRepository); // uproots model from it's original resource...
 		}
 		{
-			final Resource r = rs.getResource(spds.get(0).eResource().getURI(), false);
+			final Resource r = rs.getResource(currentSpd.eResource().getURI(), false);
 			r.getContents().clear();
 			r.getContents().add(spd); // uproots model from it's original resource...
 		}
