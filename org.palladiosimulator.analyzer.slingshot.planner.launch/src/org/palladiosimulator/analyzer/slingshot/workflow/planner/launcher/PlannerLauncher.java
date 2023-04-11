@@ -1,8 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -12,9 +10,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.workflow.events.WorkflowLaunchConfigurationBuilderInitialized;
-import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.ArchitecturalModelsConfiguration;
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.PlannerWorkflowConfiguration;
-import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.SlingshotSpecificWorkflowConfiguration;
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher.jobs.PlannerRootJob;
 import org.palladiosimulator.analyzer.workflow.configurations.AbstractPCMLaunchConfigurationDelegate;
 

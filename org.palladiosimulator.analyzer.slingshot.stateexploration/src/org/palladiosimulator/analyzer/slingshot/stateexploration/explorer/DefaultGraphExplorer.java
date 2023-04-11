@@ -23,6 +23,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.config
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
@@ -143,21 +144,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// provided D:
 		final SubModule submodule = new SubModule(config, snapConfig);
 
-		final AbstractModule simComConfigProvider = new AbstractModule() {
-			@Provides
-			public IProgressMonitor monitor() {
-				return monitor;
-			}
 
-			@Provides
-			public SimuComConfig config() {
-				return simuComConfig;
-			}
-		};
+		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 
 		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
 
-		driver.init(Set.of(submodule, simComConfigProvider), simuComConfig);
+		driver.init(simuComConfig, monitor, Set.of(submodule));
 		driver.start();
 
 		// Post processing :

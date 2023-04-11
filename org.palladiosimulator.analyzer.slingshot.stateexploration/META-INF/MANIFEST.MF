@@ -22,4 +22,5 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.servicelevelobjective;bundle-version="5.1.0",
  org.palladiosimulator.analyzer.slingshot.ui.events,
  org.palladiosimulator.analyzer.slingshot.workflow.events,
- org.palladiosimulator.analyzer.slingshot.behavior.util
+ org.palladiosimulator.analyzer.slingshot.behavior.util,
+ org.palladiosimulator.analyzer.slingshot.workflow
