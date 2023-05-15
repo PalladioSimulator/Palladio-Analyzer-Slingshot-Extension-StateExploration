@@ -4,7 +4,7 @@ Bundle-Name: Launch
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.planner.launch;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.planner.launch
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: org.eclipse.debug.ui;bundle-version="3.14.700",
  org.eclipse.swt;bundle-version="3.115.100",
  de.uka.ipd.sdq.workflow.launchconfig;bundle-version="5.1.0",

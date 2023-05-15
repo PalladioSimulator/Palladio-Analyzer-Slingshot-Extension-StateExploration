@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Data
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.snapshot.data
 Bundle-Version: 1.0.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.snapshot.data
 Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,

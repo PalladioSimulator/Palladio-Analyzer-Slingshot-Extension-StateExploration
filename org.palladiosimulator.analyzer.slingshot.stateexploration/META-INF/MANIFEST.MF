@@ -4,7 +4,7 @@ Bundle-Name: Stateexploration
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.explorer
 Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.snapshot.data,
