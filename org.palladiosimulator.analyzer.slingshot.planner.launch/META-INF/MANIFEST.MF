@@ -18,4 +18,5 @@ Require-Bundle: org.eclipse.debug.ui;bundle-version="3.14.700",
  org.palladiosimulator.analyzer.slingshot.core,
  org.palladiosimulator.analyzer.slingshot.workflow.events,
  org.palladiosimulator.analyzer.slingshot.ui.events,
- org.palladiosimulator.analyzer.slingshot.stateexploration.data
+ org.palladiosimulator.analyzer.slingshot.stateexploration.data,
+ org.palladiosimulator.analyzer.slingshot.planner

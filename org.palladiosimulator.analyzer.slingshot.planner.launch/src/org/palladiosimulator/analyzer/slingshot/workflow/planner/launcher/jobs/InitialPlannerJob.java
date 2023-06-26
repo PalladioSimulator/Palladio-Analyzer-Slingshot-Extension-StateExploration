@@ -5,6 +5,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
+import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.planner.runner.PlannerRunner;
+import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
@@ -61,6 +64,15 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver, this.configuration.getlaunchConfigParams(), monitor);
 		final RawStateGraph rawGraph =  explorer.start();
 
+		// converting the RawStateGraph to the new Graph format
+		final StateGraph graph = StateGraphConverter.convert(rawGraph)
+		;
+		// TODO: run the planning here!
+		PlannerRunner pr = new PlannerRunner(graph);
+		LOGGER.info("**** Planner started ****");
+		pr.start();
+		LOGGER.info("**** Planner finished ****");
+		
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.
 
 		// PS: i actually end up here :)
