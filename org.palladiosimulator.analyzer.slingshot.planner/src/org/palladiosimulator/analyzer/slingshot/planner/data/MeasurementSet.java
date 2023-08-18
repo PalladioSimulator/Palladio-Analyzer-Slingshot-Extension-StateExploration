@@ -11,7 +11,7 @@ import java.util.function.UnaryOperator;
  * @author Jonas Edlhuber
  *
  */
-public class MeasurementSet extends ArrayList<Measurement<Double>> {
+public class MeasurementSet extends ArrayList<Measurement<Number>> {
 	private Double measurementsSetMedian;
 	private Double measurementsSetAverage;
 	
@@ -22,7 +22,7 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 		super();
 	}
 
-	public MeasurementSet(Collection<? extends Measurement<Double>> c) {
+	public MeasurementSet(Collection<? extends Measurement<Number>> c) {
 		super(c);
 	}
 
@@ -51,7 +51,7 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 			return 0;
 		}
 		if (measurementsSetMedian == null) {
-			double[] doubles = this.stream().mapToDouble(x -> x.getMeasure()).sorted().toArray();
+			double[] doubles = this.stream().mapToDouble(x -> x.getMeasure().doubleValue()).sorted().toArray();
 			measurementsSetMedian = doubles[doubles.length/2];
 		}
 		return measurementsSetMedian;
@@ -62,7 +62,7 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 			return 0;
 		}
 		if (measurementsSetAverage == null) {
-			measurementsSetAverage = this.stream().mapToDouble(x -> x.getMeasure()).sum()/this.size();
+			measurementsSetAverage = this.stream().mapToDouble(x -> x.getMeasure().doubleValue()).sum()/this.size();
 		}
 		return measurementsSetAverage;
 	}
@@ -72,25 +72,25 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 	 */
 	
 	@Override
-	public void add(int index, Measurement<Double> element) {
+	public void add(int index, Measurement<Number> element) {
 		super.add(index, element);
 		this.measurementsSetAverage = null;
 	}
 
 	@Override
-	public boolean add(Measurement<Double> e) {
+	public boolean add(Measurement<Number> e) {
 		resetCalcuationCaches();
 		return super.add(e);
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends Measurement<Double>> c) {
+	public boolean addAll(Collection<? extends Measurement<Number>> c) {
 		resetCalcuationCaches();
 		return super.addAll(c);
 	}
 
 	@Override
-	public boolean addAll(int index, Collection<? extends Measurement<Double>> c) {
+	public boolean addAll(int index, Collection<? extends Measurement<Number>> c) {
 		resetCalcuationCaches();
 		return super.addAll(index, c);
 	}
@@ -102,7 +102,7 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 	}
 
 	@Override
-	public Measurement<Double> remove(int index) {
+	public Measurement<Number> remove(int index) {
 		resetCalcuationCaches();
 		return super.remove(index);
 	}
@@ -120,7 +120,7 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 	}
 
 	@Override
-	public boolean removeIf(Predicate<? super Measurement<Double>> filter) {
+	public boolean removeIf(Predicate<? super Measurement<Number>> filter) {
 		resetCalcuationCaches();
 		return super.removeIf(filter);
 	}
@@ -132,13 +132,13 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 	}
 
 	@Override
-	public void replaceAll(UnaryOperator<Measurement<Double>> operator) {
+	public void replaceAll(UnaryOperator<Measurement<Number>> operator) {
 		super.replaceAll(operator);
 		resetCalcuationCaches();
 	}
 
 	@Override
-	public Measurement<Double> set(int index, Measurement<Double> element) {
+	public Measurement<Number> set(int index, Measurement<Number> element) {
 		resetCalcuationCaches();
 		return super.set(index, element);
 	}
