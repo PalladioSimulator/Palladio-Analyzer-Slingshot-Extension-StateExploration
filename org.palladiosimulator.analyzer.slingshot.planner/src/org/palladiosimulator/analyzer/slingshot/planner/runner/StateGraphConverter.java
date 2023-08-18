@@ -14,6 +14,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 
@@ -58,6 +59,8 @@ public class StateGraphConverter {
 					reason = Reason.EnviromentalChange;
 				else if (transition.getChange().get() instanceof Reconfiguration) // reconfiguration change
 					reason = Reason.ReconfigurationChange;
+				else if (transition.getChange().get() instanceof ReactiveReconfiguration)  // reactive reconfiguration change
+					reason = Reason.ReactiveReconfigurationChange;
 				
 				newState.addOutTransition(new Transition(newStates.get(transition.getTarget().getId()),newStates.get(transition.getSource().getId()), reason));
 			}
