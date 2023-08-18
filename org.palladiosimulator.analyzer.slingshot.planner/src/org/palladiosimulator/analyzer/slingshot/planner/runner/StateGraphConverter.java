@@ -16,6 +16,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransiti
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
+import org.palladiosimulator.monitorrepository.Monitor;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 
 public class StateGraphConverter {
@@ -34,6 +35,15 @@ public class StateGraphConverter {
 			
 			newState.setStartTime(state.getStartTime());
 			newState.setEndTime(state.getEndTime());
+			
+			/**
+			 * The following lines are needed of the Palladio System to load the Monitors. 
+			 * This is a workaround because otherwise the reading the monitor of the SLO MeasurmentDescription for the Measuring Point would be null.
+			 */
+			System.out.println("Monitors:");
+			for (Monitor monitor : state.getArchitecureConfiguration().getMonitorRepository().getMonitors()) {
+				System.out.println(monitor.getEntityName());
+			}
 			
 			if (state.getArchitecureConfiguration() != null && state.getArchitecureConfiguration().getSLOs() != null) {
 				ArrayList<SLO> slos = new ArrayList<SLO>();
