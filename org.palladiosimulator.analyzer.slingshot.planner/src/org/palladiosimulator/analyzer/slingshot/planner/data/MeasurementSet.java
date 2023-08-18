@@ -16,6 +16,7 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 	private Double measurementsSetAverage;
 	
 	private String name;
+	private String measuringPointURI;
 	
 	public MeasurementSet() {
 		super();
@@ -37,6 +38,14 @@ public class MeasurementSet extends ArrayList<Measurement<Double>> {
 		this.name = name;
 	}
 
+	public String getMeasuringPointURI() {
+		return measuringPointURI;
+	}
+	
+	public void setMeasuringPointURI(String uri) {
+		this.measuringPointURI = uri;
+	}
+	
 	public double getMedian() {
 		if (this.size() < 1) {
 			return 0;
