@@ -7,9 +7,11 @@ import java.util.stream.Collectors;
 import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
+import org.eclipse.emf.ecore.EObject;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
+import org.palladiosimulator.commons.emfutils.EMFLoadHelper;
 import org.palladiosimulator.edp2.dao.MeasurementsDao;
 import org.palladiosimulator.edp2.dao.exception.DataNotAccessibleException;
 import org.palladiosimulator.edp2.models.ExperimentData.DataSeries;
@@ -17,10 +19,13 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentRun;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.ExperimentData.MeasurementRange;
 import org.palladiosimulator.edp2.models.ExperimentData.RawMeasurements;
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
 import org.palladiosimulator.edp2.util.MeasurementsUtility;
 import org.palladiosimulator.edp2.util.MetricDescriptionUtility;
 import org.palladiosimulator.metricspec.BaseMetricDescription;
+import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+
 
 /**
  * Static functions to extract information from different Palladio Objects
@@ -32,7 +37,7 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
  */
 public class PalladioSimulationsVisitor {
 	public static SLO visitServiceLevelObjective(ServiceLevelObjective slo) {
-		return new SLO(slo.getName(), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
+		return new SLO(slo.getName(), slo.getMeasurementSpecification().getMonitor().getMeasuringPoint().getResourceURIRepresentation(), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
 	public static ArrayList<MeasurementSet> visitExperiementSetting(ExperimentSetting es) {
@@ -59,13 +64,13 @@ public class PalladioSimulationsVisitor {
 		ArrayList<MeasurementSet> mrs = new ArrayList<MeasurementSet>();
 
 		for (MeasurementRange mr : m.getMeasurementRanges()) {
-			mrs.add(PalladioSimulationsVisitor.visitMeasurementRange(mr));
+			mrs.addAll(PalladioSimulationsVisitor.visitMeasurementRange(mr));
 		}
 
 		return mrs;
 	}
 
-	public static MeasurementSet visitMeasurementRange(MeasurementRange mr) {
+	public static ArrayList<MeasurementSet> visitMeasurementRange(MeasurementRange mr) {
 		if (mr.getRawMeasurements() == null)
 			throw new IllegalStateException("No RawMeasurments found!");
 
@@ -82,11 +87,13 @@ public class PalladioSimulationsVisitor {
 	 * @param rawMeasurments
 	 * @return
 	 */
-	public static MeasurementSet visitRawMeasurments(RawMeasurements rawMeasurments) {
-		MeasurementSet measurments = new MeasurementSet();
+	public static ArrayList<MeasurementSet> visitRawMeasurments(RawMeasurements rawMeasurments) {
+		ArrayList<MeasurementSet> measurments = new ArrayList<MeasurementSet>();
 
-		ArrayList<Double> pointInTime = null;
-		ArrayList<Double> values = null;
+		ArrayList<Number> pointInTime = null;
+		ArrayList<Number> values = null;
+		String measureName = null;
+		String measureURI = null;
 
 		for (int i = 0; i < rawMeasurments.getDataSeries().size(); i++) {
 			DataSeries dataSeries = rawMeasurments.getDataSeries().get(i);
@@ -94,12 +101,12 @@ public class PalladioSimulationsVisitor {
 			if (rawMeasurments.getMeasurementRange().getMeasurement().getMeasuringType().getMetric()
 					.eContainer() == null)
 				throw new IllegalStateException("MetricDescription not the one from common metrics.");
-
+			
 			// it is presumed that the the index of the metric is correlated to the index of
 			// the data series
 			BaseMetricDescription bmc = MetricDescriptionUtility.toBaseMetricDescriptions(
 					rawMeasurments.getMeasurementRange().getMeasurement().getMeasuringType().getMetric())[i];
-
+			
 			// TODO: using the BasicMetricDescription it can be decided which type of Measure<?, ?> will be returened
 //			System.out.println(bmc.getName());
 //			System.out.println(bmc.getScale().getName());
@@ -107,22 +114,44 @@ public class PalladioSimulationsVisitor {
 //			System.out.println(bmc.getCaptureType().getName());	
 //			System.out.println(bmc.getScopeOfValidity().getName());
 			
-			
-			if (i == 0 && !bmc.getName().equals("Point in Time")) {
-				throw new IllegalStateException("First DataSeries is not Point in Time, execution aboarded!");
-			} else if (i == 0) {
+			if (bmc.getName().equals("Point in Time")) {
 				pointInTime = PalladioSimulationsVisitor.visitDataSeries(dataSeries);
-			} else if (i == 1) {
+			} else {
 				values = PalladioSimulationsVisitor.visitDataSeries(dataSeries);
-				measurments.setName(bmc.getName()); // setting description of the values
+				measureName = bmc.getName();
+				measureURI = dataSeries.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getResourceURIRepresentation();
 			}
-		}
+			
+			// i found two measures, one with point in time and one with something else
+			if (pointInTime != null && values != null) {
+				if (!(pointInTime.size() == values.size()))
+					throw new IllegalStateException("Number of point in time values and measurments value do not match!");
 
-		if (pointInTime == null || values == null || !(pointInTime.size() == values.size()))
-			throw new IllegalStateException("Number of point in time values and measurments value do not match!");
+				// checking if the point in time values do ascend
+				Number previous = 0;
+				for (Number n : pointInTime) {
+					if (n.doubleValue() >= previous.doubleValue())
+						previous = n;
+					else
+						throw new IllegalStateException("Point in time values do not present an ascending row!");
+				}
+				
+				MeasurementSet ms = new MeasurementSet();
+				ms.setName(measureName);
+				ms.setMeasuringPointURI(measureURI);
+				
+				for (int j = 0; j < pointInTime.size(); j++) {
+					ms.add(new Measurement<Number>(values.get(j), (double) pointInTime.get(j)));
+				}
 
-		for (int i = 0; i < pointInTime.size(); i++) {
-			measurments.add(new Measurement<Double>(values.get(i), pointInTime.get(i)));
+				if (ms.getName().equals("Response Time")) // temporary hiding all but the relevant measure
+					measurments.add(ms);
+				
+				// reset for the next rows
+				pointInTime = null;
+				values = null;
+				measureName = null;
+			}
 		}
 
 		return measurments;
@@ -134,13 +163,13 @@ public class PalladioSimulationsVisitor {
 	 * @param ds DataSeries with doubles
 	 * @return ArrayList of Doubles
 	 */
-	private static ArrayList<Double> visitDataSeries(DataSeries ds) {
-		MeasurementsDao<Double, Duration> dao = 
-				(MeasurementsDao<Double, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
+	private static ArrayList<Number> visitDataSeries(DataSeries ds) {
+		MeasurementsDao<Number, Duration> dao = 
+				(MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
 
-		List<Measure<Double, Duration>> measures = dao.getMeasurements();
+		List<Measure<Number, Duration>> measures = dao.getMeasurements();
 		
-		ArrayList<Double> doubles = new ArrayList<Double>(
+		ArrayList<Number> numbers = new ArrayList<Number>(
 				measures.stream().map(measure -> measure.getValue()).collect(Collectors.toList()));
 
 		try {
@@ -149,7 +178,7 @@ public class PalladioSimulationsVisitor {
 			e.printStackTrace();
 		}
 
-		return doubles;
+		return numbers;
 	}
 
 }
