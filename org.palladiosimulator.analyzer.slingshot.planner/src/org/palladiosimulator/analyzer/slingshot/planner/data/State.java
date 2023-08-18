@@ -62,8 +62,18 @@ public class State {
 	 * @return
 	 */
 	public double getUtiltity() {
-		if (utility == null)
-			utility = this.getDuration() * (this.slos.stream().mapToDouble(x -> x.getUpperThreshold().doubleValue()).sum() - measurements.stream().mapToDouble(x -> x.getMedian()).sum());
+		if (utility == null) {
+			double value = 0;
+			
+			for (SLO slo : this.slos) {
+				MeasurementSet ms = measurements.stream().filter(x -> x.getMeasuringPointURI().equals(slo.getMeasuringPointURI())).findFirst().orElse(null);
+				if (ms != null)
+					value += (slo.getUpperThreshold().doubleValue() - ms.getMedian());
+			}
+			
+			utility = this.getDuration() * value;
+		}
+
 		return utility;
 	}
 
