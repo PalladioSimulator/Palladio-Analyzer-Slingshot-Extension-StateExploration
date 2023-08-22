@@ -69,19 +69,28 @@ public class PlannerRunner {
 		
 		LOGGER.info("Planned Path (Bellman-Ford):");
 
+		int currentMaxIndex = 0;
+		double currentMaxDistance = 0;
+		
 		for (int i = 0; i < states.size(); i++) {
 			State current = states.get(i);
 			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
-				LOGGER.info(current.getId());
-				LOGGER.info("Distance: " + distances.get(i));
-				LOGGER.info("Path: ");
-				State parent = current;
-				while (parent != null) {
-					LOGGER.info("  " + parent.getId());
-					parent = parents.get(states.indexOf(parent));
+				if (distances.get(i) > currentMaxDistance) {
+					currentMaxDistance = distances.get(i);
+					currentMaxIndex = i;
 				}
 			}
 		}
+		
+		LOGGER.info(states.get(currentMaxIndex).getId());
+		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
+		LOGGER.info("Path: ");
+		State parent = states.get(currentMaxIndex);
+		while (parent != null) {
+			LOGGER.info("  " + parent.getId());
+			parent = parents.get(states.indexOf(parent));
+		}
+		
 		LOGGER.info("Planning (Bellman-Ford) - finished");
 	}
 	
@@ -122,8 +131,6 @@ public class PlannerRunner {
 			if (index != -1) {
 				State u = knots.remove(knots.indexOf(states.get(index))); // remove processed knot
 
-				LOGGER.info("Planning: " + u.getId());
-
 				for (Transition t : states.get(index).getOutTransitions()) {
 					if (knots.indexOf(t.getTarget()) != -1) { // check whether the knot is in the processing list
 																// (knots)
@@ -135,19 +142,28 @@ public class PlannerRunner {
 
 		LOGGER.info("Planned Path (Dijkstra):");
 
+		int currentMaxIndex = 0;
+		double currentMaxDistance = 0;
+		
 		for (int i = 0; i < states.size(); i++) {
 			State current = states.get(i);
 			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
-				LOGGER.info(current.getId());
-				LOGGER.info("Distance: " + distances.get(i));
-				LOGGER.info("Path: ");
-				State parent = current;
-				while (parent != null) {
-					LOGGER.info("  " + parent.getId());
-					parent = parents.get(states.indexOf(parent));
+				if (distances.get(i) > currentMaxDistance) {
+					currentMaxDistance = distances.get(i);
+					currentMaxIndex = i;
 				}
 			}
 		}
+		
+		LOGGER.info(states.get(currentMaxIndex).getId());
+		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
+		LOGGER.info("Path: ");
+		State parent = states.get(currentMaxIndex);
+		while (parent != null) {
+			LOGGER.info("  " + parent.getId());
+			parent = parents.get(states.indexOf(parent));
+		}
+		
 		LOGGER.info("Planning (Dijkstra) - finished");
 	}
 
@@ -181,8 +197,10 @@ public class PlannerRunner {
 		LOGGER.info("Planning (Greedy) - started");
 
 		State current = graph.getRoot();
+		double utility = 0;
 		while (current != null) {
 			path.add(current);
+			utility += current.getUtiltity();
 
 			State next = null;
 			for (Transition t : current.getOutTransitions()) {
@@ -196,7 +214,9 @@ public class PlannerRunner {
 		}
 
 		LOGGER.info("Planned Path (Greedy):");
-		path.stream().forEach(x -> LOGGER.info(x.getId()));
+		LOGGER.info("Distance: " + utility);
+		LOGGER.info("Path: ");
+		path.stream().forEach(x -> LOGGER.info("  " + x.getId()));
 		LOGGER.info("Planning (Greedy) - finished");
 	}
 	
