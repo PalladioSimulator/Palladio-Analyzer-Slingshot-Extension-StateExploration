@@ -1,8 +1,11 @@
 package org.palladiosimulator.analyzer.slingshot.planner.runner;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import org.apache.log4j.Logger;
 
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.palladiosimulator.analyzer.slingshot.planner.data.State;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
@@ -17,9 +20,22 @@ public class PlannerRunner {
 	}
 
 	public void start() {
+		// setting up a FileAppender dynamically...
+		SimpleLayout layout = new SimpleLayout();
+		FileAppender appender = null;
+		try {
+			appender = new FileAppender(layout,"/tmp/state_graph_graphical_representation.log",false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		LOGGER.addAppender(appender);
+		
 		startBellmanFord();
 		startDijkstra();
 		startGreedy();
+		
+		LOGGER.removeAppender(appender);
 	}
 	
 	public void startBellmanFord() {
