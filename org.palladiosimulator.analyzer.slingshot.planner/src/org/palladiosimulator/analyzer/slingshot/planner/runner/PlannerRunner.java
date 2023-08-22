@@ -34,6 +34,7 @@ public class PlannerRunner {
 		startBellmanFord();
 		startDijkstra();
 		startGreedy();
+		startGreedyReverse();
 		
 		LOGGER.removeAppender(appender);
 	}
@@ -198,5 +199,78 @@ public class PlannerRunner {
 		path.stream().forEach(x -> LOGGER.info(x.getId()));
 		LOGGER.info("Planning (Greedy) - finished");
 	}
+	
+	public void startGreedyReverse() {
+		ArrayList<State> states = graph.getStates();
+		ArrayList<Double> distances = new ArrayList<Double>(states.size());
+		ArrayList<State> parents = new ArrayList<State>(states.size());
 
+		for (int i = 0; i < graph.getStates().size(); i++) {
+			distances.add(-Double.MAX_VALUE);
+			parents.add(null);
+		}
+		
+		LOGGER.info("Planning (Greedy Reverse) - started");
+		LOGGER.info("Planned Path (Greedy Reverse):");
+
+		for (int i = 0; i < states.size(); i++) {
+			State current = states.get(i);
+			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
+				//LOGGER.info(current.getId());
+				//LOGGER.info("Path: ");
+				
+				State parent = current;
+				double utiltiy = 0;
+
+				// default setting for leaf note
+				utiltiy += parent.getUtiltity();
+				//LOGGER.info("  " + parent.getId());
+				
+				while (parent != null) {
+					boolean found = false;
+					stateLoop:
+					for (State p : states) {
+						for (Transition t : p.getOutTransitions()) {
+							if (t.getTarget().equals(parent)) {
+								parents.set(states.indexOf(parent), p);
+								parent = p;
+								found = true;
+								utiltiy += parent.getUtiltity();
+								//LOGGER.info("  " + parent.getId());
+								break stateLoop;
+							}
+						}
+					}
+					if (!found) // when there is no parent found break the loop
+						break;
+				}
+				distances.set(i, utiltiy);
+				//LOGGER.info("Distance: " + utiltiy);
+			}
+		}
+
+		int currentMaxIndex = 0;
+		double currentMaxDistance = 0;
+		
+		for (int i = 0; i < states.size(); i++) {
+			State current = states.get(i);
+			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
+				if (distances.get(i) > currentMaxDistance) {
+					currentMaxDistance = distances.get(i);
+					currentMaxIndex = i;
+				}
+			}
+		}
+		
+		LOGGER.info(states.get(currentMaxIndex).getId());
+		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
+		LOGGER.info("Path: ");
+		State parent = states.get(currentMaxIndex);
+		while (parent != null) {
+			LOGGER.info("  " + parent.getId());
+			parent = parents.get(states.indexOf(parent));
+		}		
+		
+		LOGGER.info("Planning (Greedy Reverse) - finished");
+	}
 }
