@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: org.palladiosimulator.analyzer.slingshot.planner,
+ com.google.gson;bundle-version="2.8.8"
+Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation

@@ -1,5 +1,9 @@
 package org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher.jobs;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
@@ -9,8 +13,10 @@ import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.PlannerRunner;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation.GraphicalRepresentation;
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.PlannerWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -70,14 +76,30 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		// TODO: run the planning here!
 		PlannerRunner pr = new PlannerRunner(graph);
 		LOGGER.info("**** Planner started ****");
-		pr.start();
+		pr.start();	
 		LOGGER.info("**** Planner finished ****");
+
+		// get the graphical representation of the raw graph
+		LOGGER.info("*** Graphical Representation ***");
+		LOGGER.info("The graphical repesentation can be found here: " + GraphicalRepresentation.getPictureString(graph));
+		LOGGER.info("*** Graphical Representation - Done ***");
+		
+		LOGGER.info("*** JSON Representation ***");
+	    try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter("/tmp/state_graph_graphical_representation.json"));
+			writer.write(GraphicalRepresentation.getJSONString(graph));
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		LOGGER.info("*** JSON Represenation - Done ***");
+		
 		
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.
 
 		// PS: i actually end up here :)
 //		simulationDriver.init(simuComConfig, monitor);
-		monitor.worked(1);
+		monitor.worked(1);	
 
 		monitor.subTask("Start simulation");
 //		simulationDriver.start();
