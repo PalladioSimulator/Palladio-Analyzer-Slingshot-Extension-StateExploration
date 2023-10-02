@@ -17,6 +17,10 @@ public class Transition {
 		return target;
 	}
 
+	public void setSource(State s) {
+		source = s;
+	}
+	
 	public State getSource() {
 		return source;
 	}
