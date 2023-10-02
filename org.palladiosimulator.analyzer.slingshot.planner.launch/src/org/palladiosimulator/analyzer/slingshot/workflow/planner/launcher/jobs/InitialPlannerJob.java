@@ -71,8 +71,8 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		final RawStateGraph rawGraph =  explorer.start();
 
 		// converting the RawStateGraph to the new Graph format
-		final StateGraph graph = StateGraphConverter.convert(rawGraph)
-		;
+		final StateGraph graph = StateGraphConverter.convert(rawGraph);
+
 		// TODO: run the planning here!
 		PlannerRunner pr = new PlannerRunner(graph);
 		LOGGER.info("**** Planner started ****");
@@ -83,7 +83,7 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		LOGGER.info("*** Graphical Representation ***");
 		LOGGER.info("The graphical repesentation can be found here: " + GraphicalRepresentation.getPictureString(graph));
 		LOGGER.info("*** Graphical Representation - Done ***");
-		
+
 		LOGGER.info("*** JSON Representation ***");
 	    try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter("/tmp/state_graph_graphical_representation.json"));
@@ -92,8 +92,7 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		LOGGER.info("*** JSON Represenation - Done ***");
-		
+	    LOGGER.info("*** JSON Represenation - Done ***");
 		
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.
 
