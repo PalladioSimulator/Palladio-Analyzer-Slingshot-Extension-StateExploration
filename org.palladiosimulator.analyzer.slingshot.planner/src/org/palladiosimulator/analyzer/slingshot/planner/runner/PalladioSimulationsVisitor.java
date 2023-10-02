@@ -107,13 +107,6 @@ public class PalladioSimulationsVisitor {
 			BaseMetricDescription bmc = MetricDescriptionUtility.toBaseMetricDescriptions(
 					rawMeasurments.getMeasurementRange().getMeasurement().getMeasuringType().getMetric())[i];
 			
-			// TODO: using the BasicMetricDescription it can be decided which type of Measure<?, ?> will be returened
-//			System.out.println(bmc.getName());
-//			System.out.println(bmc.getScale().getName());
-//			System.out.println(bmc.getDataType().getName());
-//			System.out.println(bmc.getCaptureType().getName());	
-//			System.out.println(bmc.getScopeOfValidity().getName());
-			
 			if (bmc.getName().equals("Point in Time")) {
 				pointInTime = PalladioSimulationsVisitor.visitDataSeries(dataSeries);
 			} else {

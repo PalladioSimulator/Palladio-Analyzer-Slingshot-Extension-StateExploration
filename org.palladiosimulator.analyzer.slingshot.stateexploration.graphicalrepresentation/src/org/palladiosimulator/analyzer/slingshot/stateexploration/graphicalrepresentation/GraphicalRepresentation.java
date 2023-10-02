@@ -114,11 +114,7 @@ public class GraphicalRepresentation {
 			file.close();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-
-			// this.LOGGER.info(e);
-			// return "Failed to write to file " + fileName;
 		}
 		
 		// creating image from dot file using the linux program "dot" and opening it in
@@ -128,10 +124,9 @@ public class GraphicalRepresentation {
 			Process p1 = Runtime.getRuntime().exec(
 					"/usr/bin/dot -Tjpg /tmp/state_graph_graphical_representation.dot -o /tmp/state_graph_graphical_representation.jpg");
 			p1.waitFor();
-			//Process p2 = Runtime.getRuntime().exec("/usr/bin/eog /tmp/state_graph_graphical_representation.jpg");
-			//p2.waitFor();
+			Process p2 = Runtime.getRuntime().exec("/usr/bin/eog /tmp/state_graph_graphical_representation.jpg");
+			p2.waitFor();
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
