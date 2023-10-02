@@ -2,7 +2,10 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepre
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
@@ -13,11 +16,15 @@ import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
 import org.palladiosimulator.analyzer.slingshot.planner.data.State;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
+import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
@@ -151,5 +158,54 @@ public class GraphicalRepresentation {
 		Gson gson = builder.create();
 		
 		return gson.toJson(graph);
+	}
+	
+	public static StateGraph fromJSONFile(String fileName) {
+		JsonDeserializer<MeasurementSet> deserializerMeasurementSet = new JsonDeserializer<MeasurementSet>() {
+			@Override
+			public MeasurementSet deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+					throws JsonParseException {
+				
+				JsonObject obj = json.getAsJsonObject();
+				
+				MeasurementSet ms = new MeasurementSet();
+				
+				ms.setName(obj.get("name").getAsString());
+				ms.setMeasuringPointURI(obj.get("measuringPointURI").getAsString());
+				
+				for (int i = 0; i < obj.get("elements").getAsJsonArray().size(); i++) {
+					JsonObject el = obj.get("elements").getAsJsonArray().get(i).getAsJsonObject();
+					
+					ms.add(context.deserialize(el, Measurement.class));
+				}
+				
+				return ms;
+			}
+		};
+		
+		
+		
+		try {
+			GsonBuilder builder = new GsonBuilder();
+			builder.serializeNulls();
+			builder.registerTypeAdapter(MeasurementSet.class, deserializerMeasurementSet);
+			Gson gson = builder.create();
+		    
+			Reader reader = Files.newBufferedReader(Paths.get(fileName));
+		    StateGraph graph = gson.fromJson(reader, StateGraph.class);
+
+		    for (State s : graph.getStates())
+		    	for (Transition t : s.getOutTransitions())
+		    		t.setSource(s);
+		    
+		    reader.close();
+		    
+		    return graph;
+
+		} catch (Exception ex) {
+		    ex.printStackTrace();
+		}
+		
+		return null;
 	}
 }
