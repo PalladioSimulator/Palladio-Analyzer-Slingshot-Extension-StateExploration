@@ -1,11 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.planner.runner;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
-import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 import org.palladiosimulator.analyzer.slingshot.planner.data.State;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
@@ -20,23 +17,10 @@ public class PlannerRunner {
 	}
 
 	public void start() {
-		// setting up a FileAppender dynamically...
-		SimpleLayout layout = new SimpleLayout();
-		FileAppender appender = null;
-		try {
-			appender = new FileAppender(layout,"/tmp/state_graph_graphical_representation.log",false);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		LOGGER.addAppender(appender);
-		
 		startBellmanFord();
 		startDijkstra();
 		startGreedy();
 		startGreedyReverse();
-		
-		LOGGER.removeAppender(appender);
 	}
 	
 	public void startBellmanFord() {
@@ -60,8 +44,10 @@ public class PlannerRunner {
 				int targetIndex = states.indexOf(t.getTarget());
 				int sourceIndex = states.indexOf(t.getSource());
 				
-				if ((distances.get(sourceIndex) + t.getTarget().getUtiltity()) > distances.get(targetIndex)) {
-					distances.set(targetIndex, distances.get(sourceIndex) + t.getTarget().getUtiltity());
+				double alternativeDistance = distances.get(sourceIndex) + t.getTarget().getUtiltity(); 
+				
+				if (alternativeDistance > distances.get(targetIndex)) {
+					distances.set(targetIndex, alternativeDistance);
 					parents.set(targetIndex, t.getSource());
 				}
 			}
@@ -69,13 +55,13 @@ public class PlannerRunner {
 		
 		LOGGER.info("Planned Path (Bellman-Ford):");
 
-		int currentMaxIndex = 0;
+		int currentMaxIndex = -1;
 		double currentMaxDistance = 0;
 		
 		for (int i = 0; i < states.size(); i++) {
 			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
-				if (distances.get(i) > currentMaxDistance) {
+			if (current.getOutTransitions().size() < 1) { // only have a look at the leafs
+				if (currentMaxIndex == -1 || distances.get(i) > currentMaxDistance) {
 					currentMaxDistance = distances.get(i);
 					currentMaxIndex = i;
 				}
@@ -88,6 +74,15 @@ public class PlannerRunner {
 		State parent = states.get(currentMaxIndex);
 		while (parent != null) {
 			LOGGER.info("  " + parent.getId());
+			LOGGER.info("    StartTime: " + parent.getStartTime());
+			LOGGER.info("    Duration: " + parent.getDuration());
+			LOGGER.info("    EndTime: " + parent.getEndTime());
+			LOGGER.info("    Utility: " + parent.getUtiltity());
+			/*parent.getMeasurements().stream().forEach(x -> {
+				LOGGER.info("    Measurement: " + x.getName());
+				x.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
+			});*/
+			
 			parent = parents.get(states.indexOf(parent));
 		}
 		
@@ -142,13 +137,13 @@ public class PlannerRunner {
 
 		LOGGER.info("Planned Path (Dijkstra):");
 
-		int currentMaxIndex = 0;
+		int currentMaxIndex = -1;
 		double currentMaxDistance = 0;
 		
 		for (int i = 0; i < states.size(); i++) {
 			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
-				if (distances.get(i) > currentMaxDistance) {
+			if (current.getOutTransitions().size() < 1) { // only have a look at the leafs
+				if (currentMaxIndex == -1 || distances.get(i) > currentMaxDistance) {
 					currentMaxDistance = distances.get(i);
 					currentMaxIndex = i;
 				}
@@ -161,6 +156,15 @@ public class PlannerRunner {
 		State parent = states.get(currentMaxIndex);
 		while (parent != null) {
 			LOGGER.info("  " + parent.getId());
+			LOGGER.info("    StartTime: " + parent.getStartTime());
+			LOGGER.info("    Duration: " + parent.getDuration());
+			LOGGER.info("    EndTime: " + parent.getEndTime());
+			LOGGER.info("    Utility: " + parent.getUtiltity());
+			/*parent.getMeasurements().stream().forEach(x -> {
+				LOGGER.info("    Measurement: " + x.getName());
+				x.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
+			});*/
+			
 			parent = parents.get(states.indexOf(parent));
 		}
 		
@@ -216,7 +220,18 @@ public class PlannerRunner {
 		LOGGER.info("Planned Path (Greedy):");
 		LOGGER.info("Distance: " + utility);
 		LOGGER.info("Path: ");
-		path.stream().forEach(x -> LOGGER.info("  " + x.getId()));
+		path.stream().forEach(x -> {
+			LOGGER.info("  " + x.getId());
+			LOGGER.info("    StartTime: " + x.getStartTime());
+			LOGGER.info("    Duration: " + x.getDuration());
+			LOGGER.info("    EndTime: " + x.getEndTime());
+			LOGGER.info("    Utility: " + x.getUtiltity());
+			/*x.getMeasurements().stream().forEach(xt -> {
+				LOGGER.info("    Measurement: " + xt.getName());
+				xt.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
+			});*/
+			
+		});
 		LOGGER.info("Planning (Greedy) - finished");
 	}
 	
@@ -235,16 +250,12 @@ public class PlannerRunner {
 
 		for (int i = 0; i < states.size(); i++) {
 			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
-				//LOGGER.info(current.getId());
-				//LOGGER.info("Path: ");
-				
+			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves				
 				State parent = current;
 				double utiltiy = 0;
 
 				// default setting for leaf note
 				utiltiy += parent.getUtiltity();
-				//LOGGER.info("  " + parent.getId());
 				
 				while (parent != null) {
 					boolean found = false;
@@ -256,7 +267,6 @@ public class PlannerRunner {
 								parent = p;
 								found = true;
 								utiltiy += parent.getUtiltity();
-								//LOGGER.info("  " + parent.getId());
 								break stateLoop;
 							}
 						}
@@ -265,17 +275,16 @@ public class PlannerRunner {
 						break;
 				}
 				distances.set(i, utiltiy);
-				//LOGGER.info("Distance: " + utiltiy);
 			}
 		}
 
-		int currentMaxIndex = 0;
+		int currentMaxIndex = -1;
 		double currentMaxDistance = 0;
 		
 		for (int i = 0; i < states.size(); i++) {
 			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves
-				if (distances.get(i) > currentMaxDistance) {
+			if (current.getOutTransitions().size() < 1) { // only have a look at the leafs
+				if (currentMaxIndex == -1 || distances.get(i) > currentMaxDistance) {
 					currentMaxDistance = distances.get(i);
 					currentMaxIndex = i;
 				}
@@ -288,6 +297,15 @@ public class PlannerRunner {
 		State parent = states.get(currentMaxIndex);
 		while (parent != null) {
 			LOGGER.info("  " + parent.getId());
+			LOGGER.info("    StartTime: " + parent.getStartTime());
+			LOGGER.info("    Duration: " + parent.getDuration());
+			LOGGER.info("    EndTime: " + parent.getEndTime());
+			LOGGER.info("    Utility: " + parent.getUtiltity());
+			/*parent.getMeasurements().stream().forEach(x -> {
+				LOGGER.info("    Measurement: " + x.getName());
+				x.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
+			});*/
+			
 			parent = parents.get(states.indexOf(parent));
 		}		
 		
