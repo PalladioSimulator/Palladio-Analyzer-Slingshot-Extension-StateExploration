@@ -55,7 +55,7 @@ public class GraphicalRepresentation {
 				}
 				
 				for (SLO slo : state.getSLOs()) {
-					noteDescription += String.format("%s: %d to %d\\n", slo.getName(), slo.getLowerThreshold(), slo.getUpperThreshold());
+					noteDescription += String.format("%s: %d to %d\\n", slo.name(), slo.lowerThreshold(), slo.upperThreshold());
 				}
 				
 				noteDescription += String.format("Current Utility: %.2f\\n", state.getUtiltity());

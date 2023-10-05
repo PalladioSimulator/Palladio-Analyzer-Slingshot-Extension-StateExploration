@@ -66,9 +66,9 @@ public class State {
 			double value = 0;
 			
 			for (SLO slo : this.slos) {
-				MeasurementSet ms = measurements.stream().filter(x -> x.getMeasuringPointURI().equals(slo.getMeasuringPointURI())).findFirst().orElse(null);
+				MeasurementSet ms = measurements.stream().filter(x -> x.getMeasuringPointURI().equals(slo.measuringPointURI())).findFirst().orElse(null);
 				if (ms != null)
-					value += (slo.getUpperThreshold().doubleValue() - ms.getMedian());
+					value += (slo.upperThreshold().doubleValue() - ms.getMedian());
 			}
 			
 			utility = this.getDuration() * value;
