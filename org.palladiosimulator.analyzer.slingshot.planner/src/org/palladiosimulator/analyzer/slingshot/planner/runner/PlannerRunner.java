@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.planner.data.State;
+import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
 
@@ -25,15 +25,15 @@ public class PlannerRunner {
 	}
 	
 	public void startBellmanFord() {
-		List<State> states = graph.getStates();
+		List<StateGraphNode> states = graph.getStates();
 			
 		List<Double> distances = new ArrayList<Double>(states.size());
-		List<State> parents = new ArrayList<State>(states.size());
+		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
 
 		List<Transition> transitions = new ArrayList<Transition>();
 		
-		for (State s : states) {
-			transitions.addAll(s.getOutTransitions());
+		for (StateGraphNode s : states) {
+			transitions.addAll(s.outTransitions());
 		}
 		
 		LOGGER.info("Planning (Bellman-Ford) - started");
@@ -45,7 +45,7 @@ public class PlannerRunner {
 				int targetIndex = states.indexOf(t.getTarget());
 				int sourceIndex = states.indexOf(t.getSource());
 				
-				double alternativeDistance = distances.get(sourceIndex) + t.getTarget().getUtiltity(); 
+				double alternativeDistance = distances.get(sourceIndex) + t.getTarget().utility(); 
 				
 				if (alternativeDistance > distances.get(targetIndex)) {
 					distances.set(targetIndex, alternativeDistance);
@@ -60,8 +60,8 @@ public class PlannerRunner {
 		double currentMaxDistance = 0;
 		
 		for (int i = 0; i < states.size(); i++) {
-			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leafs
+			StateGraphNode current = states.get(i);
+			if (current.outTransitions().size() < 1) { // only have a look at the leafs
 				if (currentMaxIndex == -1 || distances.get(i) > currentMaxDistance) {
 					currentMaxDistance = distances.get(i);
 					currentMaxIndex = i;
@@ -69,21 +69,21 @@ public class PlannerRunner {
 			}
 		}
 		
-		LOGGER.info(states.get(currentMaxIndex).getId());
+		LOGGER.info(states.get(currentMaxIndex).id());
 		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
 		LOGGER.info("Path: ");
-		State parent = states.get(currentMaxIndex);
+		StateGraphNode parent = states.get(currentMaxIndex);
 		while (parent != null) {
-			LOGGER.info("  " + parent.getId());
-			LOGGER.info("    Duration: " + parent.getDuration());
-			LOGGER.info("    Utility: " + parent.getUtiltity());
+			LOGGER.info("  " + parent.id());
+			LOGGER.info("    Duration: " + parent.duration());
+			LOGGER.info("    Utility: " + parent.utility());
 			parent = parents.get(states.indexOf(parent));
 		}
 		
 		LOGGER.info("Planning (Bellman-Ford) - finished");
 	}
 	
-	private void initBellmanFord(StateGraph graph, List<Double> distances, List<State> parents) {
+	private void initBellmanFord(StateGraph graph, List<Double> distances, List<StateGraphNode> parents) {
 		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
 			parents.add(null);
@@ -94,11 +94,11 @@ public class PlannerRunner {
 	}
 
 	public void startDijkstra() {
-		List<State> states = graph.getStates();
+		List<StateGraphNode> states = graph.getStates();
 
-		List<State> knots = graph.getStates();
+		List<StateGraphNode> knots = graph.getStates();
 		List<Double> distances = new ArrayList<Double>(states.size());
-		List<State> parents = new ArrayList<State>(states.size());
+		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
 
 		LOGGER.info("Planning (Dijkstra) - started");
 
@@ -117,9 +117,9 @@ public class PlannerRunner {
 			}
 
 			if (index != -1) {
-				State u = knots.remove(knots.indexOf(states.get(index))); // remove processed knot
+				StateGraphNode u = knots.remove(knots.indexOf(states.get(index))); // remove processed knot
 
-				for (Transition t : states.get(index).getOutTransitions()) {
+				for (Transition t : states.get(index).outTransitions()) {
 					if (knots.indexOf(t.getTarget()) != -1) { // check whether the knot is in the processing list
 																// (knots)
 						dijkstraUpdate(u, t.getTarget(), graph, distances, parents);
@@ -134,8 +134,8 @@ public class PlannerRunner {
 		double currentMaxDistance = 0;
 		
 		for (int i = 0; i < states.size(); i++) {
-			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leafs
+			StateGraphNode current = states.get(i);
+			if (current.outTransitions().size() < 1) { // only have a look at the leafs
 				if (currentMaxIndex == -1 || distances.get(i) > currentMaxDistance) {
 					currentMaxDistance = distances.get(i);
 					currentMaxIndex = i;
@@ -143,21 +143,21 @@ public class PlannerRunner {
 			}
 		}
 		
-		LOGGER.info(states.get(currentMaxIndex).getId());
+		LOGGER.info(states.get(currentMaxIndex).id());
 		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
 		LOGGER.info("Path: ");
-		State parent = states.get(currentMaxIndex);
+		StateGraphNode parent = states.get(currentMaxIndex);
 		while (parent != null) {
-			LOGGER.info("  " + parent.getId());
-			LOGGER.info("    Duration: " + parent.getDuration());
-			LOGGER.info("    Utility: " + parent.getUtiltity());
+			LOGGER.info("  " + parent.id());
+			LOGGER.info("    Duration: " + parent.duration());
+			LOGGER.info("    Utility: " + parent.utility());
 			parent = parents.get(states.indexOf(parent));
 		}
 		
 		LOGGER.info("Planning (Dijkstra) - finished");
 	}
 
-	private void dijkstraInit(StateGraph graph, List<Double> distances, List<State> parents) {
+	private void dijkstraInit(StateGraph graph, List<Double> distances, List<StateGraphNode> parents) {
 		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
 			parents.add(null);
@@ -167,12 +167,12 @@ public class PlannerRunner {
 		distances.set(graph.getStates().indexOf(graph.getRoot()), 0.0d);
 	}
 
-	private void dijkstraUpdate(State u, State v, StateGraph graph, List<Double> distances,
-			List<State> parents) {
+	private void dijkstraUpdate(StateGraphNode u, StateGraphNode v, StateGraph graph, List<Double> distances,
+			List<StateGraphNode> parents) {
 		int indexU = graph.getStates().indexOf(u);
 		int indexV = graph.getStates().indexOf(v);
 
-		double alternative = distances.get(indexU) + v.getUtiltity();
+		double alternative = distances.get(indexU) + v.utility();
 
 		if (alternative > distances.get(indexV)) {
 			distances.set(indexV, alternative);
@@ -181,21 +181,21 @@ public class PlannerRunner {
 	}
 
 	public void startGreedy() {
-		List<State> path = new ArrayList<State>();
+		List<StateGraphNode> path = new ArrayList<StateGraphNode>();
 
 		LOGGER.info("Planning (Greedy) - started");
 
-		State current = graph.getRoot();
+		StateGraphNode current = graph.getRoot();
 		double utility = 0;
 		while (current != null) {
 			path.add(current);
-			utility += current.getUtiltity();
+			utility += current.utility();
 
-			State next = null;
-			for (Transition t : current.getOutTransitions()) {
+			StateGraphNode next = null;
+			for (Transition t : current.outTransitions()) {
 				if (next == null) {
 					next = t.getTarget();
-				} else if (next.getUtiltity() < t.getTarget().getUtiltity()) {
+				} else if (next.utility() < t.getTarget().utility()) {
 					next = t.getTarget();
 				}
 			}
@@ -206,17 +206,17 @@ public class PlannerRunner {
 		LOGGER.info("Distance: " + utility);
 		LOGGER.info("Path: ");
 		path.stream().forEach(x -> {
-			LOGGER.info("  " + x.getId());
-			LOGGER.info("    Duration: " + x.getDuration());
-			LOGGER.info("    Utility: " + x.getUtiltity());
+			LOGGER.info("  " + x.id());
+			LOGGER.info("    Duration: " + x.duration());
+			LOGGER.info("    Utility: " + x.utility());
 		});
 		LOGGER.info("Planning (Greedy) - finished");
 	}
 	
 	public void startGreedyReverse() {
-		List<State> states = graph.getStates();
+		List<StateGraphNode> states = graph.getStates();
 		List<Double> distances = new ArrayList<Double>(states.size());
-		List<State> parents = new ArrayList<State>(states.size());
+		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
 
 		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
@@ -227,24 +227,24 @@ public class PlannerRunner {
 		LOGGER.info("Planned Path (Greedy Reverse):");
 
 		for (int i = 0; i < states.size(); i++) {
-			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leaves				
-				State parent = current;
+			StateGraphNode current = states.get(i);
+			if (current.outTransitions().size() < 1) { // only have a look at the leaves				
+				StateGraphNode parent = current;
 				double utiltiy = 0;
 
 				// default setting for leaf note
-				utiltiy += parent.getUtiltity();
+				utiltiy += parent.utility();
 				
 				while (parent != null) {
 					boolean found = false;
 					stateLoop:
-					for (State p : states) {
-						for (Transition t : p.getOutTransitions()) {
+					for (StateGraphNode p : states) {
+						for (Transition t : p.outTransitions()) {
 							if (t.getTarget().equals(parent)) {
 								parents.set(states.indexOf(parent), p);
 								parent = p;
 								found = true;
-								utiltiy += parent.getUtiltity();
+								utiltiy += parent.utility();
 								break stateLoop;
 							}
 						}
@@ -260,8 +260,8 @@ public class PlannerRunner {
 		double currentMaxDistance = 0;
 		
 		for (int i = 0; i < states.size(); i++) {
-			State current = states.get(i);
-			if (current.getOutTransitions().size() < 1) { // only have a look at the leafs
+			StateGraphNode current = states.get(i);
+			if (current.outTransitions().size() < 1) { // only have a look at the leafs
 				if (currentMaxIndex == -1 || distances.get(i) > currentMaxDistance) {
 					currentMaxDistance = distances.get(i);
 					currentMaxIndex = i;
@@ -269,14 +269,14 @@ public class PlannerRunner {
 			}
 		}
 		
-		LOGGER.info(states.get(currentMaxIndex).getId());
+		LOGGER.info(states.get(currentMaxIndex).id());
 		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
 		LOGGER.info("Path: ");
-		State parent = states.get(currentMaxIndex);
+		StateGraphNode parent = states.get(currentMaxIndex);
 		while (parent != null) {
-			LOGGER.info("  " + parent.getId());
-			LOGGER.info("    Duration: " + parent.getDuration());
-			LOGGER.info("    Utility: " + parent.getUtiltity());
+			LOGGER.info("  " + parent.id());
+			LOGGER.info("    Duration: " + parent.duration());
+			LOGGER.info("    Utility: " + parent.utility());
 			parent = parents.get(states.indexOf(parent));
 		}		
 		

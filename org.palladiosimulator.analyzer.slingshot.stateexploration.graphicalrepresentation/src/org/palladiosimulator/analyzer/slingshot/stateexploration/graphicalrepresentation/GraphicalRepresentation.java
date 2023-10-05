@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
-import org.palladiosimulator.analyzer.slingshot.planner.data.State;
+import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
@@ -32,7 +32,7 @@ public class GraphicalRepresentation {
 
 	static public String getPictureString(StateGraph graph) {
 		final String fileName = "/tmp/state_graph_graphical_representation.dot";
-		final List<State> states = graph.getStates();
+		final List<StateGraphNode> states = graph.getStates();
 
 		try {
 			FileWriter file = new FileWriter(fileName);
@@ -44,26 +44,26 @@ public class GraphicalRepresentation {
 
 			int noteCount = 0;
 
-			for (State state : states) {
-				List<Transition> transitions = state.getOutTransitions();
+			for (StateGraphNode state : states) {
+				List<Transition> transitions = state.outTransitions();
 
 				String noteDescription = String.format("StartTime: %.2f\\nLength: %.2f\\nEndTime: %.2f\\n",
-						state.getStartTime(), state.getDuration(), state.getEndTime());
+						state.startTime(), state.duration(), state.endTime());
 
-				for (MeasurementSet ms : state.getMeasurements()) {
+				for (MeasurementSet ms : state.measurements()) {
 					noteDescription += String.format("%s (Size: %d): %.2f\\n", ms.getName(), ms.size(), ms.getMedian());
 				}
 				
-				for (SLO slo : state.getSLOs()) {
+				for (SLO slo : state.slos()) {
 					noteDescription += String.format("%s: %d to %d\\n", slo.name(), slo.lowerThreshold(), slo.upperThreshold());
 				}
 				
-				noteDescription += String.format("Current Utility: %.2f\\n", state.getUtiltity());
+				noteDescription += String.format("Current Utility: %.2f\\n", state.utility());
 
-				file.write("\"" + state.getId() + "\";\n");
+				file.write("\"" + state.id() + "\";\n");
 				file.write("note" + noteCount + "[shape=box, label=\"" + noteDescription + "\", style=filled];\n");
-				file.write("\"" + state.getId() + "\" -> note" + noteCount + " [style=dotted, arrowhead=none];\n");
-				file.write("{rank=same; rankdir=TB; note" + noteCount + "; \"" + state.getId() + "\";}\n\n");
+				file.write("\"" + state.id() + "\" -> note" + noteCount + " [style=dotted, arrowhead=none];\n");
+				file.write("{rank=same; rankdir=TB; note" + noteCount + "; \"" + state.id() + "\";}\n\n");
 
 				noteCount++;
 
@@ -71,16 +71,16 @@ public class GraphicalRepresentation {
 				for (Transition transition : transitions) {
 					switch (transition.getReason()) {
 						case EnviromentalChange: {
-							file.write("\"" + transition.getSource().getId() + "\" -> \"" + transition.getTarget().getId()+ "\" [style=\"dotted\"];\n");
+							file.write("\"" + transition.getSource().id() + "\" -> \"" + transition.getTarget().id()+ "\" [style=\"dotted\"];\n");
 							break;
 						}
 						case IntervalChange: {
-							file.write("\"" + transition.getSource().getId() + "\" -> \"" + transition.getTarget().getId()+ "\" [style=\"dashed\"];\n");
+							file.write("\"" + transition.getSource().id() + "\" -> \"" + transition.getTarget().id()+ "\" [style=\"dashed\"];\n");
 							break;
 						}
 						case ReactiveReconfigurationChange:
 						case ReconfigurationChange: {
-							file.write("\"" + transition.getSource().getId() + "\" -> \"" + transition.getTarget().getId()+ "\";\n");
+							file.write("\"" + transition.getSource().id() + "\" -> \"" + transition.getTarget().id()+ "\";\n");
 							break;
 						}
 					}
@@ -90,7 +90,7 @@ public class GraphicalRepresentation {
 
 			// use sorted array of states to combine states with same start time in the same
 			// rank
-			List<State> sortedStates = (List<State>) states.stream().sorted(Comparator.comparing(State::getStartTime)).collect(Collectors.toList());
+			List<StateGraphNode> sortedStates = (List<StateGraphNode>) states.stream().sorted(Comparator.comparing(StateGraphNode::startTime)).collect(Collectors.toList());
 			sortedStates.remove(graph.getRoot());
 
 			boolean nextRank = true;
@@ -100,10 +100,10 @@ public class GraphicalRepresentation {
 					nextRank = false;
 				}
 
-				file.write("\"" + sortedStates.get(i).getId() + "\"; ");
+				file.write("\"" + sortedStates.get(i).id() + "\"; ");
 
 				if (((i + 1) >= sortedStates.size())
-						|| sortedStates.get(i).getStartTime() != sortedStates.get(i + 1).getStartTime()) {
+						|| sortedStates.get(i).startTime() != sortedStates.get(i + 1).startTime()) {
 					nextRank = true;
 					file.write("};\n");
 				}
@@ -189,8 +189,8 @@ public class GraphicalRepresentation {
 			Reader reader = Files.newBufferedReader(Paths.get(fileName));
 		    StateGraph graph = gson.fromJson(reader, StateGraph.class);
 
-		    for (State s : graph.getStates())
-		    	for (Transition t : s.getOutTransitions())
+		    for (StateGraphNode s : graph.getStates())
+		    	for (Transition t : s.outTransitions())
 		    		t.setSource(s);
 		    
 		    reader.close();

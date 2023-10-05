@@ -5,18 +5,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class StateGraph {
-	private State root;
+	private StateGraphNode root;
 	
-	public StateGraph(State root) {
+	public StateGraph(StateGraphNode root) {
 		this.root = root;
 	}
 
-	public State getRoot() {
+	public StateGraphNode getRoot() {
 		return root;
 	}
 	
-	public List<State> getStates() {
-		List<State> states = new ArrayList<State>();
+	public List<StateGraphNode> getStates() {
+		List<StateGraphNode> states = new ArrayList<StateGraphNode>();
 		
 		states.add(this.getRoot());
 		states.addAll(visitStates(this.getRoot()));
@@ -24,12 +24,12 @@ public class StateGraph {
 		return states;
 	}
 	
-	private List<State> visitStates(State state) {
-		List<State> states = new ArrayList<State>();
+	private List<StateGraphNode> visitStates(StateGraphNode state) {
+		List<StateGraphNode> states = new ArrayList<StateGraphNode>();
 		
-		states.addAll(state.getOutTransitions().stream().map(x -> x.getTarget()).collect(Collectors.toList()));
+		states.addAll(state.outTransitions().stream().map(x -> x.getTarget()).collect(Collectors.toList()));
 		
-		for (State x : state.getOutTransitions().stream().map(x -> x.getTarget()).collect(Collectors.toList())) {
+		for (StateGraphNode x : state.outTransitions().stream().map(x -> x.getTarget()).collect(Collectors.toList())) {
 			states.addAll(visitStates(x));
 		}
 		

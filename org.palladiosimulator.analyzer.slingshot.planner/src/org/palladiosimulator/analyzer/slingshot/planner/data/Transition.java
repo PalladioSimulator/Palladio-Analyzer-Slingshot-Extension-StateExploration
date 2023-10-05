@@ -1,27 +1,27 @@
 package org.palladiosimulator.analyzer.slingshot.planner.data;
 
 public class Transition {
-	private transient State source;
-	private State target;
+	private transient StateGraphNode source;
+	private StateGraphNode target;
 	
 	private Reason reason;
 	
-	public Transition(State target, State source, Reason reason) {
+	public Transition(StateGraphNode target, StateGraphNode source, Reason reason) {
 		super();
 		this.target = target;
 		this.source = source;
 		this.reason = reason;
 	}
 
-	public State getTarget() {
+	public StateGraphNode getTarget() {
 		return target;
 	}
 
-	public void setSource(State s) {
+	public void setSource(StateGraphNode s) {
 		source = s;
 	}
 	
-	public State getSource() {
+	public StateGraphNode getSource() {
 		return source;
 	}
 	
