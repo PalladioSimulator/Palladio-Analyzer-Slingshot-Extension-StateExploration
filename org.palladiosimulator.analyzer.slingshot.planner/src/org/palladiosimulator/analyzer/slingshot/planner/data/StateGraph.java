@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.planner.data;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class StateGraph {
@@ -14,8 +15,8 @@ public class StateGraph {
 		return root;
 	}
 	
-	public ArrayList<State> getStates() {
-		ArrayList<State> states = new ArrayList<State>();
+	public List<State> getStates() {
+		List<State> states = new ArrayList<State>();
 		
 		states.add(this.getRoot());
 		states.addAll(visitStates(this.getRoot()));
@@ -23,8 +24,8 @@ public class StateGraph {
 		return states;
 	}
 	
-	private ArrayList<State> visitStates(State state) {
-		ArrayList<State> states = new ArrayList<State>();
+	private List<State> visitStates(State state) {
+		List<State> states = new ArrayList<State>();
 		
 		states.addAll(state.getOutTransitions().stream().map(x -> x.getTarget()).collect(Collectors.toList()));
 		

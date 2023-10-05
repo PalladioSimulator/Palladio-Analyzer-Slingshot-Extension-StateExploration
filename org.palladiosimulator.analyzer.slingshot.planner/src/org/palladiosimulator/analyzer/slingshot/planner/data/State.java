@@ -5,17 +5,17 @@ import java.util.List;
 
 public class State {
 	private String id;
-	private ArrayList<Transition> outTransitions;
+	private List<Transition> outTransitions;
 	
 	private double startTime;
 	private double endTime;
 
-	private ArrayList<MeasurementSet> measurements;
-	private ArrayList<SLO> slos;
+	private List<MeasurementSet> measurements;
+	private List<SLO> slos;
 	
 	private transient Double utility;
 	
-	public State(String id, ArrayList<Transition> outTransitions, double startTime, double endTime, ArrayList<MeasurementSet> measurements, ArrayList<SLO> slos) {
+	public State(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos) {
 		super();
 		this.id = id;
 		this.outTransitions = outTransitions;
@@ -33,7 +33,7 @@ public class State {
 		this.slos = new ArrayList<SLO>();
 	}
 
-	public ArrayList<Transition> getOutTransitions() {
+	public List<Transition> getOutTransitions() {
 		return outTransitions;
 	}
 	
@@ -45,11 +45,11 @@ public class State {
 		return id;
 	}
 	
-	public ArrayList<SLO> getSLOs() {
+	public List<SLO> getSLOs() {
 		return slos;
 	}
 	
-	public void setSLOs(ArrayList<SLO> slos) {
+	public void setSLOs(List<SLO> slos) {
 		this.utility = null;
 		this.slos = slos;
 	}
@@ -97,11 +97,11 @@ public class State {
 		return endTime - startTime;
 	}
 
-	public void setMeasurements(ArrayList<MeasurementSet> measurements) {
+	public void setMeasurements(List<MeasurementSet> measurements) {
 		this.measurements = measurements;
 	}
 	
-	public ArrayList<MeasurementSet> getMeasurements() {
+	public List<MeasurementSet> getMeasurements() {
 		return measurements;
 	}
 	

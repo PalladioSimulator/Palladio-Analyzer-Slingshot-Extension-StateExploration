@@ -7,11 +7,9 @@ import java.util.stream.Collectors;
 import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
-import org.eclipse.emf.ecore.EObject;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
-import org.palladiosimulator.commons.emfutils.EMFLoadHelper;
 import org.palladiosimulator.edp2.dao.MeasurementsDao;
 import org.palladiosimulator.edp2.dao.exception.DataNotAccessibleException;
 import org.palladiosimulator.edp2.models.ExperimentData.DataSeries;
@@ -19,11 +17,9 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentRun;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.ExperimentData.MeasurementRange;
 import org.palladiosimulator.edp2.models.ExperimentData.RawMeasurements;
-import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
 import org.palladiosimulator.edp2.util.MeasurementsUtility;
 import org.palladiosimulator.edp2.util.MetricDescriptionUtility;
 import org.palladiosimulator.metricspec.BaseMetricDescription;
-import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 
 
@@ -40,8 +36,8 @@ public class PalladioSimulationsVisitor {
 		return new SLO(slo.getName(), slo.getMeasurementSpecification().getMonitor().getMeasuringPoint().getResourceURIRepresentation(), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
-	public static ArrayList<MeasurementSet> visitExperiementSetting(ExperimentSetting es) {
-		ArrayList<MeasurementSet> runs = new ArrayList<MeasurementSet>();
+	public static List<MeasurementSet> visitExperiementSetting(ExperimentSetting es) {
+		List<MeasurementSet> runs = new ArrayList<MeasurementSet>();
 
 		for (ExperimentRun er : es.getExperimentRuns()) {
 			runs.addAll(PalladioSimulationsVisitor.visitExperimentRun(er));
@@ -50,8 +46,8 @@ public class PalladioSimulationsVisitor {
 		return runs;
 	}
 
-	public static ArrayList<MeasurementSet> visitExperimentRun(ExperimentRun er) {
-		ArrayList<MeasurementSet> ms = new ArrayList<MeasurementSet>();
+	public static List<MeasurementSet> visitExperimentRun(ExperimentRun er) {
+		List<MeasurementSet> ms = new ArrayList<MeasurementSet>();
 
 		for (org.palladiosimulator.edp2.models.ExperimentData.Measurement m : er.getMeasurement()) {
 			ms.addAll(PalladioSimulationsVisitor.visitMeasurment(m));
@@ -60,8 +56,8 @@ public class PalladioSimulationsVisitor {
 		return ms;
 	}
 
-	public static ArrayList<MeasurementSet> visitMeasurment(org.palladiosimulator.edp2.models.ExperimentData.Measurement m) {
-		ArrayList<MeasurementSet> mrs = new ArrayList<MeasurementSet>();
+	public static List<MeasurementSet> visitMeasurment(org.palladiosimulator.edp2.models.ExperimentData.Measurement m) {
+		List<MeasurementSet> mrs = new ArrayList<MeasurementSet>();
 
 		for (MeasurementRange mr : m.getMeasurementRanges()) {
 			mrs.addAll(PalladioSimulationsVisitor.visitMeasurementRange(mr));
@@ -70,7 +66,7 @@ public class PalladioSimulationsVisitor {
 		return mrs;
 	}
 
-	public static ArrayList<MeasurementSet> visitMeasurementRange(MeasurementRange mr) {
+	public static List<MeasurementSet> visitMeasurementRange(MeasurementRange mr) {
 		if (mr.getRawMeasurements() == null)
 			throw new IllegalStateException("No RawMeasurments found!");
 
@@ -87,11 +83,11 @@ public class PalladioSimulationsVisitor {
 	 * @param rawMeasurments
 	 * @return
 	 */
-	public static ArrayList<MeasurementSet> visitRawMeasurments(RawMeasurements rawMeasurments) {
-		ArrayList<MeasurementSet> measurments = new ArrayList<MeasurementSet>();
+	public static List<MeasurementSet> visitRawMeasurments(RawMeasurements rawMeasurments) {
+		List<MeasurementSet> measurments = new ArrayList<MeasurementSet>();
 
-		ArrayList<Number> pointInTime = null;
-		ArrayList<Number> values = null;
+		List<Number> pointInTime = null;
+		List<Number> values = null;
 		String measureName = null;
 		String measureURI = null;
 
@@ -156,13 +152,13 @@ public class PalladioSimulationsVisitor {
 	 * @param ds DataSeries with doubles
 	 * @return ArrayList of Doubles
 	 */
-	private static ArrayList<Number> visitDataSeries(DataSeries ds) {
+	private static List<Number> visitDataSeries(DataSeries ds) {
 		MeasurementsDao<Number, Duration> dao = 
 				(MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
 
 		List<Measure<Number, Duration>> measures = dao.getMeasurements();
 		
-		ArrayList<Number> numbers = new ArrayList<Number>(
+		List<Number> numbers = new ArrayList<Number>(
 				measures.stream().map(measure -> measure.getValue()).collect(Collectors.toList()));
 
 		try {

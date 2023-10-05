@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.planner.runner;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.planner.data.State;
@@ -24,12 +25,12 @@ public class PlannerRunner {
 	}
 	
 	public void startBellmanFord() {
-		ArrayList<State> states = graph.getStates();
+		List<State> states = graph.getStates();
 			
-		ArrayList<Double> distances = new ArrayList<Double>(states.size());
-		ArrayList<State> parents = new ArrayList<State>(states.size());
+		List<Double> distances = new ArrayList<Double>(states.size());
+		List<State> parents = new ArrayList<State>(states.size());
 
-		ArrayList<Transition> transitions = new ArrayList<Transition>();
+		List<Transition> transitions = new ArrayList<Transition>();
 		
 		for (State s : states) {
 			transitions.addAll(s.getOutTransitions());
@@ -82,7 +83,7 @@ public class PlannerRunner {
 		LOGGER.info("Planning (Bellman-Ford) - finished");
 	}
 	
-	private void initBellmanFord(StateGraph graph, ArrayList<Double> distances, ArrayList<State> parents) {
+	private void initBellmanFord(StateGraph graph, List<Double> distances, List<State> parents) {
 		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
 			parents.add(null);
@@ -93,11 +94,11 @@ public class PlannerRunner {
 	}
 
 	public void startDijkstra() {
-		ArrayList<State> states = graph.getStates();
+		List<State> states = graph.getStates();
 
-		ArrayList<State> knots = graph.getStates();
-		ArrayList<Double> distances = new ArrayList<Double>(states.size());
-		ArrayList<State> parents = new ArrayList<State>(states.size());
+		List<State> knots = graph.getStates();
+		List<Double> distances = new ArrayList<Double>(states.size());
+		List<State> parents = new ArrayList<State>(states.size());
 
 		LOGGER.info("Planning (Dijkstra) - started");
 
@@ -156,7 +157,7 @@ public class PlannerRunner {
 		LOGGER.info("Planning (Dijkstra) - finished");
 	}
 
-	private void dijkstraInit(StateGraph graph, ArrayList<Double> distances, ArrayList<State> parents) {
+	private void dijkstraInit(StateGraph graph, List<Double> distances, List<State> parents) {
 		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
 			parents.add(null);
@@ -166,8 +167,8 @@ public class PlannerRunner {
 		distances.set(graph.getStates().indexOf(graph.getRoot()), 0.0d);
 	}
 
-	private void dijkstraUpdate(State u, State v, StateGraph graph, ArrayList<Double> distances,
-			ArrayList<State> parents) {
+	private void dijkstraUpdate(State u, State v, StateGraph graph, List<Double> distances,
+			List<State> parents) {
 		int indexU = graph.getStates().indexOf(u);
 		int indexV = graph.getStates().indexOf(v);
 
@@ -180,7 +181,7 @@ public class PlannerRunner {
 	}
 
 	public void startGreedy() {
-		ArrayList<State> path = new ArrayList<State>();
+		List<State> path = new ArrayList<State>();
 
 		LOGGER.info("Planning (Greedy) - started");
 
@@ -213,9 +214,9 @@ public class PlannerRunner {
 	}
 	
 	public void startGreedyReverse() {
-		ArrayList<State> states = graph.getStates();
-		ArrayList<Double> distances = new ArrayList<Double>(states.size());
-		ArrayList<State> parents = new ArrayList<State>(states.size());
+		List<State> states = graph.getStates();
+		List<Double> distances = new ArrayList<Double>(states.size());
+		List<State> parents = new ArrayList<State>(states.size());
 
 		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);

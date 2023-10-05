@@ -6,8 +6,8 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
@@ -32,7 +32,7 @@ public class GraphicalRepresentation {
 
 	static public String getPictureString(StateGraph graph) {
 		final String fileName = "/tmp/state_graph_graphical_representation.dot";
-		final ArrayList<State> states = graph.getStates();
+		final List<State> states = graph.getStates();
 
 		try {
 			FileWriter file = new FileWriter(fileName);
@@ -45,7 +45,7 @@ public class GraphicalRepresentation {
 			int noteCount = 0;
 
 			for (State state : states) {
-				ArrayList<Transition> transitions = state.getOutTransitions();
+				List<Transition> transitions = state.getOutTransitions();
 
 				String noteDescription = String.format("StartTime: %.2f\\nLength: %.2f\\nEndTime: %.2f\\n",
 						state.getStartTime(), state.getDuration(), state.getEndTime());
@@ -90,7 +90,7 @@ public class GraphicalRepresentation {
 
 			// use sorted array of states to combine states with same start time in the same
 			// rank
-			ArrayList<State> sortedStates = (ArrayList<State>) states.stream().sorted(Comparator.comparing(State::getStartTime)).collect(Collectors.toList());
+			List<State> sortedStates = (List<State>) states.stream().sorted(Comparator.comparing(State::getStartTime)).collect(Collectors.toList());
 			sortedStates.remove(graph.getRoot());
 
 			boolean nextRank = true;
