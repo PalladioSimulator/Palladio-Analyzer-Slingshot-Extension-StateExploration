@@ -74,7 +74,7 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 	@Override
 	public void add(int index, Measurement<Number> element) {
 		super.add(index, element);
-		this.measurementsSetAverage = null;
+		resetCalcuationCaches();
 	}
 
 	@Override
@@ -149,7 +149,7 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 		resetCalcuationCaches();
 	}
 	
-	/**
+	/**	
 	 * Private method to reset the calculation caches.
 	 */
 	private void resetCalcuationCaches() {
