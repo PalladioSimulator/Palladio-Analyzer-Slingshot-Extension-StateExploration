@@ -74,15 +74,8 @@ public class PlannerRunner {
 		State parent = states.get(currentMaxIndex);
 		while (parent != null) {
 			LOGGER.info("  " + parent.getId());
-			LOGGER.info("    StartTime: " + parent.getStartTime());
 			LOGGER.info("    Duration: " + parent.getDuration());
-			LOGGER.info("    EndTime: " + parent.getEndTime());
 			LOGGER.info("    Utility: " + parent.getUtiltity());
-			/*parent.getMeasurements().stream().forEach(x -> {
-				LOGGER.info("    Measurement: " + x.getName());
-				x.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
-			});*/
-			
 			parent = parents.get(states.indexOf(parent));
 		}
 		
@@ -90,11 +83,10 @@ public class PlannerRunner {
 	}
 	
 	private void initBellmanFord(StateGraph graph, ArrayList<Double> distances, ArrayList<State> parents) {
-		for (int i = 0; i < graph.getStates().size(); i++)
+		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
-
-		for (int i = 0; i < graph.getStates().size(); i++)
 			parents.add(null);
+		}
 
 		// setting distance of the root knot to 0
 		distances.set(graph.getStates().indexOf(graph.getRoot()), 0.0d);
@@ -156,15 +148,8 @@ public class PlannerRunner {
 		State parent = states.get(currentMaxIndex);
 		while (parent != null) {
 			LOGGER.info("  " + parent.getId());
-			LOGGER.info("    StartTime: " + parent.getStartTime());
 			LOGGER.info("    Duration: " + parent.getDuration());
-			LOGGER.info("    EndTime: " + parent.getEndTime());
 			LOGGER.info("    Utility: " + parent.getUtiltity());
-			/*parent.getMeasurements().stream().forEach(x -> {
-				LOGGER.info("    Measurement: " + x.getName());
-				x.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
-			});*/
-			
 			parent = parents.get(states.indexOf(parent));
 		}
 		
@@ -172,11 +157,10 @@ public class PlannerRunner {
 	}
 
 	private void dijkstraInit(StateGraph graph, ArrayList<Double> distances, ArrayList<State> parents) {
-		for (int i = 0; i < graph.getStates().size(); i++)
+		for (int i = 0; i < graph.getStates().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
-
-		for (int i = 0; i < graph.getStates().size(); i++)
 			parents.add(null);
+		}
 
 		// setting distance of the root knot to 0
 		distances.set(graph.getStates().indexOf(graph.getRoot()), 0.0d);
@@ -222,15 +206,8 @@ public class PlannerRunner {
 		LOGGER.info("Path: ");
 		path.stream().forEach(x -> {
 			LOGGER.info("  " + x.getId());
-			LOGGER.info("    StartTime: " + x.getStartTime());
 			LOGGER.info("    Duration: " + x.getDuration());
-			LOGGER.info("    EndTime: " + x.getEndTime());
 			LOGGER.info("    Utility: " + x.getUtiltity());
-			/*x.getMeasurements().stream().forEach(xt -> {
-				LOGGER.info("    Measurement: " + xt.getName());
-				xt.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
-			});*/
-			
 		});
 		LOGGER.info("Planning (Greedy) - finished");
 	}
@@ -297,15 +274,8 @@ public class PlannerRunner {
 		State parent = states.get(currentMaxIndex);
 		while (parent != null) {
 			LOGGER.info("  " + parent.getId());
-			LOGGER.info("    StartTime: " + parent.getStartTime());
 			LOGGER.info("    Duration: " + parent.getDuration());
-			LOGGER.info("    EndTime: " + parent.getEndTime());
 			LOGGER.info("    Utility: " + parent.getUtiltity());
-			/*parent.getMeasurements().stream().forEach(x -> {
-				LOGGER.info("    Measurement: " + x.getName());
-				x.stream().forEach(y -> LOGGER.info("      " + y.getTimeStamp() + " " + y.getMeasure()));
-			});*/
-			
 			parent = parents.get(states.indexOf(parent));
 		}		
 		
