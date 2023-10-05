@@ -51,7 +51,7 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 			return 0;
 		}
 		if (measurementsSetMedian == null) {
-			double[] doubles = this.stream().mapToDouble(x -> x.getMeasure().doubleValue()).sorted().toArray();
+			double[] doubles = this.stream().mapToDouble(x -> x.measure().doubleValue()).sorted().toArray();
 			measurementsSetMedian = doubles[doubles.length/2];
 		}
 		return measurementsSetMedian;
@@ -62,7 +62,7 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 			return 0;
 		}
 		if (measurementsSetAverage == null) {
-			measurementsSetAverage = this.stream().mapToDouble(x -> x.getMeasure().doubleValue()).sum()/this.size();
+			measurementsSetAverage = this.stream().mapToDouble(x -> x.measure().doubleValue()).sum()/this.size();
 		}
 		return measurementsSetAverage;
 	}
