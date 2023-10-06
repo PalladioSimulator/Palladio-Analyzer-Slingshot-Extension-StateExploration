@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,18 +70,18 @@ public class GraphicalRepresentation {
 
 				// for every transition a path is written to the file
 				for (Transition transition : transitions) {
-					switch (transition.getReason()) {
+					switch (transition.reason()) {
 						case EnviromentalChange: {
-							file.write("\"" + transition.getSource().id() + "\" -> \"" + transition.getTarget().id()+ "\" [style=\"dotted\"];\n");
+							file.write("\"" + transition.source().id() + "\" -> \"" + transition.target().id()+ "\" [style=\"dotted\"];\n");
 							break;
 						}
 						case IntervalChange: {
-							file.write("\"" + transition.getSource().id() + "\" -> \"" + transition.getTarget().id()+ "\" [style=\"dashed\"];\n");
+							file.write("\"" + transition.source().id() + "\" -> \"" + transition.target().id()+ "\" [style=\"dashed\"];\n");
 							break;
 						}
 						case ReactiveReconfigurationChange:
 						case ReconfigurationChange: {
-							file.write("\"" + transition.getSource().id() + "\" -> \"" + transition.getTarget().id()+ "\";\n");
+							file.write("\"" + transition.source().id() + "\" -> \"" + transition.target().id()+ "\";\n");
 							break;
 						}
 					}
@@ -189,9 +190,15 @@ public class GraphicalRepresentation {
 			Reader reader = Files.newBufferedReader(Paths.get(fileName));
 		    StateGraph graph = gson.fromJson(reader, StateGraph.class);
 
-		    for (StateGraphNode s : graph.states())
-		    	for (Transition t : s.outTransitions())
-		    		t.setSource(s);
+		    for (StateGraphNode s : graph.states()) {
+		    	List<Transition> trans = new ArrayList<Transition>();
+		    	trans.addAll(s.outTransitions());
+		    	s.outTransitions().clear();
+		    	
+		    	for (Transition t : trans) {
+		    		s.outTransitions().add(new Transition(s, t.target(), t.reason()));
+		    	}
+		    }
 		    
 		    reader.close();
 		    

@@ -42,14 +42,14 @@ public class PlannerRunner {
 		
 		for (int i = 0; i < states.size() - 1; i++) {
 			for (Transition t : transitions) {
-				int targetIndex = states.indexOf(t.getTarget());
-				int sourceIndex = states.indexOf(t.getSource());
+				int targetIndex = states.indexOf(t.target());
+				int sourceIndex = states.indexOf(t.source());
 				
-				double alternativeDistance = distances.get(sourceIndex) + t.getTarget().utility(); 
+				double alternativeDistance = distances.get(sourceIndex) + t.target().utility(); 
 				
 				if (alternativeDistance > distances.get(targetIndex)) {
 					distances.set(targetIndex, alternativeDistance);
-					parents.set(targetIndex, t.getSource());
+					parents.set(targetIndex, t.source());
 				}
 			}
 		}
@@ -120,9 +120,9 @@ public class PlannerRunner {
 				StateGraphNode u = knots.remove(knots.indexOf(states.get(index))); // remove processed knot
 
 				for (Transition t : states.get(index).outTransitions()) {
-					if (knots.indexOf(t.getTarget()) != -1) { // check whether the knot is in the processing list
+					if (knots.indexOf(t.target()) != -1) { // check whether the knot is in the processing list
 																// (knots)
-						dijkstraUpdate(u, t.getTarget(), graph, distances, parents);
+						dijkstraUpdate(u, t.target(), graph, distances, parents);
 					}
 				}
 			}
@@ -194,9 +194,9 @@ public class PlannerRunner {
 			StateGraphNode next = null;
 			for (Transition t : current.outTransitions()) {
 				if (next == null) {
-					next = t.getTarget();
-				} else if (next.utility() < t.getTarget().utility()) {
-					next = t.getTarget();
+					next = t.target();
+				} else if (next.utility() < t.target().utility()) {
+					next = t.target();
 				}
 			}
 			current = next;
@@ -240,7 +240,7 @@ public class PlannerRunner {
 					stateLoop:
 					for (StateGraphNode p : states) {
 						for (Transition t : p.outTransitions()) {
-							if (t.getTarget().equals(parent)) {
+							if (t.target().equals(parent)) {
 								parents.set(states.indexOf(parent), p);
 								parent = p;
 								found = true;

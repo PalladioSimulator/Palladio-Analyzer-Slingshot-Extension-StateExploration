@@ -21,9 +21,9 @@ public record StateGraph(StateGraphNode root, List<StateGraphNode> states) {
 	private static List<StateGraphNode> visitStates(StateGraphNode state) {
 		List<StateGraphNode> states = new ArrayList<StateGraphNode>();
 		
-		states.addAll(state.outTransitions().stream().map(x -> x.getTarget()).collect(Collectors.toList()));
+		states.addAll(state.outTransitions().stream().map(x -> x.target()).collect(Collectors.toList()));
 		
-		for (StateGraphNode x : state.outTransitions().stream().map(x -> x.getTarget()).collect(Collectors.toList())) {
+		for (StateGraphNode x : state.outTransitions().stream().map(x -> x.target()).collect(Collectors.toList())) {
 			states.addAll(visitStates(x));
 		}
 		
