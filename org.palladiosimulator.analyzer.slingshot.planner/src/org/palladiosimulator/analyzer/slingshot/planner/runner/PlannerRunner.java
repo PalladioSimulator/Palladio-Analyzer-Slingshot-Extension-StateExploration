@@ -25,7 +25,7 @@ public class PlannerRunner {
 	}
 	
 	public void startBellmanFord() {
-		List<StateGraphNode> states = graph.getStates();
+		List<StateGraphNode> states = graph.states();
 			
 		List<Double> distances = new ArrayList<Double>(states.size());
 		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
@@ -84,19 +84,19 @@ public class PlannerRunner {
 	}
 	
 	private void initBellmanFord(StateGraph graph, List<Double> distances, List<StateGraphNode> parents) {
-		for (int i = 0; i < graph.getStates().size(); i++) {
+		for (int i = 0; i < graph.states().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
 			parents.add(null);
 		}
 
 		// setting distance of the root knot to 0
-		distances.set(graph.getStates().indexOf(graph.getRoot()), 0.0d);
+		distances.set(graph.states().indexOf(graph.root()), 0.0d);
 	}
 
 	public void startDijkstra() {
-		List<StateGraphNode> states = graph.getStates();
+		List<StateGraphNode> states = graph.states();
 
-		List<StateGraphNode> knots = graph.getStates();
+		List<StateGraphNode> knots = graph.states();
 		List<Double> distances = new ArrayList<Double>(states.size());
 		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
 
@@ -158,19 +158,19 @@ public class PlannerRunner {
 	}
 
 	private void dijkstraInit(StateGraph graph, List<Double> distances, List<StateGraphNode> parents) {
-		for (int i = 0; i < graph.getStates().size(); i++) {
+		for (int i = 0; i < graph.states().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
 			parents.add(null);
 		}
 
 		// setting distance of the root knot to 0
-		distances.set(graph.getStates().indexOf(graph.getRoot()), 0.0d);
+		distances.set(graph.states().indexOf(graph.root()), 0.0d);
 	}
 
 	private void dijkstraUpdate(StateGraphNode u, StateGraphNode v, StateGraph graph, List<Double> distances,
 			List<StateGraphNode> parents) {
-		int indexU = graph.getStates().indexOf(u);
-		int indexV = graph.getStates().indexOf(v);
+		int indexU = graph.states().indexOf(u);
+		int indexV = graph.states().indexOf(v);
 
 		double alternative = distances.get(indexU) + v.utility();
 
@@ -185,7 +185,7 @@ public class PlannerRunner {
 
 		LOGGER.info("Planning (Greedy) - started");
 
-		StateGraphNode current = graph.getRoot();
+		StateGraphNode current = graph.root();
 		double utility = 0;
 		while (current != null) {
 			path.add(current);
@@ -214,11 +214,11 @@ public class PlannerRunner {
 	}
 	
 	public void startGreedyReverse() {
-		List<StateGraphNode> states = graph.getStates();
+		List<StateGraphNode> states = graph.states();
 		List<Double> distances = new ArrayList<Double>(states.size());
 		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
 
-		for (int i = 0; i < graph.getStates().size(); i++) {
+		for (int i = 0; i < graph.states().size(); i++) {
 			distances.add(-Double.MAX_VALUE);
 			parents.add(null);
 		}

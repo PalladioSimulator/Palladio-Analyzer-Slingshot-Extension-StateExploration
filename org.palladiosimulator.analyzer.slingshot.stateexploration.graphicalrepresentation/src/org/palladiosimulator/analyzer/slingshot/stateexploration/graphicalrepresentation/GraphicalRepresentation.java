@@ -32,7 +32,7 @@ public class GraphicalRepresentation {
 
 	static public String getPictureString(StateGraph graph) {
 		final String fileName = "/tmp/state_graph_graphical_representation.dot";
-		final List<StateGraphNode> states = graph.getStates();
+		final List<StateGraphNode> states = graph.states();
 
 		try {
 			FileWriter file = new FileWriter(fileName);
@@ -91,7 +91,7 @@ public class GraphicalRepresentation {
 			// use sorted array of states to combine states with same start time in the same
 			// rank
 			List<StateGraphNode> sortedStates = (List<StateGraphNode>) states.stream().sorted(Comparator.comparing(StateGraphNode::startTime)).collect(Collectors.toList());
-			sortedStates.remove(graph.getRoot());
+			sortedStates.remove(graph.root());
 
 			boolean nextRank = true;
 			for (int i = 0; i < sortedStates.size(); i++) {
@@ -189,7 +189,7 @@ public class GraphicalRepresentation {
 			Reader reader = Files.newBufferedReader(Paths.get(fileName));
 		    StateGraph graph = gson.fromJson(reader, StateGraph.class);
 
-		    for (StateGraphNode s : graph.getStates())
+		    for (StateGraphNode s : graph.states())
 		    	for (Transition t : s.outTransitions())
 		    		t.setSource(s);
 		    
