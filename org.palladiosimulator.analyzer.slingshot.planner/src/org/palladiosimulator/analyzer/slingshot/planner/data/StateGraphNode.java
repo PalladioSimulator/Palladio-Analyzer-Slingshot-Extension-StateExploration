@@ -4,7 +4,15 @@ import java.util.List;
 
 public record StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, Double utility) {
 	
-	public StateGraphNode {
+	public StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos) {
+		this(id, outTransitions, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos));	
+	}
+	
+	public double duration() {
+		return endTime - startTime;
+	}
+	
+	private static double calcUtility(double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos) {
 		/**
 		 * This calculates the utility of the state.
 		 * In the form of "(slo1 - measure1) + (slo2 - measure2)"
@@ -20,11 +28,7 @@ public record StateGraphNode(String id, List<Transition> outTransitions, double 
 				value += (slo.upperThreshold().doubleValue() - ms.getMedian());
 		}
 		
-		utility = (endTime - startTime) * value;
-	}
-	
-	public double duration() {
-		return endTime - startTime;
+		return ((endTime - startTime) * value);
 	}
 	
 	@Override

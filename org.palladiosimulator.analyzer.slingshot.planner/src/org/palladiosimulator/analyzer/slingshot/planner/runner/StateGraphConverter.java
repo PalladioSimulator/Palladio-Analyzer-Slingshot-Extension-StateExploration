@@ -66,7 +66,7 @@ public class StateGraphConverter {
 				transitions.add(new Transition(newStates.get(transition.getTarget().getId()),newStates.get(transition.getSource().getId()), reason));
 			}
 			
-			newStates.put(state.getId(), new StateGraphNode(state.getId(), transitions, state.getStartTime(), state.getEndTime(), measuremnets, slos, null));
+			newStates.put(state.getId(), new StateGraphNode(state.getId(), transitions, state.getStartTime(), state.getEndTime(), measuremnets, slos));
 		}
 		
 		return new StateGraph(newStates.get(graph.getRoot().getId()));
