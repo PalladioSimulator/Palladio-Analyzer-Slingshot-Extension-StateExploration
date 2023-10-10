@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher.jobs;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -10,6 +11,7 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.PlannerRunner;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
@@ -76,7 +78,7 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		// TODO: run the planning here!
 		PlannerRunner pr = new PlannerRunner(graph);
 		LOGGER.info("**** Planner started ****");
-		pr.start();	
+		List<StateGraphNode> path = pr.start(PlannerRunner.PlanningAlgorithm.DIJKSTRA);	
 		LOGGER.info("**** Planner finished ****");
 
 		// get the graphical representation of the raw graph

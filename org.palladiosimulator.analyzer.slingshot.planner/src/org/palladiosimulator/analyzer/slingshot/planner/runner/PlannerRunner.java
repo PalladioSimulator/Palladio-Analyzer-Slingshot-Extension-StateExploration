@@ -12,19 +12,34 @@ public class PlannerRunner {
 	private static final Logger LOGGER = Logger.getLogger(PlannerRunner.class.getName());
 
 	private StateGraph graph;
+	
+	public enum PlanningAlgorithm {
+		DIJKSTRA,
+		BELLMANFORD,
+		GREEDY,
+		GREEDY_REVERSE,
+	}
 
 	public PlannerRunner(StateGraph graph) {
 		this.graph = graph;
 	}
 
-	public void start() {
-		startBellmanFord();
-		startDijkstra();
-		startGreedy();
-		startGreedyReverse();
+	public List<StateGraphNode> start(PlanningAlgorithm pa) {
+		switch (pa) {
+			case DIJKSTRA:
+				return startDijkstra();
+			case BELLMANFORD:
+				return startBellmanFord();
+			case GREEDY:
+				return startGreedy();
+			case GREEDY_REVERSE:
+				return startGreedyReverse();
+			default:
+				throw new IllegalArgumentException("No valid algorithm was provided for this function.");
+		}
 	}
 	
-	public void startBellmanFord() {
+	public List<StateGraphNode> startBellmanFord() {
 		List<StateGraphNode> states = graph.states();
 			
 		List<Double> distances = new ArrayList<Double>(states.size());
@@ -69,18 +84,24 @@ public class PlannerRunner {
 			}
 		}
 		
+		List<StateGraphNode> path = new ArrayList<StateGraphNode>();
+		
 		LOGGER.info(states.get(currentMaxIndex).id());
 		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
 		LOGGER.info("Path: ");
 		StateGraphNode parent = states.get(currentMaxIndex);
+		path.add(parent);
 		while (parent != null) {
 			LOGGER.info("  " + parent.id());
 			LOGGER.info("    Duration: " + parent.duration());
 			LOGGER.info("    Utility: " + parent.utility());
 			parent = parents.get(states.indexOf(parent));
+			path.add(parent);
 		}
 		
 		LOGGER.info("Planning (Bellman-Ford) - finished");
+		
+		return path;
 	}
 	
 	private void initBellmanFord(StateGraph graph, List<Double> distances, List<StateGraphNode> parents) {
@@ -93,7 +114,7 @@ public class PlannerRunner {
 		distances.set(graph.states().indexOf(graph.root()), 0.0d);
 	}
 
-	public void startDijkstra() {
+	public List<StateGraphNode> startDijkstra() {
 		List<StateGraphNode> states = graph.states();
 
 		List<StateGraphNode> knots = graph.states();
@@ -142,19 +163,24 @@ public class PlannerRunner {
 				}
 			}
 		}
+		List<StateGraphNode> path = new ArrayList<StateGraphNode>();
 		
 		LOGGER.info(states.get(currentMaxIndex).id());
 		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
 		LOGGER.info("Path: ");
 		StateGraphNode parent = states.get(currentMaxIndex);
+		path.add(parent);
 		while (parent != null) {
 			LOGGER.info("  " + parent.id());
 			LOGGER.info("    Duration: " + parent.duration());
 			LOGGER.info("    Utility: " + parent.utility());
 			parent = parents.get(states.indexOf(parent));
+			path.add(parent);
 		}
 		
 		LOGGER.info("Planning (Dijkstra) - finished");
+		
+		return path;
 	}
 
 	private void dijkstraInit(StateGraph graph, List<Double> distances, List<StateGraphNode> parents) {
@@ -180,7 +206,7 @@ public class PlannerRunner {
 		}
 	}
 
-	public void startGreedy() {
+	public List<StateGraphNode> startGreedy() {
 		List<StateGraphNode> path = new ArrayList<StateGraphNode>();
 
 		LOGGER.info("Planning (Greedy) - started");
@@ -211,9 +237,11 @@ public class PlannerRunner {
 			LOGGER.info("    Utility: " + x.utility());
 		});
 		LOGGER.info("Planning (Greedy) - finished");
+		
+		return path;
 	}
 	
-	public void startGreedyReverse() {
+	public List<StateGraphNode> startGreedyReverse() {
 		List<StateGraphNode> states = graph.states();
 		List<Double> distances = new ArrayList<Double>(states.size());
 		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
@@ -269,17 +297,23 @@ public class PlannerRunner {
 			}
 		}
 		
+		List<StateGraphNode> path = new ArrayList<StateGraphNode>();
+		
 		LOGGER.info(states.get(currentMaxIndex).id());
 		LOGGER.info("Distance: " + distances.get(currentMaxIndex));
 		LOGGER.info("Path: ");
 		StateGraphNode parent = states.get(currentMaxIndex);
+		path.add(parent);
 		while (parent != null) {
 			LOGGER.info("  " + parent.id());
 			LOGGER.info("    Duration: " + parent.duration());
 			LOGGER.info("    Utility: " + parent.utility());
 			parent = parents.get(states.indexOf(parent));
+			path.add(parent);
 		}		
 		
 		LOGGER.info("Planning (Greedy Reverse) - finished");
+		
+		return path;
 	}
 }
