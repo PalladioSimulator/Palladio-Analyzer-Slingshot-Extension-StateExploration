@@ -2,32 +2,15 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepre
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Type;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
-import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
-import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 
 public class GraphicalRepresentation {
 
@@ -132,82 +115,5 @@ public class GraphicalRepresentation {
 		}
 
 		return fileName;
-	}
-	
-	public static String getJSONString(StateGraph graph) {
-		JsonSerializer<MeasurementSet> serializerMeasurementSet = new JsonSerializer<MeasurementSet>() {  
-		    @Override
-		    public JsonElement serialize(MeasurementSet src, Type typeOfSrc, JsonSerializationContext context) {
-		        JsonObject jsonMeasurementSet = new JsonObject();
-
-		        jsonMeasurementSet.addProperty("name", src.getName());
-		        jsonMeasurementSet.addProperty("measuringPointURI", src.getMeasuringPointURI());
-		        jsonMeasurementSet.add("elements", context.serialize(src.toArray()));
-		        
-		        return jsonMeasurementSet;
-		    }
-		};
-		
-		GsonBuilder builder = new GsonBuilder();
-		builder.serializeNulls();
-		builder.registerTypeAdapter(MeasurementSet.class, serializerMeasurementSet);
-		Gson gson = builder.create();
-		
-		return gson.toJson(graph);
-	}
-	
-	public static StateGraph fromJSONFile(String fileName) {
-		JsonDeserializer<MeasurementSet> deserializerMeasurementSet = new JsonDeserializer<MeasurementSet>() {
-			@Override
-			public MeasurementSet deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-					throws JsonParseException {
-				
-				JsonObject obj = json.getAsJsonObject();
-				
-				MeasurementSet ms = new MeasurementSet();
-				
-				ms.setName(obj.get("name").getAsString());
-				ms.setMeasuringPointURI(obj.get("measuringPointURI").getAsString());
-				
-				for (int i = 0; i < obj.get("elements").getAsJsonArray().size(); i++) {
-					JsonObject el = obj.get("elements").getAsJsonArray().get(i).getAsJsonObject();
-					
-					ms.add(context.deserialize(el, Measurement.class));
-				}
-				
-				return ms;
-			}
-		};
-		
-		
-		
-		try {
-			GsonBuilder builder = new GsonBuilder();
-			builder.serializeNulls();
-			builder.registerTypeAdapter(MeasurementSet.class, deserializerMeasurementSet);
-			Gson gson = builder.create();
-		    
-			Reader reader = Files.newBufferedReader(Paths.get(fileName));
-		    StateGraph graph = gson.fromJson(reader, StateGraph.class);
-
-		    for (StateGraphNode s : graph.states()) {
-		    	List<Transition> trans = new ArrayList<Transition>();
-		    	trans.addAll(s.outTransitions());
-		    	s.outTransitions().clear();
-		    	
-		    	for (Transition t : trans) {
-		    		s.outTransitions().add(new Transition(s, t.target(), t.reason()));
-		    	}
-		    }
-		    
-		    reader.close();
-		    
-		    return graph;
-
-		} catch (Exception ex) {
-		    ex.printStackTrace();
-		}
-		
-		return null;
 	}
 }

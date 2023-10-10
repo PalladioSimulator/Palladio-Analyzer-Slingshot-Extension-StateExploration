@@ -19,6 +19,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation.GraphicalRepresentation;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation.JsonExporter;
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.PlannerWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -89,7 +90,7 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		LOGGER.info("*** JSON Representation ***");
 	    try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter("/tmp/state_graph_graphical_representation.json"));
-			writer.write(GraphicalRepresentation.getJSONString(graph));
+			writer.write(JsonExporter.getJSONString(graph));
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
