@@ -1,8 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.StepBasedAdjustor;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.pcm.core.CoreFactory;
@@ -35,8 +34,8 @@ public class AdjustorEventConcerns {
 	 */
 	public DESEvent copyForTargetGroup(final DESEvent event, final ArchitectureConfiguration config){
 
-		if (event instanceof final AdjustorBasedEvent adjustor) {
-			final TargetGroup tg = adjustor.getTargetGroup();
+		if (event instanceof final ModelAdjustmentRequested adjustor) {
+			final TargetGroup tg = adjustor.getScalingPolicy().getTargetGroup();
 
 			/* Update Target Group */
 			if (tg instanceof final ElasticInfrastructure ei) {
@@ -46,13 +45,16 @@ public class AdjustorEventConcerns {
 			}
 
 			/*Create Event copy*/
-			if (event instanceof final StepBasedAdjustor specificAdjustor) {
-				return new StepBasedAdjustor(tg, specificAdjustor.getStepCount());
-			} else {
-				throw new IllegalArgumentException(String.format("Adjustor event of type %s not yet supported", event.getClass().getSimpleName()));
-			}
+			// if (event instanceof final StepBasedAdjustor specificAdjustor) {
+			// return new StepBasedAdjustor(tg, specificAdjustor.getStepCount());
+			// } else {
+			// throw new IllegalArgumentException(String.format("Adjustor event of type %s
+			// not yet supported", event.getClass().getSimpleName()));
+			// }
+			return new ModelAdjustmentRequested(adjustor.getScalingPolicy());
 		}
-		throw new IllegalArgumentException(String.format("Expected DESEvent of type %s, but got %s", AdjustorBasedEvent.class.getSimpleName(), event.getClass().getSimpleName()));
+		throw new IllegalArgumentException(String.format("Expected DESEvent of type %s, but got %s",
+				ModelAdjustmentRequested.class.getSimpleName(), event.getClass().getSimpleName()));
 	}
 
     /**

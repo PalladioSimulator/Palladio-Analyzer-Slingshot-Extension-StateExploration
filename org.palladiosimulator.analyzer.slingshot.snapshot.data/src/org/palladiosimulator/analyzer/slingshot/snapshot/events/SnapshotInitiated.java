@@ -2,7 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.events;
 
 import java.util.Optional;
 
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulationEvent;
 
 /**
@@ -17,7 +17,7 @@ import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulation
  */
 public class SnapshotInitiated extends AbstractSimulationEvent{
 
-	private final Optional<AdjustorBasedEvent> triggeringEvent;
+	private final Optional<ModelAdjustmentRequested> triggeringEvent;
 
 	public SnapshotInitiated() {
 		this(0);
@@ -28,12 +28,12 @@ public class SnapshotInitiated extends AbstractSimulationEvent{
 		this.triggeringEvent = Optional.empty();
 	}
 
-	public SnapshotInitiated(final double delay, final AdjustorBasedEvent event) {
+	public SnapshotInitiated(final double delay, final ModelAdjustmentRequested event) {
 		super("TODO", delay);
 		this.triggeringEvent = Optional.of(event);
 	}
 
-	public Optional<AdjustorBasedEvent> getTriggeringEvent() {
+	public Optional<ModelAdjustmentRequested> getTriggeringEvent() {
 		return triggeringEvent;
 	}
 }

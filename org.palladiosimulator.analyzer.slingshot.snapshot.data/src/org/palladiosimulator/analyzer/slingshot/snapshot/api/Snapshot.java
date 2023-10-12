@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 import java.util.Optional;
 import java.util.Set;
 
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 
 /**
@@ -25,6 +26,7 @@ public interface Snapshot {
 	 *
 	 * @return
 	 */
-	public Optional<DESEvent> getAdjustorEvent();
-	public void setAdjustorEvent(DESEvent event);
+	public Optional<ModelAdjustmentRequested> getAdjustorEvent();
+
+	public void setAdjustorEvent(ModelAdjustmentRequested event);
 }

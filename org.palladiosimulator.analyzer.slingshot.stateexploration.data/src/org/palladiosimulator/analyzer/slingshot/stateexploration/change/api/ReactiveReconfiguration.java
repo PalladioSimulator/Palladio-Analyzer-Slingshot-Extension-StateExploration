@@ -1,18 +1,19 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.change.api;
 
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  *
  *
  */
-public class ReactiveReconfiguration implements Change {
+public class ReactiveReconfiguration extends Reconfiguration {
 
 
 	private final DESEvent event;
 
-	public ReactiveReconfiguration(final DESEvent event) {
-		super();
+	public ReactiveReconfiguration(final ScalingPolicy policy, final DESEvent event) {
+		super(policy);
 		this.event = event;
 	}
 

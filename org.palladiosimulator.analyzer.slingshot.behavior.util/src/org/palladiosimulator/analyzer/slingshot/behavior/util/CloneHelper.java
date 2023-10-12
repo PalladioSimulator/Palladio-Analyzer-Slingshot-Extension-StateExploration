@@ -81,7 +81,7 @@ public final class CloneHelper {
 	 * @return
 	 */
 	public DESEvent clone(final InterArrivalUserInitiated event, final double simulationTime) {
-		return new InterArrivalUserInitiated(event.time() - simulationTime);
+		return new InterArrivalUserInitiated(event.getEntity(), event.time() - simulationTime);
 	}
 
 	/**

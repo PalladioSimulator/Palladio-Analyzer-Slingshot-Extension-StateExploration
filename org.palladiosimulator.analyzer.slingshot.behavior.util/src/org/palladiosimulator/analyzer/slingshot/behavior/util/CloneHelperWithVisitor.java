@@ -61,7 +61,8 @@ public class CloneHelperWithVisitor {
 	}
 
 	private DESEvent clone(final InterArrivalUserInitiated clonee) {
-		return new InterArrivalUserInitiated(clonee.delay());
+		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getEntity());
+		return new InterArrivalUserInitiated(clonedContext, clonee.delay());
 	}
 
 	private DESEvent clone(final ResourceDemandRequested clonee) {
