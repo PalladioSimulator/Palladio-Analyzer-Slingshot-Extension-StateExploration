@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Reason;
+import org.palladiosimulator.analyzer.slingshot.planner.data.ReconfigurationChange;
 import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
@@ -14,11 +16,13 @@ import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.monitorrepository.Monitor;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+import org.palladiosimulator.spd.SPD;
 
 public class StateGraphConverter {
 	public static StateGraph convert(RawStateGraph graph) {
@@ -54,16 +58,26 @@ public class StateGraphConverter {
 			// for every transition a path is written to the file
 			for (RawTransition transition : state.getOutTransitions()) {
 				Reason reason = null;
+				org.palladiosimulator.analyzer.slingshot.planner.data.Change change = null;
+				
 				if (!transition.getChange().isPresent()) // no change in PCM instance -> measurement change
 					reason = Reason.IntervalChange;
 				else if (transition.getChange().get() instanceof EnvironmentChange) // environment change
 					reason = Reason.EnviromentalChange;
-				else if (transition.getChange().get() instanceof Reconfiguration) // reconfiguration change
+				else if (transition.getChange().get() instanceof Reconfiguration) { // reconfiguration change
 					reason = Reason.ReconfigurationChange;
-				else if (transition.getChange().get() instanceof ReactiveReconfiguration)  // reactive reconfiguration change
+					Optional<Change> changeOrg = transition.getChange();
+					if (changeOrg.isPresent()) {
+						String scalingPolicyId = ((Reconfiguration) changeOrg.get()).getScalingPolicy().getId();
+						double timeStamp = transition.getSource().getEndTime();
+						
+						change = new ReconfigurationChange(scalingPolicyId, timeStamp);
+					}
+					
+				} else if (transition.getChange().get() instanceof ReactiveReconfiguration)  // reactive reconfiguration change
 					reason = Reason.ReactiveReconfigurationChange;
 				
-				transitions.add(new Transition(newStates.get(transition.getTarget().getId()),newStates.get(transition.getSource().getId()), reason));
+				transitions.add(new Transition(newStates.get(transition.getTarget().getId()),newStates.get(transition.getSource().getId()), reason, Optional.ofNullable(change)));
 			}
 			
 			newStates.put(state.getId(), new StateGraphNode(state.getId(), transitions, state.getStartTime(), state.getEndTime(), measuremnets, slos));
