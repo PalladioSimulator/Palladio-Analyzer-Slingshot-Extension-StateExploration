@@ -3,7 +3,6 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 import java.util.Optional;
 import java.util.Set;
 
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelperWithVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
@@ -17,7 +16,7 @@ public final class InMemorySnapshot implements Snapshot {
 
 	private final Set<DESEvent> events;
 
-	private Optional<ModelAdjustmentRequested> adjustorEvent;
+	private Optional<DESEvent> adjustorEvent;
 
 	public InMemorySnapshot() {
 		this(Set.of());
@@ -37,12 +36,12 @@ public final class InMemorySnapshot implements Snapshot {
 	}
 
 	@Override
-	public Optional<ModelAdjustmentRequested> getAdjustorEvent() {
+	public Optional<DESEvent> getAdjustorEvent() {
 		return this.adjustorEvent;
 	}
 
 	@Override
-	public void setAdjustorEvent(final ModelAdjustmentRequested event) {
+	public void setAdjustorEvent(final DESEvent event) {
 		this.adjustorEvent = Optional.of(event);
 	}
 }

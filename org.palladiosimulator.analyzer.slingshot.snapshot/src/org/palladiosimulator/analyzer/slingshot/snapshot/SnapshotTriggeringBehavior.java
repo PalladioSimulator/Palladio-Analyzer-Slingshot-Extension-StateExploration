@@ -9,7 +9,7 @@ import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
@@ -65,7 +65,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 	@PreIntercept
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
-			final ModelAdjustmentRequested event) {
+			final AdjustorBasedEvent event) {
 		// only intercept triggered adjustments. do not intercept snapped adjustments..
 		// assumption: do not copy adjustor events from the FEL, i.e. the "first" adjustor is always from the snapshot.
 		if (event.time() == 0) {

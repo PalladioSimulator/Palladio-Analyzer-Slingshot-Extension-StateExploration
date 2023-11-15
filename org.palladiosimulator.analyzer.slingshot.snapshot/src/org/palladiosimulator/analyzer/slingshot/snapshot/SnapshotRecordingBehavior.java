@@ -10,7 +10,8 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
@@ -112,7 +113,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		final Snapshot snapshot = camera.takeSnapshot();
 
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
-			final ModelAdjustmentRequested triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
+			final AdjustorBasedEvent triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
 			snapshot.setAdjustorEvent(triggeringeEvent);
 		}
 
