@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.util.EList;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.GeneralEntryRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.ResourceDemandRequest;
@@ -146,14 +147,24 @@ public final class CloneHelper {
 	 * @return
 	 * @throws CloningFailedException
 	 */
-	public Job clone(final Job job) {
+	public Job clone(final ActiveJob job) {
 		final ResourceDemandRequest clonedRequest = clone(job.getRequest());
 
-		final Job clonedJob = Job.builder().withDemand(job.getDemand()).withId(job.getId())
+		final Job clonedJob = ActiveJob.builder().withDemand(job.getDemand()).withId(job.getId())
 				.withProcessingResourceType(job.getProcessingResourceType()).withRequest(clonedRequest)
 				.withAllocationContext(job.getAllocationContext()).build();
 
 		return clonedJob;
+	}
+
+	/**
+	 *
+	 * @param job
+	 * @return
+	 * @throws CloningFailedException
+	 */
+	public Job clone(final Job job) {
+		throw new UnsupportedOperationException("cloning Linking Jobs not yet supported");
 	}
 
 
