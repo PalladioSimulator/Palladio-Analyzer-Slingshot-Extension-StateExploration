@@ -61,7 +61,10 @@ public class ScalingPolicyConcerns {
 
 
 		if (oneTrickPony.getTargetGroup() instanceof final ElasticInfrastructure ei) {
-			ei.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
+			// TODO fix this
+			// HOW ???
+			ei.setUnit(config.getAllocation().getTargetResourceEnvironment_Allocation().getResourceContainer_ResourceEnvironment().get(0));
+			//ei.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
 		} else {
 			throw new IllegalArgumentException(String.format("Target Group of type %s not yet supported", oneTrickPony.getTargetGroup().getClass().getSimpleName()));
 		}

@@ -40,7 +40,10 @@ public class AdjustorEventConcerns {
 
 			/* Update Target Group */
 			if (tg instanceof final ElasticInfrastructure ei) {
-				ei.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
+				// TODO fix this
+				// TODO search for Unit matching the unit of the given TG. 
+				ei.setUnit(config.getAllocation().getTargetResourceEnvironment_Allocation().getResourceContainer_ResourceEnvironment().get(0));
+				//ei.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
 			} else {
 				throw new IllegalArgumentException(String.format("Target Group of type %s not yet supported", tg.getClass().getSimpleName()));
 			}
