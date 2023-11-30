@@ -7,6 +7,8 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
@@ -93,14 +95,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 			this.exploreBranch(config);
 		}
-		LOGGER.info("********** DefaultGraphExplorer is done :) **********");
-		LOGGER.info("********** States : ");
+		LOGGER.warn("********** DefaultGraphExplorer is done :) **********");
+		LOGGER.warn("********** States : ");
 		this.graph.getStates()
-				.forEach(s -> LOGGER.info(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
+				.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
 						s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
-		LOGGER.info("********** Transitions : ");
+		LOGGER.warn("********** Transitions : ");
 		this.graph.getTransitions().stream().forEach(t -> LOGGER
-				.info(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
+				.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
 		return this.graph;
 	}
 
@@ -148,6 +150,15 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 
 		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
+		
+		LOGGER.info("Run on Models at: " + config.getStateToExplore().getArchitecureConfiguration().getAllocation().eResource().getURI().toString());
+		
+		
+		LOGGER.info("Start with Request to these Resources: ");
+		config.getSnapToInitOn().getEvents().stream().filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
+				.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
+						.getAllocationContext().getResourceContainer_AllocationContext().getId())
+				.forEach(id -> LOGGER.info(id));
 
 		driver.init(simuComConfig, monitor, Set.of(submodule));
 		driver.start();

@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
+import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
@@ -67,15 +68,27 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	/* helper */
 	private final Map<UsageModelPassedElement<?>, Double> event2offset;
 
+	private final boolean activated;
+
 	@Inject
-	public SnapshotGraphStateBehaviour(final DefaultState halfDoneState, final SnapshotConfiguration snapshotConfig,
-			final SimuComConfig simuComConfig, final Set<DESEvent> eventsToInitOn) {
+	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
+			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable SimuComConfig simuComConfig,
+			final @Nullable Set<DESEvent> eventsToInitOn) {
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 		this.eventsToInitOn = eventsToInitOn;
 
+		this.activated = this.halfDoneState != null && this.snapshotConfig != null && this.simuComConfig != null
+				&& eventsToInitOn != null;
+
+
 		this.event2offset = new HashMap<>();
+	}
+
+	@Override
+	public boolean isActive() {
+		return this.activated;
 	}
 
 	/**

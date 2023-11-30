@@ -56,15 +56,16 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 	@Subscribe
 	public Result<SnapshotInitiated> onMeasurementMade(final MeasurementMade event) {
-		if (this.signicifantChange(event.getEntity())){
-			state.setReasonToLeave(ReasonToLeave.significantChange);
-			return Result.of(new SnapshotInitiated());
-		}
+
+		//if (this.signicifantChange(event.getEntity())){
+		//	state.setReasonToLeave(ReasonToLeave.significantChange);
+		//	return Result.of(new SnapshotInitiated());
+		//}
 		return Result.empty();
 	}
 
 	@PreIntercept
-	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
+	public InterceptionResult preInterceptAdjustorBasedEvent(final InterceptorInformation information,
 			final AdjustorBasedEvent event) {
 		// only intercept triggered adjustments. do not intercept snapped adjustments..
 		// assumption: do not copy adjustor events from the FEL, i.e. the "first" adjustor is always from the snapshot.
