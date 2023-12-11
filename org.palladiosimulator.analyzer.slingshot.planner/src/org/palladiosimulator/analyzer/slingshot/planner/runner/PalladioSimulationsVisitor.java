@@ -114,7 +114,7 @@ public class PalladioSimulationsVisitor {
 			measureURI = dataSeries1.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getResourceURIRepresentation();
 		} else if (!(bmc2.getName().equals(POINT_IN_TIME))) {
 			values = PalladioSimulationsVisitor.visitDataSeries(dataSeries2);
-			measureName = bmc1.getName();
+			measureName = bmc2.getName();
 			measureURI = dataSeries2.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getResourceURIRepresentation();
 		}
 		
