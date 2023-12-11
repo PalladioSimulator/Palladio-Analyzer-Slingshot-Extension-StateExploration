@@ -35,7 +35,7 @@ public class GraphicalRepresentation {
 						state.startTime(), state.duration(), state.endTime());
 
 				for (MeasurementSet ms : state.measurements()) {
-					noteDescription += String.format("%s (Size: %d): %.2f\\n", ms.getName(), ms.size(), ms.getMedian());
+					noteDescription += String.format("%s (%s, Size: %d): %.2f\\n", ms.getMeasuringPointURI(), ms.getName(), ms.size(), ms.getMedian());
 				}
 				
 				for (SLO slo : state.slos()) {

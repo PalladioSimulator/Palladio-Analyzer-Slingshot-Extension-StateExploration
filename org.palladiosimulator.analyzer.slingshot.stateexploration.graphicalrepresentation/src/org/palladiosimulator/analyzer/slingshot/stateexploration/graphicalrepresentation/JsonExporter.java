@@ -32,7 +32,7 @@ public class JsonExporter {
 		    	s.outTransitions().clear();
 		    	
 		    	for (Transition t : trans) {
-		    		s.outTransitions().add(new Transition(s, t.target(), t.reason()));
+		    		s.outTransitions().add(new Transition(s, t.target(), t.reason(), t.change()));
 		    	}
 		    }
 		    
