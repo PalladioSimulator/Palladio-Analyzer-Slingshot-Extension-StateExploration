@@ -1,9 +1,12 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.graphicalrepresentation;
 
 import java.lang.reflect.Type;
+import java.util.Optional;
 
 import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -55,11 +58,25 @@ public class GsonProvider {
 			        return jsonMeasurementSet;
 			    }
 			};
+			
+			JsonSerializer<ScalingPolicy> serializerScalingPolicy = new JsonSerializer<ScalingPolicy>() {  
+			    @Override
+			    public JsonElement serialize(ScalingPolicy src, Type typeOfSrc, JsonSerializationContext context) {
+			        JsonObject jsonScalingPolicy = new JsonObject();
 
+			        jsonScalingPolicy.addProperty("id", src.getId());
+			        jsonScalingPolicy.addProperty("name", src.getEntityName());
+			        jsonScalingPolicy.addProperty("uri", src.eResource().getURI().toString());
+			        
+			        return jsonScalingPolicy;
+			    }
+			};
+			
 			gsonBuilder = new GsonBuilder();
 			gsonBuilder.serializeNulls();
 			gsonBuilder.registerTypeAdapter(MeasurementSet.class, deserializerMeasurementSet);
 			gsonBuilder.registerTypeAdapter(MeasurementSet.class, serializerMeasurementSet);
+			gsonBuilder.registerTypeAdapter(ScalingPolicy.class, serializerScalingPolicy);
 			
 			gson = gsonBuilder.create();
 		}
