@@ -117,7 +117,7 @@ public class PlannerRunner {
 	public List<StateGraphNode> startDijkstra() {
 		List<StateGraphNode> states = graph.states();
 
-		List<StateGraphNode> knots = new ArrayList<StateGraphNode>(states);
+		List<StateGraphNode> knots = graph.states();
 		List<Double> distances = new ArrayList<Double>(states.size());
 		List<StateGraphNode> parents = new ArrayList<StateGraphNode>(states.size());
 
