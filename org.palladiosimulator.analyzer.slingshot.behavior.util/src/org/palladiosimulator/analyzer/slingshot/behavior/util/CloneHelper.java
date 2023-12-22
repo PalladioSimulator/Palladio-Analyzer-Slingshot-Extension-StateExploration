@@ -8,8 +8,11 @@ import java.io.ObjectOutputStream;
 
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.util.EList;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.LinkingJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.GeneralEntryRequest;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.CallOverWireRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.ResourceDemandRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.SEFFInterpretationContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.RootBehaviorContextHolder;
@@ -39,6 +42,8 @@ import org.palladiosimulator.pcm.seff.ResourceDemandingBehaviour;
 import org.palladiosimulator.pcm.usagemodel.AbstractUserAction;
 import org.palladiosimulator.pcm.usagemodel.Start;
 import org.palladiosimulator.pcm.usagemodel.UsageScenario;
+
+import de.uka.ipd.sdq.simucomframework.variables.stackframe.SimulatedStackframe;
 
 /**
  * Helper to create deep copies of entities.
@@ -81,7 +86,7 @@ public final class CloneHelper {
 	 * @return
 	 */
 	public DESEvent clone(final InterArrivalUserInitiated event, final double simulationTime) {
-		return new InterArrivalUserInitiated(event.time() - simulationTime);
+		return new InterArrivalUserInitiated(event.getEntity(), event.time() - simulationTime);
 	}
 
 	/**
@@ -147,15 +152,66 @@ public final class CloneHelper {
 	 * @throws CloningFailedException
 	 */
 	public Job clone(final Job job) {
+		if (job instanceof final ActiveJob activejob) {
+			return clone(activejob);
+		} else if (job instanceof final LinkingJob linkingJob) {
+			return clone(linkingJob);
+		}
+		throw new UnsupportedOperationException(
+				String.format("Dont Know how to Clone %s", job.getClass().getSimpleName()));
+	}
+
+	/**
+	 *
+	 * @param job
+	 * @return
+	 * @throws CloningFailedException
+	 */
+	public Job clone(final ActiveJob job) {
 		final ResourceDemandRequest clonedRequest = clone(job.getRequest());
 
-		final Job clonedJob = Job.builder().withDemand(job.getDemand()).withId(job.getId())
+		final Job clonedJob = ActiveJob.builder().withDemand(job.getDemand()).withId(job.getId())
 				.withProcessingResourceType(job.getProcessingResourceType()).withRequest(clonedRequest)
 				.withAllocationContext(job.getAllocationContext()).build();
 
 		return clonedJob;
 	}
 
+	/**
+	 *
+	 * @param job
+	 * @return
+	 * @throws CloningFailedException
+	 */
+	public Job clone(final LinkingJob job) {
+		final CallOverWireRequest clonedRequest = clone(job.getRequest());
+
+		final Job clonedJob = new LinkingJob(job.getId(), job.getDemand(), job.getLinkingResource(), clonedRequest);
+
+		return clonedJob;
+	}
+
+	/**
+	 *
+	 * @param request
+	 * @return
+	 */
+	public CallOverWireRequest clone(final CallOverWireRequest request) {
+
+		final GeneralEntryRequest clonedEntryRequest = cloneGeneralEntryRequest(request.getEntryRequest());
+		final User clonedUser = cloneUser(request.getUser());
+		final SimulatedStackframe<Object> variablesToConsider = clonedUser.getStack().currentStackFrame();
+
+		final CallOverWireRequest.Builder clonedRequestBuilder = CallOverWireRequest.builder().from(request.getFrom()).to(request.getTo()).signature(request.getSignature())
+				.user(clonedUser).entryRequest(clonedEntryRequest).variablesToConsider(variablesToConsider);
+
+		if (request.getReplyTo().isPresent()) {
+			final CallOverWireRequest clonedReplyTo = clone(request.getReplyTo().get());
+			clonedRequestBuilder.replyTo(clonedReplyTo);
+		}
+
+		return clonedRequestBuilder.build();
+	}
 
 
 
@@ -290,6 +346,9 @@ public final class CloneHelper {
 	 * Just cannot figure out whether i could do this manually like with all the
 	 * other (non serializable) objects. serialising and deserialising is horribly
 	 * tempting though.
+	 *
+	 * What the fuck to my former self, but also i guess this saves my ass wrt to
+	 * the stack?
 	 *
 	 * @param user
 	 * @return

@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
 import org.palladiosimulator.spd.ScalingPolicy;
 import org.palladiosimulator.spd.SpdFactory;
 import org.palladiosimulator.spd.adjustments.AdjustmentsFactory;
@@ -61,12 +62,30 @@ public class ScalingPolicyConcerns {
 
 
 		if (oneTrickPony.getTargetGroup() instanceof final ElasticInfrastructure ei) {
-			ei.setPCM_ResourceEnvironment(config.getAllocation().getTargetResourceEnvironment_Allocation());
+			ei.setUnit(getTargetGroupUnit(config));
 		} else {
 			throw new IllegalArgumentException(String.format("Target Group of type %s not yet supported", oneTrickPony.getTargetGroup().getClass().getSimpleName()));
 		}
 
 		return oneTrickPony;
+	}
+
+	/**
+	 * 
+	 * Get a {@code unit} {@link ResourceContainer} from the given architecture
+	 * configuration.
+	 * 
+	 * For now, it returns just any container. But once we switch to the new SPD
+	 * interpreter with the semantic SPD, we must make sure that we select only RCs
+	 * for which we have a semantic model, i guess.
+	 * 
+	 * TODO fix this.
+	 * 
+	 * @param config 
+	 * @return
+	 */
+	private ResourceContainer getTargetGroupUnit(final ArchitectureConfiguration config) {
+		return config.getAllocation().getTargetResourceEnvironment_Allocation().getResourceContainer_ResourceEnvironment().get(0);
 	}
 
 	/**

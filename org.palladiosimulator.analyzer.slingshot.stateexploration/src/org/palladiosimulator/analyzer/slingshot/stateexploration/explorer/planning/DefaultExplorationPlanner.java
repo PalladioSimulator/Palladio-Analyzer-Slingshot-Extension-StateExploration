@@ -105,7 +105,9 @@ public class DefaultExplorationPlanner {
 		// Reactive Reconfiguration
 		if (start.getSnapshot().getAdjustorEvent().isPresent()) {
 			final DESEvent event = start.getSnapshot().getAdjustorEvent().get();
-			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+
+			this.rawgraph.addFringeEdge(
+					new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
 		// Proactive Reconfiguration
 		for (final ScalingPolicy scalingPolicy : this.changeApplicator.getExplorationPolicyTemplates()) {

@@ -38,7 +38,7 @@ public class CloneHelperWithVisitor {
         		 on(UsageModelPassedElement.class).then(e->(new ModelElementPassedVisitor()).visit(e)).
         		 on(AbstractUserChangedEvent.class).then(e->(new UserChangedEventVisitor()).visit(e)).
         		 on(SEFFInterpreted.class).then(e->(new SEFFInterpretedVisitor()).visit(e)).
-        		 on(AbstractJobEvent.class).then(e -> (new JobEventVisitor()).visit(e)).
+				 on(AbstractJobEvent.class).then(e -> (new JobEventVisitor()).visit(e)).
         		 on(ResourceDemandRequested.class).then(this::clone).
         		 on(ActiveResourceFinished.class).then(this::clone).
         		 on(UserRequestFinished.class).then(this::clone).
@@ -61,7 +61,8 @@ public class CloneHelperWithVisitor {
 	}
 
 	private DESEvent clone(final InterArrivalUserInitiated clonee) {
-		return new InterArrivalUserInitiated(clonee.delay());
+		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getEntity());
+		return new InterArrivalUserInitiated(clonedContext, clonee.delay());
 	}
 
 	private DESEvent clone(final ResourceDemandRequested clonee) {

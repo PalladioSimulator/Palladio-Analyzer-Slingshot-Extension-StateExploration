@@ -12,4 +12,7 @@ Now, for the State Exploration:
   - https://github.com/PalladioSimulator/Palladio-Analyzer-Slingshot-Extension-StateExploration
 * in (already cloned) repository *Palladio-Analyzer-Slingshot* switch to branch `stateexplorationRequirements`
 * in (already cloned) repository *Palladio-Analyzer-Slingshot-Extension-PCM-Core* switch to branch `stateexplorationRequirements`
-- some of these state exploration requirements are temporary workarounds, others i'll try to get into the actual slingshot :)  
+  - beware : requires `...spd.semantic` from the repository *Palladio-Addons-SPD-Metamodel*, please import into workspace as well.
+* in (already cloned) repository *Palladio-Analyzer-Slingshot-Extension-SPD-Interpreter* switch to branch `staleForStateExploration`
+
+- some of these state exploration requirements are temporary workarounds, others i'll try to get into the actual slingshot :)

@@ -6,11 +6,13 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
@@ -111,7 +113,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		final Snapshot snapshot = camera.takeSnapshot();
 
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
-			final DESEvent triggeringeEvent =  snapshotTaken.getTriggeringEvent().get();
+			final AdjustorBasedEvent triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
 			snapshot.setAdjustorEvent(triggeringeEvent);
 		}
 
@@ -140,12 +142,12 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 *
 	 * @param procSharingJobs
 	 */
-	private void scheduleProcSharingUpdatesHelper(final Set<Job> procSharingJobs) {
+	private void scheduleProcSharingUpdatesHelper(final Set<ActiveJob> procSharingJobs) {
 		// these are the resource containers i must update
 		final Set<AllocationContext> allocationContexts = procSharingJobs.stream()
 				.map(job -> job.getAllocationContext()).collect(Collectors.toSet());
 
-		for (final Job job : procSharingJobs) {
+		for (final ActiveJob job : procSharingJobs) {
 			final AllocationContext context = job.getAllocationContext();
 			if (!allocationContexts.contains(context)) {
 				continue;
@@ -162,8 +164,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 * @param job blueprint to copy from
 	 * @return fake job
 	 */
-	private Job createFakeJob(final Job job) {
-		return Job.builder().withAllocationContext(job.getAllocationContext()).withDemand(0).withId(FAKE)
+	private ActiveJob createFakeJob(final ActiveJob job) {
+		return ActiveJob.builder().withAllocationContext(job.getAllocationContext()).withDemand(0).withId(FAKE)
 				.withProcessingResourceType(job.getProcessingResourceType()).build();
 	}
 }

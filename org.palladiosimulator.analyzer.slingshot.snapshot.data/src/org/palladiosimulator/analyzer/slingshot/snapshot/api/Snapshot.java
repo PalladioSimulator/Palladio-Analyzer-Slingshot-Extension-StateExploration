@@ -26,5 +26,6 @@ public interface Snapshot {
 	 * @return
 	 */
 	public Optional<DESEvent> getAdjustorEvent();
+
 	public void setAdjustorEvent(DESEvent event);
 }

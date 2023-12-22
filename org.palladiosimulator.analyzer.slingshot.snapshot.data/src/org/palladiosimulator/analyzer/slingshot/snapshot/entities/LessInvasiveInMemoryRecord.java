@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.User;
@@ -62,24 +62,32 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 
 	@Override
 	public void removeJobRecord(final JobFinished event) {
-		openJob.remove(event.getEntity().getRequest().getUser());
+		if (event.getEntity() instanceof final ActiveJob job) {
+			openJob.remove(job.getRequest().getUser());
+		}
 	}
 
 	@Override
 	public void createJobRecord(final JobInitiated event) {
-		if (openJob.containsKey(event.getEntity().getRequest().getUser())) {
+
+		if (event.getEntity() instanceof final ActiveJob job) {
+			if (openJob.containsKey(job.getRequest().getUser())) {
 			throw new IllegalArgumentException(String.format("Cannot create Record for %s, a Record already exsits.", event.getEntity().toString()));
 		}
 
-		openJob.put(event.getEntity().getRequest().getUser(), new JobRecord(event.getEntity()));
+		openJob.put(job.getRequest().getUser(), new JobRecord(job));
+	}
 	}
 	@Override
 	public void updateJobRecord(final JobInitiated event) {
-		if (!openJob.containsKey(event.getEntity().getRequest().getUser())) {
+
+		if (event.getEntity() instanceof final ActiveJob job) {
+			if (!openJob.containsKey(job.getRequest().getUser())) {
 			throw new IllegalArgumentException(String.format("Cannot update %s, missing Record.", event.getEntity().toString()));
 		}
 
-		openJob.get(event.getEntity().getRequest().getUser()).setNormalizedDemand(event.getEntity().getDemand());
+		openJob.get(job.getRequest().getUser()).setNormalizedDemand(job.getDemand());
+	}
 	}
 
 	@Override
@@ -106,7 +114,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	 * @param job
 	 * @return true iff job is processed by an FCFS processing recource.
 	 */
-	private boolean isFCFS(final Job job) {
+	private boolean isFCFS(final ActiveJob job) {
 		final Optional<ProcessingResourceSpecification> optSpec = job.getAllocationContext()
 				.getResourceContainer_AllocationContext().getActiveResourceSpecifications_ResourceContainer().stream()
 				.filter(spec -> spec instanceof ProcessingResourceSpecification).map(spec -> spec).findFirst();
@@ -123,7 +131,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	 * @param job
 	 * @return true iff job is processed by an processor sharing processing resource
 	 */
-	private boolean isProcSharing(final Job job) {
+	private boolean isProcSharing(final ActiveJob job) {
 		final Optional<ProcessingResourceSpecification> optSpec = job.getAllocationContext()
 				.getResourceContainer_AllocationContext().getActiveResourceSpecifications_ResourceContainer().stream()
 				.filter(spec -> spec instanceof ProcessingResourceSpecification).map(spec -> spec).findFirst();
