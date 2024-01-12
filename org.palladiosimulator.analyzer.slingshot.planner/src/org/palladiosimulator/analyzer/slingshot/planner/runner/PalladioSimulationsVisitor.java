@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.planner.runner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.measure.Measure;
@@ -35,8 +36,18 @@ public class PalladioSimulationsVisitor {
 	public final static String POINT_IN_TIME = "Point in Time";
 	public final static String RESPONSE_TIME = "Response Time";
 	
+	// Workaround to prevent exception while monitors are null 
+	public static <T> T safe(Supplier<T> resolver) {
+	    try {
+	        return resolver.get();
+	    } catch (NullPointerException e) {
+	        return null;
+	    }
+	}
+
+	
 	public static SLO visitServiceLevelObjective(ServiceLevelObjective slo) {
-		return new SLO(slo.getName(), slo.getMeasurementSpecification().getMonitor().getMeasuringPoint().getResourceURIRepresentation(), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
+		return new SLO(slo.getName(), safe(() -> slo.getMeasurementSpecification().getMonitor().getMeasuringPoint().getResourceURIRepresentation()), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
 	public static List<MeasurementSet> visitExperiementSetting(ExperimentSetting es) {

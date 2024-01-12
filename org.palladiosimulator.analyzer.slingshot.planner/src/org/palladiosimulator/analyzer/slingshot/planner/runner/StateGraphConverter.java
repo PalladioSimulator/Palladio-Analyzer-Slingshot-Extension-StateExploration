@@ -27,7 +27,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
 
 public class StateGraphConverter {
 	public static StateGraph convert(RawStateGraph graph) {
-		StateGraph newGraph = new StateGraph(convertState(graph.getRoot()));
+		StateGraph newGraph = new StateGraph(convertState(graph.getRoot(), null));
 
 		// set source from null to correct value
 	    for (StateGraphNode s : newGraph.states()) {
@@ -43,7 +43,7 @@ public class StateGraphConverter {
 	    return newGraph;
 	}
 	
-	private static StateGraphNode convertState(RawModelState state) {
+	public static StateGraphNode convertState(RawModelState state, String parentId) {
 		List<SLO> slos = new ArrayList<SLO>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 		List<Transition> transitions = new ArrayList<Transition>();
@@ -87,9 +87,9 @@ public class StateGraphConverter {
 				reason = Reason.ReactiveReconfigurationChange;
 			
 			// source is null to prevent infinity loop
-			transitions.add(new Transition(null, convertState(transition.getTarget()), reason, Optional.ofNullable(change)));
+			transitions.add(new Transition(null, convertState(transition.getTarget(), transition.getSource().getId()), reason, Optional.ofNullable(change)));
 		}
 		
-		return new StateGraphNode(state.getId(), transitions, state.getStartTime(), state.getEndTime(), measuremnets, slos);
+		return new StateGraphNode(state.getId(), transitions, state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId);
 	}
 }

@@ -13,7 +13,9 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
+import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
+import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
@@ -60,14 +62,16 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final DefaultGraph graph;
 
 	private final IProgressMonitor monitor;
-
+	
+	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
+	
 	public DefaultGraphExplorer(final PCMResourceSetPartition partition, final SimulationDriver driver,
 			final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor) {
 		super();
 		this.initModels = partition;
 		this.launchConfigurationParams = launchConfigurationParams;
 		this.monitor = monitor;
-
+		
 		// TODO
 		// cannot yet grab the models at the providers, or can i?
 		// get monitor Repo + spds.
@@ -86,7 +90,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 10; i++) { // just random.
+		for (int i = 0; i < 30; i++) { // just random.
 			if (!this.graph.hasNext()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
 				break;
@@ -120,8 +124,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
 		final DefaultState root = new DefaultState(0.0, rootConfig);
+		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null)));
 		root.setSnapshot(initSnapshot);
-
 		return root;
 	}
 
@@ -165,6 +169,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// Post processing :
 		final DefaultState current = submodule.builder();
+		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId())));
 		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 

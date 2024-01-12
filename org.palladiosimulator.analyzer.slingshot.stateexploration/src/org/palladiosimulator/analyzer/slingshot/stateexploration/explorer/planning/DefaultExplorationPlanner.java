@@ -70,7 +70,7 @@ public class DefaultExplorationPlanner {
 
 		// different handling depending of type of change.
 		if (next.getChange().isEmpty()) {
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, null);
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, null, start.getId());
 		}
 
 		if (next.getChange().get() instanceof final ReactiveReconfiguration reactiveReconf) {
@@ -78,7 +78,7 @@ public class DefaultExplorationPlanner {
 
 			final DESEvent initEvent = this.adjustorEventConcerns.copyForTargetGroup(
 					reactiveReconf.getReactiveReconfigurationEvent(), end.getArchitecureConfiguration());
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent);
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent, start.getId());
 		}
 
 		if (next.getChange().get() instanceof final Reconfiguration reconf) {
@@ -86,7 +86,7 @@ public class DefaultExplorationPlanner {
 
 			final ScalingPolicy initPolicy = this.changeApplicator
 					.createOneTimeUsageScalingPolicy(reconf.getScalingPolicy(), end.getArchitecureConfiguration());
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initPolicy, null);
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initPolicy, null, start.getId());
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");

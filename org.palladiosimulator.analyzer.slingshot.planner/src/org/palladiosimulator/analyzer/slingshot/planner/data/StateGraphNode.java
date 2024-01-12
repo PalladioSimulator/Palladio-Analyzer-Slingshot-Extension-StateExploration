@@ -2,10 +2,10 @@ package org.palladiosimulator.analyzer.slingshot.planner.data;
 
 import java.util.List;
 
-public record StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, Double utility) {
+public record StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, Double utility, String parentId) {
 	
-	public StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos) {
-		this(id, outTransitions, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos));	
+	public StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, String parentId) {
+		this(id, outTransitions, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId);	
 	}
 	
 	public double duration() {
