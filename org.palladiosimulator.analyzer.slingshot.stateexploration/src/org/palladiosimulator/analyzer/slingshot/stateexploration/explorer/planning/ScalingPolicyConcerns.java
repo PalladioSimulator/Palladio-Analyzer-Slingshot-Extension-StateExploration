@@ -2,11 +2,13 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
+import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
 import org.palladiosimulator.spd.ScalingPolicy;
 import org.palladiosimulator.spd.SpdFactory;
 import org.palladiosimulator.spd.adjustments.AdjustmentsFactory;
@@ -47,6 +49,8 @@ public class ScalingPolicyConcerns {
 
 	/**
 	 * create new scaling policy for the given architecture configuration.
+	 * 
+	 * TODO 
 	 *
 	 * @param template
 	 * @param config
@@ -60,32 +64,55 @@ public class ScalingPolicyConcerns {
 		final ScalingPolicy oneTrickPony = EcoreUtil.copy(template);//SpdFactory.eINSTANCE.createScalingPolicy();
 		oneTrickPony.setEntityName("OneTrickPonyPolicy");
 
+		// Get Semantic SPD (copy!!) 
+		// TODO select an existing targetGroup, for which a TargetGroupCfg already existis.
+		// TODO how to select? 
+		
+		// @floriment is there always a semantic Cfg for each T
+		
+		
+		Set<ResourceContainer> units = getValidUnits(config);
+		
+		if (units.isEmpty()) {
+			throw new IllegalArgumentException(String.format("No semantic Config for chosen unit"));
+		}
 
 		if (oneTrickPony.getTargetGroup() instanceof final ElasticInfrastructure ei) {
-			ei.setUnit(getTargetGroupUnit(config));
+			ResourceContainer unit = units.stream().findAny().get();
+
+			ei.setUnit(unit);
 		} else {
 			throw new IllegalArgumentException(String.format("Target Group of type %s not yet supported", oneTrickPony.getTargetGroup().getClass().getSimpleName()));
 		}
 
 		return oneTrickPony;
 	}
-
+	
+	
 	/**
+	 * Get all {@link ResourceContainer} which are unit to a EI target group and also have a semantic configuration.
 	 * 
-	 * Get a {@code unit} {@link ResourceContainer} from the given architecture
-	 * configuration.
+	 * TODO check whether this is even necessary or SPD already has constraint with regard to the semantic configs. 
 	 * 
-	 * For now, it returns just any container. But once we switch to the new SPD
-	 * interpreter with the semantic SPD, we must make sure that we select only RCs
-	 * for which we have a semantic model, i guess.
-	 * 
-	 * TODO fix this.
-	 * 
-	 * @param config 
+	 * @param config
 	 * @return
 	 */
-	private ResourceContainer getTargetGroupUnit(final ArchitectureConfiguration config) {
-		return config.getAllocation().getTargetResourceEnvironment_Allocation().getResourceContainer_ResourceEnvironment().get(0);
+	private Set<ResourceContainer> getValidUnits(final ArchitectureConfiguration config) {
+
+		// get all unit from SPD
+		Set<ResourceContainer> spdUnits = config.getSPD().getTargetGroups().stream()
+				.filter(tg -> tg instanceof ElasticInfrastructure).map(tg -> ((ElasticInfrastructure) tg).getUnit())
+				.collect(Collectors.toSet());
+
+		// get all unit from semantics.
+		Set<ResourceContainer> semanticUnits = config.getSemanticSPDConfiguration().getTargetCfgs().stream()
+				.filter(conf -> conf instanceof ElasticInfrastructureCfg)
+				.map(conf -> ((ElasticInfrastructureCfg) conf).getUnit()).collect(Collectors.toSet());
+
+				
+		spdUnits.retainAll(semanticUnits);
+		
+		return spdUnits;
 	}
 
 	/**

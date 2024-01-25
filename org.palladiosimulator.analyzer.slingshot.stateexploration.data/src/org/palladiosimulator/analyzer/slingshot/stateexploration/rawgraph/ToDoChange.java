@@ -7,6 +7,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 public class ToDoChange {
 	private final DefaultState start;
 	private final Optional<Change> change;
+
 	public ToDoChange(final Optional<Change> change, final DefaultState start) {
 		super();
 		this.start = start;

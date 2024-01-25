@@ -11,6 +11,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.Defaul
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.PlannerWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
+
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.jobs.CleanupFailedException;
 import de.uka.ipd.sdq.workflow.jobs.IBlackboardInteractingJob;
@@ -48,7 +49,7 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		LOGGER.info("**** SimulationJob.execute ****");
 		final PCMResourceSetPartition partition = (PCMResourceSetPartition)
 				this.blackboard.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID);
-
+		
 		this.pcmResourceSetPartition.set(partition);
 		LOGGER.debug("Current partition: ");
 		partition.getResourceSet().getResources().forEach(resource -> LOGGER.debug("Resource: " + resource.getURI().path()));
@@ -58,7 +59,8 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		monitor.subTask("Initialize driver");
 
-		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver, this.configuration.getlaunchConfigParams(), monitor);
+		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver,
+				this.configuration.getlaunchConfigParams(), monitor, this.blackboard);
 		final RawStateGraph rawGraph =  explorer.start();
 
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.

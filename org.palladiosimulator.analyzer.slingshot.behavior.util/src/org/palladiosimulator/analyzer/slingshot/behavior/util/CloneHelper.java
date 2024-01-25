@@ -280,7 +280,8 @@ public final class CloneHelper {
 				clonedHolder.getNextAction();
 			}
 		} else {
-			throw new IllegalArgumentException("Not yet implemented");
+			throw new IllegalArgumentException(
+					String.format("clonging %s not yet implemented", holder.getClass().getSimpleName()));
 		}
 		// TODO else reset the parents
 
