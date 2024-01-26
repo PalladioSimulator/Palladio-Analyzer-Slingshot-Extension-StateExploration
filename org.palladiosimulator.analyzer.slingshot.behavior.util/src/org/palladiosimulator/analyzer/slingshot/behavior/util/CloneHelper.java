@@ -15,8 +15,10 @@ import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entiti
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.CallOverWireRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.ResourceDemandRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.SEFFInterpretationContext;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.BranchBehaviorContextHolder;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.RootBehaviorContextHolder;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorContextHolder;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorWrapper;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.user.RequestProcessingContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.InterArrivalTime;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.ThinkTime;
@@ -57,8 +59,6 @@ public final class CloneHelper {
 
 	public static final Logger LOGGER = Logger.getLogger(CloneHelper.class);
 
-
-
 	/**
 	 * TODO on a closer look : what is this does not belong here, iirc o_O
 	 *
@@ -74,8 +74,7 @@ public final class CloneHelper {
 		var.setSpecification(String.valueOf(remainingthinktime));
 
 		final ThinkTime newThinktime = new ThinkTime(var);
-		return new ClosedWorkloadUserInitiated(
-				cloneUserInterpretationContext(event.getEntity()), newThinktime);
+		return new ClosedWorkloadUserInitiated(cloneUserInterpretationContext(event.getEntity()), newThinktime);
 	}
 
 	/**
@@ -110,7 +109,6 @@ public final class CloneHelper {
 		return event;
 	}
 
-
 	/**
 	 *
 	 * TODO ??
@@ -120,8 +118,8 @@ public final class CloneHelper {
 	 */
 	public DESEvent clone(final UsageModelPassedElement<?> event) {
 		final Object modelElement = event.getModelElement();
-		return  new UsageModelPassedElement<Start>((Start) modelElement,
-						cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()));
+		return new UsageModelPassedElement<Start>((Start) modelElement,
+				cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()));
 	}
 
 	/**
@@ -138,10 +136,8 @@ public final class CloneHelper {
 		var.setSpecification(String.valueOf(remainingthinktime));
 
 		final ThinkTime newThinktime = new ThinkTime(var);
-		return new ClosedWorkloadUserInitiated(
-				cloneUserInterpretationContext(event.getEntity()), newThinktime);
+		return new ClosedWorkloadUserInitiated(cloneUserInterpretationContext(event.getEntity()), newThinktime);
 	}
-
 
 	// getter for various entity clones
 
@@ -202,8 +198,9 @@ public final class CloneHelper {
 		final User clonedUser = cloneUser(request.getUser());
 		final SimulatedStackframe<Object> variablesToConsider = clonedUser.getStack().currentStackFrame();
 
-		final CallOverWireRequest.Builder clonedRequestBuilder = CallOverWireRequest.builder().from(request.getFrom()).to(request.getTo()).signature(request.getSignature())
-				.user(clonedUser).entryRequest(clonedEntryRequest).variablesToConsider(variablesToConsider);
+		final CallOverWireRequest.Builder clonedRequestBuilder = CallOverWireRequest.builder().from(request.getFrom())
+				.to(request.getTo()).signature(request.getSignature()).user(clonedUser).entryRequest(clonedEntryRequest)
+				.variablesToConsider(variablesToConsider);
 
 		if (request.getReplyTo().isPresent()) {
 			final CallOverWireRequest clonedReplyTo = clone(request.getReplyTo().get());
@@ -212,8 +209,6 @@ public final class CloneHelper {
 
 		return clonedRequestBuilder.build();
 	}
-
-
 
 	/**
 	 *
@@ -241,23 +236,67 @@ public final class CloneHelper {
 	 */
 	public SEFFInterpretationContext cloneContext(final SEFFInterpretationContext context) {
 
-		final SeffBehaviorContextHolder seffBehaviorContextHolder = cloneBehaviorContext(context.getBehaviorContext());
-		final RequestProcessingContext requestProcessingContext = cloneRequestProcessingContext(
-				context.getRequestProcessingContext());
 		final AssemblyContext assemblyContext = context.getAssemblyContext();
 
+		// 1 define all content.
+		SEFFInterpretationContext clonedParent = null;
+		SeffBehaviorContextHolder seffBehaviorContextHolder = null;
+		RequestProcessingContext requestProcessingContext = null;
 		SEFFInterpretationContext calledFrom = null;
+		CallOverWireRequest clonedCallOverWireRequest = null;
+		SimulatedStackframe<Object> clonedStackFrame = null;
 
-		if (context.getCaller().isPresent()) {
-			calledFrom = cloneCalledFrom(context.getCaller().get());
+		// 2 clone parent.
+		if (context.getParent().isPresent()) {
+			clonedParent = cloneContext(context.getParent().get());
+
+			requestProcessingContext = clonedParent.getRequestProcessingContext();
+			seffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(),
+					clonedParent.getBehaviorContext().getCurrentProcessedBehavior());
+			calledFrom = clonedParent.getCaller().orElseGet(() -> null);
+
+		} else {
+			requestProcessingContext = cloneRequestProcessingContext(context.getRequestProcessingContext());
+			seffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(), null);
+
+			if (context.getCaller().isPresent()) {
+				calledFrom = cloneContext(context.getCaller().get());
+			}
 		}
 
-		final SEFFInterpretationContext clonedContext = SEFFInterpretationContext.builder()
-				.withAssemblyContext(assemblyContext).withCaller(calledFrom)
-				.withBehaviorContext(seffBehaviorContextHolder).withRequestProcessingContext(requestProcessingContext)
-				.build();
+		if (context.getCurrentResultStackframe() != null) {
+			clonedStackFrame = requestProcessingContext.getUser().getStack().currentStackFrame();
+		}
+
+		if (context.getCallOverWireRequest().isPresent()) { // TODO probably like above
+			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get());
+		}
+
+		final SEFFInterpretationContext clonedContext = SEFFInterpretationContext.builder().withParent(clonedParent)
+				.withCallOverWireRequest(clonedCallOverWireRequest).withBehaviorContext(seffBehaviorContextHolder)
+				.withCaller(calledFrom).withRequestProcessingContext(requestProcessingContext)
+				.withAssemblyContext(assemblyContext).withResultStackframe(clonedStackFrame).build();
 
 		return clonedContext;
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param holder
+	 * @return
+	 */
+	public SeffBehaviorContextHolder cloneSeffBehaviorContextHolder(final SeffBehaviorContextHolder holder,
+			final SeffBehaviorWrapper clonedParentWrapper) {
+
+		if (holder instanceof RootBehaviorContextHolder rootholder) {
+			return cloneRootBehaviorContextHolder(rootholder);
+		}
+		if (holder instanceof BranchBehaviorContextHolder branchholder) {
+			return cloneBranchBehaviorContextHolder(branchholder, clonedParentWrapper);
+		}
+		throw new IllegalArgumentException(
+				String.format("Cloning %s not yet supported", holder.getClass().getSimpleName()));
 	}
 
 	/**
@@ -266,24 +305,42 @@ public final class CloneHelper {
 	 * @return
 	 * @throws CloningFailedException
 	 */
-	public SeffBehaviorContextHolder cloneBehaviorContext(final SeffBehaviorContextHolder holder) {
+	public SeffBehaviorContextHolder cloneRootBehaviorContextHolder(final RootBehaviorContextHolder holder) {
 
-		SeffBehaviorContextHolder clonedHolder = null;
 		final ResourceDemandingBehaviour behaviour = holder.getCurrentProcessedBehavior().getBehavior();
 		final AbstractAction current = holder.getCurrentProcessedBehavior().getCurrentAction();
 
-		if (holder instanceof RootBehaviorContextHolder) {
+		final SeffBehaviorContextHolder clonedHolder = new RootBehaviorContextHolder(behaviour);
 
-			clonedHolder = new RootBehaviorContextHolder(behaviour);
-
-			while (clonedHolder.getCurrentProcessedBehavior().getCurrentAction() != current) {
-				clonedHolder.getNextAction();
-			}
-		} else {
-			throw new IllegalArgumentException(
-					String.format("clonging %s not yet implemented", holder.getClass().getSimpleName()));
+		while (clonedHolder.getCurrentProcessedBehavior().getCurrentAction() != current) {
+			clonedHolder.getNextAction();
 		}
-		// TODO else reset the parents
+
+		return clonedHolder;
+	}
+
+	/**
+	 * 
+	 * @param branchedholder
+	 * @param clonedParent
+	 * @return
+	 */
+	public SeffBehaviorContextHolder cloneBranchBehaviorContextHolder(final BranchBehaviorContextHolder branchedholder,
+			final SeffBehaviorWrapper clonedParent) {
+
+		SeffBehaviorContextHolder clonedHolder = null;
+		final ResourceDemandingBehaviour behaviour = branchedholder.getCurrentProcessedBehavior().getBehavior();
+		final AbstractAction current = branchedholder.getCurrentProcessedBehavior().getCurrentAction();
+
+		// PCM element -> no cloning
+		final AbstractAction successor = branchedholder.getSuccessor().isPresent() ? branchedholder.getSuccessor().get()
+				: null;
+
+		clonedHolder = new BranchBehaviorContextHolder(behaviour, successor, clonedParent);
+
+		while (clonedHolder.getCurrentProcessedBehavior().getCurrentAction() != current) {
+			clonedHolder.getNextAction();
+		}
 
 		return clonedHolder;
 	}
@@ -382,7 +439,8 @@ public final class CloneHelper {
 	 * @return
 	 * @throws CloningFailedException
 	 */
-	public UserInterpretationContext cloneUserInterpretationContext(final UserInterpretationContext userInterpretationContext) {
+	public UserInterpretationContext cloneUserInterpretationContext(
+			final UserInterpretationContext userInterpretationContext) {
 
 		if (userInterpretationContext == null) {
 			return null;
@@ -392,9 +450,9 @@ public final class CloneHelper {
 		// reference the same UserInterpretationContext...i guess.
 		// nah, i really dont remember why it is like this :x
 		// TODO dont do this, this is horrible, because the user get out of sync o_O
-		//		if (this.contextClone != null) {
-		//			return this.contextClone;
-		//		}
+		// if (this.contextClone != null) {
+		// return this.contextClone;
+		// }
 
 		UserInterpretationContext clonedUserInterpretationContext = null;
 		final AbstractUserAction firstAction = userInterpretationContext.getCurrentAction();
@@ -402,7 +460,8 @@ public final class CloneHelper {
 		if (userInterpretationContext instanceof ClosedWorkloadUserInterpretationContext) {
 
 			final UsageScenario usageScenario = userInterpretationContext.getScenario();
-			final ThinkTime thinkTime = ((ClosedWorkloadUserInterpretationContext) userInterpretationContext).getThinkTime();
+			final ThinkTime thinkTime = ((ClosedWorkloadUserInterpretationContext) userInterpretationContext)
+					.getThinkTime();
 
 			final UsageScenarioBehaviorContext scenarioContext = cloneUsageScenarioBehaviorContext(
 					userInterpretationContext.getBehaviorContext());
@@ -440,9 +499,9 @@ public final class CloneHelper {
 		// the only reason this has not yet broken my leg, is because i always work with
 		// root scenarios of a single action.
 
-		//		RootScenarioContext clonedScenarioContext = RootScenarioContext.builder()
-		//				.withScenarioBehavior(scenarioContext.getScenarioBehavior())
-		//				.build();
+		// RootScenarioContext clonedScenarioContext = RootScenarioContext.builder()
+		// .withScenarioBehavior(scenarioContext.getScenarioBehavior())
+		// .build();
 
 		return scenarioContext;
 	}
@@ -458,12 +517,32 @@ public final class CloneHelper {
 
 		final GeneralEntryRequest clonedGeneralEntryRequest = GeneralEntryRequest.builder()
 				.withInputVariableUsages(generalEntryRequest.getInputVariableUsages())
+				.withOutputVariableUsages(generalEntryRequest.getOutputVariableUsages())
 				.withRequestFrom(cloneContext(generalEntryRequest.getRequestFrom()))
 				.withRequiredRole(generalEntryRequest.getRequiredRole())
 				.withSignature(generalEntryRequest.getSignature()).withUser(cloneUser(generalEntryRequest.getUser()))
 				.build();
 
+
 		return clonedGeneralEntryRequest;
 	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param seffBehaviorWrapper
+	 * @return
+	 */
+//	public SeffBehaviorWrapper cloneSeffBehaviorWrapper(final SeffBehaviorWrapper seffBehaviorWrapper) {
+//
+//		final ResourceDemandingBehaviour rdBehaviour = seffBehaviorWrapper.getBehavior();
+//		final SeffBehaviorContextHolder clonedSeffBehaviorContextHolder = cloneSeffBehaviorContextHolder(
+//				seffBehaviorWrapper.getContext(), null);
+//
+//		final SeffBehaviorWrapper clonedSeffBehaviorWrapper = new SeffBehaviorWrapper(rdBehaviour,
+//				clonedSeffBehaviorContextHolder);
+//
+//		return clonedSeffBehaviorWrapper;
+//	}
 
 }
