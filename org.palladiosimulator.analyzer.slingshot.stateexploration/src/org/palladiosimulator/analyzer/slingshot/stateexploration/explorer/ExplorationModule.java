@@ -38,6 +38,7 @@ public class ExplorationModule extends AbstractSlingshotExtension {
 		messageBinder.addBinding("StateExplored").toInstance(StateExploredMessage.class);
 		
 		install(ExplorationMessageDispatcher.class);
+		install(SimulationUsageDataCollector.class);
 		
 	}
 

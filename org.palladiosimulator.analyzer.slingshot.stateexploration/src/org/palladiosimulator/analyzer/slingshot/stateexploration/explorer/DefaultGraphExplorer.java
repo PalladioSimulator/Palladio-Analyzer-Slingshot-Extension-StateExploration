@@ -90,7 +90,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 30; i++) { // just random.
+		for (int i = 0; i < 100; i++) { // just random.
 			if (!this.graph.hasNext()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
 				break;
@@ -249,6 +249,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// MapHelper.getValue(configuration, VARIATION_ID, String.class)
 		launchConfigurationParams.put(SimuComConfig.VARIATION_ID, variation);
 		launchConfigurationParams.put(SimuComConfig.EXPERIMENT_RUN, this.graph.toString());
+		//launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
+
 
 		return new SimuComConfig(launchConfigurationParams, true);
 	}
