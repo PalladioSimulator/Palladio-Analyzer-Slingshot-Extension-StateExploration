@@ -188,18 +188,22 @@ public final class CloneHelper {
 	}
 
 	/**
+	 * TODO FIX IT
 	 *
 	 * @param request
+	 * @param user    user from the enclosing {@link SEFFInterpretationContext}
 	 * @return
 	 */
 	public CallOverWireRequest clone(final CallOverWireRequest request) {
 
 		final GeneralEntryRequest clonedEntryRequest = cloneGeneralEntryRequest(request.getEntryRequest());
-		final User clonedUser = cloneUser(request.getUser());
-		final SimulatedStackframe<Object> variablesToConsider = clonedUser.getStack().currentStackFrame();
+
+		final User user = clonedEntryRequest.getUser();
+
+		final SimulatedStackframe<Object> variablesToConsider = user.getStack().currentStackFrame();
 
 		final CallOverWireRequest.Builder clonedRequestBuilder = CallOverWireRequest.builder().from(request.getFrom())
-				.to(request.getTo()).signature(request.getSignature()).user(clonedUser).entryRequest(clonedEntryRequest)
+				.to(request.getTo()).signature(request.getSignature()).user(user).entryRequest(clonedEntryRequest)
 				.variablesToConsider(variablesToConsider);
 
 		if (request.getReplyTo().isPresent()) {
@@ -265,6 +269,8 @@ public final class CloneHelper {
 		}
 
 		if (context.getCurrentResultStackframe() != null) {
+			// acutally no, the result stackframe seems to be a completely different
+			// stackframe, that is not part of the user stack.
 			clonedStackFrame = requestProcessingContext.getUser().getStack().currentStackFrame();
 		}
 
@@ -367,11 +373,14 @@ public final class CloneHelper {
 		final ProvidedRole opProvidedRole = requestProcessingContext.getProvidedRole();
 		final AssemblyContext assmemblyContext = requestProcessingContext.getAssemblyContext();
 
+		final UserInterpretationContext clonedUserInterpretationContext = cloneUserInterpretationContext(
+				requestProcessingContext.getUserInterpretationContext());
+		final UserRequest clonedUserRequest = cloneUserRequest(requestProcessingContext.getUserRequest(),
+				clonedUserInterpretationContext.getUser());
+
 		final RequestProcessingContext clonedRequestProcessingContext = RequestProcessingContext.builder()
-				.withUser(cloneUser(requestProcessingContext.getUser()))
-				.withUserRequest(cloneUserRequest(requestProcessingContext.getUserRequest()))
-				.withUserInterpretationContext(
-						cloneUserInterpretationContext(requestProcessingContext.getUserInterpretationContext()))
+				.withUser(clonedUserRequest.getUser()).withUserRequest(clonedUserRequest)
+				.withUserInterpretationContext(clonedUserInterpretationContext)
 				.withProvidedRole(opProvidedRole).withAssemblyContext(assmemblyContext).build();
 
 		return clonedRequestProcessingContext;
@@ -390,11 +399,27 @@ public final class CloneHelper {
 			return null;
 		}
 
+		return cloneUserRequest(userRequest, cloneUser(userRequest.getUser()));
+	}
+
+	/**
+	 *
+	 * @param userRequest
+	 * @return
+	 * @throws CloningFailedException
+	 */
+	public UserRequest cloneUserRequest(final UserRequest userRequest, final User user) {
+
+		// because sometimes the userRequest is legitly null.
+		if (userRequest == null) {
+			return null;
+		}
+
 		final OperationProvidedRole opProvidedRole = userRequest.getOperationProvidedRole();
 		final OperationSignature signature = userRequest.getOperationSignature();
 		final EList<VariableUsage> inputParameterUsages = userRequest.getVariableUsages();
 
-		final UserRequest clonedUserRequest = UserRequest.builder().withUser(cloneUser(userRequest.getUser()))
+		final UserRequest clonedUserRequest = UserRequest.builder().withUser(user)
 				.withOperationProvidedRole(opProvidedRole).withOperationSignature(signature)
 				.withVariableUsages(inputParameterUsages).build();
 		return clonedUserRequest;
@@ -514,13 +539,16 @@ public final class CloneHelper {
 	 * @throws CloningFailedException
 	 */
 	public GeneralEntryRequest cloneGeneralEntryRequest(final GeneralEntryRequest generalEntryRequest) {
+		
+		SEFFInterpretationContext clonedContext = cloneContext(generalEntryRequest.getRequestFrom());
 
 		final GeneralEntryRequest clonedGeneralEntryRequest = GeneralEntryRequest.builder()
 				.withInputVariableUsages(generalEntryRequest.getInputVariableUsages())
 				.withOutputVariableUsages(generalEntryRequest.getOutputVariableUsages())
-				.withRequestFrom(cloneContext(generalEntryRequest.getRequestFrom()))
+				.withRequestFrom(clonedContext)
 				.withRequiredRole(generalEntryRequest.getRequiredRole())
-				.withSignature(generalEntryRequest.getSignature()).withUser(cloneUser(generalEntryRequest.getUser()))
+				.withSignature(generalEntryRequest.getSignature())
+				.withUser(clonedContext.getRequestProcessingContext().getUser())
 				.build();
 
 
