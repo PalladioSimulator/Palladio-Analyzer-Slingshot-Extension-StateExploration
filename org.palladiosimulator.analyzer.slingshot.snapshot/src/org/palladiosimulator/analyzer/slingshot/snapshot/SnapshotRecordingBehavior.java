@@ -83,6 +83,14 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		recorder.removeJobRecord(event);
 	}
 
+	/**
+	 * Create JobRecord before the {@link JobInitiated} get processed, with initial
+	 * demand.
+	 * 
+	 * @param information
+	 * @param event
+	 * @return
+	 */
 	@PreIntercept
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
 			final JobInitiated event) {
@@ -92,6 +100,15 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		return InterceptionResult.success();
 	}
 
+	/**
+	 * Update JobRecord after the {@link JobInitiated} got processed, to set
+	 * normalized demand.
+	 * 
+	 * @param information
+	 * @param event
+	 * @param result
+	 * @return
+	 */
 	@PostIntercept
 	public InterceptionResult postInterceptSimulationStarted(final InterceptorInformation information,
 			final JobInitiated event, final Result<?> result) {
@@ -128,8 +145,10 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 */
 	@Subscribe
 	public Result<SnapshotTaken> onSnapshotInitiatedEvent(final SnapshotInitiated snapshotInitiated) {
+		// Cast to ActiveJob is feasible, because LinkingJobs are always FCFS.
 		this.scheduleProcSharingUpdatesHelper(
-				recorder.getProcSharingJobRecords().stream().map(record -> record.getJob()).collect(Collectors.toSet()));
+				recorder.getProcSharingJobRecords().stream().map(record -> (ActiveJob) record.getJob())
+						.collect(Collectors.toSet()));
 
 		return Result.of(new SnapshotTaken(0, snapshotInitiated.getTriggeringEvent()));
 	}
@@ -159,6 +178,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
+	 * TODO
 	 *
 	 * @param job blueprint to copy from
 	 * @return fake job

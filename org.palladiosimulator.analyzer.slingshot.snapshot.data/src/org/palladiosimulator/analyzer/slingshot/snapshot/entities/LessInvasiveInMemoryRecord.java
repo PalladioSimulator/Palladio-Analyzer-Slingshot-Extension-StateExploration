@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.LinkingJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.User;
@@ -62,32 +64,47 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 
 	@Override
 	public void removeJobRecord(final JobFinished event) {
-		if (event.getEntity() instanceof final ActiveJob job) {
-			openJob.remove(job.getRequest().getUser());
+		openJob.remove(this.getUser(event.getEntity()));
+	}
+
+	/**
+	 * TODO
+	 * 
+	 * @param njob
+	 * @return
+	 */
+	private User getUser(final Job njob) {
+		if (njob instanceof final ActiveJob job) {
+			return job.getRequest().getUser();
 		}
+		if (njob instanceof final LinkingJob job) {
+			return job.getRequest().getUser();
+		}
+		throw new IllegalArgumentException(
+				String.format("Cannot handle jobs of type %s.", njob.getClass().getSimpleName()));
 	}
 
 	@Override
 	public void createJobRecord(final JobInitiated event) {
+		final User user = this.getUser(event.getEntity());
 
-		if (event.getEntity() instanceof final ActiveJob job) {
-			if (openJob.containsKey(job.getRequest().getUser())) {
+		if (openJob.containsKey(user)) {
 			throw new IllegalArgumentException(String.format("Cannot create Record for %s, a Record already exsits.", event.getEntity().toString()));
 		}
 
-		openJob.put(job.getRequest().getUser(), new JobRecord(job));
-	}
+		openJob.put(user, new JobRecord(event.getEntity()));
+
 	}
 	@Override
 	public void updateJobRecord(final JobInitiated event) {
+		final User user = this.getUser(event.getEntity());
 
-		if (event.getEntity() instanceof final ActiveJob job) {
-			if (!openJob.containsKey(job.getRequest().getUser())) {
+		if (!openJob.containsKey(user)) {
 			throw new IllegalArgumentException(String.format("Cannot update %s, missing Record.", event.getEntity().toString()));
 		}
 
-		openJob.get(job.getRequest().getUser()).setNormalizedDemand(job.getDemand());
-	}
+		openJob.get(user).setNormalizedDemand(event.getEntity().getDemand());
+
 	}
 
 	@Override
@@ -112,18 +129,18 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	/**
 	 *
 	 * @param job
-	 * @return true iff job is processed by an FCFS processing recource.
+	 * @return true iff job is processed by an FCFS processing resource.
 	 */
-	private boolean isFCFS(final ActiveJob job) {
-		final Optional<ProcessingResourceSpecification> optSpec = job.getAllocationContext()
-				.getResourceContainer_AllocationContext().getActiveResourceSpecifications_ResourceContainer().stream()
-				.filter(spec -> spec instanceof ProcessingResourceSpecification).map(spec -> spec).findFirst();
+	private boolean isFCFS(final Job job) {
 
-		if (optSpec.isEmpty()) {
-			LOGGER.debug(String.format("not a processing resource"));
-			return false;
+		if (job instanceof LinkingJob) {
+			return true;
 		}
-		return optSpec.get().getSchedulingPolicy().getId().equals(FCFS_ID);
+		if (job instanceof ActiveJob activeJob) {
+			return jobIsOfType(activeJob, FCFS_ID);
+		}
+		LOGGER.debug(String.format("Job of unknown type %s", job.getClass().getSimpleName()));
+		return false;
 	}
 
 	/**
@@ -131,15 +148,34 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	 * @param job
 	 * @return true iff job is processed by an processor sharing processing resource
 	 */
-	private boolean isProcSharing(final ActiveJob job) {
+	private boolean isProcSharing(final Job job) {
+		if (job instanceof LinkingJob) {
+			return false;
+		}
+		if (job instanceof ActiveJob activeJob) {
+			return jobIsOfType(activeJob, PROCSHARING_ID);
+		}
+		LOGGER.debug(String.format("Job of unknown type %s", job.getClass().getSimpleName()));
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param job
+	 * @param type_ID
+	 * @return
+	 */
+	private boolean jobIsOfType(final ActiveJob job, final String type_ID) {
 		final Optional<ProcessingResourceSpecification> optSpec = job.getAllocationContext()
 				.getResourceContainer_AllocationContext().getActiveResourceSpecifications_ResourceContainer().stream()
 				.filter(spec -> spec instanceof ProcessingResourceSpecification).map(spec -> spec).findFirst();
 
 		if (optSpec.isEmpty()) {
-			LOGGER.debug(String.format("not a processing resource"));
+			LOGGER.debug(String.format("Missing ProcessingResourceSpecification, cannot determine Type."));
 			return false;
 		}
-		return optSpec.get().getSchedulingPolicy().getId().equals(PROCSHARING_ID);
+		return optSpec.get().getSchedulingPolicy().getId().equals(type_ID);
+
 	}
+
 }
