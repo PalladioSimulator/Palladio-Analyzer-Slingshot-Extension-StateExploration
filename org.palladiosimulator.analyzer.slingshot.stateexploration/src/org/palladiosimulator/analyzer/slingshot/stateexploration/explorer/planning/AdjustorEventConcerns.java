@@ -9,12 +9,10 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
-import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
 import org.palladiosimulator.pcm.usagemodel.UsageModel;
 import org.palladiosimulator.pcm.usagemodel.Workload;
 import org.palladiosimulator.spd.ScalingPolicy;
-import org.palladiosimulator.spd.targets.ElasticInfrastructure;
-import org.palladiosimulator.spd.targets.TargetGroup;
+
 import de.uka.ipd.sdq.simucomframework.usage.ClosedWorkload;
 import de.uka.ipd.sdq.simucomframework.usage.OpenWorkload;
 
@@ -22,7 +20,7 @@ import de.uka.ipd.sdq.simucomframework.usage.OpenWorkload;
  * To be used during exploration planning.
  *
  * Responsible for things concerned with / related to
- * {@link AdjustorBasedEvent}s.
+ * {@link ModelAdjustmentRequested} events.
  *
  * @author stiesssh
  *
@@ -32,30 +30,18 @@ public class AdjustorEventConcerns {
 	private static final Logger LOGGER = Logger.getLogger(AdjustorEventConcerns.class.getName());
 
 	/**
-	 * Create copy of the given event and update TargetGroup to reference the new
-	 * copy of the architecture.
+	 * Create copy of the given event.
+	 * 
+	 * The copy references a scaling Policy from the given
+	 * {@link ArchitectureConfiguration}
 	 *
 	 * @param event  event to be copied
 	 * @param config architecture to be referenced
 	 * @return copy of event
 	 */
 	public DESEvent copyForTargetGroup(final DESEvent event, final ArchitectureConfiguration config) {
-
 		if (event instanceof final ModelAdjustmentRequested adjustor) {
-			final ScalingPolicy appliedPolicy = adjustor.getScalingPolicy();
-			
-			final TargetGroup tg = appliedPolicy.getTargetGroup();
-
-			/* Update Target Group */
-			if (tg instanceof final ElasticInfrastructure ei) {
-					ei.setUnit(getMatchingResourceContainer(config, ei.getUnit().getId()));
-			} else {
-				throw new IllegalArgumentException(
-						String.format("Target Group of type %s not yet supported", tg.getClass().getSimpleName()));
-			}
-
-			/* Create Event copy */
-			return new ModelAdjustmentRequested(getMatchingPolicy(config, appliedPolicy));
+			return new ModelAdjustmentRequested(getMatchingPolicy(config, adjustor.getScalingPolicy()));
 
 		}
 		throw new IllegalArgumentException(String.format("Expected DESEvent of type %s, but got %s",
@@ -79,28 +65,6 @@ public class AdjustorEventConcerns {
 					"No Scaling Policy matching ID %s in new Architectur Configuration.", appliedPolicy.getId()));
 		}
 		return copiedPolicy.get();
-	}
-
-	
-	/**
-	 * Get a resource container matching the given {@code id} from the new architecture configuration.
-	 * 
-	 * @param config new copy of the architecture models.
-	 * @param id id to match for. 
-	 * @return ResourceContainer with the given id from the new config. 
-	 * 
-	 * @throws NoSuchElementException if the new config has no resource container matching the given {@code id}.
-	 */
-	private ResourceContainer getMatchingResourceContainer(final ArchitectureConfiguration config,
-			String id) {
-		Optional<ResourceContainer> newrc = config.getAllocation().getTargetResourceEnvironment_Allocation()
-				.getResourceContainer_ResourceEnvironment().stream()
-				.filter(rc -> rc.getId().equals(id)).findAny();
-		if (newrc.isEmpty()) {
-			throw new NoSuchElementException(String.format(
-					"No ResourceContainer matching ID %s in new Architectur Configuration.", id));			
-		} 
-		return newrc.get();
 	}
 
 	/**
