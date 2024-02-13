@@ -188,7 +188,7 @@ public final class CloneHelper {
 	}
 
 	/**
-	 * TODO FIX IT
+	 * TODO PLAIN Cow.
 	 *
 	 * @param request
 	 * @param user    user from the enclosing {@link SEFFInterpretationContext}
@@ -197,6 +197,34 @@ public final class CloneHelper {
 	public CallOverWireRequest clone(final CallOverWireRequest request) {
 
 		final GeneralEntryRequest clonedEntryRequest = cloneGeneralEntryRequest(request.getEntryRequest());
+
+		final User user = clonedEntryRequest.getUser();
+
+		final SimulatedStackframe<Object> variablesToConsider = user.getStack().currentStackFrame();
+
+		final CallOverWireRequest.Builder clonedRequestBuilder = CallOverWireRequest.builder().from(request.getFrom())
+				.to(request.getTo()).signature(request.getSignature()).user(user).entryRequest(clonedEntryRequest)
+				.variablesToConsider(variablesToConsider);
+
+		if (request.getReplyTo().isPresent()) {
+			final CallOverWireRequest clonedReplyTo = clone(request.getReplyTo().get());
+			clonedRequestBuilder.replyTo(clonedReplyTo);
+		}
+
+		return clonedRequestBuilder.build();
+	}
+
+	/**
+	 * NESTED
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public CallOverWireRequest clone(final CallOverWireRequest request,
+			final SEFFInterpretationContext seffIC_calledFrom) {
+
+		final GeneralEntryRequest clonedEntryRequest = cloneGeneralEntryRequest(request.getEntryRequest(),
+				seffIC_calledFrom);
 
 		final User user = clonedEntryRequest.getUser();
 
@@ -275,7 +303,11 @@ public final class CloneHelper {
 		}
 
 		if (context.getCallOverWireRequest().isPresent()) { // TODO probably like above
-			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get());
+//			if (calledFrom == null) {
+//				throw new IllegalStateException(
+//						"If the Call over wire is present, there must also be a caller (i think)!");
+//			}
+			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get(), calledFrom);
 		}
 
 		final SEFFInterpretationContext clonedContext = SEFFInterpretationContext.builder().withParent(clonedParent)
@@ -373,13 +405,16 @@ public final class CloneHelper {
 		final ProvidedRole opProvidedRole = requestProcessingContext.getProvidedRole();
 		final AssemblyContext assmemblyContext = requestProcessingContext.getAssemblyContext();
 
-		final UserInterpretationContext clonedUserInterpretationContext = cloneUserInterpretationContext(
-				requestProcessingContext.getUserInterpretationContext());
-		final UserRequest clonedUserRequest = cloneUserRequest(requestProcessingContext.getUserRequest(),
-				clonedUserInterpretationContext.getUser());
+		// Because right now, they might in fact be legitly null :/
+
+		final User clonedUser = cloneUser(requestProcessingContext.getUser());
+
+		UserInterpretationContext clonedUserInterpretationContext = cloneUserInterpretationContext(
+				requestProcessingContext.getUserInterpretationContext(), clonedUser);
+		UserRequest clonedUserRequest = cloneUserRequest(requestProcessingContext.getUserRequest(), clonedUser);
 
 		final RequestProcessingContext clonedRequestProcessingContext = RequestProcessingContext.builder()
-				.withUser(clonedUserRequest.getUser()).withUserRequest(clonedUserRequest)
+				.withUser(clonedUser).withUserRequest(clonedUserRequest)
 				.withUserInterpretationContext(clonedUserInterpretationContext)
 				.withProvidedRole(opProvidedRole).withAssemblyContext(assmemblyContext).build();
 
@@ -471,6 +506,17 @@ public final class CloneHelper {
 			return null;
 		}
 
+		return cloneUserInterpretationContext(userInterpretationContext,
+				cloneUser(userInterpretationContext.getUser()));
+	}
+
+	public UserInterpretationContext cloneUserInterpretationContext(
+			final UserInterpretationContext userInterpretationContext, final User clonedUser) {
+
+		if (userInterpretationContext == null) {
+			return null;
+		}
+
 		// only clone it once. relevant because nested SEFF interpretations must
 		// reference the same UserInterpretationContext...i guess.
 		// nah, i really dont remember why it is like this :x
@@ -492,7 +538,7 @@ public final class CloneHelper {
 					userInterpretationContext.getBehaviorContext());
 
 			clonedUserInterpretationContext = ClosedWorkloadUserInterpretationContext.builder()
-					.withUser(cloneUser(userInterpretationContext.getUser())).withScenario(usageScenario)
+					.withUser(clonedUser).withScenario(usageScenario)
 					.withCurrentAction(firstAction).withThinkTime(thinkTime)
 					.withUsageScenarioBehaviorContext(scenarioContext).build();
 		} else {
@@ -504,7 +550,7 @@ public final class CloneHelper {
 					userInterpretationContext.getBehaviorContext());
 
 			clonedUserInterpretationContext = OpenWorkloadUserInterpretationContext.builder()
-					.withUser(cloneUser(userInterpretationContext.getUser())).withScenario(usageScenario)
+					.withUser(clonedUser).withScenario(usageScenario)
 					.withCurrentAction(firstAction).withInterArrivalTime(interArrivalTime)
 					.withUsageScenarioBehaviorContext(scenarioContext).build();
 
@@ -532,7 +578,7 @@ public final class CloneHelper {
 	}
 
 	/**
-	 * TODO
+	 * TODO PLAIN
 	 *
 	 * @param generalEntryRequest
 	 * @return
@@ -551,6 +597,31 @@ public final class CloneHelper {
 				.withUser(clonedContext.getRequestProcessingContext().getUser())
 				.build();
 
+
+		return clonedGeneralEntryRequest;
+	}
+
+	/**
+	 * Cloning Nested {@link GeneralEntryRequest}s.
+	 * 
+	 * Must reference the same caller {@link SEFFInterpretationContext} as the
+	 * enclosing context.
+	 *
+	 * @param generalEntryRequest
+	 * @return
+	 * @throws CloningFailedException
+	 */
+	public GeneralEntryRequest cloneGeneralEntryRequest(final GeneralEntryRequest generalEntryRequest,
+			final SEFFInterpretationContext SEFFIC_requestFrom) {
+
+		SEFFInterpretationContext clonedSEFFIC = SEFFIC_requestFrom.update().withCaller(SEFFIC_requestFrom).build();
+
+		final GeneralEntryRequest clonedGeneralEntryRequest = GeneralEntryRequest.builder()
+				.withInputVariableUsages(generalEntryRequest.getInputVariableUsages())
+				.withOutputVariableUsages(generalEntryRequest.getOutputVariableUsages()).withRequestFrom(clonedSEFFIC)
+				.withRequiredRole(generalEntryRequest.getRequiredRole())
+				.withSignature(generalEntryRequest.getSignature())
+				.withUser(SEFFIC_requestFrom.getRequestProcessingContext().getUser()).build();
 
 		return clonedGeneralEntryRequest;
 	}
