@@ -35,11 +35,14 @@ public class ExplorationModule extends AbstractSlingshotExtension {
 		var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {}, new TypeLiteral<Class<? extends Message<?>>>() {});
 		
 		messageBinder.addBinding("Test").toInstance(TestMessage.class);
+		messageBinder.addBinding("TestSimEvent").toInstance(SimTestMessage.class);
+		
+		
 		messageBinder.addBinding("StateExplored").toInstance(StateExploredMessage.class);
 		
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
-		
+		install(SimulationBehaviourReactionTest.class);
 	}
 
 	private void configureGson() {
