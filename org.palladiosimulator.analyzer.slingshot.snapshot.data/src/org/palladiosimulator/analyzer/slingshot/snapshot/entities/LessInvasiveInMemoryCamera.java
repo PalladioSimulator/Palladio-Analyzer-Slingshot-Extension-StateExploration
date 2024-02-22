@@ -23,6 +23,8 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 
+import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
+
 public final class LessInvasiveInMemoryCamera implements Camera {
 	private static final Logger LOGGER = Logger.getLogger(LessInvasiveInMemoryCamera.class);
 
@@ -78,7 +80,6 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		initJobs.addAll(this.handlePFCFSJobs(fcfsRecords, progressedFcfs));
 		initJobs.addAll(this.handleProcSharingJobs(procsharingRecords));
 
-
 		relevantEvents.addAll(initJobs);
 
 		relevantEvents.addAll(record.getRecordedCalculators());
@@ -112,20 +113,32 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	}
 
 	/**
+	 * Denormalizes the demand of the open jobs and creates {@link JobInitiated}
+	 * events to reinsert them to their respective FCFS Resource.
+	 * 
+	 * The demand must be denormalized, because upon receiving a
+	 * {@link JobInitiated} event, the {@link AbstractActiveResource} normalizes a
+	 * job's demand with the resource's processing rate. Thus without
+	 * denormalisation, the demand would be wrong.
+	 * 
+	 * This is required for ActiveJobs, and for LinkingJobs. In case of LinkingJobs,
+	 * the throughput is used as processing rate.
 	 *
-	 * @param jobrecords
-	 * @param fcfsProgressed
-	 * @return
+	 * @param jobrecords     jobs waiting at an FCFS resource at the time of the
+	 *                       snapshot
+	 * @param fcfsProgressed events scheduled for simulation at the time of the
+	 *                       snapshot
+	 * @return events to reinsert all open jobs to their respective FCFS Resource
 	 */
 	private Set<JobInitiated> handlePFCFSJobs(final Set<JobRecord> jobrecords, final Set<AbstractJobEvent> fcfsProgressed) {
 		final Set<JobInitiated> rval = new HashSet<>();
 
-		final Map<Job, AbstractJobEvent> job2event = new HashMap<>();
-		fcfsProgressed.stream().forEach(event -> job2event.put(event.getEntity(), event));
+		final Map<Job, AbstractJobEvent> progressedJobs = new HashMap<>();
+		fcfsProgressed.stream().forEach(event -> progressedJobs.put(event.getEntity(), event));
 
 		for (final JobRecord record : jobrecords) {
-			if (job2event. keySet().contains(record.getJob()))  {
-				final AbstractJobEvent event = job2event.get(record.getJob());
+			if (progressedJobs.keySet().contains(record.getJob())) {
+				final AbstractJobEvent event = progressedJobs.get(record.getJob());
 				// time equals remaining demand because of normalization.
 				final double remainingDemand = event.time() -  engine.getSimulationInformation().currentSimulationTime();
 				final double factor = record.getRequestedDemand() / record.getNormalizedDemand();

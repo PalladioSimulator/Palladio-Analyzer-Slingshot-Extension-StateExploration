@@ -31,12 +31,14 @@ import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRe
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.Repository.Repository;
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
+import org.palladiosimulator.monitorrepository.MonitorRepository;
+import org.palladiosimulator.pcm.allocation.Allocation;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
@@ -70,18 +72,23 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	private final boolean activated;
 
+	private final Allocation allocation;
+	private final MonitorRepository monitoring;
+
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable SimuComConfig simuComConfig,
-			final @Nullable Set<DESEvent> eventsToInitOn) {
+			final @Nullable Set<DESEvent> eventsToInitOn, final Allocation allocation,
+			final MonitorRepository monitoring) {
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 		this.eventsToInitOn = eventsToInitOn;
+		this.allocation = allocation;
+		this.monitoring = monitoring;
 
 		this.activated = this.halfDoneState != null && this.snapshotConfig != null && this.simuComConfig != null
 				&& eventsToInitOn != null;
-
 
 		this.event2offset = new HashMap<>();
 	}
@@ -234,14 +241,26 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 */
 	@Subscribe
 	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
-		final ArchitectureConfiguration archconfig = this.halfDoneState.getArchitecureConfiguration();
+		// beware: das hier sind andere modelle in der archconfig, als die, die provided
+		// werden!!
+		// weil ich die instanzen aus der archconfig raus nehmen musste um sie in die
+		// provider rein zu kriegen.
 
-		ResourceUtils.saveResource(archconfig.getMonitorRepository().eResource());
-		ResourceUtils.saveResource(archconfig.getAllocation().eResource());
-		ResourceUtils.saveResource(archconfig.getAllocation().getTargetResourceEnvironment_Allocation().eResource());
-		ResourceUtils.saveResource(archconfig.getAllocation().getSystem_Allocation().eResource());
+		ResourceUtils.saveResource(this.monitoring.eResource());
 
-		// Do NOT save the ScalingPolicyies, cause that would get the oneTrickPony into the persisted Rules.
+		if (!this.monitoring.getMonitors().isEmpty()) {
+			LOGGER.debug("monitors defined, updating Meassuring points");
+			MeasuringPointRepository mpRepo = this.monitoring.getMonitors().get(0).getMeasuringPoint()
+					.getMeasuringPointRepository();
+			ResourceUtils.saveResource(mpRepo.eResource());
+		}
+
+		ResourceUtils.saveResource(this.allocation.eResource());
+		ResourceUtils.saveResource(this.allocation.getTargetResourceEnvironment_Allocation().eResource());
+		ResourceUtils.saveResource(this.allocation.getSystem_Allocation().eResource());
+
+		// Do NOT save the ScalingPolicyies, cause that would get the oneTrickPony into
+		// the persisted Rules.
 
 	}
 

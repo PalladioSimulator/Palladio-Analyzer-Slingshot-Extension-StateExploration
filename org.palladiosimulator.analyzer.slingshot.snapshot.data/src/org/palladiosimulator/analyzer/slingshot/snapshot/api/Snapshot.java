@@ -25,7 +25,7 @@ public interface Snapshot {
 	 *
 	 * @return
 	 */
-	public Optional<DESEvent> getAdjustorEvent();
+	public Optional<DESEvent> getModelAdjustmentRequestedEvent();
 
-	public void setAdjustorEvent(DESEvent event);
+	public void setModelAdjustmentRequestedEvent(DESEvent event);
 }

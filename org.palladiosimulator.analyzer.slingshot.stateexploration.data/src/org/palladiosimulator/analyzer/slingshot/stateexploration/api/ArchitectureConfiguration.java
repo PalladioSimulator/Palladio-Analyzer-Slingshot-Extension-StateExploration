@@ -1,7 +1,12 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
+import org.palladiosimulator.pcm.system.System;
+import org.palladiosimulator.pcm.usagemodel.UsageModel;
+import org.palladiosimulator.semanticspd.Configuration;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 import org.palladiosimulator.spd.SPD;
 
@@ -19,9 +24,19 @@ public interface ArchitectureConfiguration {
 
 	public Allocation getAllocation();
 
+	public ResourceEnvironment getResourceEnvironment();
+
+	public System getSystem();
+
 	public SPD getSPD();
+	
+	public Configuration getSemanticSPDConfiguration();
 
 	public ServiceLevelObjectiveRepository getSLOs();
+
+	public MeasuringPointRepository getMeasuringPointRepository();
+
+	public UsageModel getUsageModel();
 
 	public ArchitectureConfiguration copy();
 }

@@ -10,8 +10,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.AdjustorBasedEvent;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
@@ -84,6 +83,14 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		recorder.removeJobRecord(event);
 	}
 
+	/**
+	 * Create JobRecord before the {@link JobInitiated} get processed, with initial
+	 * demand.
+	 * 
+	 * @param information
+	 * @param event
+	 * @return
+	 */
 	@PreIntercept
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
 			final JobInitiated event) {
@@ -93,6 +100,15 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		return InterceptionResult.success();
 	}
 
+	/**
+	 * Update JobRecord after the {@link JobInitiated} got processed, to set
+	 * normalized demand.
+	 * 
+	 * @param information
+	 * @param event
+	 * @param result
+	 * @return
+	 */
 	@PostIntercept
 	public InterceptionResult postInterceptSimulationStarted(final InterceptorInformation information,
 			final JobInitiated event, final Result<?> result) {
@@ -113,8 +129,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		final Snapshot snapshot = camera.takeSnapshot();
 
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
-			final AdjustorBasedEvent triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
-			snapshot.setAdjustorEvent(triggeringeEvent);
+			final ModelAdjustmentRequested triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
+			snapshot.setModelAdjustmentRequestedEvent(triggeringeEvent);
 		}
 
 		return Result.of(new SnapshotFinished(snapshot));
@@ -129,8 +145,10 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 */
 	@Subscribe
 	public Result<SnapshotTaken> onSnapshotInitiatedEvent(final SnapshotInitiated snapshotInitiated) {
+		// Cast to ActiveJob is feasible, because LinkingJobs are always FCFS.
 		this.scheduleProcSharingUpdatesHelper(
-				recorder.getProcSharingJobRecords().stream().map(record -> record.getJob()).collect(Collectors.toSet()));
+				recorder.getProcSharingJobRecords().stream().map(record -> (ActiveJob) record.getJob())
+						.collect(Collectors.toSet()));
 
 		return Result.of(new SnapshotTaken(0, snapshotInitiated.getTriggeringEvent()));
 	}
@@ -160,6 +178,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
+	 * TODO
 	 *
 	 * @param job blueprint to copy from
 	 * @return fake job
