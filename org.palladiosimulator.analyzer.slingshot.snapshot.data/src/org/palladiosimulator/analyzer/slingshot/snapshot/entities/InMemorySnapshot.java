@@ -36,12 +36,12 @@ public final class InMemorySnapshot implements Snapshot {
 	}
 
 	@Override
-	public Optional<DESEvent> getAdjustorEvent() {
+	public Optional<DESEvent> getModelAdjustmentRequestedEvent() {
 		return this.adjustorEvent;
 	}
 
 	@Override
-	public void setAdjustorEvent(final DESEvent event) {
+	public void setModelAdjustmentRequestedEvent(final DESEvent event) {
 		this.adjustorEvent = Optional.of(event);
 	}
 }

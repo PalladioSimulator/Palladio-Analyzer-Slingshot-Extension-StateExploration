@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 
 
 /**
@@ -15,21 +15,24 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
  */
 public class JobRecord {
 
-	private final ActiveJob job;
+	private final Job job;
 
+	/** Initial demand, as defined in the model */
 	private final double requestedDemand;
+
+	/** Demand, after the Job entered the Resource */
 	private double normalizedDemand;
 
 	/**
 	 * create record and set requested demand.
 	 * @param job
 	 */
-	public JobRecord(final ActiveJob job) {
+	public JobRecord(final Job job) {
 		this.job = job;
 		this.requestedDemand = job.getDemand();
 	}
 
-	public ActiveJob getJob() {
+	public Job getJob() {
 		return job;
 	}
 

@@ -17,6 +17,7 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.workflow,
  de.uka.ipd.sdq.workflow.mdsd.blackboard,
  org.palladiosimulator.spd,
- org.palladiosimulator.servicelevelobjective
+ org.palladiosimulator.servicelevelobjective,
+ org.palladiosimulator.spd.semantic
 Export-Package: org.palladiosimulator.analyzer.slingshot.behavior.util,
  org.palladiosimulator.analyzer.slingshot.common.utils

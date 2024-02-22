@@ -24,4 +24,6 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.workflow.events,
  org.palladiosimulator.analyzer.slingshot.behavior.util,
  org.palladiosimulator.analyzer.slingshot.workflow,
- org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data
+ org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
+ org.palladiosimulator.spd.semantic,
+ org.jgrapht.core

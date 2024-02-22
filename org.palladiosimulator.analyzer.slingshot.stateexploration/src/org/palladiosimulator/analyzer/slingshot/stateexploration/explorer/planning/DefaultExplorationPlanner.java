@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
 import java.util.Optional;
+
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
@@ -103,8 +104,8 @@ public class DefaultExplorationPlanner {
 		// NOP
 		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
 		// Reactive Reconfiguration
-		if (start.getSnapshot().getAdjustorEvent().isPresent()) {
-			final DESEvent event = start.getSnapshot().getAdjustorEvent().get();
+		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
+			final DESEvent event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
 
 			this.rawgraph.addFringeEdge(
 					new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
