@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
@@ -67,7 +67,7 @@ public class DefaultExplorationPlanner {
 
 		final double duration = calculateRunDuration(start);
 
-		this.updateSPD(end.getArchitecureConfiguration().getSPD(), start.getDuration());
+		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
 
 		// different handling depending of type of change.
 		if (next.getChange().isEmpty()) {
@@ -130,7 +130,7 @@ public class DefaultExplorationPlanner {
 	private DefaultState createNewGraphNode(final ToDoChange next) {
 		final DefaultState predecessor = next.getStart();
 
-		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
+		final SetBasedArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
 		final DefaultState newNode = new DefaultState(predecessor.getEndTime(), newConfig);
 
 		this.rawgraph.addNode(newNode);
@@ -155,14 +155,17 @@ public class DefaultExplorationPlanner {
 	}
 
 	/**
-	 * reduces the expected value for scaling policies with simulation time stimulus
-	 * triggers, or deactivates the policy if the trigger is in the past with regard
-	 * to global time.
-	 *
-	 * @param spd
-	 * @param offset
+	 * Reduces the {@link ExpectedTime} value for scaling policies with trigger
+	 * stimulus {@link SimulationTime} or deactivates the policy if the trigger is
+	 * in the past with regard to global time.
+	 * 
+	 * The {@link ExpectedTime} value is reduced by the duration of the previous
+	 * state.
+	 * 
+	 * @param spd    current scaling rules.
+	 * @param offset duration of the previous state
 	 */
-	private void updateSPD(final SPD spd, final double offset) {
+	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
 
 		// get all triggers on Fixed point in time.
 		spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).map(policy -> policy.getScalingTrigger())

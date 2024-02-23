@@ -2,7 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
 import java.util.Set;
 
-import org.eclipse.emf.common.util.URI;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
 /**
@@ -19,7 +18,7 @@ public interface RawModelState {
 	 *
 	 * @return
 	 */
-	public ArchitectureConfiguration getArchitecureConfiguration();
+	public SetBasedArchitectureConfiguration getArchitecureConfiguration();
 
 	/**
 	 * Get Measurements as EDP2
@@ -65,8 +64,7 @@ public interface RawModelState {
 	 * @return Id for the state
 	 */
 	public default String getId() {
-		final URI uri = getArchitecureConfiguration().getAllocation().eResource().getURI();
-		return uri.segment(uri.segmentCount() - 2);
+		return getArchitecureConfiguration().getSegment();
 	}
 
 	/**

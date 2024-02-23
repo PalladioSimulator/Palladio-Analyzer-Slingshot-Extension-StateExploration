@@ -3,11 +3,9 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -25,12 +23,12 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriAndSetBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -38,17 +36,7 @@ import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationMo
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
-import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
-import org.palladiosimulator.monitorrepository.MonitorRepository;
-import org.palladiosimulator.pcm.allocation.Allocation;
-import org.palladiosimulator.pcm.repository.Repository;
-import org.palladiosimulator.pcm.repository.RepositoryPackage;
-import org.palladiosimulator.pcm.resourceenvironment.ResourceenvironmentPackage;
-import org.palladiosimulator.pcm.system.SystemPackage;
-import org.palladiosimulator.pcm.usagemodel.UsageModel;
-import org.palladiosimulator.semanticspd.Configuration;
-import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
-import org.palladiosimulator.spd.SPD;
+import org.palladiosimulator.pcm.allocation.AllocationPackage;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -96,17 +84,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		final MonitorRepository monitorRepository = PCMResourcePartitionHelper.getMonitorRepository(partition);
-		final MeasuringPointRepository measuringPointRepository = PCMResourcePartitionHelper
-				.getMeasuringPointRepository(partition);
-		final SPD spd = PCMResourcePartitionHelper.getSPD(partition);
-		final Configuration semanticSpd = PCMResourcePartitionHelper.getSemanticSPD(partition);
-		final ServiceLevelObjectiveRepository sloRepository = PCMResourcePartitionHelper.getSLORepository(partition);
+		this.graph = new DefaultGraph(this.createRoot());
 
-		this.graph = new DefaultGraph(this.createRoot(this.initModels.getAllocation(), this.initModels.getUsageModel(),
-				monitorRepository, measuringPointRepository, spd, semanticSpd, sloRepository));
-
-		this.blackbox = new DefaultExplorationPlanner(spd, this.graph);
+		this.blackbox = new DefaultExplorationPlanner(PCMResourcePartitionHelper.getSPD(partition), this.graph);
 
 		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
 	}
@@ -115,7 +95,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 100; i++) { // just random.
+		for (int i = 0; i < 17; i++) { // just random.
+			LOGGER.warn("********** Iteration " + i + "**********");
 			if (!this.graph.hasNext()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
 				break;
@@ -139,15 +120,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Create root node for the graph. Sadly, ExperimentSettings for root are null
 	 * :/
 	 */
-	private DefaultState createRoot(final Allocation alloc, final UsageModel usageModel,
-			final MonitorRepository monitoring, final MeasuringPointRepository measuringPoints, final SPD spd,
-			final Configuration semanticpd, final ServiceLevelObjectiveRepository slo) {
-		// final ArchitectureConfiguration rootConfig = new
-		// DefaultArchitectureConfiguration(alloc, monitoring, spd);
-		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration.builder().withAllocation(alloc)
-				.withUsageModel(usageModel).withMonitorRepository(monitoring).withSPD(spd).withSLO(slo)
-				.withSemanticSpdConfigruation(semanticpd).withMeasuringPointRepository(measuringPoints).build();
-
+	private DefaultState createRoot() {
+		final SetBasedArchitectureConfiguration rootConfig = new UriAndSetBasedArchitectureConfiguration(
+				this.initModels.getResourceSet());
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
 		final DefaultState root = new DefaultState(0.0, rootConfig);
@@ -167,9 +142,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// update provided models
 		this.updatePCMPartitionProvider(config);
 		// update simucomconfig
-		final SimuComConfig simuComConfig = prepareSimuComConfig(config.getStateToExplore()
-				.getArchitecureConfiguration().getAllocation().eResource().getURI().toString(),
-				config.getExplorationDuration());
+		final SimuComConfig simuComConfig = prepareSimuComConfig(
+				config.getStateToExplore().getArchitecureConfiguration().getSegment(), config.getExplorationDuration());
 		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config.getExplorationDuration(),
 				!config.getSnapToInitOn().getEvents().isEmpty());
@@ -184,8 +158,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
 
-		LOGGER.warn("Run on Models at: " + config.getStateToExplore().getArchitecureConfiguration().getAllocation()
-				.eResource().getURI().toString());
+		LOGGER.warn("Run on Models at: " + config.getStateToExplore().getArchitecureConfiguration()
+				.getUri(AllocationPackage.eINSTANCE.getAllocation()).toString());
 
 		LOGGER.warn("Start with Request to these Resources: ");
 		config.getSnapToInitOn().getEvents().stream().filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
@@ -313,22 +287,18 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Put the copied models into the {@link PCMResourceSetPartitionProvider}.
-	 *
-	 * I'm pretty sure the current implementation is pretty illegal, cause it
-	 * updates alloc, monitor and spd only but disregards the other models.
-	 *
-	 * Does this implementatin fuck with proxies?
-	 *
-	 * Currently, injection only works because slingshot always injects allocation.
-	 *
-	 *
-	 * @param allocation
-	 * @param monitorRepository
+	 * Replace all resources in {@code initModels} with the resources from the
+	 * architecture configuration of the upcoming simulation run.
+	 * 
+	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
+		List<Resource> resources = config.getStateToExplore().getArchitecureConfiguration().getResources();
 
-		replaceResoucreContentForAllModels(config.getStateToExplore().getArchitecureConfiguration());
+		// clear init models.
+		this.initModels.getResourceSet().getResources().clear();
+		// refill init model
+		this.initModels.getResourceSet().getResources().addAll(resources);
 
 		/* add initial ScalingPolicy, if present */
 		if (config.getPolicy().isPresent()) {
@@ -340,90 +310,4 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		provider.set(this.initModels); // this is probably not needed.
 	}
 
-	/**
-	 * 
-	 * @param archConfig
-	 */
-	private void replaceResoucreContentForAllModels(ArchitectureConfiguration archConfig) {
-		if (this.initModels.hasElement(SystemPackage.eINSTANCE.getSystem())) {
-			// replaceResourceContent(archConfig.getSystem(), this.initModels.getSystem());
-			replaceResourceContent(archConfig.getAllocation().getSystem_Allocation(), this.initModels.getSystem());
-		} else {
-			LOGGER.info("no System model, skip replacement");
-		}
-		if (this.initModels.hasElement(ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment())) {
-//			replaceResourceContent(archConfig.getResourceEnvironment(),
-//				this.initModels.getResourceEnvironment());
-			replaceResourceContent(archConfig.getAllocation().getTargetResourceEnvironment_Allocation(),
-					this.initModels.getResourceEnvironment());
-
-		} else {
-			LOGGER.info("no ResourceEnvironment model, skip replacement");
-		}
-		if (this.initModels.hasElement(RepositoryPackage.eINSTANCE.getRepository())) {
-			replaceRepositoryModel(archConfig);
-		} else {
-			LOGGER.info("no repository model, skip replacement");
-		}
-
-		replaceResourceContent(archConfig.getAllocation(), this.initModels.getAllocation());
-
-		replaceResourceContent(archConfig.getMonitorRepository(),
-				PCMResourcePartitionHelper.getMonitorRepository(initModels));
-		replaceResourceContent(archConfig.getSPD(), PCMResourcePartitionHelper.getSPD(initModels));
-		replaceResourceContent(archConfig.getSemanticSPDConfiguration(),
-				PCMResourcePartitionHelper.getSemanticSPD(initModels));
-
-		replaceResourceContent(archConfig.getSLOs(), PCMResourcePartitionHelper.getSLORepository(initModels));
-		replaceResourceContent(archConfig.getMeasuringPointRepository(),
-				PCMResourcePartitionHelper.getMeasuringPointRepository(initModels));
-
-		replaceResourceContent(archConfig.getUsageModel(), this.initModels.getUsageModel());
-
-	}
-
-	/**
-	 * 
-	 * Replace a model.
-	 * 
-	 * @param <T>      type of the model to be replaced in the resource, bounded by
-	 *                 {@code EObject} in stead of {@code Entity} because of
-	 *                 {@link Configuration} is not an {@code Entity}.
-	 * @param model    the new model
-	 * @param oldModel the model to be replaced.
-	 */
-	private <T extends EObject> void replaceResourceContent(final T model, final T oldModel) {
-		assert model.getClass().equals(oldModel.getClass()) : "Type of old and new model do not match.";
-
-		final Resource r = this.initModels.getResourceSet().getResource(oldModel.eResource().getURI(), false);
-		r.setURI(model.eResource().getURI());
-		r.getContents().clear();
-		r.getContents().add(model); // uproots model from it's original resource...
-
-	}
-
-	/**
-	 * 
-	 * Helper for replacing the repository models, as they need more attention than
-	 * the other models.
-	 * 
-	 * Requires, that neither the system is not empty.
-	 * 
-	 * @param archConfig
-	 */
-	private void replaceRepositoryModel(final ArchitectureConfiguration archConfig) {
-
-		Repository newRepo = archConfig.getAllocation().getSystem_Allocation().getAssemblyContexts__ComposedStructure()
-				.get(0).getEncapsulatedComponent__AssemblyContext().getRepository__RepositoryComponent();
-
-		List<Repository> oldPlatformRepos = this.initModels.getRepositories().stream()
-				.filter(r -> r.eResource().getURI().isPlatform()).collect(Collectors.toList());
-
-		if (oldPlatformRepos.size() != 1) {
-			throw new IllegalStateException("wrong number of platform repos.");
-		}
-
-		replaceResourceContent(newRepo, oldPlatformRepos.get(0));
-
-	}
 }
