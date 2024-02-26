@@ -47,7 +47,7 @@ public class PalladioSimulationsVisitor {
 
 	
 	public static SLO visitServiceLevelObjective(ServiceLevelObjective slo) {
-		return new SLO(slo.getName(), safe(() -> slo.getMeasurementSpecification().getMonitor().getMeasuringPoint().getResourceURIRepresentation()), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
+		return new SLO(slo.getName(), slo.getMeasurementSpecification().getMonitor().getMeasuringPoint().getResourceURIRepresentation(), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
 	public static List<MeasurementSet> visitExperiementSetting(ExperimentSetting es) {
@@ -98,15 +98,16 @@ public class PalladioSimulationsVisitor {
 					rawMeasurments.getMeasurementRange().getMeasurement().getMeasuringType().getMetric())[i];
 			BaseMetricDescription bmc2 = MetricDescriptionUtility.toBaseMetricDescriptions(
 					rawMeasurments.getMeasurementRange().getMeasurement().getMeasuringType().getMetric())[i+1];
-
+			
 			MeasurementSet ms = processDataSeries(dataSeries1, dataSeries2, bmc1, bmc2);
 			
-			if (ms != null && ms.getName().equals(RESPONSE_TIME)) // temporary hiding all but the relevant measure
+			if (ms != null)
 				measurments.add(ms);
 		}
 
 		return measurments;
 	}
+	
 	
 	private static MeasurementSet processDataSeries(DataSeries dataSeries1, DataSeries dataSeries2, BaseMetricDescription bmc1, BaseMetricDescription bmc2) {
 		List<Number> pointInTime = null;
@@ -153,6 +154,7 @@ public class PalladioSimulationsVisitor {
 
 			return ms;
 		}
+		
 		
 		return null;
 	}

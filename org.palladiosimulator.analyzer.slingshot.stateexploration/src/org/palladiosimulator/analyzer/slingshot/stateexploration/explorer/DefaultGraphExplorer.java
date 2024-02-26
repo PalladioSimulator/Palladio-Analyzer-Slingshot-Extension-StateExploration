@@ -126,7 +126,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
 		final DefaultState root = new DefaultState(0.0, rootConfig);
-		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null)));
+		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null, null)));
 		root.setSnapshot(initSnapshot);
 		return root;
 	}
@@ -182,7 +182,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// Post processing :
 		final DefaultState current = submodule.builder();
-		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId())));
+		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), config.getPolicy().orElseGet(() -> null))));
 		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 

@@ -27,7 +27,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
 
 public class StateGraphConverter {
 	public static StateGraph convert(RawStateGraph graph) {
-		StateGraph newGraph = new StateGraph(convertState(graph.getRoot(), null));
+		StateGraph newGraph = new StateGraph(convertState(graph.getRoot(), null, null));
 
 		// set source from null to correct value
 	    for (StateGraphNode s : newGraph.states()) {
@@ -43,7 +43,10 @@ public class StateGraphConverter {
 	    return newGraph;
 	}
 	
-	public static StateGraphNode convertState(RawModelState state, String parentId) {
+	static int i = 0;
+	
+	public static StateGraphNode convertState(RawModelState state, String parentId, ScalingPolicy scalingPolicy) {
+		
 		List<SLO> slos = new ArrayList<SLO>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 		List<Transition> transitions = new ArrayList<Transition>();
@@ -53,7 +56,7 @@ public class StateGraphConverter {
 		 * This is a workaround because otherwise the reading the monitor of the SLO MeasurmentDescription for the Measuring Point would be null.
 		 */
 		for (Monitor monitor : state.getArchitecureConfiguration().getMonitorRepository().getMonitors()) {
-			//System.out.println(monitor.getEntityName());
+			System.out.println(monitor.getEntityName());
 		}
 		
 		if (state.getArchitecureConfiguration() != null && state.getArchitecureConfiguration().getSLOs() != null) {
@@ -63,6 +66,7 @@ public class StateGraphConverter {
 				slos.add(PalladioSimulationsVisitor.visitServiceLevelObjective(slo));
 			}
 		}
+		
 		
 		// getting all measurements from the RawState and add them to the newly created state
 		if (state.getMeasurements() != null) {
@@ -87,9 +91,9 @@ public class StateGraphConverter {
 				reason = Reason.ReactiveReconfigurationChange;
 			
 			// source is null to prevent infinity loop
-			transitions.add(new Transition(null, convertState(transition.getTarget(), transition.getSource().getId()), reason, Optional.ofNullable(change)));
+			transitions.add(new Transition(null, convertState(transition.getTarget(), transition.getSource().getId(), null), reason, Optional.ofNullable(change)));
 		}
 		
-		return new StateGraphNode(state.getId(), transitions, state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId);
+		return new StateGraphNode(state.getId(), transitions, state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId, scalingPolicy);
 	}
 }
