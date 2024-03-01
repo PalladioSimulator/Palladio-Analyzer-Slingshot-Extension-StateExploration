@@ -60,7 +60,12 @@ public class ExplorationModule extends AbstractSlingshotExtension {
 					MeasurementSet ms = new MeasurementSet();
 					
 					ms.setName(obj.get("name").getAsString());
-					ms.setMeasuringPointURI(obj.get("measuringPointURI").getAsString());
+					ms.setMonitorId(obj.get("monitorId").getAsString());
+					ms.setMonitorName(obj.get("monitorName").getAsString());
+					ms.setSpecificationName(obj.get("specificationName").getAsString());
+					ms.setSpecificationId(obj.get("specificationId").getAsString());
+					ms.setMetricDescription(obj.get("metricDescription").getAsString());
+					ms.setMetricName(obj.get("metricName").getAsString());
 					
 					for (int i = 0; i < obj.get("elements").getAsJsonArray().size(); i++) {
 						JsonObject el = obj.get("elements").getAsJsonArray().get(i).getAsJsonObject();
@@ -76,12 +81,18 @@ public class ExplorationModule extends AbstractSlingshotExtension {
 			        JsonObject jsonMeasurementSet = new JsonObject();
 
 			        jsonMeasurementSet.addProperty("name", src.getName());
-			        jsonMeasurementSet.addProperty("measuringPointURI", src.getMeasuringPointURI());
+			        jsonMeasurementSet.addProperty("monitorId", src.getMonitorId());
+			        jsonMeasurementSet.addProperty("monitorName", src.getMonitorName());
+			        jsonMeasurementSet.addProperty("specificationName", src.getSpecificationName());
+			        jsonMeasurementSet.addProperty("specificationId", src.getSpecificationId());
+			        jsonMeasurementSet.addProperty("metricName", src.getMetricName());
+			        jsonMeasurementSet.addProperty("metricDescription", src.getMetricDescription());
 			        jsonMeasurementSet.add("elements", context.serialize(src.toArray()));
 			        
 			        return jsonMeasurementSet;
 			    }
 			}));
+			
 		
 		gsonBinder.addBinding(ScalingPolicy.class).toInstance(new JsonSerializer<ScalingPolicy>() {  
 		    @Override

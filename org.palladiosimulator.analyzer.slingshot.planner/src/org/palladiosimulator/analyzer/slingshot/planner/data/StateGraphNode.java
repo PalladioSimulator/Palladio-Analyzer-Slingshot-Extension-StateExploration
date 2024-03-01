@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.palladiosimulator.spd.ScalingPolicy;
 
+import com.google.common.base.Objects;
+
 public record StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements,
 		List<SLO> slos, Double utility, String parentId, ScalingPolicy incomingPolicy) {
 	
@@ -26,7 +28,7 @@ public record StateGraphNode(String id, List<Transition> outTransitions, double 
 		double value = 0;
 		
 		for (SLO slo : slos) {
-			MeasurementSet ms = measurements.stream().filter(x -> x.getMeasuringPointURI().equals(slo.measuringPointURI())).findFirst().orElse(null);
+			MeasurementSet ms = measurements.stream().filter(x -> Objects.equal(x.getSpecificationId(),slo.specificationId())).findFirst().orElse(null);
 			if (ms != null)
 				value += (slo.upperThreshold().doubleValue() - ms.getMedian());
 		}

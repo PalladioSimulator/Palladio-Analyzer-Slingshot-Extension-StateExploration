@@ -12,6 +12,7 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.spd
 Import-Package: com.google.gson.annotations;version="2.8.8",
  org.apache.log4j,
+ org.palladiosimulator.analyzer.slingshot.core,
  org.palladiosimulator.commons.emfutils
 Export-Package: org.palladiosimulator.analyzer.slingshot.planner.data,
  org.palladiosimulator.analyzer.slingshot.planner.runner

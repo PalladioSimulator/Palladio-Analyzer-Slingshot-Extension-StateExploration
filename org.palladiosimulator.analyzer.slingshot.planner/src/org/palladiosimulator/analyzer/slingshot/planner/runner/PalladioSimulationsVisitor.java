@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
+import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Measurement;
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
@@ -21,7 +22,13 @@ import org.palladiosimulator.edp2.models.ExperimentData.RawMeasurements;
 import org.palladiosimulator.edp2.util.MeasurementsUtility;
 import org.palladiosimulator.edp2.util.MetricDescriptionUtility;
 import org.palladiosimulator.metricspec.BaseMetricDescription;
+import org.palladiosimulator.metricspec.MetricDescription;
+import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+
+import com.google.common.base.Objects;
+
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
 
 
 /**
@@ -47,7 +54,7 @@ public class PalladioSimulationsVisitor {
 
 	
 	public static SLO visitServiceLevelObjective(ServiceLevelObjective slo) {
-		return new SLO(slo.getName(), slo.getMeasurementSpecification().getMonitor().getMeasuringPoint().getResourceURIRepresentation(), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
+		return new SLO(slo.getName(), slo.getMeasurementSpecification().getId(), (Number) slo.getLowerThreshold().getThresholdLimit().getValue(), (Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
 	public static List<MeasurementSet> visitExperiementSetting(ExperimentSetting es) {
@@ -59,13 +66,14 @@ public class PalladioSimulationsVisitor {
 	}
 
 	public static List<MeasurementSet> visitMeasurment(org.palladiosimulator.edp2.models.ExperimentData.Measurement m) {
+		System.out.println("mid2: " + m.getId());
 		return m.getMeasurementRanges().stream().map(x -> PalladioSimulationsVisitor.visitMeasurementRange(x)).flatMap(y -> y.stream()).toList();
 	}
 
 	public static List<MeasurementSet> visitMeasurementRange(MeasurementRange mr) {
 		if (mr.getRawMeasurements() == null)
 			throw new IllegalStateException("No RawMeasurments found!");
-
+		
 		return PalladioSimulationsVisitor.visitRawMeasurments(mr.getRawMeasurements());
 	}
 
@@ -101,6 +109,7 @@ public class PalladioSimulationsVisitor {
 			
 			MeasurementSet ms = processDataSeries(dataSeries1, dataSeries2, bmc1, bmc2);
 			
+			
 			if (ms != null)
 				measurments.add(ms);
 		}
@@ -120,13 +129,20 @@ public class PalladioSimulationsVisitor {
 		else if (bmc2.getName().equals(POINT_IN_TIME))
 			pointInTime = PalladioSimulationsVisitor.visitDataSeries(dataSeries2);
 		
+		MeasuringPoint mpoint = null;
+		MetricDescription mc = null;
+		
 		if (!(bmc1.getName().equals(POINT_IN_TIME))) {
+			mc = dataSeries1.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMetric();
+			mpoint = dataSeries1.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint();
 			values = PalladioSimulationsVisitor.visitDataSeries(dataSeries1);
-			measureName = bmc1.getName();
+			measureName = dataSeries1.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getStringRepresentation();
 			measureURI = dataSeries1.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getResourceURIRepresentation();
 		} else if (!(bmc2.getName().equals(POINT_IN_TIME))) {
+			mc = dataSeries2.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMetric();
+			mpoint = dataSeries2.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint();
 			values = PalladioSimulationsVisitor.visitDataSeries(dataSeries2);
-			measureName = bmc2.getName();
+			measureName = dataSeries2.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getStringRepresentation();
 			measureURI = dataSeries2.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getResourceURIRepresentation();
 		}
 		
@@ -144,9 +160,32 @@ public class PalladioSimulationsVisitor {
 					throw new IllegalStateException("Point in time values do not provide an ascending row!");
 			}
 			
+			var monitorRepo = Slingshot.getInstance().getInstance(MonitorRepository.class);
+			
+			final String mpointUri = mpoint.getResourceURIRepresentation();
+			
+			var monitor = monitorRepo.getMonitors().stream().filter(x -> 
+				Objects.equal(x.getMeasuringPoint().getResourceURIRepresentation(), mpointUri))
+					.findAny().orElse(null);
+			
+			var specification = monitor.getMeasurementSpecifications().stream()
+					.filter(x -> MetricDescriptionUtility.isBaseMetricDescriptionSubsumedByMetricDescription(bmc1, x.getMetricDescription()) ||
+							MetricDescriptionUtility.isBaseMetricDescriptionSubsumedByMetricDescription(bmc2, x.getMetricDescription()))
+					.findAny().orElse(null);
+					
+			
+			
 			MeasurementSet ms = new MeasurementSet();
-			ms.setName(measureName);
-			ms.setMeasuringPointURI(measureURI);
+			var md = specification.getMetricDescription();
+			if(specification != null) {
+				ms.setSpecificationId(specification.getId());
+				ms.setSpecificationName(specification.getName());
+				ms.setMonitorId(monitor.getId());
+				ms.setMonitorName(monitor.getEntityName());
+				ms.setName(measureName);
+				ms.setMetricName(md.getName());
+				ms.setMetricDescription(md.getTextualDescription());
+			}
 			
 			for (int j = 0; j < pointInTime.size(); j++) {
 				ms.add(new Measurement<Number>(values.get(j), (double) pointInTime.get(j)));

@@ -16,7 +16,12 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 	private Double measurementsSetAverage;
 	
 	private String name;
-	private String measuringPointURI;
+	private String monitorId;
+	private String monitorName;
+	private String specificationId;
+	private String specificationName;
+	private String metricName;
+	private String metricDescription;
 	
 	public MeasurementSet() {
 		super();
@@ -30,6 +35,32 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 		super(initialCapacity);
 	}
 	
+	
+	
+	public String getMetricName() {
+		return metricName;
+	}
+
+	public void setMetricName(String metricName) {
+		this.metricName = metricName;
+	}
+
+	public String getMetricDescription() {
+		return metricDescription;
+	}
+
+	public void setMetricDescription(String metricDescription) {
+		this.metricDescription = metricDescription;
+	}
+
+	public String getSpecificationId() {
+		return specificationId;
+	}
+
+	public void setSpecificationId(String specificationId) {
+		this.specificationId = specificationId;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -37,15 +68,25 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	
+	public String getMonitorId() {
+		return monitorId;
+	}
 
-	public String getMeasuringPointURI() {
-		return measuringPointURI;
+	public void setMonitorId(String monitorId) {
+		this.monitorId = monitorId;
 	}
-	
-	public void setMeasuringPointURI(String uri) {
-		this.measuringPointURI = uri;
+
+	public String getMonitorName() {
+		return monitorName;
 	}
-	
+
+	public void setMonitorName(String monitorName) {
+		this.monitorName = monitorName;
+	}
+
+
 	public double getMedian() {
 		if (this.size() < 1) {
 			return 0;
@@ -155,5 +196,13 @@ public class MeasurementSet extends ArrayList<Measurement<Number>> {
 	private void resetCalcuationCaches() {
 		this.measurementsSetAverage = null;
 		this.measurementsSetMedian = null;
+	}
+
+	public String getSpecificationName() {
+		return specificationName;
+	}
+
+	public void setSpecificationName(String specificationName) {
+		this.specificationName = specificationName;
 	}
 }
