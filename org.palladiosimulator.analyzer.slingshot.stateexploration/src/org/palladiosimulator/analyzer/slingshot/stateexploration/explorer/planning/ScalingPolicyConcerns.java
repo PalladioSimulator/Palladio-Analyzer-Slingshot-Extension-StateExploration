@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.pcm.core.entity.Entity;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
 import org.palladiosimulator.semanticspd.CompetingConsumersGroupCfg;
@@ -63,7 +63,7 @@ public class ScalingPolicyConcerns {
 	 * @return
 	 */
 	public ScalingPolicy createOneTimeUsageScalingPolicy(final ScalingPolicy template,
-			final SetBasedArchitectureConfiguration config) {
+			final ArchitectureConfiguration config) {
 		if (!this.explorationPolicyTemplates.contains(template)) {
 			throw new IllegalArgumentException(
 					String.format("ScalingPolicy %s is not a template Policy", template.getEntityName()));
@@ -90,7 +90,7 @@ public class ScalingPolicyConcerns {
 	 * @param config
 	 * @return
 	 */
-	private Set<TargetGroup> getValidTargetGroups(final SetBasedArchitectureConfiguration config) {
+	private Set<TargetGroup> getValidTargetGroups(final ArchitectureConfiguration config) {
 		final Set<Entity> unitOfSemanticConfigurations = config.getSemanticSPDConfiguration().getTargetCfgs().stream()
 				.map(conf -> this.getUnits(conf)).collect(Collectors.toSet());
 

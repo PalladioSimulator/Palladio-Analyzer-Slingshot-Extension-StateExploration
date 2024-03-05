@@ -18,7 +18,7 @@ public interface RawModelState {
 	 *
 	 * @return
 	 */
-	public SetBasedArchitectureConfiguration getArchitecureConfiguration();
+	public ArchitectureConfiguration getArchitecureConfiguration();
 
 	/**
 	 * Get Measurements as EDP2

@@ -4,10 +4,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
 /**
@@ -23,7 +23,7 @@ public class DefaultState implements RawModelState{
 
 	/* known at start */
 	private final double startTime;
-	private final SetBasedArchitectureConfiguration archConfig;
+	private final ArchitectureConfiguration archConfig;
 
 	/* known at the end*/
 	private double duration;
@@ -38,7 +38,7 @@ public class DefaultState implements RawModelState{
 	private final Set<RawTransition> outTransitions;
 
 
-	public DefaultState(final double pointInTime, final SetBasedArchitectureConfiguration archConfig) {
+	public DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig) {
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
 		this.outTransitions = new HashSet<RawTransition>();
@@ -84,7 +84,7 @@ public class DefaultState implements RawModelState{
 	/* to  match the interface */
 
 	@Override
-	public SetBasedArchitectureConfiguration getArchitecureConfiguration() {
+	public ArchitectureConfiguration getArchitecureConfiguration() {
 		return this.archConfig;
 	}
 

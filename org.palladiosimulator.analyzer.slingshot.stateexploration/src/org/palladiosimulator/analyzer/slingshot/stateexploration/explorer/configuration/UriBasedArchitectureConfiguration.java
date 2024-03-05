@@ -2,7 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.confi
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,13 +18,13 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringpointPackage;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.allocation.AllocationPackage;
+import org.palladiosimulator.pcm.repository.Repository;
 import org.palladiosimulator.pcm.repository.RepositoryPackage;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceenvironmentPackage;
@@ -44,7 +43,7 @@ import org.palladiosimulator.spd.SpdPackage;
  * A {@link ArchitectureConfiguration} represents a set of PCM models for one
  * state in the state exploration.
  * 
- * For this {@link UriAndSetBasedArchitectureConfiguration}, all PCM models are
+ * For this {@link UriBasedArchitectureConfiguration}, all PCM models are
  * always persisted to the file system. I.e. this configuration represents (and
  * gives access) to a set of PCM-Models, as they are persisted in the file
  * system.
@@ -53,14 +52,13 @@ import org.palladiosimulator.spd.SpdPackage;
  * @author stiesssh
  *
  */
-public class UriAndSetBasedArchitectureConfiguration
-		implements SetBasedArchitectureConfiguration, ArchitectureConfiguration {
+public class UriBasedArchitectureConfiguration implements ArchitectureConfiguration {
 
-	private static final Logger LOGGER = Logger.getLogger(UriAndSetBasedArchitectureConfiguration.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(UriBasedArchitectureConfiguration.class.getName());
 
 
 	/** contains a mapping for all eClasses in {@code MODEL_ECLASS_WHITELIST} */
-	final private Map<EClass, URI> uris;
+	private final Map<EClass, URI> uris;
 
 	private final ResourceSet set = new ResourceSetImpl();
 
@@ -79,9 +77,11 @@ public class UriAndSetBasedArchitectureConfiguration
 	 * 
 	 * Beware: Intended to be called by this class' {@code copy} operation only.
 	 * 
-	 * @param set
+	 * 
+	 * @param uris
+	 * @param idSegment
 	 */
-	private UriAndSetBasedArchitectureConfiguration(final Map<EClass, URI> uris, final String idSegment) {
+	private UriBasedArchitectureConfiguration(final Map<EClass, URI> uris, final String idSegment) {
 		assert uris.keySet().containsAll(MODEL_ECLASS_WHITELIST) : "Missing EClass mappings";
 
 		this.uris = uris;
@@ -97,22 +97,8 @@ public class UriAndSetBasedArchitectureConfiguration
 	 * @param set
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
-	public static UriAndSetBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
-		return new UriAndSetBasedArchitectureConfiguration(set, "root");
-	}
-
-	/**
-	 * Create a new {@code ArchitectureConfiguration}.
-	 * 
-	 * @param set
-	 * @param idSegment
-	 */
-	private UriAndSetBasedArchitectureConfiguration(final ResourceSet set, final String idSegment) {
-		this.uris = new HashMap<>();
-		this.idSegment = idSegment;
-
-		fillUrisMap(set);
-
+	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
+		return new UriBasedArchitectureConfiguration(createUriMap(set), "root");
 	}
 
 	/**
@@ -123,10 +109,11 @@ public class UriAndSetBasedArchitectureConfiguration
 	 * 
 	 * @param set ResourceSet to be filled into {@code uris}.
 	 * @throws IllegalArgumentException if any Resource in the given ResourceSet is
-	 *                                  empty, or if a mapping for a white listed
-	 *                                  model is missing.
+	 *                                  empty.
 	 */
-	private void fillUrisMap(final ResourceSet set) {
+	private static Map<EClass, URI> createUriMap(final ResourceSet set) {
+		final Map<EClass, URI> map = new HashMap<>();
+
 		for (final Resource resource : set.getResources()) {
 			if (resource.getContents().isEmpty()) {
 				throw new IllegalArgumentException(
@@ -134,17 +121,11 @@ public class UriAndSetBasedArchitectureConfiguration
 			}
 
 			if (MODEL_ECLASS_WHITELIST.contains(resource.getContents().get(0).eClass())) {
-				uris.put(resource.getContents().get(0).eClass(), resource.getURI());
+				map.put(resource.getContents().get(0).eClass(), resource.getURI());
 			}
 		}
 
-		if (!uris.keySet().containsAll(MODEL_ECLASS_WHITELIST)) {
-			Set<EClass> missingClasses = new HashSet<>(MODEL_ECLASS_WHITELIST);
-			missingClasses.removeAll(uris.keySet());
-
-			throw new IllegalArgumentException(
-					String.format("Missing EClass mappings for these classes: %s ", missingClasses.toString()));
-		}
+		return map;
 	}
 
 	/**
@@ -201,7 +182,7 @@ public class UriAndSetBasedArchitectureConfiguration
 	 * 
 	 */
 	@Override
-	public UriAndSetBasedArchitectureConfiguration copy() {
+	public UriBasedArchitectureConfiguration copy() {
 
 		final String nextIdSegment = UUID.randomUUID().toString();
 
@@ -233,17 +214,11 @@ public class UriAndSetBasedArchitectureConfiguration
 		}
 
 		// 7. build copy with copied models
-		return new UriAndSetBasedArchitectureConfiguration(copyUris, nextIdSegment);
+		return new UriBasedArchitectureConfiguration(copyUris, nextIdSegment);
 	}
 
-	@Override
 	public List<Resource> getResources() {
 		return this.set.getResources();
-	}
-
-	@Override
-	public ResourceSet getResourceSet() {
-		return this.set;
 	}
 
 	@Override
@@ -256,10 +231,23 @@ public class UriAndSetBasedArchitectureConfiguration
 		return this.idSegment;
 	}
 
+	@Override
+	public void transferModelsToSet(final ResourceSet set) {
+		this.load(); // 1. ensure that load all models are loaded.
+
+		set.getResources().clear();
+		set.getResources().addAll(this.getResources());
+	}
+
+	@Override
+	public ResourceSet getResourceSet() {
+		return this.set;
+	}
+
 	private boolean shallbeSaved(final EObject model) {
 		assert model != null;
 
-		return MODEL_ECLASS_WHITELIST.stream().anyMatch(bannedEClass -> bannedEClass == model.eClass());
+		return MODEL_ECLASS_WHITELIST.stream().anyMatch(allowedEClass -> allowedEClass == model.eClass());
 
 	}
 
@@ -315,11 +303,9 @@ public class UriAndSetBasedArchitectureConfiguration
 		return get(uris.get(UsagemodelPackage.eINSTANCE.getUsageModel()));
 	}
 
+	// not called in explorer
 	@Override
-	public void transferModelsToSet(final ResourceSet set) {
-		this.load(); // 1. ensure that load all models are loaded.
-
-		set.getResources().clear();
-		set.getResources().addAll(this.getResources());
+	public Repository getRepository() {
+		return get(uris.get(RepositoryPackage.eINSTANCE.getRepository()));
 	}
 }

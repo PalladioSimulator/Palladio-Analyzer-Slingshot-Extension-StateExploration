@@ -19,12 +19,12 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriAndSetBasedArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -115,7 +115,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * :/
 	 */
 	private DefaultState createRoot() {
-		final SetBasedArchitectureConfiguration rootConfig = UriAndSetBasedArchitectureConfiguration
+		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration
 				.createRootArchConfig(this.initModels.getResourceSet());
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
