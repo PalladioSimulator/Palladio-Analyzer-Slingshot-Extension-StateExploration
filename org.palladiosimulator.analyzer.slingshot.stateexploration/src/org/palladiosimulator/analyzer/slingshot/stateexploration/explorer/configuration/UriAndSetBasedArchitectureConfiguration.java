@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.confi
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,10 +40,14 @@ import org.palladiosimulator.spd.SpdPackage;
 
 /**
  *
- * The further this one evolves, the more it feels like a copy of the
- * resourcePartition thing...
- *
- * Maybe it makes more sense to redesign this.
+ * A {@link ArchitectureConfiguration} represents a set of PCM models for one
+ * state in the state exploration.
+ * 
+ * For this {@link UriAndSetBasedArchitectureConfiguration}, all PCM models are
+ * always persisted to the file system. I.e. this configuration represents (and
+ * gives access) to a set of PCM-Models, as they are persisted in the fiel
+ * system.
+ * 
  *
  * @author stiesssh
  *
@@ -50,54 +55,102 @@ import org.palladiosimulator.spd.SpdPackage;
 public class UriAndSetBasedArchitectureConfiguration
 		implements SetBasedArchitectureConfiguration, ArchitectureConfiguration {
 
-
+	/** contains a mapping for all eClasses in {@code MODEL_ECLASS_WHITELIST} */
 	final private Map<EClass, URI> uris;
 
-	private ResourceSet set = null; // for loading the first time. 
+	private ResourceSet set = null; // for loading the first time.
 
-	private final String idSegment = UUID.randomUUID().toString();
+	private final String idSegment;
 
 	private static final Set<EClass> MODEL_ECLASS_WHITELIST = Set.of(RepositoryPackage.eINSTANCE.getRepository(),
-			AllocationPackage.eINSTANCE.getAllocation(),
-			UsagemodelPackage.eINSTANCE.getUsageModel(), SystemPackage.eINSTANCE.getSystem(),
-			ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment(),
+			AllocationPackage.eINSTANCE.getAllocation(), UsagemodelPackage.eINSTANCE.getUsageModel(),
+			SystemPackage.eINSTANCE.getSystem(), ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment(),
 			MonitorRepositoryPackage.eINSTANCE.getMonitorRepository(),
 			MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository(), SpdPackage.eINSTANCE.getSPD(),
 			SemanticspdPackage.eINSTANCE.getConfiguration(),
 			ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository());
 
 	/**
-	 * DONT DARE TO FUCKING MOVE THE SET CONTENT. THE SET CONTENT WILL BE USED!! ---
-	 * or will it?
+	 * Create a new {@code ArchitectureConfiguration}.
+	 * 
+	 * Beware: Intended to be called by this class' {@code copy} operation only.
 	 * 
 	 * @param set
 	 */
-	private UriAndSetBasedArchitectureConfiguration(final Map<EClass, URI> uris) {
+	private UriAndSetBasedArchitectureConfiguration(final Map<EClass, URI> uris, final String idSegment) {
+		assert uris.keySet().containsAll(MODEL_ECLASS_WHITELIST) : "Missing EClass mappings";
+
 		this.uris = uris;
+		this.idSegment = idSegment;
+	}
+
+	/**
+	 * Create a new {@code ArchitectureConfiguration} representing the architecture
+	 * configuration at the very beginning of the exploration, i.e. the architecture
+	 * configuration of the stategraph's root node.
+	 * 
+	 * @param set
+	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
+	 */
+	public static UriAndSetBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
+		return new UriAndSetBasedArchitectureConfiguration(set, "root");
+	}
+
+	/**
+	 * Create a new {@code ArchitectureConfiguration}.
+	 * 
+	 * @param set
+	 * @param idSegment
+	 */
+	private UriAndSetBasedArchitectureConfiguration(final ResourceSet set, final String idSegment) {
+		this.uris = new HashMap<>();
+		this.idSegment = idSegment;
+
+		fillUrisMap(set);
 
 	}
 
-	public UriAndSetBasedArchitectureConfiguration(final ResourceSet set) {
+	/**
+	 * Fills the {@code uris} map of this {@code ArchitectureConfiguration}.
+	 * 
+	 * Ensures, that {@code uris} contains a mapping for all white listed model
+	 * classes.
+	 * 
+	 * @param set ResourceSet to be filled into {@code uris}.
+	 * @throws IllegalArgumentException if any Resource in the given ResourceSet is
+	 *                                  empty, or if a mapping for a white listed
+	 *                                  model is missing.
+	 */
+	private void fillUrisMap(final ResourceSet set) {
+		for (final Resource resource : set.getResources()) {
+			if (resource.getContents().isEmpty()) {
+				throw new IllegalArgumentException(
+						String.format("Empty resource for : %s.", resource.getURI().toString()));
+			}
 
-		this.uris = new HashMap<>();
-
-		// TODO : assert that all (and only) "mandatory" model are here?
-		for (Resource resource : set.getResources()) {
 			if (MODEL_ECLASS_WHITELIST.contains(resource.getContents().get(0).eClass())) {
 				uris.put(resource.getContents().get(0).eClass(), resource.getURI());
 			}
 		}
-		System.out.println("breakpointline");
-	}
 
+		if (!uris.keySet().containsAll(MODEL_ECLASS_WHITELIST)) {
+			Set<EClass> missingClasses = new HashSet<>(MODEL_ECLASS_WHITELIST);
+			missingClasses.removeAll(uris.keySet());
+
+			throw new IllegalArgumentException(
+					String.format("Missing EClass mappings for these classes: %s ", missingClasses.toString()));
+		}
+	}
 
 	/**
 	 * 
-	 * @param <T>
-	 * @param uri
-	 * @return
+	 * Get a model from the {@link Resource} with the given URI.
+	 * 
+	 * @param <T> type of the model
+	 * @param uri uri of the {@link Resource} to be accessed.
+	 * @return model from the {@link Resource} with the given uri.
 	 */
-	private final <T> T get(URI uri) {
+	private final <T> T get(final URI uri) {
 		this.load();
 
 		if (set.getResource(uri, false).getContents().isEmpty()) {
@@ -119,6 +172,10 @@ public class UriAndSetBasedArchitectureConfiguration
 	 * create resource set and load all URIs
 	 * 
 	 * ensure set != null and all proxies are resolved.
+	 * 
+	 * probably also ensures, that all resources in the set are loaded i.e.
+	 * !getContents().isEmpty()
+	 * 
 	 */
 	private void load() {
 		if (set == null) {
@@ -127,22 +184,31 @@ public class UriAndSetBasedArchitectureConfiguration
 
 		// only white listed.
 		for (URI uri : uris.values()) {
-			createAndLoadSingleResource(uri, set);
+			createAndLoadSingleResource(uri);
 		}
 		EcoreUtil.resolveAll(set);
 	}
 
 	/**
 	 * 
-	 * create a resource and load the model at the provided uri into that resource.
+	 * Load the contents of the {@link Resource} with the given URI.
 	 * 
-	 * does not resolve proxies.
+	 * Creates a new {@link Resource}, if {@code set} contains no resource for the
+	 * given URI.
+	 * 
+	 * If a {@link Resource} for the given URI already exists, and its contents are
+	 * not empty, nothing happens.
+	 * 
+	 * Does not resolve proxies.
 	 * 
 	 * @param uri
 	 */
-	private void createAndLoadSingleResource(URI uri, ResourceSet newSet) {
-		if (newSet.getResource(uri, false) == null || newSet.getResource(uri, false).getContents().isEmpty()) {
-			final Resource res = newSet.createResource(uri);
+	private void createAndLoadSingleResource(final URI uri) {
+		if (this.set.getResource(uri, false) == null) {
+			this.set.createResource(uri);
+		}
+		if (this.set.getResource(uri, false).getContents().isEmpty()) {
+			final Resource res = this.set.getResource(uri, false);
 			try {
 				res.load(((XMLResource) res).getDefaultLoadOptions());
 			} catch (final IOException e) {
@@ -151,22 +217,20 @@ public class UriAndSetBasedArchitectureConfiguration
 		}
 	}
 
-	/** TODO : I was doing stuff here --- yeah, okey, but what stuff? O_o **/
+	/**
+	 * Creates a copy of this architecture Configuration.
+	 * 
+	 * The copy is created by saving all models of this configuration to a new
+	 * location in the file system, and setting the EClass to URI mappings of the
+	 * copy such that they are pointing to the copied model in the file system.
+	 * 
+	 */
 	@Override
 	public UriAndSetBasedArchitectureConfiguration copy() {
-		final UriAndSetBasedArchitectureConfiguration copy = this.copyAlloc(idSegment);
-		return copy;
-	}
 
-	/**
-	 *
-	 * @param allocation
-	 * @return copy of the allocation
-	 */
-	private UriAndSetBasedArchitectureConfiguration copyAlloc(final String idSegment) {
+		final String nextIdSegment = UUID.randomUUID().toString();
 
 		this.load(); // 1. load all models. -- maybe it already is loaded? i'm not sure.
-		
 
 		final List<Resource> whitelisted = set.getResources().stream()
 				.filter(r -> this.shallbeSaved(r.getContents().get(0))).toList();
@@ -176,34 +240,25 @@ public class UriAndSetBasedArchitectureConfiguration
 		for (final Resource resource : whitelisted) {
 			// cache?
 			final URI oldUri = resource.getURI();
-			final URI newUri = ResourceUtils.insertFragment(oldUri, idSegment, oldUri.segmentCount() - 1);
+			final URI newUri = ResourceUtils.insertFragment(oldUri, nextIdSegment, oldUri.segmentCount() - 1);
 			resource.setURI(newUri);
 			copyUris.put(resource.getContents().get(0).eClass(), newUri);
 		}
-		
+
 		// 3. save to new path
 		for (final Resource resource : whitelisted) {
-				System.out.println("tryinto save" + resource.getURI().toString());
-				ResourceUtils.saveResource(resource);
+			System.out.println("tryinto save" + resource.getURI().toString());
+			ResourceUtils.saveResource(resource);
 		}
 
 		// 4. reset URIs to old values.
 		for (final Resource resource : whitelisted) {
-			final URI oldUri = uris.get(resource.getContents().get(0).eClass()); // should be there, because we
-																					// literally just loaded it.
+			final URI oldUri = uris.get(resource.getContents().get(0).eClass());
 			resource.setURI(oldUri);
 		}
 
-		// 5. load copies
-		// nope.
-
-
-		// 6. get copies
-		// nope.
-
-
-		// 7. build copy with copied mdodels
-		return new UriAndSetBasedArchitectureConfiguration(copyUris);
+		// 7. build copy with copied models
+		return new UriAndSetBasedArchitectureConfiguration(copyUris, nextIdSegment);
 	}
 
 	@Override
@@ -221,8 +276,6 @@ public class UriAndSetBasedArchitectureConfiguration
 		return uris.get(type);
 	}
 
-
-
 	@Override
 	public String getSegment() {
 		return this.idSegment;
@@ -230,10 +283,10 @@ public class UriAndSetBasedArchitectureConfiguration
 
 	private boolean shallbeSaved(final EObject model) {
 		assert model != null;
-    	
+
 		return MODEL_ECLASS_WHITELIST.stream().anyMatch(bannedEClass -> bannedEClass == model.eClass());
-    			
-    }
+
+	}
 
 	@Override
 	public SPD getSPD() {

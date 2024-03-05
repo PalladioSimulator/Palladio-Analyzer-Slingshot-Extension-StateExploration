@@ -65,7 +65,7 @@ public class DefaultExplorationPlanner {
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
 
-		final double duration = calculateRunDuration(start);
+		final double duration = this.calculateRunDuration(start);
 
 		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
 

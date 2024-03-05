@@ -117,8 +117,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * :/
 	 */
 	private DefaultState createRoot() {
-		final SetBasedArchitectureConfiguration rootConfig = new UriAndSetBasedArchitectureConfiguration(
-				this.initModels.getResourceSet());
+		final SetBasedArchitectureConfiguration rootConfig = UriAndSetBasedArchitectureConfiguration
+				.createRootArchConfig(this.initModels.getResourceSet());
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
 		final DefaultState root = new DefaultState(0.0, rootConfig);
@@ -138,7 +138,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// update provided models
 		this.updatePCMPartitionProvider(config);
 		// update simucomconfig
-		final SimuComConfig simuComConfig = prepareSimuComConfig(
+		final SimuComConfig simuComConfig = this.prepareSimuComConfig(
 				config.getStateToExplore().getArchitecureConfiguration().getSegment(), config.getExplorationDuration());
 		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config.getExplorationDuration(),
