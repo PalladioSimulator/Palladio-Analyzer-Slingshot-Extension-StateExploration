@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.log4j.Logger;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
@@ -45,7 +46,7 @@ import org.palladiosimulator.spd.SpdPackage;
  * 
  * For this {@link UriAndSetBasedArchitectureConfiguration}, all PCM models are
  * always persisted to the file system. I.e. this configuration represents (and
- * gives access) to a set of PCM-Models, as they are persisted in the fiel
+ * gives access) to a set of PCM-Models, as they are persisted in the file
  * system.
  * 
  *
@@ -55,10 +56,13 @@ import org.palladiosimulator.spd.SpdPackage;
 public class UriAndSetBasedArchitectureConfiguration
 		implements SetBasedArchitectureConfiguration, ArchitectureConfiguration {
 
+	private static final Logger LOGGER = Logger.getLogger(UriAndSetBasedArchitectureConfiguration.class.getName());
+
+
 	/** contains a mapping for all eClasses in {@code MODEL_ECLASS_WHITELIST} */
 	final private Map<EClass, URI> uris;
 
-	private ResourceSet set = null; // for loading the first time.
+	private final ResourceSet set = new ResourceSetImpl();
 
 	private final String idSegment;
 
@@ -82,6 +86,7 @@ public class UriAndSetBasedArchitectureConfiguration
 
 		this.uris = uris;
 		this.idSegment = idSegment;
+
 	}
 
 	/**
@@ -143,77 +148,47 @@ public class UriAndSetBasedArchitectureConfiguration
 	}
 
 	/**
-	 * 
 	 * Get a model from the {@link Resource} with the given URI.
+	 * 
+	 * Create a {@link Resource} with the given URI if it does not exist. Load the
+	 * resources, if its contents are empty (should not happen).
+	 * 
+	 * Resolves all Proxies in the model by loading referenced models into the
+	 * resources.
 	 * 
 	 * @param <T> type of the model
 	 * @param uri uri of the {@link Resource} to be accessed.
-	 * @return model from the {@link Resource} with the given uri.
+	 * @return model from the {@link Resource} with the given URI.
 	 */
 	private final <T> T get(final URI uri) {
-		this.load();
+		Resource res = this.set.getResource(uri, true);
 
-		if (set.getResource(uri, false).getContents().isEmpty()) {
-			final Resource tmp = set.getResource(uri, false);
+		if (res.getContents().isEmpty()) {
 			try {
-				tmp.unload();
-				tmp.load(((XMLResource) tmp).getDefaultLoadOptions());
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		Resource res = set.getResource(uri, false);
-		EcoreUtil.resolveAll(set); // still needed?
-		return (T) res.getContents().get(0);
-	}
-
-	/**
-	 * create resource set and load all URIs
-	 * 
-	 * ensure set != null and all proxies are resolved.
-	 * 
-	 * probably also ensures, that all resources in the set are loaded i.e.
-	 * !getContents().isEmpty()
-	 * 
-	 */
-	private void load() {
-		if (set == null) {
-			this.set = new ResourceSetImpl();
-		}
-
-		// only white listed.
-		for (URI uri : uris.values()) {
-			createAndLoadSingleResource(uri);
-		}
-		EcoreUtil.resolveAll(set);
-	}
-
-	/**
-	 * 
-	 * Load the contents of the {@link Resource} with the given URI.
-	 * 
-	 * Creates a new {@link Resource}, if {@code set} contains no resource for the
-	 * given URI.
-	 * 
-	 * If a {@link Resource} for the given URI already exists, and its contents are
-	 * not empty, nothing happens.
-	 * 
-	 * Does not resolve proxies.
-	 * 
-	 * @param uri
-	 */
-	private void createAndLoadSingleResource(final URI uri) {
-		if (this.set.getResource(uri, false) == null) {
-			this.set.createResource(uri);
-		}
-		if (this.set.getResource(uri, false).getContents().isEmpty()) {
-			final Resource res = this.set.getResource(uri, false);
-			try {
+				LOGGER.debug(String.format("Contents of Resource %s was empty and had to be loaded manually.",
+						res.getURI().toString()));
+				res.unload();
 				res.load(((XMLResource) res).getDefaultLoadOptions());
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}
+		}
+
+		EcoreUtil.resolveAll(set); // resolve the *set* to load the referenced models.
+		return (T) res.getContents().get(0);
+
+	}
+
+	/**
+	 * load all URIs
+	 * 
+	 * ensure all proxies are resolved and all resources in the set are loaded i.e.
+	 * !getContents().isEmpty()
+	 * 
+	 */
+	private void load() {
+		for (URI uri : uris.values()) {
+			this.get(uri);
 		}
 	}
 
@@ -230,7 +205,7 @@ public class UriAndSetBasedArchitectureConfiguration
 
 		final String nextIdSegment = UUID.randomUUID().toString();
 
-		this.load(); // 1. load all models. -- maybe it already is loaded? i'm not sure.
+		this.load(); // 1. ensure that load all models are loaded.
 
 		final List<Resource> whitelisted = set.getResources().stream()
 				.filter(r -> this.shallbeSaved(r.getContents().get(0))).toList();
@@ -298,38 +273,53 @@ public class UriAndSetBasedArchitectureConfiguration
 		return get(uris.get(SemanticspdPackage.eINSTANCE.getConfiguration()));
 	}
 
+	// not called in explorer
 	@Override
 	public ServiceLevelObjectiveRepository getSLOs() {
 		return get(uris.get(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository()));
 	}
 
+	// not called in explorer
 	@Override
 	public MonitorRepository getMonitorRepository() {
 		return get(uris.get(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository()));
 	}
 
+	// not called in explorer
 	@Override
 	public Allocation getAllocation() {
 		return get(uris.get(AllocationPackage.eINSTANCE.getAllocation()));
 	}
 
+	// not called in explorer
 	@Override
 	public ResourceEnvironment getResourceEnvironment() {
 		return get(uris.get(ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment()));
 	}
 
+	// not called in explorer
 	@Override
 	public org.palladiosimulator.pcm.system.System getSystem() {
 		return get(uris.get(SystemPackage.eINSTANCE.getSystem()));
 	}
 
+	// not called in explorer
 	@Override
 	public MeasuringPointRepository getMeasuringPointRepository() {
 		return get(uris.get(MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository()));
 	}
 
+	// not called in explorer
 	@Override
 	public UsageModel getUsageModel() {
 		return get(uris.get(UsagemodelPackage.eINSTANCE.getUsageModel()));
+	}
+
+	@Override
+	public void transferModelsToSet(final ResourceSet set) {
+		this.load(); // 1. ensure that load all models are loaded.
+
+		set.getResources().clear();
+		set.getResources().addAll(this.getResources());
 	}
 }

@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
@@ -41,7 +42,7 @@ public class AdjustorEventConcerns {
 	 */
 	public DESEvent copyForTargetGroup(final DESEvent event, final SetBasedArchitectureConfiguration config) {
 		if (event instanceof final ModelAdjustmentRequested adjustor) {
-			return new ModelAdjustmentRequested(getMatchingPolicy(config, adjustor.getScalingPolicy()));
+			return new ModelAdjustmentRequested(this.getMatchingPolicy(config, adjustor.getScalingPolicy()));
 
 		}
 		throw new IllegalArgumentException(String.format("Expected DESEvent of type %s, but got %s",

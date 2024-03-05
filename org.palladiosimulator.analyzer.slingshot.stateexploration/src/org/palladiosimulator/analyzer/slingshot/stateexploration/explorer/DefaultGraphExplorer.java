@@ -1,12 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
@@ -286,12 +284,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
-		List<Resource> resources = config.getStateToExplore().getArchitecureConfiguration().getResources();
-
-		// clear init models.
-		this.initModels.getResourceSet().getResources().clear();
-		// refill init model
-		this.initModels.getResourceSet().getResources().addAll(resources);
+		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
 		/* add initial ScalingPolicy, if present */
 		if (config.getPolicy().isPresent()) {

@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
@@ -39,4 +40,6 @@ public interface ArchitectureConfiguration {
 	public UsageModel getUsageModel();
 
 	public ArchitectureConfiguration copy();
+
+	public void transferModelsToSet(final ResourceSet set);
 }
