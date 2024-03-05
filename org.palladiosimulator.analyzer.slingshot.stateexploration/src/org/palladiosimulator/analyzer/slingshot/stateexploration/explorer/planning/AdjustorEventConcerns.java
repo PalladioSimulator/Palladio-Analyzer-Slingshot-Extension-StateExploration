@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 import org.palladiosimulator.pcm.usagemodel.UsageModel;
@@ -39,9 +39,9 @@ public class AdjustorEventConcerns {
 	 * @param config architecture to be referenced
 	 * @return copy of event
 	 */
-	public DESEvent copyForTargetGroup(final DESEvent event, final SetBasedArchitectureConfiguration config) {
+	public DESEvent copyForTargetGroup(final DESEvent event, final ArchitectureConfiguration config) {
 		if (event instanceof final ModelAdjustmentRequested adjustor) {
-			return new ModelAdjustmentRequested(getMatchingPolicy(config, adjustor.getScalingPolicy()));
+			return new ModelAdjustmentRequested(this.getMatchingPolicy(config, adjustor.getScalingPolicy()));
 
 		}
 		throw new IllegalArgumentException(String.format("Expected DESEvent of type %s, but got %s",
@@ -58,7 +58,7 @@ public class AdjustorEventConcerns {
 	 *
 	 * @throws NoSuchElementException if the new config has no resource container matching the given {@code id}.
 	 */
-	private ScalingPolicy getMatchingPolicy(final SetBasedArchitectureConfiguration config,
+	private ScalingPolicy getMatchingPolicy(final ArchitectureConfiguration config,
 			final ScalingPolicy appliedPolicy) {
 
 		Optional<ScalingPolicy> copiedPolicy = config.getSPD().getScalingPolicies().stream().filter(policy -> policy.getId().equals(appliedPolicy.getId())).findAny();

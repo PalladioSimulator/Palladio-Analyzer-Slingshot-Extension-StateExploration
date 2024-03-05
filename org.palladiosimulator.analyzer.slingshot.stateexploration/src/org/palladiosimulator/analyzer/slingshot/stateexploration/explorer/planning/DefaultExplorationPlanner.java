@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
@@ -65,7 +65,7 @@ public class DefaultExplorationPlanner {
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
 
-		final double duration = calculateRunDuration(start);
+		final double duration = this.calculateRunDuration(start);
 
 		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
 
@@ -130,7 +130,7 @@ public class DefaultExplorationPlanner {
 	private DefaultState createNewGraphNode(final ToDoChange next) {
 		final DefaultState predecessor = next.getStart();
 
-		final SetBasedArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
+		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
 		final DefaultState newNode = new DefaultState(predecessor.getEndTime(), newConfig);
 
 		this.rawgraph.addNode(newNode);

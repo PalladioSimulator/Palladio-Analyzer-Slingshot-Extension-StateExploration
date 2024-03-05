@@ -1,12 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
@@ -23,12 +21,12 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.SetBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriAndSetBasedArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -121,8 +119,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * :/
 	 */
 	private DefaultState createRoot() {
-		final SetBasedArchitectureConfiguration rootConfig = new UriAndSetBasedArchitectureConfiguration(
-				this.initModels.getResourceSet());
+		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration
+				.createRootArchConfig(this.initModels.getResourceSet());
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
 		final DefaultState root = new DefaultState(0.0, rootConfig);
@@ -142,7 +140,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// update provided models
 		this.updatePCMPartitionProvider(config);
 		// update simucomconfig
-		final SimuComConfig simuComConfig = prepareSimuComConfig(
+		final SimuComConfig simuComConfig = this.prepareSimuComConfig(
 				config.getStateToExplore().getArchitecureConfiguration().getSegment(), config.getExplorationDuration());
 		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config.getExplorationDuration(),
@@ -293,12 +291,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
-		List<Resource> resources = config.getStateToExplore().getArchitecureConfiguration().getResources();
-
-		// clear init models.
-		this.initModels.getResourceSet().getResources().clear();
-		// refill init model
-		this.initModels.getResourceSet().getResources().addAll(resources);
+		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
 		/* add initial ScalingPolicy, if present */
 		if (config.getPolicy().isPresent()) {
