@@ -20,6 +20,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelperWithVis
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
+import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 
@@ -41,6 +42,7 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 				.on(UsageModelPassedElement.class).then(this::clone)
 				.on(ClosedWorkloadUserInitiated.class).then(this::clone)
 				.on(InterArrivalUserInitiated.class).then(this::clone)
+				.on(IntervalPassed.class).then(this::clone)
 				.on(DESEvent.class).then(e -> e);
 	}
 
@@ -50,6 +52,9 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		return snapshot;
 	}
 
+	private DESEvent clone(final IntervalPassed event) {
+		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
+	}
 	private DESEvent clone(final UsageModelPassedElement<?> event) {
 		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}

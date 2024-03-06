@@ -21,6 +21,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.ModelElem
 import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.SEFFInterpretedVisitor;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.UserChangedEventVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
 
 public class CloneHelperWithVisitor {
 
@@ -42,8 +43,9 @@ public class CloneHelperWithVisitor {
         		 on(ResourceDemandRequested.class).then(this::clone).
         		 on(ActiveResourceFinished.class).then(this::clone).
         		 on(UserRequestFinished.class).then(this::clone).
-         		 on(UserEntryRequested.class).then(this::clone).
-         		 on(InterArrivalUserInitiated.class).then(this::clone).
+				 on(UserEntryRequested.class).then(this::clone).
+				 on(InterArrivalUserInitiated.class).then(this::clone).
+				 on(IntervalPassed.class).then(this::clone).
          		 on(DESEvent.class).then(this::log);
 	}
 
@@ -82,5 +84,9 @@ public class CloneHelperWithVisitor {
 		final UserRequest clonedRequest = helper.cloneUserRequest(clonee.getEntity());
 		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getUserContext());
 		return new UserRequestFinished(clonedRequest, clonedContext);
+	}
+	
+	private DESEvent clone(final IntervalPassed clonee) {
+		return new IntervalPassed(clonee);
 	}
 }
