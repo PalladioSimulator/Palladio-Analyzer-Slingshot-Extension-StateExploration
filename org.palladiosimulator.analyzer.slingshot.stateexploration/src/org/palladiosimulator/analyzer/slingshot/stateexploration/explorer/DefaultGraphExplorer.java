@@ -79,8 +79,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
 		this.graph = new DefaultGraph(this.createRoot());
-
-		this.blackbox = new DefaultExplorationPlanner(PCMResourcePartitionHelper.getSPD(partition), this.graph);
+		this.blackbox = new DefaultExplorationPlanner(this.graph);
 
 		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
 	}

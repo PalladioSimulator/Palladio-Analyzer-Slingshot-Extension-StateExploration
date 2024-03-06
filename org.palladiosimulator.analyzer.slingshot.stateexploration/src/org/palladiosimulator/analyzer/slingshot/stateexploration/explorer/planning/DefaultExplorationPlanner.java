@@ -3,9 +3,10 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
@@ -34,13 +35,11 @@ public class DefaultExplorationPlanner {
 
 	private final DefaultGraph rawgraph;
 	private final ScalingPolicyConcerns changeApplicator;
-	private final AdjustorEventConcerns adjustorEventConcerns;
 	private final CutOffConcerns cutOffConcerns;
 
-	public DefaultExplorationPlanner(final SPD spd, final DefaultGraph graph) {
+	public DefaultExplorationPlanner(final DefaultGraph graph) {
 		this.rawgraph = graph;
 		this.changeApplicator = new ScalingPolicyConcerns();
-		this.adjustorEventConcerns = new AdjustorEventConcerns();
 		this.cutOffConcerns = new CutOffConcerns();
 
 		this.updateGraphFringePostSimulation(graph.getRoot());
@@ -65,24 +64,38 @@ public class DefaultExplorationPlanner {
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
 
-		final double duration = this.calculateRunDuration(start);
-
 		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
 
-		// different handling depending of type of change.
-		if (next.getChange().isEmpty()) {
+		return createConfigBasedOnChange(next.getChange(), start, end);
+
+	}
+
+	/**
+	 * 
+	 * @param change
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	private SimulationInitConfiguration createConfigBasedOnChange(final Optional<Change> change,
+			final DefaultState start,
+			final DefaultState end) {
+
+		final double duration = this.calculateRunDuration(start);
+
+		if (change.isEmpty()) {
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, null);
 		}
 
-		if (next.getChange().get() instanceof final ReactiveReconfiguration reactiveReconf) {
+		if (change.get() instanceof final ReactiveReconfiguration reactiveReconf) {
 			LOGGER.debug("Reactive Reconfiguration : Update Target Group");
 
-			final DESEvent initEvent = this.adjustorEventConcerns.copyForTargetGroup(
-					reactiveReconf.getReactiveReconfigurationEvent(), end.getArchitecureConfiguration());
+			final ModelAdjustmentRequested initEvent = (new AdjustorEventConcerns(end.getArchitecureConfiguration()))
+					.copy(reactiveReconf.getReactiveReconfigurationEvent());
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent);
 		}
 
-		if (next.getChange().get() instanceof final Reconfiguration reconf) {
+		if (change.get() instanceof final Reconfiguration reconf) {
 			LOGGER.debug("Proactive Reconfiguration : create scalingpolicy for one time usage");
 
 			final ScalingPolicy initPolicy = this.changeApplicator
@@ -105,7 +118,7 @@ public class DefaultExplorationPlanner {
 		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
 		// Reactive Reconfiguration
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
-			final DESEvent event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
+			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
 
 			this.rawgraph.addFringeEdge(
 					new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
