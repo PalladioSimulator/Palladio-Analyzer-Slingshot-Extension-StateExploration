@@ -7,7 +7,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ModelElementDifference;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.pcm.core.entity.Entity;
 
 /**
@@ -62,7 +62,7 @@ public interface RawTransition {
 			return TransitionType.NOP;
 		} else if (this.getChange().get() instanceof ReactiveReconfiguration) {
 			return TransitionType.reactiveReconfiguration;
-		} else if (this.getChange().get() instanceof Reconfiguration) {
+		} else if (this.getChange().get() instanceof ProactiveReconfiguration) {
 			return TransitionType.reconfiguration;
 		} else if (this.getChange().get() instanceof EnvironmentChange) {
 			return TransitionType.environmentChange;

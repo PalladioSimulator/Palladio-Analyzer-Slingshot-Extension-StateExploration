@@ -139,7 +139,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				config.getStateToExplore().getArchitecureConfiguration().getSegment(), config.getExplorationDuration());
 		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config.getExplorationDuration(),
-				!config.getSnapToInitOn().getEvents().isEmpty());
+				!config.getSnapToInitOn().getEvents().isEmpty() || !config.getEvent().isEmpty());
 
 		// TODO *somehow* get this submodule into the driver, such that it will be
 		// provided D:

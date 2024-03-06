@@ -22,6 +22,6 @@ public class ReactiveReconfiguration implements Change {
 
 	@Override
 	public String toString() {
-		return String.format("%s-reconfiguration", event.getName());
+		return String.format("%s-REactive reconfiguration", event.getName());
 	}
 }

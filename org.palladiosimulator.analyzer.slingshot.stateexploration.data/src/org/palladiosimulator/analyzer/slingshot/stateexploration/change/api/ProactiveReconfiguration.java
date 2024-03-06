@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.change.api;
 
-import org.palladiosimulator.spd.ScalingPolicy;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 
 /**
  *
@@ -30,31 +30,20 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * @author stiesssh
  *
  */
-public class Reconfiguration implements Change {
+public class ProactiveReconfiguration implements Change {
+	private final ModelAdjustmentRequested event;
 
-
-	private final ScalingPolicy policy;
-//	private AdjustmentResult result;
-//
-	public Reconfiguration(final ScalingPolicy policy) {
+	public ProactiveReconfiguration(final ModelAdjustmentRequested event) {
 		super();
-		this.policy = policy;
+		this.event = event;
 	}
 
-	public ScalingPolicy getScalingPolicy() {
-		return policy;
+	public ModelAdjustmentRequested getReactiveReconfigurationEvent() {
+		return event;
 	}
-//
-//	public AdjustmentResult getResult() {
-//		return result;
-//	}
-//
-//	public void setResult(final AdjustmentResult result) {
-//		this.result = result;
-//	}
 
 	@Override
 	public String toString() {
-		return String.format("%s-reconfiguration", policy.getEntityName());
+		return String.format("%s-PROactvie reconfiguration", event.getName());
 	}
 }

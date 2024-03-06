@@ -1,14 +1,16 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -34,12 +36,12 @@ public class DefaultExplorationPlanner {
 	private static final Logger LOGGER = Logger.getLogger(DefaultExplorationPlanner.class.getName());
 
 	private final DefaultGraph rawgraph;
-	private final ScalingPolicyConcerns changeApplicator;
+	// private final ScalingPolicyConcerns changeApplicator;
 	private final CutOffConcerns cutOffConcerns;
 
 	public DefaultExplorationPlanner(final DefaultGraph graph) {
 		this.rawgraph = graph;
-		this.changeApplicator = new ScalingPolicyConcerns();
+		// this.changeApplicator = new ScalingPolicyConcerns();
 		this.cutOffConcerns = new CutOffConcerns();
 
 		this.updateGraphFringePostSimulation(graph.getRoot());
@@ -78,8 +80,7 @@ public class DefaultExplorationPlanner {
 	 * @return
 	 */
 	private SimulationInitConfiguration createConfigBasedOnChange(final Optional<Change> change,
-			final DefaultState start,
-			final DefaultState end) {
+			final DefaultState start, final DefaultState end) {
 
 		final double duration = this.calculateRunDuration(start);
 
@@ -95,12 +96,14 @@ public class DefaultExplorationPlanner {
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent);
 		}
 
-		if (change.get() instanceof final Reconfiguration reconf) {
+		if (change.get() instanceof final ProactiveReconfiguration reconf) {
 			LOGGER.debug("Proactive Reconfiguration : create scalingpolicy for one time usage");
 
-			final ScalingPolicy initPolicy = this.changeApplicator
-					.createOneTimeUsageScalingPolicy(reconf.getScalingPolicy(), end.getArchitecureConfiguration());
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initPolicy, null);
+			final ModelAdjustmentRequested initEvent = (new AdjustorEventConcerns(end.getArchitecureConfiguration()))
+					.copy(reconf.getReactiveReconfigurationEvent());
+
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent);
+
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");
@@ -114,29 +117,117 @@ public class DefaultExplorationPlanner {
 	 * @param start
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
-		// NOP
+		// NOP Always
 		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
-		// Reactive Reconfiguration
+		// Reactive Reconfiguration - Always.
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
 			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
 
-			this.rawgraph.addFringeEdge(
-					new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+			// reactive reconf to the next state.
+			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+
+			// reactive reconf at the previous state -> proactive reconf.
+			final Optional<ToDoChange> proactiveChange = createProactiveChange(start);
+
+			if (proactiveChange.isPresent()) {
+				this.rawgraph.addFringeEdge(proactiveChange.get());
+			}
 		}
-		// Proactive Reconfiguration
-		for (final ScalingPolicy scalingPolicy : this.changeApplicator.getExplorationPolicyTemplates()) {
-			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
+
+	}
+
+	/**
+	 * Create a {@code ToDoChange} that applies the reactive reconfiguration, on
+	 * which {@code state} ended onto the first predecessor, which has no successor,
+	 * that starts on the application of that policy.
+	 * 
+	 * Problem: disregards changes, that are still in the fringe. --> also check
+	 * fringe!
+	 * 
+	 * @param state
+	 * @return
+	 */
+	private Optional<ToDoChange> createProactiveChange(final DefaultState state) {
+
+		final ModelAdjustmentRequested event = state.getSnapshot().getModelAdjustmentRequestedEvent().get();
+
+		Optional<DefaultState> predecessor = getPredecessor(state);
+
+		while (predecessor.isPresent() && policyAlreadyExploredAtState(predecessor.get(), event.getScalingPolicy())) {
+			predecessor = getPredecessor(predecessor.get());
+		}
+
+		if (predecessor.isPresent()) {
+			return Optional.of(new ToDoChange(Optional.of(new ProactiveReconfiguration(event)), predecessor.get()));
+		} else {
+			return Optional.empty();
+		}
+
+	}
+
+	/**
+	 * Check whether {@code state} already transitioned to a successor, via the
+	 * given policy. Or wether it is already planned to explore that (i.e.
+	 * corresponding change in the fringe)
+	 * 
+	 * @param state
+	 * @param policy
+	 * @return
+	 */
+	private boolean policyAlreadyExploredAtState(final DefaultState state, final ScalingPolicy policy) {
+		List<Change> foo = state.getOutTransitions().stream().filter(t -> t.getChange().isPresent())
+				.map(t -> t.getChange().get()).filter(c -> isSamePolicy(c, policy)).toList();
+
+		List<ToDoChange> bar = this.rawgraph.getFringe().stream().filter(c -> c.getStart().equals(state)
+				&& c.getChange().isPresent() && isSamePolicy(c.getChange().get(), policy)).toList();
+
+		return !(foo.isEmpty() && bar.isEmpty());
+	}
+
+	/**
+	 * Check whether the given change is a change for the given policy. Checks via
+	 * ID, as the object migh differ.
+	 * 
+	 * @param c1
+	 * @param policy
+	 * @return
+	 */
+	private static boolean isSamePolicy(final Change c1, final ScalingPolicy policy) {
+		String idPolicy1 = null;
+
+		if (c1 instanceof ReactiveReconfiguration r) {
+			idPolicy1 = r.getReactiveReconfigurationEvent().getScalingPolicy().getId();
+		} else if (c1 instanceof ProactiveReconfiguration r) {
+			idPolicy1 = r.getReactiveReconfigurationEvent().getScalingPolicy().getId();
+		}
+
+		return policy.getId().equals(idPolicy1);
+	}
+
+	/**
+	 * Get predecessor of the given state.
+	 * 
+	 * @param state
+	 * @return
+	 */
+	private Optional<DefaultState> getPredecessor(final DefaultState state) {
+		Optional<RawModelState> predecessor = rawgraph.getTransitions().stream()
+				.filter(t -> t.getTarget().equals(state)).map(t -> t.getSource()).findFirst();
+
+		if (predecessor.isPresent()) {
+			return Optional.of((DefaultState) predecessor.get());
+		} else {
+			return Optional.empty();
 		}
 	}
 
 	/**
 	 * Create a new graph note with a new arch configuration.
 	 *
-	 * creating a fully connected Graph node encompasses :
-	 * - copying architecture configuration from preceding state.
-	 * - setting the start time of the new node wrt. global time.
-	 * - adding the node to the graph's node list.
-	 * - creating transition to connect new node t predecessor.
+	 * creating a fully connected Graph node encompasses : - copying architecture
+	 * configuration from preceding state. - setting the start time of the new node
+	 * wrt. global time. - adding the node to the graph's node list. - creating
+	 * transition to connect new node t predecessor.
 	 *
 	 * @return a new node, connected to its predecessor in graph.
 	 */

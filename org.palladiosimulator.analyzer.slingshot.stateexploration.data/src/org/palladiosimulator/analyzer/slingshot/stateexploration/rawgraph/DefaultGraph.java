@@ -42,9 +42,7 @@ public class DefaultGraph implements RawStateGraph{
 	 * @return
 	 */
 	public ToDoChange getNext() {
-		final ToDoChange todochange = this.fringe.poll();
-		//((BloatedState) edge.getSource()).addOutTransition(edge);
-		return todochange;
+		return this.fringe.poll();
 	}
 
 	/**
@@ -65,6 +63,10 @@ public class DefaultGraph implements RawStateGraph{
 	 */
 	public void addFringeEdge(final ToDoChange edge) {
 		fringe.add(edge);
+	}
+
+	public ArrayDeque<ToDoChange> getFringe() {
+		return this.fringe;
 	}
 
 	@Override

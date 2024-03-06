@@ -117,4 +117,10 @@ public class DefaultState implements RawModelState{
 	public double getDuration() {
 		return this.duration;
 	}
+
+	@Override
+	public String toString() {
+		return "DefaultState [archConfig=" + archConfig.getSegment() + ", reasonToLeave=" + reasonToLeave + "]";
+	}
+
 }
