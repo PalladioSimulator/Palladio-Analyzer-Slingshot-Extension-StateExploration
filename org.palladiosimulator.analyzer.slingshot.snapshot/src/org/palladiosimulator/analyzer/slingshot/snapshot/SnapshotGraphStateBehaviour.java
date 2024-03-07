@@ -250,7 +250,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 		if (!this.monitoring.getMonitors().isEmpty()) {
 			LOGGER.debug("monitors defined, updating Meassuring points");
-			MeasuringPointRepository mpRepo = this.monitoring.getMonitors().get(0).getMeasuringPoint()
+			final MeasuringPointRepository mpRepo = this.monitoring.getMonitors().get(0).getMeasuringPoint()
 					.getMeasuringPointRepository();
 			ResourceUtils.saveResource(mpRepo.eResource());
 		}
@@ -260,9 +260,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		ResourceUtils.saveResource(this.allocation.getSystem_Allocation().eResource());
 		ResourceUtils.saveResource(this.allocation.getSystem_Allocation().getAssemblyContexts__ComposedStructure()
 				.get(0).getEncapsulatedComponent__AssemblyContext().getRepository__RepositoryComponent().eResource());
-
-		// Do NOT save the ScalingPolicyies, cause that would get the oneTrickPony into
-		// the persisted Rules.
 
 	}
 

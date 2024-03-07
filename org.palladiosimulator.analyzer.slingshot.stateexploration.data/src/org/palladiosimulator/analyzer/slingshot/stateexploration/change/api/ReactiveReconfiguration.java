@@ -6,22 +6,10 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
  *
  *
  */
-public class ReactiveReconfiguration implements Change {
-
-
-	private final ModelAdjustmentRequested event;
+public class ReactiveReconfiguration extends Reconfiguration {
 
 	public ReactiveReconfiguration(final ModelAdjustmentRequested event) {
-		super();
-		this.event = event;
+		super(event);
 	}
 
-	public ModelAdjustmentRequested getReactiveReconfigurationEvent() {
-		return event;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("%s-REactive reconfiguration", event.getName());
-	}
 }

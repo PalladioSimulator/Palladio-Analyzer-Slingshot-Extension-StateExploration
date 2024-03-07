@@ -10,7 +10,6 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
-import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
@@ -160,15 +159,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 						.getAllocationContext().getResourceContainer_AllocationContext().getId())
 				.forEach(id -> LOGGER.info(id));
 
-		if (config.getEvent().isPresent()) {
-			LOGGER.warn("Start with reactive Configuration.");
-		}
-		if (config.getPolicy().isPresent()) {
-			LOGGER.warn("Start with proactive Configuration.");
-		}
-		if (config.getEvent().isEmpty() && config.getPolicy().isEmpty()) {
-			LOGGER.warn("Start after intervall transition.");
-		}
+		LOGGER.warn("start on config" + config.toString());
 
 		driver.init(simuComConfig, monitor, Set.of(submodule));
 		driver.start();
@@ -284,11 +275,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
 		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
-
-		/* add initial ScalingPolicy, if present */
-		if (config.getPolicy().isPresent()) {
-			PCMResourcePartitionHelper.getSPD(initModels).getScalingPolicies().add(config.getPolicy().get());
-		}
 
 		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
 				.getInstance(PCMResourceSetPartitionProvider.class);

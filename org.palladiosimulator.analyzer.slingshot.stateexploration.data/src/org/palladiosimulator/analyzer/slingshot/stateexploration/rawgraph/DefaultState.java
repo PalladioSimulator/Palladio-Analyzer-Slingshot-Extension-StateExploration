@@ -8,35 +8,37 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.Architectur
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  * State in the raw state graph.
  *
- * Big State, with all the data i can get my hands on. to be condensed to the necessary amount of data later on.
+ * Big State, with all the data i can get my hands on. to be condensed to the
+ * necessary amount of data later on.
  *
  *
  * @author stiesssh
  *
  */
-public class DefaultState implements RawModelState{
+public class DefaultState implements RawModelState {
 
 	/* known at start */
 	private final double startTime;
 	private final ArchitectureConfiguration archConfig;
 
-	/* known at the end*/
+	/* known at the end */
 	private double duration;
 	private Snapshot snapshot;
 	private ReasonToLeave reasonToLeave;
 	private boolean decreaseInterval = false;
 
-	/* known after configuration of the simulation run*/
+	/* known after configuration of the simulation run */
 	private ExperimentSetting experimentSetting;
 
 	/* changes upon creation of successive states */
 	private final Set<RawTransition> outTransitions;
-
 
 	public DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig) {
 		this.startTime = pointInTime;
@@ -81,7 +83,18 @@ public class DefaultState implements RawModelState{
 		this.duration = duration;
 	}
 
-	/* to  match the interface */
+	public boolean hasOutTransitionFor(final ScalingPolicy matchee) {
+		return this.outTransitions.stream()
+				.filter(t -> t.getChange().isPresent())
+				.map(t -> t.getChange().get())
+				.filter(c -> c instanceof final Reconfiguration r)
+				.map(c -> ((Reconfiguration) c).getAppliedPolicy())
+				.filter(policy -> policy.getId().equals(matchee.getId()))
+				.findAny()
+				.isPresent();
+	}
+
+	/* to match the interface */
 
 	@Override
 	public ArchitectureConfiguration getArchitecureConfiguration() {
