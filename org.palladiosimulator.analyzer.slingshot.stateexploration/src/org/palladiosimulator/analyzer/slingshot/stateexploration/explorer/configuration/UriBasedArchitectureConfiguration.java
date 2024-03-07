@@ -1,12 +1,16 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-import javax.annotation.processing.Generated;
-
+import org.apache.log4j.Logger;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
@@ -15,366 +19,293 @@ import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringpointPackage;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
+import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
 import org.palladiosimulator.pcm.allocation.Allocation;
+import org.palladiosimulator.pcm.allocation.AllocationPackage;
+import org.palladiosimulator.pcm.repository.Repository;
+import org.palladiosimulator.pcm.repository.RepositoryPackage;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
-import org.palladiosimulator.pcm.system.System;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceenvironmentPackage;
+import org.palladiosimulator.pcm.system.SystemPackage;
 import org.palladiosimulator.pcm.usagemodel.UsageModel;
+import org.palladiosimulator.pcm.usagemodel.UsagemodelPackage;
 import org.palladiosimulator.semanticspd.Configuration;
+import org.palladiosimulator.semanticspd.SemanticspdPackage;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
+import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 import org.palladiosimulator.spd.SPD;
+import org.palladiosimulator.spd.SpdPackage;
 
 /**
  *
- * The further this one evolves, the more it feels like a copy of the
- * resourcePartition thing...
- *
- * Maybe it makes more sense to redesign this.
+ * A {@link ArchitectureConfiguration} represents a set of PCM models for one
+ * state in the state exploration.
+ * 
+ * For this {@link UriBasedArchitectureConfiguration}, all PCM models are
+ * always persisted to the file system. I.e. this configuration represents (and
+ * gives access) to a set of PCM-Models, as they are persisted in the file
+ * system.
+ * 
  *
  * @author stiesssh
  *
  */
 public class UriBasedArchitectureConfiguration implements ArchitectureConfiguration {
 
-
-	private final URI usageModel;
-	private final URI allocation;
-	private final URI resourceEnvironment;
-	private final URI system;
-	private final URI monitorRepository;
-	private final URI measuringPoints;
-	private final URI spd;
-	private final URI semanticSpdConfigruation;
-	private final URI slo;
-
-	private ResourceSet set = null;
-
-	private final List<URI> allURI;
-
-	private UriBasedArchitectureConfiguration(final Allocation allocation,
-			final UsageModel usageModel, final MonitorRepository monitorRepository,
-			final MeasuringPointRepository measuringpoints, final SPD spd, final Configuration semanticSpdConfigruation,
-			final ServiceLevelObjectiveRepository slo) {
+	private static final Logger LOGGER = Logger.getLogger(UriBasedArchitectureConfiguration.class.getName());
 
 
-		this.allocation = allocation.eResource().getURI();
-		this.resourceEnvironment = allocation.getTargetResourceEnvironment_Allocation().eResource().getURI();
-		this.system = allocation.getSystem_Allocation().eResource().getURI();
+	/** contains a mapping for all eClasses in {@code MODEL_ECLASS_WHITELIST} */
+	private final Map<EClass, URI> uris;
 
-		this.monitorRepository = monitorRepository.eResource().getURI();
-		this.measuringPoints = measuringpoints.eResource().getURI();
+	private final ResourceSet set = new ResourceSetImpl();
 
-		this.spd = spd.eResource().getURI();
-		this.semanticSpdConfigruation = semanticSpdConfigruation.eResource().getURI();
-		this.slo = slo.eResource().getURI();
-		this.usageModel = usageModel.eResource().getURI();
+	private final String idSegment;
 
-		// TODO make it a fucking map, or something like that?
-		this.allURI = List.of(this.allocation, this.resourceEnvironment, this.system,
-				this.monitorRepository, this.measuringPoints, this.spd, this.semanticSpdConfigruation, this.slo,
-				this.usageModel);
-	}
+	private static final Set<EClass> MODEL_ECLASS_WHITELIST = Set.of(RepositoryPackage.eINSTANCE.getRepository(),
+			AllocationPackage.eINSTANCE.getAllocation(), UsagemodelPackage.eINSTANCE.getUsageModel(),
+			SystemPackage.eINSTANCE.getSystem(), ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment(),
+			MonitorRepositoryPackage.eINSTANCE.getMonitorRepository(),
+			MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository(), SpdPackage.eINSTANCE.getSPD(),
+			SemanticspdPackage.eINSTANCE.getConfiguration(),
+			ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository());
 
-	@Override
-	public Allocation getAllocation() {
-		return this.get(this.allocation);
-	}
+	/**
+	 * Create a new {@code ArchitectureConfiguration}.
+	 * 
+	 * Beware: Intended to be called by this class' {@code copy} operation only.
+	 * 
+	 * 
+	 * @param uris
+	 * @param idSegment
+	 */
+	private UriBasedArchitectureConfiguration(final Map<EClass, URI> uris, final String idSegment) {
+		assert uris.keySet().containsAll(MODEL_ECLASS_WHITELIST) : "Missing EClass mappings";
 
-	@Override
-	public MonitorRepository getMonitorRepository() {
-		return this.get(this.monitorRepository);
-	}
+		this.uris = uris;
+		this.idSegment = idSegment;
 
-	@Override
-	public SPD getSPD() {
-		return this.get(this.spd);
-	}
-
-	@Override
-	public ServiceLevelObjectiveRepository getSLOs() {
-		return this.get(this.slo);
-	}
-
-	@Override
-	public Configuration getSemanticSPDConfiguration() {
-		return this.get(this.semanticSpdConfigruation);
-	}
-
-	@Override
-	public ResourceEnvironment getResourceEnvironment() {
-		return this.get(this.resourceEnvironment);
-	}
-
-	@Override
-	public UsageModel getUsageModel() {
-		return this.get(this.usageModel);
-
-	}
-
-	@Override
-	public System getSystem() {
-		return this.get(this.system);
-	}
-
-	@Override
-	public MeasuringPointRepository getMeasuringPointRepository() {
-		return this.get(this.measuringPoints);
 	}
 
 	/**
+	 * Create a new {@code ArchitectureConfiguration} representing the architecture
+	 * configuration at the very beginning of the exploration, i.e. the architecture
+	 * configuration of the stategraph's root node.
 	 * 
-	 * @param <T>
-	 * @param uri
-	 * @return
+	 * @param set
+	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
-	private final <T> T get(URI uri) {
-		if (set == null) {
-			this.load();
-		}
-		if (set.getResource(uri, false).getContents().isEmpty()) {
-			final Resource tmp = set.getResource(uri, false);
-			try {
-				tmp.unload();
-				tmp.load(((XMLResource) tmp).getDefaultLoadOptions());
-			} catch (final IOException e) {
-				e.printStackTrace();
+	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
+		return new UriBasedArchitectureConfiguration(createUriMap(set), "root");
+	}
+
+	/**
+	 * Fills the {@code uris} map of this {@code ArchitectureConfiguration}.
+	 * 
+	 * Ensures, that {@code uris} contains a mapping for all white listed model
+	 * classes.
+	 * 
+	 * @param set ResourceSet to be filled into {@code uris}.
+	 * @throws IllegalArgumentException if any Resource in the given ResourceSet is
+	 *                                  empty.
+	 */
+	private static Map<EClass, URI> createUriMap(final ResourceSet set) {
+		final Map<EClass, URI> map = new HashMap<>();
+
+		for (final Resource resource : set.getResources()) {
+			if (resource.getContents().isEmpty()) {
+				throw new IllegalArgumentException(
+						String.format("Empty resource for : %s.", resource.getURI().toString()));
+			}
+
+			if (MODEL_ECLASS_WHITELIST.contains(resource.getContents().get(0).eClass())) {
+				map.put(resource.getContents().get(0).eClass(), resource.getURI());
 			}
 		}
 
-		Resource res = set.getResource(uri, false);
-		EcoreUtil.resolveAll(set);
-		return (T) res.getContents().get(0);
+		return map;
 	}
 
 	/**
-	 * create resource set and load all URIs
+	 * Get a model from the {@link Resource} with the given URI.
 	 * 
-	 * ensure set != null and all proxies are resolved.
+	 * Create a {@link Resource} with the given URI if it does not exist. Load the
+	 * resources, if its contents are empty (should not happen).
+	 * 
+	 * Resolves all Proxies in the model by loading referenced models into the
+	 * resources.
+	 * 
+	 * @param <T> type of the model
+	 * @param uri uri of the {@link Resource} to be accessed.
+	 * @return model from the {@link Resource} with the given URI.
 	 */
-	private void load() {
-		this.set = new ResourceSetImpl();
+	private final <T> T get(final URI uri) {
+		Resource res = this.set.getResource(uri, true);
 
-		for (URI uri : allURI) {
-			createAndLoadSingleResource(uri, set);
-		}
-	}
-
-	/**
-	 * 
-	 * create a resource and load the model at the provided uri into that resource.
-	 * 
-	 * does not resolve proxies.
-	 * 
-	 * @param uri
-	 */
-	private void createAndLoadSingleResource(URI uri, ResourceSet newSet) {
-		if (newSet.getResource(uri, false) == null || newSet.getResource(uri, false).getContents().isEmpty()) {
-			final Resource res = newSet.createResource(uri);
+		if (res.getContents().isEmpty()) {
 			try {
+				LOGGER.debug(String.format("Contents of Resource %s was empty and had to be loaded manually.",
+						res.getURI().toString()));
+				res.unload();
 				res.load(((XMLResource) res).getDefaultLoadOptions());
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}
 		}
-	}
 
-	/** TODO : I was doing stuff here --- yeah, okey, but what stuff? O_o **/
-	@Override
-	public ArchitectureConfiguration copy() {
-		final String idSegment = UUID.randomUUID().toString();
+		EcoreUtil.resolveAll(set); // resolve the *set* to load the referenced models.
+		return (T) res.getContents().get(0);
 
-		final Builder builder = UriBasedArchitectureConfiguration.builder();
-		// iteration 1 : set ist viel zu voll.
-		this.copyAlloc(builder, idSegment);
-
-		final UriBasedArchitectureConfiguration copy = builder.build();
-
-		return copy;
 	}
 
 	/**
-	 *
-	 * @param allocation
-	 * @return copy of the allocation
+	 * load all URIs
+	 * 
+	 * ensure all proxies are resolved and all resources in the set are loaded i.e.
+	 * !getContents().isEmpty()
+	 * 
 	 */
-	private void copyAlloc(final Builder builder, final String idSegment) {
+	private void load() {
+		for (URI uri : uris.values()) {
+			this.get(uri);
+		}
+	}
 
-		// 1. get models
-		final ResourceEnvironment resourceEnvironmentModel = this.getResourceEnvironment();
-		final System systemModel = this.getSystem();
-		final Allocation allocModel = this.getAllocation();
+	/**
+	 * Creates a copy of this architecture Configuration.
+	 * 
+	 * The copy is created by saving all models of this configuration to a new
+	 * location in the file system, and setting the EClass to URI mappings of the
+	 * copy such that they are pointing to the copied model in the file system.
+	 * 
+	 */
+	@Override
+	public UriBasedArchitectureConfiguration copy() {
 
-		final MonitorRepository monitorRepoModel = this.getMonitorRepository();
-		final MeasuringPointRepository measuringPointRepositoryModel = this.getMeasuringPointRepository();
-		final ServiceLevelObjectiveRepository sloModel = this.getSLOs();
+		final String nextIdSegment = UUID.randomUUID().toString();
 
-		final SPD spdModel = this.getSPD();
-		final Configuration semanticSpdConfigModel = this.getSemanticSPDConfiguration();
+		this.load(); // 1. ensure that load all models are loaded.
 
-		final UsageModel usageModelModel = this.getUsageModel();
+		final List<Resource> whitelisted = set.getResources().stream()
+				.filter(r -> this.shallbeSaved(r.getContents().get(0))).toList();
+		final Map<EClass, URI> copyUris = new HashMap<>();
 
 		// 2. update paths
-		final URI newAllocUri = ResourceUtils.insertFragment(allocation, idSegment, allocation.segmentCount() - 1);
-		allocModel.eResource().setURI(newAllocUri);
-
-		final URI newResUri = ResourceUtils.insertFragment(resourceEnvironment, idSegment,
-				resourceEnvironment.segmentCount() - 1);
-		resourceEnvironmentModel.eResource().setURI(newResUri);
-
-		final URI newUsageUri = ResourceUtils.insertFragment(usageModel, idSegment, usageModel.segmentCount() - 1);
-		usageModelModel.eResource().setURI(newUsageUri);
-
-		final URI newSysUri = ResourceUtils.insertFragment(system, idSegment, system.segmentCount() - 1);
-		systemModel.eResource().setURI(newSysUri);
-
-		final URI newSPDUri = ResourceUtils.insertFragment(spd, idSegment, spd.segmentCount() - 1);
-		spdModel.eResource().setURI(newSPDUri);
-
-		final URI newSemantiSPDConfigUri = ResourceUtils.insertFragment(semanticSpdConfigruation, idSegment,
-				semanticSpdConfigruation.segmentCount() - 1);
-		semanticSpdConfigModel.eResource().setURI(newSemantiSPDConfigUri);
-
-		final URI newSLOUri = ResourceUtils.insertFragment(slo, idSegment, slo.segmentCount() - 1);
-		sloModel.eResource().setURI(newSLOUri);
-
-		final URI newMeasuringPointRepoUri = ResourceUtils.insertFragment(this.measuringPoints, idSegment,
-				this.measuringPoints.segmentCount() - 1);
-		measuringPointRepositoryModel.eResource().setURI(newMeasuringPointRepoUri);
-
-		final URI newmonitorRepositoryUri = ResourceUtils.insertFragment(monitorRepository, idSegment,
-				monitorRepository.segmentCount() - 1);
-		monitorRepoModel.eResource().setURI(newmonitorRepositoryUri);
+		for (final Resource resource : whitelisted) {
+			// cache?
+			final URI oldUri = resource.getURI();
+			final URI newUri = ResourceUtils.insertFragment(oldUri, nextIdSegment, oldUri.segmentCount() - 1);
+			resource.setURI(newUri);
+			copyUris.put(resource.getContents().get(0).eClass(), newUri);
+		}
 
 		// 3. save to new path
-		ResourceUtils.saveResource(resourceEnvironmentModel.eResource());
-		ResourceUtils.saveResource(systemModel.eResource());
-		ResourceUtils.saveResource(allocModel.eResource());
-		ResourceUtils.saveResource(usageModelModel.eResource());
-		ResourceUtils.saveResource(spdModel.eResource());
-		ResourceUtils.saveResource(sloModel.eResource());
-		ResourceUtils.saveResource(semanticSpdConfigModel.eResource());
-
-		ResourceUtils.saveResource(measuringPointRepositoryModel.eResource());
-		ResourceUtils.saveResource(monitorRepoModel.eResource());
+		for (final Resource resource : whitelisted) {
+			System.out.println("tryinto save" + resource.getURI().toString());
+			ResourceUtils.saveResource(resource);
+		}
 
 		// 4. reset URIs to old values.
-		allocModel.eResource().setURI(allocation);
-		usageModelModel.eResource().setURI(usageModel);
-		systemModel.eResource().setURI(system);
-		resourceEnvironmentModel.eResource().setURI(resourceEnvironment);
-		spdModel.eResource().setURI(spd);
-		sloModel.eResource().setURI(slo);
-		semanticSpdConfigModel.eResource().setURI(semanticSpdConfigruation);
+		for (final Resource resource : whitelisted) {
+			final URI oldUri = uris.get(resource.getContents().get(0).eClass());
+			resource.setURI(oldUri);
+		}
 
-		measuringPointRepositoryModel.eResource().setURI(this.measuringPoints);
-		monitorRepoModel.eResource().setURI(this.monitorRepository);
-
-		// 5. load copies
-		final ResourceSet newset = new ResourceSetImpl();
-
-		createAndLoadSingleResource(newAllocUri, newset);
-		createAndLoadSingleResource(newResUri, newset);
-		createAndLoadSingleResource(newSysUri, newset);
-		createAndLoadSingleResource(newUsageUri, newset);
-
-		createAndLoadSingleResource(newSPDUri, newset);
-
-		createAndLoadSingleResource(newMeasuringPointRepoUri, newset);
-		createAndLoadSingleResource(newmonitorRepositoryUri, newset);
-
-		createAndLoadSingleResource(newSLOUri, newset);
-		createAndLoadSingleResource(newSemantiSPDConfigUri, newset);
-
-		EcoreUtil.resolveAll(newset);
-
-		// 6. get copies
-		final Allocation copyAlloc = (Allocation) newset.getResource(newAllocUri, true).getContents().get(0);
-		final UsageModel copyUsageModel = (UsageModel) newset.getResource(newUsageUri, true).getContents().get(0);
-		final SPD copySpd = (SPD) newset.getResource(newSPDUri, true).getContents().get(0);
-		final Configuration copySemanticSpdConfig = (Configuration) newset.getResource(newSemantiSPDConfigUri, true)
-				.getContents().get(0);
-
-		final MeasuringPointRepository copyMeasuringPoints = (MeasuringPointRepository) newset
-				.getResource(newMeasuringPointRepoUri, true).getContents().get(0);
-
-		final MonitorRepository copyMonitoring = (MonitorRepository) newset.getResource(newmonitorRepositoryUri, true)
-				.getContents().get(0);
-		final ServiceLevelObjectiveRepository copySlo = (ServiceLevelObjectiveRepository) newset
-				.getResource(newSLOUri, true).getContents().get(0);
-
-		// 7. build copy with copied mdodels
-		builder.withAllocation(copyAlloc);
-		builder.withUsageModel(copyUsageModel);
-		builder.withSPD(copySpd);
-		builder.withSLO(copySlo);
-		builder.withMonitorRepository(copyMonitoring);
-		builder.withMeasuringPointRepository(copyMeasuringPoints);
-		builder.withSemanticSpdConfigruation(copySemanticSpdConfig);
+		// 7. build copy with copied models
+		return new UriBasedArchitectureConfiguration(copyUris, nextIdSegment);
 	}
 
-	/**
-	 *
-	 * @return Builder.
-	 */
-	public static Builder builder() {
-		return new Builder();
+	public List<Resource> getResources() {
+		return this.set.getResources();
 	}
 
-	/**
-	 * Builder to build {@link UriBasedArchitectureConfiguration}.
-	 */
-	@Generated("SparkTools")
-	public static final class Builder {
-		private Allocation alloc;
-		private MonitorRepository monitorRepository;
-		private MeasuringPointRepository measuringPointRepository;
-		private SPD spd;
-		private ServiceLevelObjectiveRepository slo;
-		private Configuration semanticSpdConfigruation;
+	@Override
+	public URI getUri(final EClass type) {
+		return uris.get(type);
+	}
 
-		private UsageModel usageModel;
+	@Override
+	public String getSegment() {
+		return this.idSegment;
+	}
 
-		private Builder() {
-		}
+	@Override
+	public void transferModelsToSet(final ResourceSet set) {
+		this.load(); // 1. ensure that load all models are loaded.
 
-		public Builder withAllocation(final Allocation alloc) {
-			this.alloc = alloc;
-			return this;
-		}
+		set.getResources().clear();
+		set.getResources().addAll(this.getResources());
+	}
 
-		public Builder withUsageModel(final UsageModel usageModel) {
-			this.usageModel = usageModel;
-			return this;
-		}
+	@Override
+	public ResourceSet getResourceSet() {
+		return this.set;
+	}
 
-		public Builder withMonitorRepository(final MonitorRepository monitorRepository) {
-			this.monitorRepository = monitorRepository;
-			return this;
-		}
+	private boolean shallbeSaved(final EObject model) {
+		assert model != null;
 
-		public Builder withMeasuringPointRepository(final MeasuringPointRepository measuringPointRepository) {
-			this.measuringPointRepository = measuringPointRepository;
-			return this;
-		}
+		return MODEL_ECLASS_WHITELIST.stream().anyMatch(allowedEClass -> allowedEClass == model.eClass());
 
-		public Builder withSPD(final SPD spd) {
-			this.spd = spd;
-			return this;
-		}
+	}
 
-		public Builder withSemanticSpdConfigruation(final Configuration semanticSpdConfigruation) {
-			this.semanticSpdConfigruation = semanticSpdConfigruation;
-			return this;
-		}
+	@Override
+	public SPD getSPD() {
+		return get(uris.get(SpdPackage.eINSTANCE.getSPD()));
+	}
 
-		public Builder withSLO(final ServiceLevelObjectiveRepository slo) {
-			this.slo = slo;
-			return this;
-		}
+	@Override
+	public Configuration getSemanticSPDConfiguration() {
+		return get(uris.get(SemanticspdPackage.eINSTANCE.getConfiguration()));
+	}
 
-		public UriBasedArchitectureConfiguration build() {
-			return new UriBasedArchitectureConfiguration(alloc, usageModel, monitorRepository,
-					measuringPointRepository, spd, semanticSpdConfigruation, slo);
-		}
+	// not called in explorer
+	@Override
+	public ServiceLevelObjectiveRepository getSLOs() {
+		return get(uris.get(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository()));
+	}
+
+	// not called in explorer
+	@Override
+	public MonitorRepository getMonitorRepository() {
+		return get(uris.get(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository()));
+	}
+
+	// not called in explorer
+	@Override
+	public Allocation getAllocation() {
+		return get(uris.get(AllocationPackage.eINSTANCE.getAllocation()));
+	}
+
+	// not called in explorer
+	@Override
+	public ResourceEnvironment getResourceEnvironment() {
+		return get(uris.get(ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment()));
+	}
+
+	// not called in explorer
+	@Override
+	public org.palladiosimulator.pcm.system.System getSystem() {
+		return get(uris.get(SystemPackage.eINSTANCE.getSystem()));
+	}
+
+	// not called in explorer
+	@Override
+	public MeasuringPointRepository getMeasuringPointRepository() {
+		return get(uris.get(MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository()));
+	}
+
+	// not called in explorer
+	@Override
+	public UsageModel getUsageModel() {
+		return get(uris.get(UsagemodelPackage.eINSTANCE.getUsageModel()));
+	}
+
+	// not called in explorer
+	@Override
+	public Repository getRepository() {
+		return get(uris.get(RepositoryPackage.eINSTANCE.getRepository()));
 	}
 }

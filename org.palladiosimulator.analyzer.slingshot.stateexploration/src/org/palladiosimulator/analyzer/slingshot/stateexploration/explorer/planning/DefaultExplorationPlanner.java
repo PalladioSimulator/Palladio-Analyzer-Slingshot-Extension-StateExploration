@@ -65,9 +65,9 @@ public class DefaultExplorationPlanner {
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
 
-		final double duration = calculateRunDuration(start);
+		final double duration = this.calculateRunDuration(start);
 
-		this.updateSPD(end.getArchitecureConfiguration().getSPD(), start.getDuration());
+		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
 
 		// different handling depending of type of change.
 		if (next.getChange().isEmpty()) {
@@ -155,14 +155,17 @@ public class DefaultExplorationPlanner {
 	}
 
 	/**
-	 * reduces the expected value for scaling policies with simulation time stimulus
-	 * triggers, or deactivates the policy if the trigger is in the past with regard
-	 * to global time.
-	 *
-	 * @param spd
-	 * @param offset
+	 * Reduces the {@link ExpectedTime} value for scaling policies with trigger
+	 * stimulus {@link SimulationTime} or deactivates the policy if the trigger is
+	 * in the past with regard to global time.
+	 * 
+	 * The {@link ExpectedTime} value is reduced by the duration of the previous
+	 * state.
+	 * 
+	 * @param spd    current scaling rules.
+	 * @param offset duration of the previous state
 	 */
-	private void updateSPD(final SPD spd, final double offset) {
+	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
 
 		// get all triggers on Fixed point in time.
 		spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).map(policy -> policy.getScalingTrigger())
