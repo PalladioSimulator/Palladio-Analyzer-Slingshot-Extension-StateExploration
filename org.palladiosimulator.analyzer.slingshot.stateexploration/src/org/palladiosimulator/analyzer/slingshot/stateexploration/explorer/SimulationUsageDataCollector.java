@@ -29,6 +29,7 @@ public class SimulationUsageDataCollector implements SimulationBehaviorExtension
 	
 	@Subscribe
 	public void onUserEntryRequest(UserEntryRequested request) {
+		/*
 		try {
 			client.sendMessage(new EntryDataMessage(new EntryData(
 					request.getEntity().getUser().getId(),
@@ -40,6 +41,7 @@ public class SimulationUsageDataCollector implements SimulationBehaviorExtension
 			ee.printStackTrace();
 			System.exit(0);
 		}
+		*/
 	}
 
 }

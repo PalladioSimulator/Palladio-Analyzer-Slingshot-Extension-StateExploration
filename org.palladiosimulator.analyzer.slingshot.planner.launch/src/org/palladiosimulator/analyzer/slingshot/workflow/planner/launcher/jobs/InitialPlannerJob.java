@@ -15,7 +15,6 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPar
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
-import org.palladiosimulator.analyzer.slingshot.planner.runner.PlannerRunner;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
@@ -80,7 +79,7 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		final StateGraph graph = StateGraphConverter.convert(rawGraph);
 
 		// TODO: run the planning here!
-		PlannerRunner pr = new PlannerRunner(graph);
+		//PlannerRunner pr = new PlannerRunner(graph);
 		LOGGER.info("**** Planner started ****");
 
 		/**
