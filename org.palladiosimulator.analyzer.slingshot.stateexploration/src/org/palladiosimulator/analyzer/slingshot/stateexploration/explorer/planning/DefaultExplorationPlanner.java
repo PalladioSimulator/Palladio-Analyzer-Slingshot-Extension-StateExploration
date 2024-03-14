@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
@@ -7,7 +8,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
@@ -37,9 +37,13 @@ public class DefaultExplorationPlanner {
 	private final DefaultGraph rawgraph;
 	private final CutOffConcerns cutOffConcerns;
 
+	private final ProactivePolicyStrategy proactivePolicyStrategy;
+
 	public DefaultExplorationPlanner(final DefaultGraph graph) {
 		this.rawgraph = graph;
 		this.cutOffConcerns = new CutOffConcerns();
+
+		this.proactivePolicyStrategy = new BacktrackPolicyStrategy(this.rawgraph);
 
 		this.updateGraphFringePostSimulation(graph.getRoot());
 	}
@@ -104,6 +108,10 @@ public class DefaultExplorationPlanner {
 	 *
 	 * To be called after the given state was simulated.
 	 *
+	 * This is where the proactive / reactive / nop changes for future iterations
+	 * are set. If we want to add more proactive changes later on, this operation is
+	 * where we should insert them.
+	 *
 	 * @param start
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
@@ -115,73 +123,18 @@ public class DefaultExplorationPlanner {
 
 			// reactive reconf to the next state.
 			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
-
-			// reactive reconf at the previous state -> proactive reconf.
-			final Optional<ToDoChange> proactiveChange = createProactiveChange(start);
-
-			if (proactiveChange.isPresent()) {
-				this.rawgraph.addFringeEdge(proactiveChange.get());
-			}
 		}
 
-	}
+		// proactive reconf.
+		final List<ToDoChange> proactiveChanges = this.proactivePolicyStrategy.createProactiveChanges(start);
 
-	/**
-	 * Create a {@code ToDoChange} that applies the reactive reconfiguration, on
-	 * which {@code state} ended onto the first predecessor, which has no successor,
-	 * that starts on the application of that policy.
-	 *
-	 * @param state
-	 * @return
-	 */
-	private Optional<ToDoChange> createProactiveChange(final DefaultState state) {
-		final ModelAdjustmentRequested event = state.getSnapshot().getModelAdjustmentRequestedEvent().get();
-
-		DefaultState predecessor = state;
-
-		if (!this.rawgraph.getRoot().equals(state)) {
-			predecessor = getPredecessor(state);
+		for (final ToDoChange toDoChange : proactiveChanges) {
+			this.rawgraph.addFringeEdge(toDoChange);
 		}
-
-		while (policyAlreadyExploredAtState(predecessor, event.getScalingPolicy())) {
-			if (this.rawgraph.getRoot().equals(predecessor)) {
-				return Optional.empty();
-			}
-			predecessor = getPredecessor(predecessor);
-		}
-
-		return Optional.of(new ToDoChange(Optional.of(new ProactiveReconfiguration(event)), predecessor));
 	}
 
-	/**
-	 * Check whether {@code state} already transitioned to a successor, via the
-	 * given policy. Or wether it is already planned to explore that (i.e.
-	 * corresponding change in the fringe)
-	 *
-	 * @param state
-	 * @param policy
-	 * @return
-	 */
-	private boolean policyAlreadyExploredAtState(final DefaultState state, final ScalingPolicy policy) {
-		return state.hasOutTransitionFor(policy) || this.rawgraph.hasInFringe(state, policy);
-	}
 
-	/**
-	 * Get predecessor of the given state.
-	 *
-	 * Requires that {@code state} is not root.
-	 *
-	 * @param state
-	 * @return
-	 */
-	private DefaultState getPredecessor(final DefaultState state) {
-		assert !this.rawgraph.getRoot().equals(state);
 
-		return (DefaultState) rawgraph.getTransitions().stream()
-				.filter(t -> t.getTarget().equals(state))
-				.map(t -> t.getSource())
-				.findFirst().get();
-	}
 
 	/**
 	 * Create a new graph note with a new arch configuration.
