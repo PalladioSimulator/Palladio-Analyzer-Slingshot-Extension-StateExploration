@@ -30,4 +30,5 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
  org.palladiosimulator.analyzer.slingshot.planner,
  org.palladiosimulator.analyzer.slingshot.networking,
- org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data
+ org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
+ com.google.gson
