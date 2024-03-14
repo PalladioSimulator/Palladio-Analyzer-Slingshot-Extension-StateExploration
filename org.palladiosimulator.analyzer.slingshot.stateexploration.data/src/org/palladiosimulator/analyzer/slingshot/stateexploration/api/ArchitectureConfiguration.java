@@ -5,7 +5,7 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 
 /**
- * 
+ *
  *
  */
 public interface ArchitectureConfiguration extends ModelAccess {
