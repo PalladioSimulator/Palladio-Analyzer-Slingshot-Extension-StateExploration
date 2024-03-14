@@ -8,11 +8,11 @@ import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.common.base.Objects;
 
-public record StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements,
+public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
 		List<SLO> slos, Utility utility, String parentId, ScalingPolicy incomingPolicy) {
 	
-	public StateGraphNode(String id, List<Transition> outTransitions, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, String parentId, ScalingPolicy incomingPolicy) {
-		this(id, outTransitions, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId, incomingPolicy);	
+	public StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, String parentId, ScalingPolicy incomingPolicy) {
+		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId, incomingPolicy);	
 	}
 	
 	public double duration() {
@@ -47,24 +47,6 @@ public record StateGraphNode(String id, List<Transition> outTransitions, double 
 	
 	private static double calculateUtility(SLO slo, MeasurementSet ms) {
 		return slo.upperThreshold().doubleValue() - ms.getAverage();
-	}
-	
-	
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		StateGraphNode other = (StateGraphNode) obj;
-		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		return true;
 	}
 }
 

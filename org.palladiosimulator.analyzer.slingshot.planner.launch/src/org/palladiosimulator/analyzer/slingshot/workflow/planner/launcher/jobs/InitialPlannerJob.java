@@ -12,9 +12,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
-import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraph;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
-import org.palladiosimulator.analyzer.slingshot.planner.data.Transition;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
@@ -73,26 +71,8 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver,
 				this.configuration.getlaunchConfigParams(), monitor, this.blackboard);
-		final RawStateGraph rawGraph =  explorer.start();
-
-		// converting the RawStateGraph to the new Graph format
-		final StateGraph graph = StateGraphConverter.convert(rawGraph);
-
-		// TODO: run the planning here!
-		//PlannerRunner pr = new PlannerRunner(graph);
-		LOGGER.info("**** Planner started ****");
-
-		/**
-		LOGGER.info("*** JSON Representation ***");
-	    try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter("/tmp/state_graph_graphical_representation.json"));
-			writer.write(JsonExporter.getJSONString(test));
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	    LOGGER.info("*** JSON Represenation - Done ***");
-		*/
+		// Start exploration. On every explored state we send a message, which alloes the external planner component to react
+		explorer.start();
 
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.
 		
