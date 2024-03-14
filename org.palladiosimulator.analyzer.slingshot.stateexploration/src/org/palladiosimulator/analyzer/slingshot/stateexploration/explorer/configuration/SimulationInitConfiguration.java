@@ -21,14 +21,16 @@ public class SimulationInitConfiguration {
 
 	private final Optional<ScalingPolicy> policy;
 	private final Optional<DESEvent> event;
+	private final String parentId;
 
-	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore, final double explorationDuration, final ScalingPolicy policy, final DESEvent event) {
+	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore, final double explorationDuration, final ScalingPolicy policy, final DESEvent event, String parentId) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
 		this.policy = Optional.ofNullable(policy);
 		this.event = Optional.ofNullable(event);
+		this.parentId = parentId;
 	}
 
 	public Snapshot getSnapToInitOn() {
@@ -57,5 +59,9 @@ public class SimulationInitConfiguration {
 	 */
 	public Optional<DESEvent> getEvent() {
 		return this.event;
+	}
+	
+	public String getParentId() {
+		return this.parentId;
 	}
 }
