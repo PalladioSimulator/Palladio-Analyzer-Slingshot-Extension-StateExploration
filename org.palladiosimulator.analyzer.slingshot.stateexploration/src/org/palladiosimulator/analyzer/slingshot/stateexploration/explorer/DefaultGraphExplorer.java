@@ -89,7 +89,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 7; i++) { // just random.
+		for (int i = 0; i < 17; i++) { // just random.
 			LOGGER.warn("********** Iteration " + i + "**********");
 			if (!this.graph.hasNext()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
@@ -102,8 +102,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		LOGGER.warn("********** DefaultGraphExplorer is done :) **********");
 		LOGGER.warn("********** States : ");
 		this.graph.getStates()
-				.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
-						s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
+		.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
+				s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
 		LOGGER.warn("********** Transitions : ");
 		this.graph.getTransitions().stream().forEach(
 				t -> LOGGER.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
@@ -157,9 +157,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		LOGGER.warn("Start with Request to these Resources: ");
 		config.getSnapToInitOn().getEvents().stream().filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
-				.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
-						.getAllocationContext().getResourceContainer_AllocationContext().getId())
-				.forEach(id -> LOGGER.info(id));
+		.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
+				.getAllocationContext().getResourceContainer_AllocationContext().getId())
+		.forEach(id -> LOGGER.info(id));
 
 		if (config.getEvent().isPresent()) {
 			LOGGER.warn("Start with reactive Configuration.");
@@ -243,7 +243,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * configuration every time) Update the variation id for each simulation run,
 	 * because each variation id yields a new {@link ExperimentSetting} and each
 	 * setting is one alternative, which is quite befitting in our case.
-	 * 
+	 *
 	 * Ensures, that the max simulation time is larger than the interval duration,
 	 * otherwise {@link SimulationFinished} gets scheduled before
 	 * {@link SnapshotInitiated}.
@@ -280,7 +280,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	/**
 	 * Replace all resources in {@code initModels} with the resources from the
 	 * architecture configuration of the upcoming simulation run.
-	 * 
+	 *
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {

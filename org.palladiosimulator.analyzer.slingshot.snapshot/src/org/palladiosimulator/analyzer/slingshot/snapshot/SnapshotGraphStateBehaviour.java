@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import org.palladiosimulator.edp2.models.Repository.Repository;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
+import org.palladiosimulator.semanticspd.Configuration;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
@@ -74,18 +76,20 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	private final Allocation allocation;
 	private final MonitorRepository monitoring;
+	private final Configuration configuration;
 
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable SimuComConfig simuComConfig,
 			final @Nullable Set<DESEvent> eventsToInitOn, final Allocation allocation,
-			final MonitorRepository monitoring) {
+			final MonitorRepository monitoring, final Configuration configuration) {
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 		this.eventsToInitOn = eventsToInitOn;
 		this.allocation = allocation;
 		this.monitoring = monitoring;
+		this.configuration = configuration;
 
 		this.activated = this.halfDoneState != null && this.snapshotConfig != null && this.simuComConfig != null
 				&& eventsToInitOn != null;
@@ -250,10 +254,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 		if (!this.monitoring.getMonitors().isEmpty()) {
 			LOGGER.debug("monitors defined, updating Meassuring points");
-			MeasuringPointRepository mpRepo = this.monitoring.getMonitors().get(0).getMeasuringPoint()
+			final MeasuringPointRepository mpRepo = this.monitoring.getMonitors().get(0).getMeasuringPoint()
 					.getMeasuringPointRepository();
 			ResourceUtils.saveResource(mpRepo.eResource());
 		}
+
+		this.configuration.getEnactedPolicy().setActive(false);
+		ResourceUtils.saveResource(this.configuration.getEnactedPolicy().eContainer().eResource());
+		ResourceUtils.saveResource(this.configuration.eResource());
 
 		ResourceUtils.saveResource(this.allocation.eResource());
 		ResourceUtils.saveResource(this.allocation.getTargetResourceEnvironment_Allocation().eResource());
