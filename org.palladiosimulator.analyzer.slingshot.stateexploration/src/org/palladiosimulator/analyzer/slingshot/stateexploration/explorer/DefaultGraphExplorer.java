@@ -34,6 +34,7 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.pcm.allocation.AllocationPackage;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -169,8 +170,11 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// Post processing :
 		final DefaultState current = submodule.builder();
-		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(),
-				config.getEvent().orElseGet(() -> null).getScalingPolicy())));
+
+		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
+
+		systemDriver.postEvent(
+				new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 
