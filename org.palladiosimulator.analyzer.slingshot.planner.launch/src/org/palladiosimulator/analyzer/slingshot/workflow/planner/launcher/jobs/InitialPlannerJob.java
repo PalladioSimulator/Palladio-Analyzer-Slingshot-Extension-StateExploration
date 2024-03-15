@@ -1,11 +1,21 @@
 package org.palladiosimulator.analyzer.slingshot.workflow.planner.launcher.jobs;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
+import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.workflow.planner.configuration.PlannerWorkflowConfiguration;
@@ -61,13 +71,14 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver,
 				this.configuration.getlaunchConfigParams(), monitor, this.blackboard);
-		final RawStateGraph rawGraph =  explorer.start();
+		// Start exploration. On every explored state we send a message, which alloes the external planner component to react
+		explorer.start();
 
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.
-
+		
 		// PS: i actually end up here :)
 //		simulationDriver.init(simuComConfig, monitor);
-		monitor.worked(1);
+		monitor.worked(1);	
 
 		monitor.subTask("Start simulation");
 //		simulationDriver.start();

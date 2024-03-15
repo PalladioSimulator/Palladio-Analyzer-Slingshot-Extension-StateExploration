@@ -12,8 +12,10 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.even
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
+import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
+import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
@@ -61,6 +63,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final DefaultGraph graph;
 
 	private final IProgressMonitor monitor;
+
+	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
 
 	private final SimpleDirectedGraph jGraphGraph;
 
@@ -118,8 +122,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
 		final DefaultState root = new DefaultState(0.0, rootConfig);
+		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null, null)));
 		root.setSnapshot(initSnapshot);
-
 		return root;
 	}
 
@@ -165,6 +169,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// Post processing :
 		final DefaultState current = submodule.builder();
+		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(),
+				config.getEvent().orElseGet(() -> null).getScalingPolicy())));
 		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 
@@ -250,6 +256,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
 		launchConfigurationParams.put(SimuComConfig.VARIATION_ID, variation);
 		launchConfigurationParams.put(SimuComConfig.EXPERIMENT_RUN, this.graph.toString());
+		//launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
+
 
 		return new SimuComConfig(launchConfigurationParams, true);
 	}

@@ -2,7 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.confi
 
 import java.util.Optional;
 
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 
@@ -18,15 +18,18 @@ public class SimulationInitConfiguration {
 	private final DefaultState stateToExplore;
 	private final double explorationDuration;
 
-	private final Optional<DESEvent> event;
+	private final Optional<ModelAdjustmentRequested> event;
+	private final String parentId;
+
 
 	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore,
-			final double explorationDuration, final DESEvent event) {
+			final double explorationDuration, final ModelAdjustmentRequested event, final String parentId) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
 		this.event = Optional.ofNullable(event);
+		this.parentId = parentId;
 	}
 
 	public Snapshot getSnapToInitOn() {
@@ -44,7 +47,7 @@ public class SimulationInitConfiguration {
 	 *
 	 * @return the event
 	 */
-	public Optional<DESEvent> getEvent() {
+	public Optional<ModelAdjustmentRequested> getEvent() {
 		return this.event;
 	}
 
@@ -54,4 +57,7 @@ public class SimulationInitConfiguration {
 				+ ", explorationDuration=" + explorationDuration + ", event=" + event + "]";
 	}
 
+	public String getParentId() {
+		return this.parentId;
+	}
 }

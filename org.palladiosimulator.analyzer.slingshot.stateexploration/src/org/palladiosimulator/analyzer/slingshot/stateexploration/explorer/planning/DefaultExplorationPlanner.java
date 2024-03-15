@@ -87,16 +87,17 @@ public class DefaultExplorationPlanner {
 		final double duration = this.calculateRunDuration(start);
 
 		if (change.isEmpty()) {
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null);
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, start.getId());
 		}
 
 		if (change.get() instanceof final Reconfiguration reconf) {
 			LOGGER.debug("Create InitConfiguration for Reconfiguration (Pro- or Reactive)");
 
+
 			final ModelAdjustmentRequested initEvent = (new AdjustorEventConcerns(end.getArchitecureConfiguration()))
 					.copy(reconf.getReactiveReconfigurationEvent());
 
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvent);
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvent, start.getId());
 
 		}
 
