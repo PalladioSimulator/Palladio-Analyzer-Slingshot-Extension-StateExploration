@@ -4,7 +4,11 @@
    <extension
          point="org.palladiosimulator.analyzer.slingshot">
       <slingshot-extension
-            module="org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ExplorationModule"></slingshot-extension>
+            module="org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ExplorationModule">
+      </slingshot-extension>
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.AdditionalConfigurationModule">
+      </slingshot-extension>
    </extension>
 
 </plugin>

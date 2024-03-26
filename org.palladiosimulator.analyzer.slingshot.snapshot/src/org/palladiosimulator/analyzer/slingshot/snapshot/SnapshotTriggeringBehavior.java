@@ -10,6 +10,7 @@ import javax.measure.quantity.Duration;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
@@ -46,13 +47,20 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 	private final int minNumberOfMeasurementsForAvg = 5;
 
+	private final boolean activated;
 
 	@Inject
-	public SnapshotTriggeringBehavior(final DefaultState state, final SimulationScheduling scheduling) {
+	public SnapshotTriggeringBehavior(final @Nullable DefaultState state, final SimulationScheduling scheduling) {
 		this.state = state;
 		this.scheduling = scheduling;
+
+		this.activated = state != null;
 	}
 
+	@Override
+	public boolean isActive() {
+		return this.activated;
+	}
 
 	@Subscribe
 	public Result<SnapshotInitiated> onMeasurementMade(final MeasurementMade event) {

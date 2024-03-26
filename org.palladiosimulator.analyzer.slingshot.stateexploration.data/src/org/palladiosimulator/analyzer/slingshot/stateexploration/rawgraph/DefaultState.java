@@ -30,6 +30,10 @@ public class DefaultState implements RawModelState {
 
 	/* known at the end */
 	private double duration;
+	/**
+	 * at first misused to get the snapshot to init on into the simulation. Later on
+	 * set to the actual snapshot of the events at the end of this state.
+	 */
 	private Snapshot snapshot;
 	private ReasonToLeave reasonToLeave;
 	private boolean decreaseInterval = false;
