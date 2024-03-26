@@ -16,7 +16,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.Usage
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
-import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
@@ -32,12 +31,12 @@ import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRe
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.Repository.Repository;
-import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.semanticspd.Configuration;
@@ -149,16 +148,25 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
 			final SimulationStarted event) {
 
-		if (information.getEnclosingType().isPresent() && ((snapshotConfig.isStartFromSnapshot()
-				&& information.getEnclosingType().get().equals(this.getClass()))
-				|| (!snapshotConfig.isStartFromSnapshot()
-						&& !information.getEnclosingType().get().equals(this.getClass())))) {
-			LOGGER.debug(String.format("Route %s to %s", event.getName(),
-					information.getEnclosingType().get().getSimpleName()));
-			return InterceptionResult.success();
+		if (!information.getEnclosingType().isPresent()) { // should not happen, right?
+			return InterceptionResult.abort(); // won't be delivered.
 		}
 
-		return InterceptionResult.abort(); // won't be delivered.
+		if (information.getEnclosingType().get().equals(this.getClass())) {
+			// delievering to this class
+			if (!this.eventsToInitOn.isEmpty()) {
+				return InterceptionResult.success();
+			} else {
+				return InterceptionResult.abort(); // won't be delivered.
+			}
+		} else {
+			// delivering e.g. to another class.
+			if (snapshotConfig.isStartFromSnapshot()) {
+				return InterceptionResult.abort();
+			} else {
+				return InterceptionResult.success(); // won't be delivered.
+			}
+		}
 	}
 
 	/**
@@ -238,40 +246,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Save state to file, because reconfiguration now happens at runtime, i.e. not
-	 * yet propagated to file.
+	 * Update persisted model files, because reconfiguration now happens at runtime,
+	 * i.e. not yet propagated to file.
 	 *
 	 * @param modelAdjusted
 	 */
 	@Subscribe
 	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
-		// beware: das hier sind andere modelle in der archconfig, als die, die provided
-		// werden!!
-		// weil ich die instanzen aus der archconfig raus nehmen musste um sie in die
-		// provider rein zu kriegen.
-
-		ResourceUtils.saveResource(this.monitoring.eResource());
-
-		if (!this.monitoring.getMonitors().isEmpty()) {
-			LOGGER.debug("monitors defined, updating Meassuring points");
-			final MeasuringPointRepository mpRepo = this.monitoring.getMonitors().get(0).getMeasuringPoint()
-					.getMeasuringPointRepository();
-			ResourceUtils.saveResource(mpRepo.eResource());
-		}
-
-		this.configuration.getEnactedPolicy().setActive(false);
-		ResourceUtils.saveResource(this.configuration.getEnactedPolicy().eContainer().eResource());
-		ResourceUtils.saveResource(this.configuration.eResource());
-
-		ResourceUtils.saveResource(this.allocation.eResource());
-		ResourceUtils.saveResource(this.allocation.getTargetResourceEnvironment_Allocation().eResource());
-		ResourceUtils.saveResource(this.allocation.getSystem_Allocation().eResource());
-		ResourceUtils.saveResource(this.allocation.getSystem_Allocation().getAssemblyContexts__ComposedStructure()
-				.get(0).getEncapsulatedComponent__AssemblyContext().getRepository__RepositoryComponent().eResource());
-
-		// Do NOT save the ScalingPolicyies, cause that would get the oneTrickPony into
-		// the persisted Rules.
-
+		ArchitectureConfigurationUtil.saveWhitelisted(this.allocation.eResource().getResourceSet());
 	}
 
 	/**

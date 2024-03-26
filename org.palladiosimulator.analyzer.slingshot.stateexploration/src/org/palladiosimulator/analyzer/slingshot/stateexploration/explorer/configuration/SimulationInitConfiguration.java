@@ -2,10 +2,9 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.confi
 
 import java.util.Optional;
 
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  *
@@ -19,16 +18,16 @@ public class SimulationInitConfiguration {
 	private final DefaultState stateToExplore;
 	private final double explorationDuration;
 
-	private final Optional<ScalingPolicy> policy;
-	private final Optional<DESEvent> event;
+	private final Optional<ModelAdjustmentRequested> event;
 	private final String parentId;
 
-	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore, final double explorationDuration, final ScalingPolicy policy, final DESEvent event, String parentId) {
+
+	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore,
+			final double explorationDuration, final ModelAdjustmentRequested event, final String parentId) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
-		this.policy = Optional.ofNullable(policy);
 		this.event = Optional.ofNullable(event);
 		this.parentId = parentId;
 	}
@@ -44,23 +43,20 @@ public class SimulationInitConfiguration {
 	}
 
 	/**
-	 * Get policy for proactive reconfiguration transition.
-	 *
-	 * @return the policy
-	 */
-	public Optional<ScalingPolicy> getPolicy() {
-		return this.policy;
-	}
-
-	/**
 	 * Get ScalingEvent for reactive reconfiguration transition
 	 *
 	 * @return the event
 	 */
-	public Optional<DESEvent> getEvent() {
+	public Optional<ModelAdjustmentRequested> getEvent() {
 		return this.event;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "SimulationInitConfiguration [snapToInitOn=" + snapToInitOn + ", stateToExplore=" + stateToExplore
+				+ ", explorationDuration=" + explorationDuration + ", event=" + event + "]";
+	}
+
 	public String getParentId() {
 		return this.parentId;
 	}

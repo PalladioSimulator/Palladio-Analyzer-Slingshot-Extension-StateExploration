@@ -1,27 +1,15 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.change.api;
 
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 
 /**
  *
  *
  */
-public class ReactiveReconfiguration implements Change {
+public class ReactiveReconfiguration extends Reconfiguration {
 
-
-	private final DESEvent event;
-
-	public ReactiveReconfiguration(final DESEvent event) {
-		super();
-		this.event = event;
+	public ReactiveReconfiguration(final ModelAdjustmentRequested event) {
+		super(event);
 	}
 
-	public DESEvent getReactiveReconfigurationEvent() {
-		return event;
-	}
-
-	@Override
-	public String toString() {
-		return String.format("%s-reconfiguration", event.getName());
-	}
 }

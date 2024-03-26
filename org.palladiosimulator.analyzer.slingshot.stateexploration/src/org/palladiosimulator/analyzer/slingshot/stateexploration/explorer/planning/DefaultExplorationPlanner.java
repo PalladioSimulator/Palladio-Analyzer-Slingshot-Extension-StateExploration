@@ -1,11 +1,13 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
@@ -33,15 +35,15 @@ public class DefaultExplorationPlanner {
 	private static final Logger LOGGER = Logger.getLogger(DefaultExplorationPlanner.class.getName());
 
 	private final DefaultGraph rawgraph;
-	private final ScalingPolicyConcerns changeApplicator;
-	private final AdjustorEventConcerns adjustorEventConcerns;
 	private final CutOffConcerns cutOffConcerns;
 
-	public DefaultExplorationPlanner(final SPD spd, final DefaultGraph graph) {
+	private final ProactivePolicyStrategy proactivePolicyStrategy;
+
+	public DefaultExplorationPlanner(final DefaultGraph graph) {
 		this.rawgraph = graph;
-		this.changeApplicator = new ScalingPolicyConcerns();
-		this.adjustorEventConcerns = new AdjustorEventConcerns();
 		this.cutOffConcerns = new CutOffConcerns();
+
+		this.proactivePolicyStrategy = new BacktrackPolicyStrategy(this.rawgraph);
 
 		this.updateGraphFringePostSimulation(graph.getRoot());
 	}
@@ -57,7 +59,7 @@ public class DefaultExplorationPlanner {
 		ToDoChange next = this.rawgraph.getNext();
 
 		while (!this.cutOffConcerns.shouldExplore(next)) {
-			LOGGER.debug(String.format("Future %s is bad, wont explore.", next.toString()));
+			LOGGER.debug(String.format("Future %s is bad, won't explore.", next.toString()));
 			// TODO : Exception if the entire fringe is bad.
 			next = this.rawgraph.getNext();
 		}
@@ -65,29 +67,38 @@ public class DefaultExplorationPlanner {
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
 
-		final double duration = this.calculateRunDuration(start);
-
 		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
 
-		// different handling depending of type of change.
-		if (next.getChange().isEmpty()) {
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, null, start.getId());
+		return createConfigBasedOnChange(next.getChange(), start, end);
+
+	}
+
+	/**
+	 *
+	 *
+	 * @param change
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	private SimulationInitConfiguration createConfigBasedOnChange(final Optional<Change> change,
+			final DefaultState start, final DefaultState end) {
+
+		final double duration = this.calculateRunDuration(start);
+
+		if (change.isEmpty()) {
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, start.getId());
 		}
 
-		if (next.getChange().get() instanceof final ReactiveReconfiguration reactiveReconf) {
-			LOGGER.debug("Reactive Reconfiguration : Update Target Group");
+		if (change.get() instanceof final Reconfiguration reconf) {
+			LOGGER.debug("Create InitConfiguration for Reconfiguration (Pro- or Reactive)");
 
-			final DESEvent initEvent = this.adjustorEventConcerns.copyForTargetGroup(
-					reactiveReconf.getReactiveReconfigurationEvent(), end.getArchitecureConfiguration());
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, initEvent, start.getId());
-		}
 
-		if (next.getChange().get() instanceof final Reconfiguration reconf) {
-			LOGGER.debug("Proactive Reconfiguration : create scalingpolicy for one time usage");
+			final ModelAdjustmentRequested initEvent = (new AdjustorEventConcerns(end.getArchitecureConfiguration()))
+					.copy(reconf.getReactiveReconfigurationEvent());
 
-			final ScalingPolicy initPolicy = this.changeApplicator
-					.createOneTimeUsageScalingPolicy(reconf.getScalingPolicy(), end.getArchitecureConfiguration());
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initPolicy, null, start.getId());
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvent, start.getId());
+
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");
@@ -98,32 +109,41 @@ public class DefaultExplorationPlanner {
 	 *
 	 * To be called after the given state was simulated.
 	 *
+	 * This is where the proactive / reactive / nop changes for future iterations
+	 * are set. If we want to add more proactive changes later on, this operation is
+	 * where we should insert them.
+	 *
 	 * @param start
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
-		// NOP
+		// NOP Always
 		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
-		// Reactive Reconfiguration
+		// Reactive Reconfiguration - Always.
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
-			final DESEvent event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
+			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
 
-			this.rawgraph.addFringeEdge(
-					new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+			// reactive reconf to the next state.
+			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
-		// Proactive Reconfiguration
-		for (final ScalingPolicy scalingPolicy : this.changeApplicator.getExplorationPolicyTemplates()) {
-			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new Reconfiguration(scalingPolicy)), start));
+
+		// proactive reconf.
+		final List<ToDoChange> proactiveChanges = this.proactivePolicyStrategy.createProactiveChanges(start);
+
+		for (final ToDoChange toDoChange : proactiveChanges) {
+			this.rawgraph.addFringeEdge(toDoChange);
 		}
 	}
+
+
+
 
 	/**
 	 * Create a new graph note with a new arch configuration.
 	 *
-	 * creating a fully connected Graph node encompasses :
-	 * - copying architecture configuration from preceding state.
-	 * - setting the start time of the new node wrt. global time.
-	 * - adding the node to the graph's node list.
-	 * - creating transition to connect new node t predecessor.
+	 * creating a fully connected Graph node encompasses : - copying architecture
+	 * configuration from preceding state. - setting the start time of the new node
+	 * wrt. global time. - adding the node to the graph's node list. - creating
+	 * transition to connect new node t predecessor.
 	 *
 	 * @return a new node, connected to its predecessor in graph.
 	 */
@@ -158,10 +178,10 @@ public class DefaultExplorationPlanner {
 	 * Reduces the {@link ExpectedTime} value for scaling policies with trigger
 	 * stimulus {@link SimulationTime} or deactivates the policy if the trigger is
 	 * in the past with regard to global time.
-	 * 
+	 *
 	 * The {@link ExpectedTime} value is reduced by the duration of the previous
 	 * state.
-	 * 
+	 *
 	 * @param spd    current scaling rules.
 	 * @param offset duration of the previous state
 	 */
@@ -169,10 +189,10 @@ public class DefaultExplorationPlanner {
 
 		// get all triggers on Fixed point in time.
 		spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).map(policy -> policy.getScalingTrigger())
-				.filter(BaseTrigger.class::isInstance).map(BaseTrigger.class::cast)
-				.filter(trigger -> trigger.getStimulus() instanceof SimulationTime)
-				.map(trigger -> trigger.getExpectedValue()).filter(ExpectedTime.class::isInstance)
-				.map(ExpectedTime.class::cast).forEach(time -> this.updateValue(time, offset));
+		.filter(BaseTrigger.class::isInstance).map(BaseTrigger.class::cast)
+		.filter(trigger -> trigger.getStimulus() instanceof SimulationTime)
+		.map(trigger -> trigger.getExpectedValue()).filter(ExpectedTime.class::isInstance)
+		.map(ExpectedTime.class::cast).forEach(time -> this.updateValue(time, offset));
 
 		ResourceUtils.saveResource(spd.eResource());
 	}

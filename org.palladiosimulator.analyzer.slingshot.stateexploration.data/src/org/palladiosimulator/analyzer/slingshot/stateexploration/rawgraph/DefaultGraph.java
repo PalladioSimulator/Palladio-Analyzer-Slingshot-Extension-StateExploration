@@ -7,6 +7,8 @@ import java.util.Set;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  * Default implementation of the RawStateGraph.
@@ -42,9 +44,7 @@ public class DefaultGraph implements RawStateGraph{
 	 * @return
 	 */
 	public ToDoChange getNext() {
-		final ToDoChange todochange = this.fringe.poll();
-		//((BloatedState) edge.getSource()).addOutTransition(edge);
-		return todochange;
+		return this.fringe.poll();
 	}
 
 	/**
@@ -65,6 +65,16 @@ public class DefaultGraph implements RawStateGraph{
 	 */
 	public void addFringeEdge(final ToDoChange edge) {
 		fringe.add(edge);
+	}
+
+	public boolean hasInFringe(final DefaultState state, final ScalingPolicy matchee) {
+		return this.fringe.stream()
+				.filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent()
+						&& todo.getChange().get() instanceof final Reconfiguration r)
+				.map(todo -> ((Reconfiguration) todo.getChange().get()).getAppliedPolicy())
+				.filter(policy -> policy.getId().equals(matchee.getId()))
+				.findAny().isPresent();
+
 	}
 
 	@Override

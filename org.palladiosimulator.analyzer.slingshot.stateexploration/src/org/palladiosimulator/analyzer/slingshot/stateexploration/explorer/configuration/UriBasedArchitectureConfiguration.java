@@ -4,13 +4,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
@@ -18,6 +16,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringpointPackage;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
@@ -42,12 +41,12 @@ import org.palladiosimulator.spd.SpdPackage;
  *
  * A {@link ArchitectureConfiguration} represents a set of PCM models for one
  * state in the state exploration.
- * 
+ *
  * For this {@link UriBasedArchitectureConfiguration}, all PCM models are
  * always persisted to the file system. I.e. this configuration represents (and
  * gives access) to a set of PCM-Models, as they are persisted in the file
  * system.
- * 
+ *
  *
  * @author stiesssh
  *
@@ -64,25 +63,20 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 	private final String idSegment;
 
-	private static final Set<EClass> MODEL_ECLASS_WHITELIST = Set.of(RepositoryPackage.eINSTANCE.getRepository(),
-			AllocationPackage.eINSTANCE.getAllocation(), UsagemodelPackage.eINSTANCE.getUsageModel(),
-			SystemPackage.eINSTANCE.getSystem(), ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment(),
-			MonitorRepositoryPackage.eINSTANCE.getMonitorRepository(),
-			MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository(), SpdPackage.eINSTANCE.getSPD(),
-			SemanticspdPackage.eINSTANCE.getConfiguration(),
-			ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository());
+
 
 	/**
 	 * Create a new {@code ArchitectureConfiguration}.
-	 * 
+	 *
 	 * Beware: Intended to be called by this class' {@code copy} operation only.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param uris
 	 * @param idSegment
 	 */
 	private UriBasedArchitectureConfiguration(final Map<EClass, URI> uris, final String idSegment) {
-		assert uris.keySet().containsAll(MODEL_ECLASS_WHITELIST) : "Missing EClass mappings";
+		assert uris.keySet().containsAll(ArchitectureConfigurationUtil.MODEL_ECLASS_WHITELIST)
+		: "Missing EClass mappings";
 
 		this.uris = uris;
 		this.idSegment = idSegment;
@@ -93,7 +87,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * Create a new {@code ArchitectureConfiguration} representing the architecture
 	 * configuration at the very beginning of the exploration, i.e. the architecture
 	 * configuration of the stategraph's root node.
-	 * 
+	 *
 	 * @param set
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
@@ -103,10 +97,10 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 	/**
 	 * Fills the {@code uris} map of this {@code ArchitectureConfiguration}.
-	 * 
+	 *
 	 * Ensures, that {@code uris} contains a mapping for all white listed model
 	 * classes.
-	 * 
+	 *
 	 * @param set ResourceSet to be filled into {@code uris}.
 	 * @throws IllegalArgumentException if any Resource in the given ResourceSet is
 	 *                                  empty.
@@ -120,7 +114,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 						String.format("Empty resource for : %s.", resource.getURI().toString()));
 			}
 
-			if (MODEL_ECLASS_WHITELIST.contains(resource.getContents().get(0).eClass())) {
+			if (ArchitectureConfigurationUtil.MODEL_ECLASS_WHITELIST.contains(resource.getContents().get(0).eClass())) {
 				map.put(resource.getContents().get(0).eClass(), resource.getURI());
 			}
 		}
@@ -130,19 +124,19 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 	/**
 	 * Get a model from the {@link Resource} with the given URI.
-	 * 
+	 *
 	 * Create a {@link Resource} with the given URI if it does not exist. Load the
 	 * resources, if its contents are empty (should not happen).
-	 * 
+	 *
 	 * Resolves all Proxies in the model by loading referenced models into the
 	 * resources.
-	 * 
+	 *
 	 * @param <T> type of the model
 	 * @param uri uri of the {@link Resource} to be accessed.
 	 * @return model from the {@link Resource} with the given URI.
 	 */
 	private final <T> T get(final URI uri) {
-		Resource res = this.set.getResource(uri, true);
+		final Resource res = this.set.getResource(uri, true);
 
 		if (res.getContents().isEmpty()) {
 			try {
@@ -162,24 +156,24 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 	/**
 	 * load all URIs
-	 * 
+	 *
 	 * ensure all proxies are resolved and all resources in the set are loaded i.e.
 	 * !getContents().isEmpty()
-	 * 
+	 *
 	 */
 	private void load() {
-		for (URI uri : uris.values()) {
+		for (final URI uri : uris.values()) {
 			this.get(uri);
 		}
 	}
 
 	/**
 	 * Creates a copy of this architecture Configuration.
-	 * 
+	 *
 	 * The copy is created by saving all models of this configuration to a new
 	 * location in the file system, and setting the EClass to URI mappings of the
 	 * copy such that they are pointing to the copied model in the file system.
-	 * 
+	 *
 	 */
 	@Override
 	public UriBasedArchitectureConfiguration copy() {
@@ -188,8 +182,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 		this.load(); // 1. ensure that load all models are loaded.
 
-		final List<Resource> whitelisted = set.getResources().stream()
-				.filter(r -> this.shallbeSaved(r.getContents().get(0))).toList();
+		final List<Resource> whitelisted = ArchitectureConfigurationUtil.getWhitelistedModels(this.set);
 		final Map<EClass, URI> copyUris = new HashMap<>();
 
 		// 2. update paths
@@ -202,10 +195,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		}
 
 		// 3. save to new path
-		for (final Resource resource : whitelisted) {
-			System.out.println("tryinto save" + resource.getURI().toString());
-			ResourceUtils.saveResource(resource);
-		}
+		ArchitectureConfigurationUtil.saveWhitelisted(this.set);
 
 		// 4. reset URIs to old values.
 		for (final Resource resource : whitelisted) {
@@ -242,13 +232,6 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	@Override
 	public ResourceSet getResourceSet() {
 		return this.set;
-	}
-
-	private boolean shallbeSaved(final EObject model) {
-		assert model != null;
-
-		return MODEL_ECLASS_WHITELIST.stream().anyMatch(allowedEClass -> allowedEClass == model.eClass());
-
 	}
 
 	@Override

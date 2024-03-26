@@ -10,7 +10,6 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
-import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -35,6 +34,7 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.pcm.allocation.AllocationPackage;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -64,7 +64,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final DefaultGraph graph;
 
 	private final IProgressMonitor monitor;
-	
+
 	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
 
 	private final SimpleDirectedGraph jGraphGraph;
@@ -83,8 +83,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
 		this.graph = new DefaultGraph(this.createRoot());
-
-		this.blackbox = new DefaultExplorationPlanner(PCMResourcePartitionHelper.getSPD(partition), this.graph);
+		this.blackbox = new DefaultExplorationPlanner(this.graph);
 
 		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
 	}
@@ -93,7 +92,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 17; i++) { // just random.
+		for (int i = 0; i < 21; i++) { // just random.
 			LOGGER.warn("********** Iteration " + i + "**********");
 			if (!this.graph.hasNext()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
@@ -143,8 +142,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final SimuComConfig simuComConfig = this.prepareSimuComConfig(
 				config.getStateToExplore().getArchitecureConfiguration().getSegment(), config.getExplorationDuration());
 		// ????
-		final SnapshotConfiguration snapConfig = createSnapConfig(config.getExplorationDuration(),
-				!config.getSnapToInitOn().getEvents().isEmpty());
+		final SnapshotConfiguration snapConfig = createSnapConfig(config);
 
 		// TODO *somehow* get this submodule into the driver, such that it will be
 		// provided D:
@@ -165,22 +163,18 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.getAllocationContext().getResourceContainer_AllocationContext().getId())
 		.forEach(id -> LOGGER.info(id));
 
-		if (config.getEvent().isPresent()) {
-			LOGGER.warn("Start with reactive Configuration.");
-		}
-		if (config.getPolicy().isPresent()) {
-			LOGGER.warn("Start with proactive Configuration.");
-		}
-		if (config.getEvent().isEmpty() && config.getPolicy().isEmpty()) {
-			LOGGER.warn("Start after intervall transition.");
-		}
+		LOGGER.warn("start on config" + config.toString());
 
 		driver.init(simuComConfig, monitor, Set.of(submodule));
 		driver.start();
 
 		// Post processing :
 		final DefaultState current = submodule.builder();
-		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), config.getPolicy().orElseGet(() -> null))));
+
+		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
+
+		systemDriver.postEvent(
+				new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 
@@ -280,8 +274,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param init     wether or not to init on a snapshot.
 	 * @return
 	 */
-	private SnapshotConfiguration createSnapConfig(final double interval, final boolean init) {
-		return new SnapshotConfiguration(interval, init, 0.5);
+	private SnapshotConfiguration createSnapConfig(final SimulationInitConfiguration config) {
+
+		final double interval = config.getExplorationDuration();
+
+		final boolean notRootSuccesor = this.graph.getRoot().getOutTransitions().stream()
+				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
+
+		return new SnapshotConfiguration(interval, notRootSuccesor, 0.5);
 	}
 
 	/**
@@ -292,11 +292,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
 		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
-
-		/* add initial ScalingPolicy, if present */
-		if (config.getPolicy().isPresent()) {
-			PCMResourcePartitionHelper.getSPD(initModels).getScalingPolicies().add(config.getPolicy().get());
-		}
 
 		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
 				.getInstance(PCMResourceSetPartitionProvider.class);

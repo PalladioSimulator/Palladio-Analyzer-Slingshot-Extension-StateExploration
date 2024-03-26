@@ -14,4 +14,6 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  org.palladiosimulator.analyzer.slingshot.snapshot.data,
  org.palladiosimulator.servicelevelobjective,
  org.palladiosimulator.spd.semantic,
- org.jgrapht.core;bundle-version="1.5.0"
+ org.jgrapht.core;bundle-version="1.5.0",
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
+ org.palladiosimulator.analyzer.slingshot.common.utils
