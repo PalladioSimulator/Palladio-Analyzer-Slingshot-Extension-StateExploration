@@ -69,6 +69,8 @@ public class DefaultExplorationPlanner {
 
 		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
 
+		end.setSnapshot(start.getSnapshot()); // get the old snapshot into the next simulation run.
+
 		return createConfigBasedOnChange(next.getChange(), start, end);
 
 	}

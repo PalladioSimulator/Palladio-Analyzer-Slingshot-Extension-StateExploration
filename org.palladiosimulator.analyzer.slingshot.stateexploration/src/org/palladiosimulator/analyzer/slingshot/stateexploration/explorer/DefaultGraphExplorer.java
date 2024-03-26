@@ -9,7 +9,6 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -29,15 +28,13 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.config
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.pcm.allocation.AllocationPackage;
 import org.palladiosimulator.spd.ScalingPolicy;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
@@ -144,14 +141,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config);
 
-		// TODO *somehow* get this submodule into the driver, such that it will be
-		// provided D:
-		final SubModule submodule = new SubModule(config, snapConfig);
-
-		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
-		// Provider blckboard here, or provide it somewhere else?
-		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
-
 		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
 
 		LOGGER.warn("Run on Models at: " + config.getStateToExplore().getArchitecureConfiguration()
@@ -165,70 +154,23 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		LOGGER.warn("start on config" + config.toString());
 
-		driver.init(simuComConfig, monitor, Set.of(submodule));
+		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
+		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
+
+		AdditionalConfigurationModule.defaultStateProvider.set(config.getStateToExplore());
+		AdditionalConfigurationModule.snapConfigProvider.set(snapConfig);
+
+		driver.init(simuComConfig, monitor);
 		driver.start();
 
 		// Post processing :
-		final DefaultState current = submodule.builder();
+		final DefaultState current = config.getStateToExplore();
 
 		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
 
 		systemDriver.postEvent(
 				new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
-	}
-
-	/**
-	 *
-	 * @author stiesssh
-	 *
-	 */
-	private class SubModule extends AbstractModule {
-
-		private final Snapshot snapToInitOn;
-		private final DefaultState currentPartialState;
-		private final SnapshotConfiguration snapshotConfiguration;
-
-		private final Set<DESEvent> eventToInitOn;
-
-		public SubModule(final SimulationInitConfiguration config, final SnapshotConfiguration snapshotConfiguration) {
-
-			this.snapToInitOn = config.getSnapToInitOn();
-			this.currentPartialState = config.getStateToExplore();
-			this.snapshotConfiguration = snapshotConfiguration;
-
-			this.eventToInitOn = snapToInitOn.getEvents();
-
-			if (config.getEvent().isPresent()) {
-				this.eventToInitOn.add(config.getEvent().get());
-			}
-		}
-
-		// PCM instance and SimuComConfig already provided via other means.
-		@Provides
-		public Snapshot snapToInitOn() {
-			return snapToInitOn;
-		}
-
-		@Provides
-		public Set<DESEvent> EventToInitOn() {
-			return eventToInitOn;
-		}
-
-		@Provides
-		public DefaultState builder() {
-			return currentPartialState;
-		}
-
-		@Provides
-		public SnapshotConfiguration snapshotConfig() {
-			return snapshotConfiguration;
-		}
-
-		@Override
-		protected void configure() {
-		}
-
 	}
 
 	/**

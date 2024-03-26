@@ -37,9 +37,7 @@ import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.Repository.Repository;
-import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
-import org.palladiosimulator.semanticspd.Configuration;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
@@ -74,24 +72,24 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	private final boolean activated;
 
 	private final Allocation allocation;
-	private final MonitorRepository monitoring;
-	private final Configuration configuration;
 
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable SimuComConfig simuComConfig,
-			final @Nullable Set<DESEvent> eventsToInitOn, final Allocation allocation,
-			final MonitorRepository monitoring, final Configuration configuration) {
+			final Allocation allocation) {
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
-		this.eventsToInitOn = eventsToInitOn;
 		this.allocation = allocation;
-		this.monitoring = monitoring;
-		this.configuration = configuration;
 
-		this.activated = this.halfDoneState != null && this.snapshotConfig != null && this.simuComConfig != null
-				&& eventsToInitOn != null;
+		this.activated = this.halfDoneState != null && this.snapshotConfig != null && this.simuComConfig != null;
+
+		if (activated && halfDoneState.getSnapshot() != null) {
+			this.eventsToInitOn = halfDoneState.getSnapshot().getEvents();
+			this.halfDoneState.setSnapshot(null);
+		} else {
+			this.eventsToInitOn = null;
+		}
 
 		this.event2offset = new HashMap<>();
 	}
