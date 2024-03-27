@@ -39,8 +39,11 @@ public class DefaultExplorationPlanner {
 
 	private final ProactivePolicyStrategy proactivePolicyStrategy;
 
-	public DefaultExplorationPlanner(final DefaultGraph graph) {
+	private final double minDuration;
+
+	public DefaultExplorationPlanner(final DefaultGraph graph, final double minDuration) {
 		this.rawgraph = graph;
+		this.minDuration = minDuration;
 		this.cutOffConcerns = new CutOffConcerns();
 
 		this.proactivePolicyStrategy = new BacktrackPolicyStrategy(this.rawgraph);
@@ -171,7 +174,7 @@ public class DefaultExplorationPlanner {
 	 */
 	private double calculateRunDuration(final DefaultState previous) {
 		if (previous.getDuration() == 0 || previous.isDecreaseInterval()) {
-			return 21.5; // Evil. Should be something scraped from launch configuration
+			return minDuration;
 		}
 		return 2 * previous.getDuration();
 	}

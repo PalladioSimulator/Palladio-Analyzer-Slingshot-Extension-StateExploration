@@ -26,6 +26,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransiti
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.AdditionalConfigurationModule;
@@ -80,7 +81,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
 		this.graph = new DefaultGraph(this.createRoot());
-		this.blackbox = new DefaultExplorationPlanner(this.graph);
+		this.blackbox = new DefaultExplorationPlanner(this.graph, this.getMinDuration());
 
 		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
 	}
@@ -89,7 +90,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public RawStateGraph start() {
 		LOGGER.info("********** DefaultGraphExplorer.start **********");
 
-		for (int i = 0; i < 21; i++) { // just random.
+		for (int i = 0; i < this.getMaxIterations(); i++) { // just random.
 			LOGGER.warn("********** Iteration " + i + "**********");
 			if (!this.graph.hasNext()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
@@ -171,6 +172,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		systemDriver.postEvent(
 				new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
+
+		// reset Additional Configurations
+		AdditionalConfigurationModule.reset();
 	}
 
 	/**
@@ -238,6 +242,32 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
 				.getInstance(PCMResourceSetPartitionProvider.class);
 		provider.set(this.initModels); // this is probably not needed.
+	}
+
+	/**
+	 * Get {@link ExplorationConfiguration.MAX_EXPLORATION_CYCLES} from launch
+	 * configuration parameters map.
+	 *
+	 * @return number of max exploration cycles
+	 */
+	private int getMaxIterations() {
+		final String maxIteration = (String) launchConfigurationParams
+				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES);
+
+		return Integer.valueOf(maxIteration);
+	}
+
+	/**
+	 * Get {@link ExplorationConfiguration.MIN_STATE_DURATION} from launch
+	 * configuration parameters map.
+	 *
+	 * @return min duration of a exploration cycles
+	 */
+	private double getMinDuration() {
+		final String minDuration = (String) launchConfigurationParams
+				.get(ExplorationConfiguration.MIN_STATE_DURATION);
+
+		return Double.valueOf(minDuration);
 	}
 
 }
