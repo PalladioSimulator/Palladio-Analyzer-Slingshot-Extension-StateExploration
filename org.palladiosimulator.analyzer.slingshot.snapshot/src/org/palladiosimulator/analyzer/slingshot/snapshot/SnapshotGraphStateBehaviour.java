@@ -20,6 +20,7 @@ import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigu
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
+import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
@@ -69,6 +70,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	/* helper */
 	private final Map<UsageModelPassedElement<?>, Double> event2offset;
 
+	private final Map<String, IntervalPassed> resourceContainer2intervalPassed;
+
 	private final boolean activated;
 
 	private final Allocation allocation;
@@ -92,6 +95,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		}
 
 		this.event2offset = new HashMap<>();
+		this.resourceContainer2intervalPassed = new HashMap<>();
 	}
 
 	@Override
@@ -127,6 +131,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		assert snapshotConfig.isStartFromSnapshot();
 
 		this.initOffsets(this.eventsToInitOn);
+		this.initIntervallPased(this.eventsToInitOn);
 		return Result.of(this.eventsToInitOn);
 	}
 
@@ -183,6 +188,23 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 			// adjust time for fakes - it's already past scheduling, thus no one really
 			// cares.
 		}
+		return InterceptionResult.success();
+	}
+
+	@PreIntercept
+	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
+			final IntervalPassed event) {
+		if (resourceContainer2intervalPassed.isEmpty()) {
+			return InterceptionResult.success();
+		}
+
+		final String target = event.getTargetResourceContainer().getId();
+
+		if (resourceContainer2intervalPassed.containsKey(target)) {
+			resourceContainer2intervalPassed.remove(target);
+			return InterceptionResult.abort();
+		}
+
 		return InterceptionResult.success();
 	}
 
@@ -266,5 +288,11 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 			event2offset.put((UsageModelPassedElement<?>) event, event.time());
 			event.setTime(0);
 		});
+	}
+
+	private void initIntervallPased(final Set<DESEvent> events) {
+		events.stream().filter(event -> event instanceof IntervalPassed)
+		.forEach(event -> resourceContainer2intervalPassed
+				.put(((IntervalPassed) event).getTargetResourceContainer().getId(), (IntervalPassed) event));
 	}
 }
