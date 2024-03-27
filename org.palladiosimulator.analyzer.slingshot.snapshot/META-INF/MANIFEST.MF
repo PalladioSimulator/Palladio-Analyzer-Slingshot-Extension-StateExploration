@@ -24,5 +24,6 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.data,
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
  org.palladiosimulator.analyzer.slingshot.stateexploration.data,
- org.palladiosimulator.spd.semantic
+ org.palladiosimulator.spd.semantic,
+ org.palladiosimulator.analyzer.slingshot.cost
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot
