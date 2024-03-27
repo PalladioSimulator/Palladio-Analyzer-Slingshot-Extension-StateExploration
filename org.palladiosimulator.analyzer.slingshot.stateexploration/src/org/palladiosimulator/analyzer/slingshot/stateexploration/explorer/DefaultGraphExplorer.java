@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,6 +10,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -30,6 +32,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.Exp
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.AdditionalConfigurationModule;
+import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
@@ -158,8 +161,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
+		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents());
+		config.getEvent().ifPresent(e -> set.add(e));
+
+		final EventsToInitOnWrapper eventsToInitOn = new EventsToInitOnWrapper(set);
+
 		AdditionalConfigurationModule.defaultStateProvider.set(config.getStateToExplore());
 		AdditionalConfigurationModule.snapConfigProvider.set(snapConfig);
+		AdditionalConfigurationModule.eventsToInitOnProvider.set(eventsToInitOn);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();

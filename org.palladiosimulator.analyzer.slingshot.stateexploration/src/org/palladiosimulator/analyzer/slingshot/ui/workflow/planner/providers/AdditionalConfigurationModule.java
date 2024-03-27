@@ -9,6 +9,8 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	public static final SnapConfigProvider snapConfigProvider = new SnapConfigProvider();
 	public static final DefaultStateProvider defaultStateProvider = new DefaultStateProvider();
 
+	public static final EventsToInitOnProvider eventsToInitOnProvider = new EventsToInitOnProvider();
+
 	public AdditionalConfigurationModule() {
 	}
 
@@ -16,6 +18,7 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	protected void configure() {
 		bind(SnapshotConfiguration.class).toProvider(snapConfigProvider);
 		bind(DefaultState.class).toProvider(defaultStateProvider);
+		bind(EventsToInitOnWrapper.class).toProvider(eventsToInitOnProvider);
 
 	}
 
@@ -27,5 +30,6 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	public static void reset() {
 		snapConfigProvider.set(null);
 		defaultStateProvider.set(null);
+		eventsToInitOnProvider.set(null);
 	}
 }

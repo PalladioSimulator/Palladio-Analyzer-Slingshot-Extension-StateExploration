@@ -34,6 +34,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
@@ -78,8 +79,11 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
-			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable SimuComConfig simuComConfig,
+			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsToInitOn, final @Nullable SimuComConfig simuComConfig,
 			final Allocation allocation) {
+
+		assert halfDoneState.getSnapshot() == null : "Snapshot already set!";
+
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
@@ -87,11 +91,10 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 		this.activated = this.halfDoneState != null && this.snapshotConfig != null && this.simuComConfig != null;
 
-		if (activated && halfDoneState.getSnapshot() != null) {
-			this.eventsToInitOn = halfDoneState.getSnapshot().getEvents();
-			this.halfDoneState.setSnapshot(null);
+		if (activated) {
+			this.eventsToInitOn = eventsToInitOn.getEventsToInitOn();
 		} else {
-			this.eventsToInitOn = null;
+			this.eventsToInitOn = Set.of();
 		}
 
 		this.event2offset = new HashMap<>();
