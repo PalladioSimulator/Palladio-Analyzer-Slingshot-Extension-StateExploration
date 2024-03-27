@@ -23,4 +23,9 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	public String getName() {
 		return "Additional Configuration";
 	}
+
+	public static void reset() {
+		snapConfigProvider.set(null);
+		defaultStateProvider.set(null);
+	}
 }
