@@ -1,6 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.planner.data;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.planner.data.Utility.UtilityData;
 import org.palladiosimulator.analyzer.slingshot.planner.data.Utility.UtilityType;
@@ -9,10 +11,10 @@ import org.palladiosimulator.spd.ScalingPolicy;
 import com.google.common.base.Objects;
 
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
-		List<SLO> slos, Utility utility, String parentId, ScalingPolicy incomingPolicy) {
+		List<SLO> slos, Utility utility, Map<String, Set<ResourceSpecification>> resourceSpecifications, String parentId, ScalingPolicy incomingPolicy) {
 	
 	public StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, String parentId, ScalingPolicy incomingPolicy) {
-		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId, incomingPolicy);	
+		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), resourceSpecifications, parentId, incomingPolicy);	
 	}
 	
 	public double duration() {
