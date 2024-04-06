@@ -32,12 +32,13 @@ public class ExplorationModule extends AbstractSlingshotExtension {
 		messageBinder.addBinding("Test").toInstance(TestMessage.class);
 		messageBinder.addBinding("TestSimEvent").toInstance(SimTestMessage.class);
 
-
 		messageBinder.addBinding("StateExplored").toInstance(StateExploredMessage.class);
+		messageBinder.addBinding("RequestArchitecture").toInstance(RequestArchitectureMessage.class);
 
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
 		install(SimulationBehaviourReactionTest.class);
+		install(ArchitectureMessageDispatcher.class);
 	}
 
 	private void configureGson() {
