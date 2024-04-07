@@ -2,12 +2,12 @@ package org.palladiosimulator.analyzer.slingshot.planner.data;
 
 public class ContainerSpecification extends ResourceSpecification {
 	private int replicas;
-	private int processingRate;
+	private double processingRate;
 	private String schedulingPolicy;
 	private double MTTR;
 	private double MTTF;
 
-	public ContainerSpecification(String id, int replicas, int processingRate, String schedulingPolicy, double MTTR, double MTTF) {
+	public ContainerSpecification(String id, int replicas, double processingRate, String schedulingPolicy, double MTTR, double MTTF) {
 		super(id);
 		this.replicas = replicas;
 		this.processingRate = processingRate;
@@ -20,7 +20,7 @@ public class ContainerSpecification extends ResourceSpecification {
 		return replicas;
 	}
 
-	public int getProcessingRate() {
+	public double getProcessingRate() {
 		return processingRate;
 	}
 	

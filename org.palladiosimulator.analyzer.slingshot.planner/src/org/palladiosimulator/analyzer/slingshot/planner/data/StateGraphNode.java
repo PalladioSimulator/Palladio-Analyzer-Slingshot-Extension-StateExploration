@@ -13,7 +13,7 @@ import com.google.common.base.Objects;
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
 		List<SLO> slos, Utility utility, Map<String, Set<ResourceSpecification>> resourceSpecifications, String parentId, ScalingPolicy incomingPolicy) {
 	
-	public StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, String parentId, ScalingPolicy incomingPolicy) {
+	public StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements, List<SLO> slos, Map<String, Set<ResourceSpecification>> resourceSpecifications, String parentId, ScalingPolicy incomingPolicy) {
 		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), resourceSpecifications, parentId, incomingPolicy);	
 	}
 	

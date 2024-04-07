@@ -2,19 +2,18 @@ package org.palladiosimulator.analyzer.slingshot.planner.runner;
 
 import de.uka.ipd.sdq.stoex.IntLiteral;
 import de.uka.ipd.sdq.stoex.DoubleLiteral;
+import de.uka.ipd.sdq.stoex.Expression;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import org.palladiosimulator.analyzer.slingshot.planner.data.ContainerSpecification;
 import org.palladiosimulator.analyzer.slingshot.planner.data.HDDContainerSpecification;
 import org.palladiosimulator.analyzer.slingshot.planner.data.LinkSpecification;
 import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
-import org.palladiosimulator.analyzer.slingshot.planner.data.Reason;
-import org.palladiosimulator.analyzer.slingshot.planner.data.ReconfigurationChange;
 import org.palladiosimulator.analyzer.slingshot.planner.data.ResourceSpecification;
 import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
@@ -27,7 +26,7 @@ import org.palladiosimulator.pcm.resourceenvironment.ProcessingResourceSpecifica
 import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 import org.palladiosimulator.spd.ScalingPolicy;
-
+	
 public class StateGraphConverter {	
 	public static StateGraphNode convertState(RawModelState state, String parentId, ScalingPolicy scalingPolicy) {
 		List<SLO> slos = new ArrayList<SLO>();
@@ -47,14 +46,28 @@ public class StateGraphConverter {
 		if (state.getArchitecureConfiguration() != null && state.getArchitecureConfiguration().getAllocation() != null) {
 			for (LinkingResource x : state.getArchitecureConfiguration().getAllocation().getTargetResourceEnvironment_Allocation().getLinkingResources__ResourceEnvironment()) {
 				CommunicationLinkResourceSpecification lr = x.getCommunicationLinkResourceSpecifications_LinkingResource();
-				setResrouceSpecification.add(new LinkSpecification(lr.getId(), ((DoubleLiteral) lr.getLatency_CommunicationLinkResourceSpecification().getExpression()).getValue(), ((IntLiteral) lr.getThroughput_CommunicationLinkResourceSpecification().getExpression()).getValue(), lr.getFailureProbability()));
+				setResrouceSpecification.add(new LinkSpecification(lr.getId(), ((IntLiteral) lr.getLatency_CommunicationLinkResourceSpecification().getExpression()).getValue(), ((IntLiteral) lr.getThroughput_CommunicationLinkResourceSpecification().getExpression()).getValue(), lr.getFailureProbability()));
 			}
 			for (ResourceContainer x : state.getArchitecureConfiguration().getAllocation().getTargetResourceEnvironment_Allocation().getResourceContainer_ResourceEnvironment()) {
 				for (ProcessingResourceSpecification y : x.getActiveResourceSpecifications_ResourceContainer()) {
-					setResrouceSpecification.add(new ContainerSpecification(y.getId(), y.getNumberOfReplicas(), ((IntLiteral) y.getProcessingRate_ProcessingResourceSpecification().getExpression()).getValue(), y.getSchedulingPolicy().getEntityName(), y.getMTTR(), y.getMTTF()));
-				}
+					double processingRate = 0;
+					Expression exp = y.getProcessingRate_ProcessingResourceSpecification().getExpression();
+					if (exp instanceof DoubleLiteral) {
+						processingRate = ((DoubleLiteral) exp).getValue();
+					} else if (exp instanceof IntLiteral) {
+						processingRate = ((IntLiteral) exp).getValue();
+					}
+					setResrouceSpecification.add(new ContainerSpecification(y.getId(), y.getNumberOfReplicas(), processingRate, y.getSchedulingPolicy().getEntityName(), y.getMTTR(), y.getMTTF()));
+				}	
 				for (HDDProcessingResourceSpecification y : x.getHddResourceSpecifications()) {
-					setResrouceSpecification.add(new HDDContainerSpecification(y.getId(), y.getNumberOfReplicas(), ((IntLiteral) y.getProcessingRate_ProcessingResourceSpecification().getExpression()).getValue(), y.getSchedulingPolicy().getEntityName(), y.getMTTR(), y.getMTTF(), ((DoubleLiteral) y.getWriteProcessingRate().getExpression()).getValue(), ((DoubleLiteral) y.getReadProcessingRate().getExpression()).getValue()));
+					double processingRate = 0;
+					Expression exp = y.getProcessingRate_ProcessingResourceSpecification().getExpression();
+					if (exp instanceof DoubleLiteral) {
+						processingRate = ((DoubleLiteral) exp).getValue();
+					} else if (exp instanceof IntLiteral) {
+						processingRate = ((IntLiteral) exp).getValue();
+					}
+					setResrouceSpecification.add(new HDDContainerSpecification(y.getId(), y.getNumberOfReplicas(), processingRate, y.getSchedulingPolicy().getEntityName(), y.getMTTR(), y.getMTTF(), ((DoubleLiteral) y.getWriteProcessingRate().getExpression()).getValue(), ((DoubleLiteral) y.getReadProcessingRate().getExpression()).getValue()));
 				}
 			}
 			resourceSpecifications.put(state.getId(), setResrouceSpecification);
