@@ -758,10 +758,13 @@ public final class CloneHelper {
 	 *
 	 *
 	 * @param <T>     Type of the element to be matched
-	 * @param element element to be matched
+	 * @param element element to be matched, must be contained in a resource.
 	 * @return matching element from {@code this}' resource set.
 	 */
 	private <T extends EObject> T getMatchingPCMElement(final T element) {
+		assert element.eResource() != null
+				: String.format("Element %s is not contained in a resource, but must be.", element.toString());
+
 		final String fragment = EcoreUtil.getURI(element).fragment();
 
 		final Resource opt = set.getResourceSet().getResources().stream()
