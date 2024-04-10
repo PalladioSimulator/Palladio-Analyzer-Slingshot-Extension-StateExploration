@@ -7,6 +7,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
 import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelperWithVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
 /**
  *
@@ -31,8 +32,8 @@ public final class InMemorySnapshot implements Snapshot {
 
 
 	@Override
-	public Set<DESEvent> getEvents() {
-		final CloneHelperWithVisitor cloneHelper = new CloneHelperWithVisitor();
+	public Set<DESEvent> getEvents(final PCMResourceSetPartition set) {
+		final CloneHelperWithVisitor cloneHelper = new CloneHelperWithVisitor(set);
 		return cloneHelper.clone(this.events);
 	}
 

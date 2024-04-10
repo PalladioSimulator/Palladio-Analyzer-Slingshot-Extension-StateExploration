@@ -15,7 +15,6 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
-import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
@@ -151,7 +150,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.getUri(AllocationPackage.eINSTANCE.getAllocation()).toString());
 
 		LOGGER.warn("Start with Request to these Resources: ");
-		config.getSnapToInitOn().getEvents().stream().filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
+		config.getSnapToInitOn().getEvents(this.initModels).stream()
+		.filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
 		.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
 				.getAllocationContext().getResourceContainer_AllocationContext().getId())
 		.forEach(id -> LOGGER.info(id));
@@ -161,7 +161,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
-		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents());
+		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
 		config.getEvent().ifPresent(e -> set.add(e));
 
 		final EventsToInitOnWrapper eventsToInitOn = new EventsToInitOnWrapper(set);
@@ -215,8 +215,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
 		launchConfigurationParams.put(SimuComConfig.VARIATION_ID, variation);
 		launchConfigurationParams.put(SimuComConfig.EXPERIMENT_RUN, this.graph.toString());
-		//launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
-
+		// launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME,
+		// String.valueOf(((long) duration) + 1));
 
 		return new SimuComConfig(launchConfigurationParams, true);
 	}
@@ -243,14 +243,16 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Replace all resources in {@code initModels} with the resources from the
 	 * architecture configuration of the upcoming simulation run.
 	 *
+	 * Currently, {@code PCMResourceSetPartitionProvider} is a singleton, and
+	 * already references {@code this.initModels}. Thus, as we only change the
+	 * contents of {initModels} we need not update the partition provided by the
+	 * partition provider.
+	 *
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
 		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
-		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
-				.getInstance(PCMResourceSetPartitionProvider.class);
-		provider.set(this.initModels); // this is probably not needed.
 	}
 
 	/**
