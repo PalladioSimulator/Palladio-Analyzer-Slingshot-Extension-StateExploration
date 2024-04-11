@@ -227,7 +227,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final double interval = config.getExplorationDuration();
 
-		final boolean notRootSuccesor = this.graph.getRoot().getOutTransitions().stream()
+		final Set<RawTransition> rootOutEdges = this.graph.outgoingEdgesOf(this.graph.getRoot());
+		final boolean notRootSuccesor = rootOutEdges.stream()
 				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
 
 		return new SnapshotConfiguration(interval, notRootSuccesor, 0.5);

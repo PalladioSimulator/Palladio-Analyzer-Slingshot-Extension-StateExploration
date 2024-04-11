@@ -1,9 +1,9 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.Set;
 
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
@@ -17,23 +17,23 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * @author stiesssh
  *
  */
-public class DefaultGraph implements RawStateGraph{
+public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, RawTransition> implements RawStateGraph {
 
-	private final Set<RawModelState> nodes;
-	private final Set<RawTransition> transitions;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -7468814179743463536L;
 
 	private final ArrayDeque<ToDoChange> fringe;
 
 	private final DefaultState root;
 
 	public DefaultGraph(final DefaultState root) {
-		super();
-		this.nodes = new HashSet<RawModelState>();
-		this.transitions = new HashSet<RawTransition>();
+		super(RawTransition.class);
+		this.addVertex(root);
+
 		this.fringe = new ArrayDeque<ToDoChange>();
 		this.root = root;
-
-		this.nodes.add(root);
 	}
 
 	/**
@@ -55,10 +55,6 @@ public class DefaultGraph implements RawStateGraph{
 		return !this.fringe.isEmpty();
 	}
 
-	public void addNode(final RawModelState node) {
-		this.nodes.add(node);
-	}
-
 	/**
 	 * The fringe are the Changes to be
 	 * @param edge
@@ -77,6 +73,17 @@ public class DefaultGraph implements RawStateGraph{
 
 	}
 
+	public boolean hasOutTransitionFor(final RawModelState vertex, final ScalingPolicy matchee) {
+		return this.outgoingEdgesOf(vertex).stream()
+				.filter(t -> t.getChange().isPresent())
+				.map(t -> t.getChange().get())
+				.filter(c -> c instanceof final Reconfiguration r)
+				.map(c -> ((Reconfiguration) c).getAppliedPolicy())
+				.filter(policy -> policy.getId().equals(matchee.getId()))
+				.findAny()
+				.isPresent();
+	}
+
 	@Override
 	public DefaultState getRoot() {
 		return this.root;
@@ -84,11 +91,11 @@ public class DefaultGraph implements RawStateGraph{
 
 	@Override
 	public Set<RawModelState> getStates() {
-		return this.nodes;
+		return this.vertexSet();
 	}
 
 	@Override
 	public Set<RawTransition> getTransitions() {
-		return this.nodes.stream().map(state -> state.getOutTransitions()).reduce(new HashSet<>(), (s,t) -> {s.addAll(t); return s;});
+		return this.edgeSet();
 	}
 }

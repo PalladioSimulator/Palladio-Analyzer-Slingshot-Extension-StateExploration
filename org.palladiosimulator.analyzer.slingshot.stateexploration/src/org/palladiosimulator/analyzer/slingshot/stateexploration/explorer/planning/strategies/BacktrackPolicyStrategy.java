@@ -65,7 +65,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @return
 	 */
 	private boolean policyAlreadyExploredAtState(final DefaultState state, final ScalingPolicy policy) {
-		return state.hasOutTransitionFor(policy) || this.graph.hasInFringe(state, policy);
+		return this.graph.hasOutTransitionFor(state, policy) || this.graph.hasInFringe(state, policy);
 	}
 
 	/**

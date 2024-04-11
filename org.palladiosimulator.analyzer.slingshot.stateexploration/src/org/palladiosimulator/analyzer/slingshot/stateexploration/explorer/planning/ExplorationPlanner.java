@@ -158,10 +158,10 @@ public class ExplorationPlanner {
 		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
 		final DefaultState newNode = new DefaultState(predecessor.getEndTime(), newConfig);
 
-		this.rawgraph.addNode(newNode);
+		this.rawgraph.addVertex(newNode);
 
 		final DefaultTransition nextTransition = new DefaultTransition(next.getChange(), predecessor, newNode);
-		predecessor.addOutTransition(nextTransition);
+		this.rawgraph.addEdge(nextTransition.getSource(), nextTransition.getTarget(), nextTransition);
 
 		return newNode;
 	}

@@ -1,16 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
-import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  * State in the raw state graph.
@@ -41,13 +35,9 @@ public class DefaultState implements RawModelState {
 	/* known after configuration of the simulation run */
 	private ExperimentSetting experimentSetting;
 
-	/* changes upon creation of successive states */
-	private final Set<RawTransition> outTransitions;
-
 	public DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig) {
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
-		this.outTransitions = new HashSet<RawTransition>();
 		this.reasonToLeave = ReasonToLeave.interval;
 	}
 
@@ -75,27 +65,12 @@ public class DefaultState implements RawModelState {
 		this.decreaseInterval = decreaseInterval;
 	}
 
-	public void addOutTransition(final RawTransition transition) {
-		this.outTransitions.add(transition);
-	}
-
 	public void setReasonToLeave(final ReasonToLeave reasonToLeave) {
 		this.reasonToLeave = reasonToLeave;
 	}
 
 	public void setDuration(final double duration) {
 		this.duration = duration;
-	}
-
-	public boolean hasOutTransitionFor(final ScalingPolicy matchee) {
-		return this.outTransitions.stream()
-				.filter(t -> t.getChange().isPresent())
-				.map(t -> t.getChange().get())
-				.filter(c -> c instanceof final Reconfiguration r)
-				.map(c -> ((Reconfiguration) c).getAppliedPolicy())
-				.filter(policy -> policy.getId().equals(matchee.getId()))
-				.findAny()
-				.isPresent();
 	}
 
 	/* to match the interface */
@@ -110,10 +85,6 @@ public class DefaultState implements RawModelState {
 		return this.getExperimentSetting();
 	}
 
-	@Override
-	public Set<RawTransition> getOutTransitions() {
-		return outTransitions;
-	}
 
 	@Override
 	public ReasonToLeave getReasonToLeave() {

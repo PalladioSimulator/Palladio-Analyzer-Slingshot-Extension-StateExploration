@@ -1,7 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
-import java.util.Set;
-
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
 /**
@@ -26,13 +24,6 @@ public interface RawModelState {
 	 * @return
 	 */
 	public ExperimentSetting getMeasurements();
-
-	/**
-	 * Get RawTransitions that start at the current state.
-	 *
-	 * @return
-	 */
-	public Set<RawTransition> getOutTransitions();
 
 	/**
 	 * Get the point in time the state started
