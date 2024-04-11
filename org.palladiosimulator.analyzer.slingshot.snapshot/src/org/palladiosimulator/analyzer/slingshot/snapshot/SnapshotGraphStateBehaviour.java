@@ -252,6 +252,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.halfDoneState.setExperimentSetting(settings.get(0));
 	}
 
+	@PreIntercept
+	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
+			final org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed event) {
+
+		event.setTime(event.time() + halfDoneState.getStartTime());
+		return InterceptionResult.success();
+	}
+
 	/**
 	 *
 	 * NB : state is complete.
