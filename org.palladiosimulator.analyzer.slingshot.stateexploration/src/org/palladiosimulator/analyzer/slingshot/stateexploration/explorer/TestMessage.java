@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import org.palladiosimulator.analyzer.slingshot.networking.ws.EventMessage;
+import org.palladiosimulator.analyzer.slingshot.networking.events.EventMessage;
 
 /**
  * Proof of Concept

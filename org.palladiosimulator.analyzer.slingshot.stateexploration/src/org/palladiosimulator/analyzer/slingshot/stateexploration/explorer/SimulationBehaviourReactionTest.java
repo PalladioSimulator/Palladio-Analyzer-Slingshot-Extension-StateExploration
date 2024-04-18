@@ -7,7 +7,7 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehavio
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.networking.SimulationEventBuffer;
+import org.palladiosimulator.analyzer.slingshot.networking.util.SimulationEventBuffer;
 
 @OnEvent(when = SimTestMessage.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class)

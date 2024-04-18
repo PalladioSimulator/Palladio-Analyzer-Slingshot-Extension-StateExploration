@@ -22,6 +22,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.SEFFInter
 import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.UserChangedEventVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.networking.events.PollSimulationEventEvent;
 
 public class CloneHelperWithVisitor {
 
@@ -46,7 +47,9 @@ public class CloneHelperWithVisitor {
 				 on(UserEntryRequested.class).then(this::clone).
 				 on(InterArrivalUserInitiated.class).then(this::clone).
 				 on(IntervalPassed.class).then(this::clone).
-         		 on(DESEvent.class).then(this::log);
+				 on(PollSimulationEventEvent.class).then(this::clone).
+         		 on(DESEvent.class).then(this::log)
+         		 ;
 	}
 
 	private DESEvent log(final DESEvent event) {
@@ -88,5 +91,9 @@ public class CloneHelperWithVisitor {
 	
 	private DESEvent clone(final IntervalPassed clonee) {
 		return new IntervalPassed(clonee);
+	}
+	
+	private DESEvent clone(final PollSimulationEventEvent clonee) {
+		return new PollSimulationEventEvent(clonee);
 	}
 }

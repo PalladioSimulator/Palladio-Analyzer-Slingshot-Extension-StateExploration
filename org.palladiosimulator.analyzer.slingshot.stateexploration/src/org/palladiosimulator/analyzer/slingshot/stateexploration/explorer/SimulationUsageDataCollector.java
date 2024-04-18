@@ -6,9 +6,9 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserE
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.GsonProvider;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.SlingshotWebsocketClient;
+import org.palladiosimulator.analyzer.slingshot.networking.SlingshotWebsocketClient;
+import org.palladiosimulator.analyzer.slingshot.networking.events.Message;
+import org.palladiosimulator.analyzer.slingshot.networking.util.GsonProvider;
 
 
 @OnEvent(when = UserEntryRequested.class)

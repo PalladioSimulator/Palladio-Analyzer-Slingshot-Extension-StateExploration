@@ -1,7 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import org.palladiosimulator.analyzer.slingshot.networking.ws.EventMessage;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
+import org.palladiosimulator.analyzer.slingshot.networking.events.EventMessage;
+import org.palladiosimulator.analyzer.slingshot.networking.events.Message;
 import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 

@@ -22,3 +22,4 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.cost
 Export-Package: org.palladiosimulator.analyzer.slingshot.behavior.util,
  org.palladiosimulator.analyzer.slingshot.common.utils
+Import-Package: org.palladiosimulator.analyzer.slingshot.networking.events
