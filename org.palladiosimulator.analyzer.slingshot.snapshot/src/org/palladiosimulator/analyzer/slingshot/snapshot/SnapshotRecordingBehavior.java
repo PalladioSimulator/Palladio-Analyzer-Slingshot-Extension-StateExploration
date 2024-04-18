@@ -51,6 +51,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotRecordingBehavior.class);
 	private static final String FAKE = "fakeID";
 
+	/* flag to prevent duplicate snapshots */
+	private boolean activated;
 
 	private final LessInvasiveInMemoryRecord recorder;
 	private final Camera camera;
@@ -67,6 +69,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.recorder = new LessInvasiveInMemoryRecord();
 		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get());
 		this.scheduling = scheduling;
+
+		this.activated = true;
 	}
 
 
@@ -148,6 +152,13 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 */
 	@Subscribe
 	public Result<SnapshotTaken> onSnapshotInitiatedEvent(final SnapshotInitiated snapshotInitiated) {
+
+		if (!this.activated) {
+			return Result.of();
+		}
+
+		this.activated = false;
+
 		// Cast to ActiveJob is feasible, because LinkingJobs are always FCFS.
 		this.scheduleProcSharingUpdatesHelper(
 				recorder.getProcSharingJobRecords().stream().map(record -> (ActiveJob) record.getJob())
