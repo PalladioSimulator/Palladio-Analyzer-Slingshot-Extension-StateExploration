@@ -7,7 +7,7 @@ import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelProvider;
-import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.gson.JsonElement;
@@ -23,7 +23,7 @@ public class ExplorationModule extends AbstractSlingshotExtension {
 	protected void configure() {
 		install(ExplorationConfiguration.class);
 		install(SLOModelConfiguration.class);
-		provideModel(ServiceLevelObjective.class, SLOModelProvider.class);
+		provideModel(ServiceLevelObjectiveRepository.class, SLOModelProvider.class);
 
 		configureGson();
 

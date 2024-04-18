@@ -28,5 +28,6 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.cost,
  org.palladiosimulator.analyzer.slingshot.stateexploration,
  org.palladiosimulator.analyzer.workflow,
- org.palladiosimulator.analyzer.slingshot.behavior.usageevolution
+ org.palladiosimulator.analyzer.slingshot.behavior.usageevolution,
+ org.palladiosimulator.servicelevelobjective
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot
