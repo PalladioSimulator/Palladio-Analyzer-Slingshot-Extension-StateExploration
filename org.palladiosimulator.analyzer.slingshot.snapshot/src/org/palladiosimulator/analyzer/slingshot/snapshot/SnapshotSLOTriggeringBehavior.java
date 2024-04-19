@@ -21,7 +21,10 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotC
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
+import org.palladiosimulator.edp2.util.MetricDescriptionUtility;
+import org.palladiosimulator.metricspec.BaseMetricDescription;
+import org.palladiosimulator.metricspec.MetricDescription;
+import org.palladiosimulator.monitorrepository.MeasurementSpecification;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 
@@ -29,7 +32,12 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveReposito
  *
  * Triggers snapshots based on a measurements closeness to defined SLOs.
  *
- * This class does <strong>not <\strong>
+ * This class does <strong>not</strong> use the raw measurements provided by
+ * {@code MeasurementMade} events. Instead it uses the aggregated values
+ * provided by {@code MeasurementUpdated} events. Beware: The aggregated values
+ * provided by {@code MeasurementUpdated} events are aggregated according to the
+ * {@code ProcessingType} elements defined in the {@code MonitorRepository}.
+ * This class does not aggregate on its own.
  *
  *
  *
@@ -46,7 +54,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	private final boolean activated;
 
 	/* Calculate mapping to save time later on (probably) */
-	private final Map<MeasuringPoint, Set<ValueRange>> mp2range;
+	private final Map<MeasurementSpecification, Set<ValueRange>> mp2range;
 
 	// TODO make configurable
 	private final double significance;
@@ -79,7 +87,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 				continue;
 			}
 
-			final MeasuringPoint mp = slo.getMeasurementSpecification().getMonitor().getMeasuringPoint();
+			final MeasurementSpecification mp = slo.getMeasurementSpecification();
 			if (!mp2range.containsKey(mp)) {
 				mp2range.put(mp, new HashSet<>());
 			}
@@ -103,17 +111,30 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	@Subscribe
 	public Result<SnapshotInitiated> onMeasurementUpdated(final MeasurementUpdated event) {
 
-		if (event.time() < minDuration || !mp2range.containsKey(event.getEntity().getMeasuringPoint())) {
+		if (event.time() < minDuration
+				|| !mp2range.containsKey(event.getEntity().getProcessingType().getMeasurementSpecification())) {
 			return Result.empty();
 		}
 
-		// cannot access values via getter because of base vs. tuple metrics foo.
-		final Measure<Double, Quantity> value = (Measure<Double, Quantity>) event.getEntity().getMeasuringValue()
-				.asArray()[1];
+		final MetricDescription base = event.getEntity().getProcessingType().getMeasurementSpecification()
+				.getMetricDescription();
+
+		// cannot access values via getter because of base vs. tuple metrics foo. // Why
+		// is it base metric for usage scenario MP???
+		// final Measure<Double, Quantity> value = (Measure<Double, Quantity>)
+		// event.getEntity().getMeasuringValue().asArray()[1];
+
+		final Measure<Double, Quantity> value = event.getEntity().getMeasuringValue().getMeasureForMetric(base);
+
+		//		final Amount<? extends Quantity> area = Amount.valueOf(value.getValue(), value.getUnit());
+		//		area.times(0.5);
+
+		final BaseMetricDescription[] bases = MetricDescriptionUtility
+				.toBaseMetricDescriptions(event.getEntity().getMeasuringValue().getMetricDesciption());
 
 		final double calculationValue = value.doubleValue(value.getUnit());
 
-		final MeasuringPoint point = event.getEntity().getMeasuringPoint();
+		final MeasurementSpecification point = event.getEntity().getProcessingType().getMeasurementSpecification();
 
 		for (final ValueRange range : mp2range.get(point)) {
 			if (range.isViolatedBy(calculationValue)) {
@@ -205,7 +226,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	private class SingleEndedRange extends ValueRange {
 
 		/**
-		 * Deaults to 0 as lower threshold.
+		 * Defaults to 0 as lower threshold.
 		 *
 		 * @see {@link ValueRange}
 		 */
