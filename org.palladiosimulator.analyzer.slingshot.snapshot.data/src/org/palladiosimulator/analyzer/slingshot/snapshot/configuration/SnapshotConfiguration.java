@@ -21,16 +21,21 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.configuration;
  */
 public final class SnapshotConfiguration {
 
-	private double interval;
 
+	private final double interval;
+	private final double minDuration;
 	private final double significance;
-
 	private final boolean startFromSnapshot;
 
-	public SnapshotConfiguration(final double interval, final boolean startFromSnapshot, final double significance) {
+	public SnapshotConfiguration(final double interval, final boolean startFromSnapshot, final double significance, final double minDuration) {
 		this.interval = interval;
 		this.startFromSnapshot = startFromSnapshot;
 		this.significance = significance;
+		this.minDuration = minDuration;
+	}
+
+	public double getMinDuration() {
+		return this.minDuration;
 	}
 
 	public double getSignificance() {
@@ -39,10 +44,6 @@ public final class SnapshotConfiguration {
 
 	public double getSnapinterval() {
 		return this.interval;
-	}
-
-	public void resetInterval() {
-		this.interval = 5.0;
 	}
 
 	public boolean isStartFromSnapshot() {

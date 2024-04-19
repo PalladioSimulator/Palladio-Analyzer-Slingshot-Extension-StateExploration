@@ -20,9 +20,11 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 
 	public static final String MAX_EXPLORATION_CYCLES = "Max Exploration Cycles";
 	public static final String MIN_STATE_DURATION = "Min State Duration";
+	public static final String SENSIBILITY = "Sensibility [0,1]";
 
 	public static final int DEFAULT_MAX_EXPLORATION_CYCLES = 20;
 	public static final int DEFAULT_MIN_STATE_DURATION = 20;
+	public static final int DEFAULT_SENSIBILITY = 0;
 
 	@Subscribe
 	public void onArchitectureModelsTab(final ExplorationConfigTabBuilderStarted event) {
@@ -35,6 +37,11 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 		.label(MIN_STATE_DURATION)
 		.promptTitle(String.valueOf(DEFAULT_MIN_STATE_DURATION))
 		.build();
+
+		event.newFieldDefinition()
+				.label(SENSIBILITY)
+				.promptTitle(String.valueOf(DEFAULT_SENSIBILITY))
+				.build();
 	}
 
 	@Subscribe

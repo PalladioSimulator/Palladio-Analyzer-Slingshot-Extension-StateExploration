@@ -17,6 +17,7 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementUpdated;
+import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -26,7 +27,11 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveReposito
 
 /**
  *
- * TODO
+ * Triggers snapshots based on a measurements closeness to defined SLOs.
+ *
+ * This class does <strong>not <\strong>
+ *
+ *
  *
  * @author stiesssh
  *
@@ -44,18 +49,21 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	private final Map<MeasuringPoint, Set<ValueRange>> mp2range;
 
 	// TODO make configurable
-	final double significance = 0.8;
-	final double minDuration = 10.0;
+	private final double significance;
+	private final double minDuration;
 
 	@Inject
 	public SnapshotSLOTriggeringBehavior(final @Nullable DefaultState state,
-			final @Nullable ServiceLevelObjectiveRepository sloRepo) {
+			final @Nullable ServiceLevelObjectiveRepository sloRepo, final @Nullable SnapshotConfiguration config) {
+
+		this.activated = state != null && sloRepo != null && config != null
+				&& !sloRepo.getServicelevelobjectives().isEmpty();
+
 		this.state = state;
 		this.sloRepo = sloRepo;
 
-
-		this.activated = this.state != null && this.sloRepo != null
-				&& !this.sloRepo.getServicelevelobjectives().isEmpty();
+		this.minDuration = activated ? config.getMinDuration() : 0;
+		this.significance = activated ? config.getSignificance() : 0;
 
 		this.mp2range = new HashMap<>();
 		for (final ServiceLevelObjective slo : sloRepo.getServicelevelobjectives()) {
@@ -107,8 +115,8 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		final MeasuringPoint point = event.getEntity().getMeasuringPoint();
 
-		for (final ValueRange slo : mp2range.get(point)) {
-			if (slo.violatesRange(calculationValue)) {
+		for (final ValueRange range : mp2range.get(point)) {
+			if (range.isViolatedBy(calculationValue)) {
 				state.setReasonToLeave(ReasonToLeave.significantChange);
 				this.mp2range.clear(); // reset to avoid additional Snapshot Initiations.
 				return Result.of(new SnapshotInitiated(0.0));
@@ -162,7 +170,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		 * @param value
 		 * @return true, if this range is violated, false otherwise.
 		 */
-		public abstract boolean violatesRange(final double value);
+		public abstract boolean isViolatedBy(final double value);
 	}
 
 	/**
@@ -182,7 +190,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		}
 
 		@Override
-		public boolean violatesRange(final double value) {
+		public boolean isViolatedBy(final double value) {
 			return value >= this.upper || value <= this.lower;
 		}
 	}
@@ -207,7 +215,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		}
 
 		@Override
-		public boolean violatesRange(final double value) {
+		public boolean isViolatedBy(final double value) {
 			return value >= this.upper;
 		}
 	}

@@ -230,7 +230,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final boolean notRootSuccesor = this.graph.getRoot().getOutTransitions().stream()
 				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
 
-		return new SnapshotConfiguration(interval, notRootSuccesor, 0.5);
+		return new SnapshotConfiguration(interval, notRootSuccesor, this.getSensibility(), this.getMinDuration());
 	}
 
 	/**
@@ -271,6 +271,21 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private double getMinDuration() {
 		final String minDuration = (String) launchConfigurationParams
 				.get(ExplorationConfiguration.MIN_STATE_DURATION);
+
+		return Double.valueOf(minDuration);
+	}
+
+	/**
+	 *
+	 *
+	 * Get {@link ExplorationConfiguration.SENSIBILITY} from launch configuration
+	 * parameters map.
+	 *
+	 * @return sensibility for stopping regarding SLOs.
+	 */
+	private double getSensibility() {
+		final String minDuration = (String) launchConfigurationParams
+				.get(ExplorationConfiguration.SENSIBILITY);
 
 		return Double.valueOf(minDuration);
 	}
