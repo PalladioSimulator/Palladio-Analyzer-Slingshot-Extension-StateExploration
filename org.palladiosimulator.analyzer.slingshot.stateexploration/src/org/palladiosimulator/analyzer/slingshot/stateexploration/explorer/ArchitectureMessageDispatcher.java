@@ -20,9 +20,9 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPar
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.GsonProvider;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.SlingshotWebsocketClient;
+import org.palladiosimulator.analyzer.slingshot.networking.SlingshotWebsocketClient;
+import org.palladiosimulator.analyzer.slingshot.networking.events.Message;
+import org.palladiosimulator.analyzer.slingshot.networking.util.GsonProvider;
 import org.palladiosimulator.pcm.repository.Repository;
 import org.palladiosimulator.spd.SpdPackage;
 
