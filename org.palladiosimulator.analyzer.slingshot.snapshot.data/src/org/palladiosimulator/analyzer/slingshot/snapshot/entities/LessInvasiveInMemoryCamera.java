@@ -55,12 +55,15 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	private DESEvent clone(final IntervalPassed event) {
 		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
+
 	private DESEvent clone(final UsageModelPassedElement<?> event) {
 		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
+
 	private DESEvent clone(final ClosedWorkloadUserInitiated event) {
 		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
+
 	private DESEvent clone(final InterArrivalUserInitiated event) {
 		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
@@ -75,11 +78,12 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		// i think this is not smart.
 		final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
 
-
 		final Set<JobRecord> fcfsRecords = record.getFCFSJobRecords();
 		final Set<JobRecord> procsharingRecords = record.getProcSharingJobRecords();
 
-		final Set<AbstractJobEvent> progressedFcfs = relevantEvents.stream().filter(e -> (e instanceof JobProgressed) || (e instanceof JobFinished)).map(e -> (AbstractJobEvent) e).collect(Collectors.toSet());
+		final Set<AbstractJobEvent> progressedFcfs = relevantEvents.stream()
+				.filter(e -> (e instanceof JobProgressed) || (e instanceof JobFinished)).map(e -> (AbstractJobEvent) e)
+				.collect(Collectors.toSet());
 
 		final Set<JobInitiated> initJobs = new HashSet<>();
 		initJobs.addAll(this.handlePFCFSJobs(fcfsRecords, progressedFcfs));
@@ -88,7 +92,6 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		relevantEvents.addAll(initJobs);
 
 		relevantEvents.addAll(record.getRecordedCalculators());
-
 
 		final Set<DESEvent> offsettedEvents = relevantEvents.stream().map(adjustOffset).collect(Collectors.toSet());
 		final Set<DESEvent> clonedEvents = (new CloneHelperWithVisitor()).clone(offsettedEvents);
@@ -107,11 +110,11 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		final Set<JobInitiated> rval = new HashSet<>();
 
 		for (final JobRecord jobRecord : jobrecords) {
-				// do the Proc Sharing Math
-				final double ratio = jobRecord.getCurrentDemand() / jobRecord.getNormalizedDemand();
-				final double reducedRequested = jobRecord.getRequestedDemand() * ratio;
-				jobRecord.getJob().updateDemand(reducedRequested);
-				rval.add(new JobInitiated(jobRecord.getJob()));
+			// do the Proc Sharing Math
+			final double ratio = jobRecord.getCurrentDemand() / jobRecord.getNormalizedDemand();
+			final double reducedRequested = jobRecord.getRequestedDemand() * ratio;
+			jobRecord.getJob().updateDemand(reducedRequested);
+			rval.add(new JobInitiated(jobRecord.getJob()));
 
 		}
 		return rval;
@@ -120,12 +123,12 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	/**
 	 * Denormalizes the demand of the open jobs and creates {@link JobInitiated}
 	 * events to reinsert them to their respective FCFS Resource.
-	 * 
+	 *
 	 * The demand must be denormalized, because upon receiving a
 	 * {@link JobInitiated} event, the {@link AbstractActiveResource} normalizes a
 	 * job's demand with the resource's processing rate. Thus without
 	 * denormalisation, the demand would be wrong.
-	 * 
+	 *
 	 * This is required for ActiveJobs, and for LinkingJobs. In case of LinkingJobs,
 	 * the throughput is used as processing rate.
 	 *
@@ -135,17 +138,24 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	 *                       snapshot
 	 * @return events to reinsert all open jobs to their respective FCFS Resource
 	 */
-	private Set<JobInitiated> handlePFCFSJobs(final Set<JobRecord> jobrecords, final Set<AbstractJobEvent> fcfsProgressed) {
+	private Set<JobInitiated> handlePFCFSJobs(final Set<JobRecord> jobrecords,
+			final Set<AbstractJobEvent> fcfsProgressed) {
 		final Set<JobInitiated> rval = new HashSet<>();
 
 		final Map<Job, AbstractJobEvent> progressedJobs = new HashMap<>();
 		fcfsProgressed.stream().forEach(event -> progressedJobs.put(event.getEntity(), event));
 
 		for (final JobRecord record : jobrecords) {
-			if (progressedJobs.keySet().contains(record.getJob())) {
+			if (record.getNormalizedDemand() == 0) { // For Linking Jobs.
+				if (record.getJob().getDemand() != 0) {
+					throw new IllegalStateException(
+							String.format("Job %s of Type %s: Normalized demand is 0, but acutal demand is not.",
+									record.getJob().toString(), record.getJob().getClass().getSimpleName()));
+				}
+			} else if (progressedJobs.keySet().contains(record.getJob())) {
 				final AbstractJobEvent event = progressedJobs.get(record.getJob());
 				// time equals remaining demand because of normalization.
-				final double remainingDemand = event.time() -  engine.getSimulationInformation().currentSimulationTime();
+				final double remainingDemand = event.time() - engine.getSimulationInformation().currentSimulationTime();
 				final double factor = record.getRequestedDemand() / record.getNormalizedDemand();
 				final double denormalizedRemainingDemand = remainingDemand * factor;
 				record.getJob().updateDemand(denormalizedRemainingDemand);
@@ -164,10 +174,13 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	 */
 	private void log(final Set<DESEvent> evt) {
 		LOGGER.warn("DEMANDS");
-		evt.stream().filter(e -> (e instanceof JobInitiated)).map(e -> (JobInitiated) e).forEach(e -> LOGGER.warn(e.getEntity().getDemand()));
+		evt.stream().filter(e -> (e instanceof JobInitiated)).map(e -> (JobInitiated) e)
+		.forEach(e -> LOGGER.warn(e.getEntity().getDemand()));
 		LOGGER.warn("TIMES");
-		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e).forEach(e -> LOGGER.warn(e.time()));
+		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e)
+		.forEach(e -> LOGGER.warn(e.time()));
 		LOGGER.warn("CWUI");
-		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e).forEach(e -> LOGGER.warn(e.delay() + " " + e.time()));
+		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e)
+		.forEach(e -> LOGGER.warn(e.delay() + " " + e.time()));
 	}
 }
