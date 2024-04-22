@@ -3,7 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 import java.lang.reflect.Type;
 
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
+import org.palladiosimulator.analyzer.slingshot.networking.events.Message;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelProvider;
