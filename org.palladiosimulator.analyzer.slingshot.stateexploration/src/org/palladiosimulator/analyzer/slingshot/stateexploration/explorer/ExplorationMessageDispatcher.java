@@ -1,7 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
-import javax.inject.Inject;
-
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
