@@ -1,17 +1,25 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.emf.common.util.URI;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
@@ -40,79 +48,62 @@ public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 			super("ArchitectureMessage", payload, "Explorer");
 		}
 	}
+	
+	private static class ArchitectureResourceAccessException extends RuntimeException {
+		public ArchitectureResourceAccessException(String exception) {
+			super(exception);
+		}
+	}
 
 	@Subscribe
 	public void onMessageRecieved(RequestArchitectureMessage sim) {
 		try {
+			System.out.println("Reacting to RequestArchitectureMessage");
 			PCMResourceSetPartitionProvider pcmResourceSetPartition = Slingshot.getInstance().getInstance(PCMResourceSetPartitionProvider.class);
 			
-			IWorkspace workspace = ResourcesPlugin.getWorkspace();
-			File workspaceDirectory = workspace.getRoot().getLocation().toFile();
-			String workspaceDirectoryPath = workspaceDirectory.getAbsolutePath();
-
-			URI allocationURI = pcmResourceSetPartition.get().getAllocation().eResource().getURI();
-			URI systemURI = pcmResourceSetPartition.get().getSystem().eResource().getURI();
-			URI resourceEnvironmentURI = pcmResourceSetPartition.get().getResourceEnvironment().eResource().getURI();
-			URI repositoryURI = null;
-			Optional<Repository> reps = pcmResourceSetPartition.get().getRepositories().stream().filter(x -> x.eResource().getURI().toString().endsWith("default.repository")).findFirst();
-			if (reps.isPresent()) {
-				repositoryURI = reps.get().eResource().getURI();
-			}
-			URI spdURI = null;
-			if (pcmResourceSetPartition.get().getElement(SpdPackage.eINSTANCE.getSPD()).size() > 0) {	
-				spdURI = pcmResourceSetPartition.get().getElement(SpdPackage.eINSTANCE.getSPD()).get(0).eResource().getURI();
-			}
+		
+			var allocationResource = pcmResourceSetPartition.get().getAllocation().eResource();
+			var systemResource = pcmResourceSetPartition.get().getSystem().eResource();
+			var resourceEnvironmentResource = pcmResourceSetPartition.get().getResourceEnvironment().eResource();
+			var repositoryResource = pcmResourceSetPartition.get().getRepositories().stream().findFirst()
+					.orElseThrow(() -> new ArchitectureResourceAccessException("Could not access repository")).eResource();
+			var spdResource = pcmResourceSetPartition.get().getElement(SpdPackage.eINSTANCE.getSPD()).stream().findFirst()
+					.orElseThrow(() -> new ArchitectureResourceAccessException("Could not access repository")).eResource();
 			
-
-			System.out.println("Resource Files:");
-			System.out.println(workspaceDirectoryPath + allocationURI.toPlatformString(false));
-			File allocationFile = new File(workspaceDirectoryPath + allocationURI.toPlatformString(false));
-			System.out.println(workspaceDirectoryPath + systemURI.toPlatformString(false));
-			File systemFile = new File(workspaceDirectoryPath + systemURI.toPlatformString(false));
-			System.out.println(workspaceDirectoryPath + resourceEnvironmentURI.toPlatformString(false));
-			File resourceEnvironmentFile = new File(workspaceDirectoryPath + resourceEnvironmentURI.toPlatformString(false));
-			File repositoryFile = null;
-			if (!repositoryURI.toString().equals("")) {
-				System.out.println(workspaceDirectoryPath + repositoryURI.toPlatformString(false));
-				repositoryFile = new File(workspaceDirectoryPath + repositoryURI.toPlatformString(false));
-			}
-			File spdFile = null;
-			if (spdURI != null) {
-				System.out.println(workspaceDirectoryPath + spdURI.toPlatformString(false));
-				spdFile = new File(workspaceDirectoryPath + spdURI.toPlatformString(false));
-			}
-
+		
+			var resources = List.of(allocationResource, systemResource, resourceEnvironmentResource, repositoryResource, spdResource);
 			
-			sendFile(allocationFile.getAbsolutePath());
-			sendFile(systemFile.getAbsolutePath());
-			sendFile(resourceEnvironmentFile.getAbsolutePath());
-			if (repositoryFile != null) {
-				sendFile(repositoryFile.getAbsolutePath());
-			}
-			if (spdFile != null) {
-				sendFile(spdFile.getAbsolutePath());
-			}
-			
-		} catch (Throwable ee) {
-			ee.printStackTrace();
-			System.exit(0);
+			resources.forEach(res -> {
+				var path = Paths.get(getAbsolutePath(res));
+				try {
+					var fileBytes = Files.readAllBytes(path);
+					var message = new String(fileBytes, StandardCharsets.UTF_8);
+					client.sendMessage(new ArchitectureMessage(message));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					throw new ArchitectureResourceAccessException("Failed to read content of: " + path);
+				}
+			});
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
+
+	}
+	
+	private String getAbsolutePath(Resource resource) {
+		var uri = resource.getURI().toPlatformString(false);
+		String projectName = uri.split("/")[1];
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+        IPath location = project.getLocation();  // This gets the absolute path to the linked resource
+        System.out.println("Linked resource absolute path: " + location.toOSString());
+        
+        var res = Arrays.stream(uri.split("/"))
+        	.filter(x -> !("".equals(x) || projectName.equals(x)))
+        	.reduce(location.toOSString(), (x,y) -> x+"/"+y);
+        
+        return res;
 	}
 
-	private void sendFile(String filePath) {
-		StringBuilder xmlStringBuilder = new StringBuilder();
-		try (BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath))) {
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				xmlStringBuilder.append(line);
-			}
 
-			JSONObject jsonObject = XML.toJSONObject(xmlStringBuilder.toString());
-			client.sendMessage(new ArchitectureMessage(gsonProvider.getGson().toJson(jsonObject)));
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-	}
 }
