@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Stateexploration Ui
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.ui;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.ui
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: org.eclipse.debug.ui,
+ org.eclipse.swt,
+ org.palladiosimulator.analyzer.slingshot.core,
+ org.eclipse.osgi,
+ org.eclipse.core.runtime,
+ org.palladiosimulator.analyzer.slingshot.ui.events,
+ de.uka.ipd.sdq.workflow.launchconfig,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.workflow,
+ de.uka.ipd.sdq.codegen.simucontroller,
+ de.uka.ipd.sdq.simucomframework;bundle-version="5.1.0",
+ org.palladiosimulator.analyzer.workflow

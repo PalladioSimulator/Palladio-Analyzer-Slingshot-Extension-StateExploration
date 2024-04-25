@@ -3,7 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.events.ExplorationConfigTabBuilderStarted;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.ExplorationConfigTabBuilderStarted;
 import org.palladiosimulator.analyzer.slingshot.workflow.events.WorkflowLaunchConfigurationBuilderInitialized;
 
 @OnEvent(when = ExplorationConfigTabBuilderStarted.class)

@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Stateexploration Workflow
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.workflow;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.workflow
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: de.uka.ipd.sdq.workflow,
+ de.uka.ipd.sdq.workflow.mdsd.blackboard,
+ org.palladiosimulator.analyzer.slingshot.core,
+ de.uka.ipd.sdq.simucomframework,
+ org.palladiosimulator.analyzer.workflow,
+ org.palladiosimulator.analyzer.slingshot.stateexploration,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.data,
+ org.palladiosimulator.analyzer.slingshot.workflow,
+ org.palladiosimulator.analyzer.slingshot.workflow.events
+Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.workflow
