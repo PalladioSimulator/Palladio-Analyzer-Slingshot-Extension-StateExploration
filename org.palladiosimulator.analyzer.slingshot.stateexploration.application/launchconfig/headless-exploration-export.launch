@@ -13,19 +13,21 @@
     <setAttribute key="deselected_workspace_bundles">
         <setEntry value="org.palladiosimulator.analyzer.slingshot.stateexploration.ui"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.ui"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.edit"/>
         <setEntry value="org.palladiosimulator.spd.edit"/>
         <setEntry value="org.palladiosimulator.spd.editor"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint.edit"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint.editor"/>
         <setEntry value="org.palladiosimulator.spd.semantic.edit"/>
         <setEntry value="org.palladiosimulator.spd.semantic.editor"/>
+        <setEntry value="org.palladiosimulator.spd.semantic.tests"/>
     </setAttribute>
     <booleanAttribute key="includeOptional" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console -application org.palladiosimulator.analyzer.slingshot.stateexploration.application.StateexplorationApplication"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console -application org.palladiosimulator.analyzer.slingshot.stateexploration.application.StateexplorationApplication /Users/stiesssh/uni/repos/slingshot-example/minimalexample-mentor/minimalmentor.experiments"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
     <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.eclipse.swt.graphics.Resource.reportNonDisposed=true -Dosgi.noShutdown=true"/>
     <stringAttribute key="pde.version" value="3.3"/>
@@ -267,6 +269,7 @@
         <setEntry value="org.junit.platform.commons@default:default"/>
         <setEntry value="org.junit@default:default"/>
         <setEntry value="org.mockito@default:default"/>
+        <setEntry value="org.modelversioning.emfprofile.application.registry@default:default"/>
         <setEntry value="org.modelversioning.emfprofile.project@default:default"/>
         <setEntry value="org.modelversioning.emfprofile.registry@default:default"/>
         <setEntry value="org.modelversioning.emfprofile@default:default"/>
@@ -296,6 +299,7 @@
         <setEntry value="org.palladiosimulator.metricspec@default:default"/>
         <setEntry value="org.palladiosimulator.monitorrepository@default:default"/>
         <setEntry value="org.palladiosimulator.pcm.edit@default:default"/>
+        <setEntry value="org.palladiosimulator.pcm.edp2.measuringpoint.edit@default:default"/>
         <setEntry value="org.palladiosimulator.pcm.edp2.measuringpoint@default:default"/>
         <setEntry value="org.palladiosimulator.pcm.resources@default:default"/>
         <setEntry value="org.palladiosimulator.pcm@default:default"/>
@@ -354,8 +358,9 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.ui.events@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.workflow.events@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.workflow@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation@default:default"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint@default:default"/>
-        <setEntry value="org.palladiosimulator.spd.semantic.tests@default:default"/>
         <setEntry value="org.palladiosimulator.spd.semantic.transformations@default:default"/>
         <setEntry value="org.palladiosimulator.spd.semantic@default:default"/>
         <setEntry value="org.palladiosimulator.spd@default:default"/>
