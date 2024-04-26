@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<viewpoint:DAnalysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:viewpoint="http://www.eclipse.org/sirius/1.1.0" uid="_FZm8QAOSEe-Df7jQ4Ks8gA" version="14.5.1.202106111100">
+  <semanticResources>model/stateexplorationtooladapter.ecore</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.experimentautomation/model/experimentautomation.ecore</semanticResources>
+  <semanticResources>platform:/plugin/de.uka.ipd.sdq.identifier/model/identifier.ecore</semanticResources>
+  <semanticResources>platform:/plugin/org.palladiosimulator.pcm/model/pcm.ecore</semanticResources>
+  <semanticResources>platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore</semanticResources>
+  <semanticResources>platform:/plugin/de.uka.ipd.sdq.stoex/model/stoex.ecore</semanticResources>
+  <semanticResources>platform:/plugin/de.uka.ipd.sdq.probfunction/model/ProbabilityFunction.ecore</semanticResources>
+  <semanticResources>platform:/plugin/de.uka.ipd.sdq.units/model/Units.ecore</semanticResources>
+  <semanticResources>platform:/plugin/org.palladiosimulator.monitorrepository/model/monitorrepository.ecore</semanticResources>
+  <semanticResources>platform:/plugin/org.palladiosimulator.edp2/model/EDP2.ecore</semanticResources>
+  <semanticResources>platform:/plugin/org.palladiosimulator.metricspec/model/metricspec.ecore</semanticResources>
+  <semanticResources>platform:/plugin/org.palladiosimulator.servicelevelobjective/model/servicelevelobjective.ecore</semanticResources>
+  <semanticResources>platform:/plugin/org.scaledl.usageevolution/model/usageevolution.ecore</semanticResources>
+  <semanticResources>platform:/plugin/tools.descartes.dlim.generator/src/tools/descartes/dlim/model/dlim.ecore</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.spd/model/SPD.ecore</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.spd.semantic/model/semantic.ecore</semanticResources>
+  <semanticResources>model/stateexplorationtooladapter.genmodel</semanticResources>
+  <semanticResources>platform:/resource/tools.descartes.dlim.generator/src/tools/descartes/dlim/model/dlim.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.eclipse.emf.ecore/model/Ecore.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.edp2/model/EDP2.genmodel</semanticResources>
+  <semanticResources>platform:/resource/de.uka.ipd.sdq.identifier/model/identifier.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.metricspec/model/metricspec.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.experimentautomation/model/ExperimentAutomation.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.monitorrepository/model/monitorrepository.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.pcm/model/pcm.genmodel</semanticResources>
+  <semanticResources>platform:/resource/de.uka.ipd.sdq.probfunction/model/ProbabilityFunction.genmodel</semanticResources>
+  <semanticResources>platform:/resource/de.uka.ipd.sdq.units/model/Units.genmodel</semanticResources>
+  <semanticResources>platform:/resource/de.uka.ipd.sdq.stoex/model/stoex.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.spd/model/SPD.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.spd.semantic/model/semantic.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.palladiosimulator.servicelevelobjective/model/servicelevelobjective.genmodel</semanticResources>
+  <semanticResources>platform:/resource/org.scaledl.usageevolution/model/usageevolution.genmodel</semanticResources>
+</viewpoint:DAnalysis>
