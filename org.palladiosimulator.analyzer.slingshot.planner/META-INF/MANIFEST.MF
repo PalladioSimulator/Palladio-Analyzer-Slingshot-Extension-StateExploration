@@ -12,6 +12,8 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.spd,
  org.palladiosimulator.monitorrepository,
  org.palladiosimulator.analyzer.slingshot.core,
- org.apache.log4j
+ de.uka.ipd.sdq.stoex
+Import-Package: com.google.gson.annotations;version="2.8.8",
+ org.palladiosimulator.commons.emfutils
 Export-Package: org.palladiosimulator.analyzer.slingshot.planner.data,
  org.palladiosimulator.analyzer.slingshot.planner.runner

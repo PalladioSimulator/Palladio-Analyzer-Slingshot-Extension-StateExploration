@@ -1,9 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
+
 import java.lang.reflect.Type;
 
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
+import org.palladiosimulator.analyzer.slingshot.networking.events.Message;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelProvider;
@@ -16,6 +17,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
+
 
 public class ExplorationModule extends AbstractSlingshotExtension {
 
@@ -32,12 +34,13 @@ public class ExplorationModule extends AbstractSlingshotExtension {
 		messageBinder.addBinding("Test").toInstance(TestMessage.class);
 		messageBinder.addBinding("TestSimEvent").toInstance(SimTestMessage.class);
 
-
 		messageBinder.addBinding("StateExplored").toInstance(StateExploredMessage.class);
+		messageBinder.addBinding("RequestArchitecture").toInstance(RequestArchitectureMessage.class);
 
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
 		install(SimulationBehaviourReactionTest.class);
+		install(ArchitectureMessageDispatcher.class);
 	}
 
 	private void configureGson() {
