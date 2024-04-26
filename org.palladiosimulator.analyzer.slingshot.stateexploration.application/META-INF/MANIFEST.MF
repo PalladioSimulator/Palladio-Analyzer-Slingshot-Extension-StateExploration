@@ -13,4 +13,8 @@ Require-Bundle: org.eclipse.equinox.app,
  org.palladiosimulator.analyzer.slingshot.core,
  org.palladiosimulator.analyzer.slingshot.workflow.events,
  org.palladiosimulator.edp2,
- org.palladiosimulator.recorderframework.edp2
+ org.palladiosimulator.recorderframework.edp2,
+ org.palladiosimulator.experimentautomation,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.workflow,
+ org.palladiosimulator.analyzer.slingshot.stateexploration,
+ org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model
