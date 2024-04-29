@@ -1,14 +1,10 @@
-package org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import de.uka.ipd.sdq.simucomframework.SimuComConfig;
-
 /**
- * A provider for the {@link SimuComConfig} object that holds
- * all the information about the simulation.
- *
+ * Provides the event to init the next simulation run on.
  */
 @Singleton
 public class EventsToInitOnProvider implements Provider<EventsToInitOnWrapper> {

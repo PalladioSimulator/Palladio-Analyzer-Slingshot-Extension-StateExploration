@@ -9,7 +9,7 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.PlannerRootJob;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.ExplorationRootJob;
 import org.palladiosimulator.analyzer.slingshot.workflow.events.WorkflowLaunchConfigurationBuilderInitialized;
 import org.palladiosimulator.analyzer.workflow.configurations.AbstractPCMLaunchConfigurationDelegate;
 
@@ -17,27 +17,27 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.jobs.IJob;
 import de.uka.ipd.sdq.workflow.logging.console.LoggerAppenderStruct;
 
-public class PlannerLauncher extends AbstractPCMLaunchConfigurationDelegate<PlannerWorkflowConfiguration> {
+public class ExplorationLauncher extends AbstractPCMLaunchConfigurationDelegate<ExplorationWorkflowConfiguration> {
 
-	private final Logger LOGGER = Logger.getLogger(PlannerLauncher.class);
+	private final Logger LOGGER = Logger.getLogger(ExplorationLauncher.class);
 
 	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
 
 	@Override
-	protected IJob createWorkflowJob(final PlannerWorkflowConfiguration config, final ILaunch launch)
+	protected IJob createWorkflowJob(final ExplorationWorkflowConfiguration config, final ILaunch launch)
 			throws CoreException {
-		return new PlannerRootJob(config, launch);
+		return new ExplorationRootJob(config, launch);
 	}
 
 	@Override
-	protected PlannerWorkflowConfiguration deriveConfiguration(final ILaunchConfiguration configuration,
+	protected ExplorationWorkflowConfiguration deriveConfiguration(final ILaunchConfiguration configuration,
 			final String mode)
 					throws CoreException {
 
 		LOGGER.info("PlannerLauncher.deriveConfiguration");
 
 		final SimuComConfig config = new SimuComConfig(configuration.getAttributes(), true);
-		final PlannerWorkflowConfiguration simulationWorkflowConfiguration = new PlannerWorkflowConfiguration(config, configuration.getAttributes());
+		final ExplorationWorkflowConfiguration simulationWorkflowConfiguration = new ExplorationWorkflowConfiguration(config, configuration.getAttributes());
 
 		final WorkflowLaunchConfigurationBuilderInitialized builderEvent = new WorkflowLaunchConfigurationBuilderInitialized(configuration, simulationWorkflowConfiguration);
 		systemDriver.postEvent(builderEvent);

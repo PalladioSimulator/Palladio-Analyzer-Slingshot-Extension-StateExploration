@@ -11,6 +11,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.BacktrackPolicyStrategy;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultTransition;
@@ -27,12 +29,12 @@ import org.palladiosimulator.spd.triggers.stimuli.SimulationTime;
  *
  * Handles fringe.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
-public class DefaultExplorationPlanner {
+public class ExplorationPlanner {
 
-	private static final Logger LOGGER = Logger.getLogger(DefaultExplorationPlanner.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(ExplorationPlanner.class.getName());
 
 	private final DefaultGraph rawgraph;
 	private final CutOffConcerns cutOffConcerns;
@@ -41,7 +43,7 @@ public class DefaultExplorationPlanner {
 
 	private final double minDuration;
 
-	public DefaultExplorationPlanner(final DefaultGraph graph, final double minDuration) {
+	public ExplorationPlanner(final DefaultGraph graph, final double minDuration) {
 		this.rawgraph = graph;
 		this.minDuration = minDuration;
 		this.cutOffConcerns = new CutOffConcerns();

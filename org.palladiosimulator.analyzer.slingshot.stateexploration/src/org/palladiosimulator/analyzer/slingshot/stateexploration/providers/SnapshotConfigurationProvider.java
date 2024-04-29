@@ -1,19 +1,19 @@
-package org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 
-import de.uka.ipd.sdq.simucomframework.SimuComConfig;
-
 /**
- * A provider for the {@link SimuComConfig} object that holds
- * all the information about the simulation.
+ * Provides the {@link SnapshotConfiguration} for starting a simulation run that
+ * can be snapshotted.
+ *
+ * @author Sarah Stieß
  *
  */
 @Singleton
-public class SnapConfigProvider implements Provider<SnapshotConfiguration> {
+public class SnapshotConfigurationProvider implements Provider<SnapshotConfiguration> {
 
 	private SnapshotConfiguration config;
 

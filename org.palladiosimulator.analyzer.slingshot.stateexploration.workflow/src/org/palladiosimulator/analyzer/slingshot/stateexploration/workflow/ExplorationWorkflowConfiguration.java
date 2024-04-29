@@ -9,11 +9,11 @@ import org.palladiosimulator.analyzer.slingshot.workflow.events.PCMWorkflowConfi
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
-public class PlannerWorkflowConfiguration extends SimulationWorkflowConfiguration implements PCMWorkflowConfiguration, SimulationConfiguration {
+public class ExplorationWorkflowConfiguration extends SimulationWorkflowConfiguration implements PCMWorkflowConfiguration, SimulationConfiguration {
 
 	private final Map<String, Object> launchConfigurationParams;
 
-	public PlannerWorkflowConfiguration(final SimuComConfig configuration, final Map<String, Object> launchConfigurationParams) {
+	public ExplorationWorkflowConfiguration(final SimuComConfig configuration, final Map<String, Object> launchConfigurationParams) {
 		super(configuration);
 		this.launchConfigurationParams = launchConfigurationParams;
 	}

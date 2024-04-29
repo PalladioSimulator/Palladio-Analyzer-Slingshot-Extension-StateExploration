@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies;
 
 import java.util.List;
 import java.util.Optional;

@@ -12,7 +12,7 @@
    <extension
          point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
-            delegate="org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.PlannerLauncher"
+            delegate="org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationLauncher"
             id="org.palladiosimulator.analyzer.slingshot.stateexploration.ui.launchConfigurationType1"
             modes="run, debug"
             name="Stateexploration"

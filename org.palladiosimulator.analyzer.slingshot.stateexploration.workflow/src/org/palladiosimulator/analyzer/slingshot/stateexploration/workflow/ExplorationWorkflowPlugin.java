@@ -3,9 +3,9 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.workflow;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
-public class PlannerWorkflowPlugin implements BundleActivator {
+public class ExplorationWorkflowPlugin implements BundleActivator {
 
-	private static PlannerWorkflowPlugin instance = null;
+	private static ExplorationWorkflowPlugin instance = null;
 	
 	@Override
 	public void start(BundleContext context) throws Exception {
@@ -17,7 +17,7 @@ public class PlannerWorkflowPlugin implements BundleActivator {
 		instance = null;
 	}
 
-	public static PlannerWorkflowPlugin getInstance() {
+	public static ExplorationWorkflowPlugin getInstance() {
 		return instance;
 	}
 }

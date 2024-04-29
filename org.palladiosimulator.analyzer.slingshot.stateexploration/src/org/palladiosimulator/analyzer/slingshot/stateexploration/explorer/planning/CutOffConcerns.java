@@ -6,12 +6,10 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoCh
 /**
  * TODO
  *
- * this is where i want to decide whether i will explore a given possible future, or not.
- * I have not yet any clue, how to decide o_O
+ * this is where i want to decide whether i will explore a given possible
+ * future, or not. I have not yet any clue, how to decide o_O
  *
- * idk, this kinda looks like it could be a funcitonal interface...?
- *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class CutOffConcerns {

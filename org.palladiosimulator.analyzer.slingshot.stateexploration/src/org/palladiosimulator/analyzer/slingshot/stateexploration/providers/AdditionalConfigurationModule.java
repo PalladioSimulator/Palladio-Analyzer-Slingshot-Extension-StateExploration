@@ -1,14 +1,20 @@
-package org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 
+/**
+ *
+ * Additional Provisionings for Stateexplorations.
+ *
+ * @author Sarah Stieß
+ *
+ */
 public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 
-	public static final SnapConfigProvider snapConfigProvider = new SnapConfigProvider();
+	public static final SnapshotConfigurationProvider snapConfigProvider = new SnapshotConfigurationProvider();
 	public static final DefaultStateProvider defaultStateProvider = new DefaultStateProvider();
-
 	public static final EventsToInitOnProvider eventsToInitOnProvider = new EventsToInitOnProvider();
 
 	public AdditionalConfigurationModule() {
@@ -24,7 +30,7 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 
 	@Override
 	public String getName() {
-		return "Additional Configuration";
+		return "Additional Configuration for Stateexploration";
 	}
 
 	public static void reset() {

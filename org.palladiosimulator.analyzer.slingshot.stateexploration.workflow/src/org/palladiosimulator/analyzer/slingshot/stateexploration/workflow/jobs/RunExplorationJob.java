@@ -7,7 +7,7 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.PlannerWorkflowConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
@@ -23,9 +23,9 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  *
  * @author stiesssh
  */
-public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboard> {
+public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboard> {
 
-	private static final Logger LOGGER = Logger.getLogger(InitialPlannerJob.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(RunExplorationJob.class.getName());
 
 	private MDSDBlackboard blackboard;
 
@@ -33,9 +33,9 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 	private final PCMResourceSetPartitionProvider pcmResourceSetPartition;
 	private final SimuComConfig simuComConfig;
 
-	private final PlannerWorkflowConfiguration configuration;
+	private final ExplorationWorkflowConfiguration configuration;
 
-	public InitialPlannerJob(final PlannerWorkflowConfiguration config) {
+	public RunExplorationJob(final ExplorationWorkflowConfiguration config) {
 		this.configuration = config;
 
 		this.simulationDriver = Slingshot.getInstance().getSimulationDriver();
@@ -48,7 +48,7 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		LOGGER.info("**** SimulationJob.execute ****");
 		final PCMResourceSetPartition partition = (PCMResourceSetPartition)
 				this.blackboard.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID);
-		
+
 		this.pcmResourceSetPartition.set(partition);
 		LOGGER.debug("Current partition: ");
 		partition.getResourceSet().getResources().forEach(resource -> LOGGER.debug("Resource: " + resource.getURI().path()));
@@ -64,13 +64,12 @@ public class InitialPlannerJob implements IBlackboardInteractingJob<MDSDBlackboa
 		explorer.start();
 
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.
-		
-		// PS: i actually end up here :)
-//		simulationDriver.init(simuComConfig, monitor);
-		monitor.worked(1);	
+
+		//		simulationDriver.init(simuComConfig, monitor);
+		monitor.worked(1);
 
 		monitor.subTask("Start simulation");
-//		simulationDriver.start();
+		//		simulationDriver.start();
 		monitor.worked(1);
 
 		monitor.subTask("Restore");
