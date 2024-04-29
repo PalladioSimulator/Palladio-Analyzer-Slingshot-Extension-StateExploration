@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model/src"
+    modelPluginID="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model"
+    modelName="Stateexplorationtooladapter" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="6.0" copyrightFields="false"
+    usedGenPackages="../../tools.descartes.dlim.generator/src/tools/descartes/dlim/model/dlim.genmodel#//dlim ../../org.eclipse.emf.ecore/model/Ecore.genmodel#//ecore ../../org.palladiosimulator.edp2/model/EDP2.genmodel#//models ../../org.palladiosimulator.experimentautomation/model/ExperimentAutomation.genmodel#//experimentautomation ../../de.uka.ipd.sdq.identifier/model/identifier.genmodel#//identifier ../../org.palladiosimulator.metricspec/model/metricspec.genmodel#//metricspec ../../org.palladiosimulator.monitorrepository/model/monitorrepository.genmodel#//monitorrepository ../../org.palladiosimulator.pcm/model/pcm.genmodel#//pcm ../../de.uka.ipd.sdq.probfunction/model/ProbabilityFunction.genmodel#//probfunction ../../org.palladiosimulator.spd/model/SPD.genmodel#//spd ../../org.palladiosimulator.spd.semantic/model/semantic.genmodel#//semanticspd ../../org.palladiosimulator.servicelevelobjective/model/servicelevelobjective.genmodel#//servicelevelobjective ../../de.uka.ipd.sdq.stoex/model/stoex.genmodel#//stoex ../../de.uka.ipd.sdq.units/model/Units.genmodel#//units ../../org.scaledl.usageevolution/model/usageevolution.genmodel#//usageevolution"
+    importOrganizing="true">
+  <foreignModel>stateexplorationtooladapter.ecore</foreignModel>
+  <genPackages prefix="StateExplorationToolAdapter" basePackage="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration"
+      resource="XML" disposableProviderFactory="true" childCreationExtenders="true"
+      ecorePackage="stateexplorationtooladapter.ecore#/">
+    <genClasses ecoreClass="stateexplorationtooladapter.ecore#//StateExplorationConfiguration">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/minStateDuration"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/maxIterations"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

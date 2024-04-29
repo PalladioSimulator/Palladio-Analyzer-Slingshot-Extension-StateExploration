@@ -6,8 +6,8 @@ Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.explorer,
- org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.events,
- org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers
+ org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.providers
 Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.snapshot.data,
  org.apache.log4j,
@@ -33,4 +33,5 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.planner,
  org.palladiosimulator.analyzer.slingshot.networking,
  org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
- com.google.gson
+ com.google.gson,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events

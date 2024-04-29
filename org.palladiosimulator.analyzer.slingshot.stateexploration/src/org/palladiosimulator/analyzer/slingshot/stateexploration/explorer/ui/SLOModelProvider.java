@@ -11,6 +11,12 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPar
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 
+/**
+ *
+ * Provides a {@link ServiceLevelObjective} model instance to the simulation.
+ *
+ * @author Sarah Stieß
+ */
 @Singleton
 public class SLOModelProvider implements ModelProvider<ServiceLevelObjective> {
 

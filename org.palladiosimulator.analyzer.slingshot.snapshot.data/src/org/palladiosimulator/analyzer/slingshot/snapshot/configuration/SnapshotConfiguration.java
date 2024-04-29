@@ -23,7 +23,6 @@ public final class SnapshotConfiguration {
 
 	private double interval;
 
-
 	private final double significance;
 
 	private final boolean startFromSnapshot;

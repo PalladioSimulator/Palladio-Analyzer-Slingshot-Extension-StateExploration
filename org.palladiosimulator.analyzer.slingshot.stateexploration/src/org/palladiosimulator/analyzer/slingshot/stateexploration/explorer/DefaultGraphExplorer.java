@@ -27,12 +27,12 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGra
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.ExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.AdditionalConfigurationModule;
-import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
@@ -60,7 +60,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final Map<String, Object> launchConfigurationParams;
 
-	private final DefaultExplorationPlanner blackbox;
+	private final ExplorationPlanner blackbox;
 
 	private final DefaultGraph graph;
 
@@ -84,7 +84,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
 		this.graph = new DefaultGraph(this.createRoot());
-		this.blackbox = new DefaultExplorationPlanner(this.graph, this.getMinDuration());
+		this.blackbox = new ExplorationPlanner(this.graph, this.getMinDuration());
 
 		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
 	}

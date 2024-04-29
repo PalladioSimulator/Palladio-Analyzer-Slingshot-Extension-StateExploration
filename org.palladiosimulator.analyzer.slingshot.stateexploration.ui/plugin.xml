@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="org.palladiosimulator.analyzer.slingshot.stateexploration.ui.LaunchSimulationTabGroup"
+            id="org.palladiosimulator.analyzer.slingshot.stateexploration.ui.launchConfigurationTabGroup1"
+            type="org.palladiosimulator.analyzer.slingshot.stateexploration.ui.launchConfigurationType1">
+      </launchConfigurationTabGroup>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationLauncher"
+            id="org.palladiosimulator.analyzer.slingshot.stateexploration.ui.launchConfigurationType1"
+            modes="run, debug"
+            name="Stateexploration"
+            public="true">
+      </launchConfigurationType>
+   </extension>
+
+</plugin>

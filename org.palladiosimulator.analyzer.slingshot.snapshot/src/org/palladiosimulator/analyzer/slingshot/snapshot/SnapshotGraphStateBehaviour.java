@@ -33,8 +33,8 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotC
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
