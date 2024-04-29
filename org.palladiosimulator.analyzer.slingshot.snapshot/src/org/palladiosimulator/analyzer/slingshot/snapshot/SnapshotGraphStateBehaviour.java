@@ -1,6 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.Usage
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
@@ -47,7 +47,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
  *
  * Behavioural Extension to handle everything related to the RawGraphState.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 @OnEvent(when = CalculatorRegistered.class, then = {})
@@ -70,7 +70,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/* helper */
 	private final Map<UsageModelPassedElement<?>, Double> event2offset;
-
 	private final Map<String, IntervalPassed> resourceContainer2intervalPassed;
 
 	private final boolean activated;
@@ -79,7 +78,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
-			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsToInitOn, final @Nullable SimuComConfig simuComConfig,
+			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsToInitOn,
+			final @Nullable SimuComConfig simuComConfig,
 			final Allocation allocation) {
 
 		assert halfDoneState.getSnapshot() == null : "Snapshot already set!";
@@ -124,7 +124,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 * Start the simulation run with the snapshotted events from an earlier
 	 * simulation run.
 	 *
-	 * Return (and thereby submit for scheduling the snapshotted events from
+	 * Return (and thereby submit for scheduling) the snapshotted events from
+	 * earlier simulation run.
 	 *
 	 * @param simulationStarted
 	 * @return
@@ -176,7 +177,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Catch ModelPassedEvent from the snapshot and offset them into the past.
+	 * Catch {@link ModelPassedEvent} from the snapshot and offset them into the
+	 * past.
 	 *
 	 * @param information interception information
 	 * @param event       intercepted event
@@ -194,6 +196,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		return InterceptionResult.success();
 	}
 
+	/**
+	 * Catch {@link IntervalPassed} (cost) from the snapshot abort them, because for
+	 * costs, we use the events of the current simulation run.
+	 *
+	 * @param information interception information
+	 * @param event       intercepted event
+	 * @return always success
+	 */
 	@PreIntercept
 	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
 			final IntervalPassed event) {
@@ -252,10 +262,19 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.halfDoneState.setExperimentSetting(settings.get(0));
 	}
 
+	/**
+	 *
+	 * Catch {@link IntervalPassed} events (usage evolution) from the snapshot and
+	 * offset them into the "future". Otherwise, we will get the wrong values from
+	 * the Load Intensity model.
+	 *
+	 * @param information interception information
+	 * @param event       intercepted event
+	 * @return always success
+	 */
 	@PreIntercept
 	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
 			final org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed event) {
-
 		event.setTime(event.time() + halfDoneState.getStartTime());
 		return InterceptionResult.success();
 	}
@@ -301,6 +320,12 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		});
 	}
 
+	/**
+	 * Collect resource containers, for which an {@link IntervalPassed} event must
+	 * be aborted later on.
+	 *
+	 * @param events events to collect resource containers from.
+	 */
 	private void initIntervallPased(final Set<DESEvent> events) {
 		events.stream().filter(event -> event instanceof IntervalPassed)
 		.forEach(event -> resourceContainer2intervalPassed

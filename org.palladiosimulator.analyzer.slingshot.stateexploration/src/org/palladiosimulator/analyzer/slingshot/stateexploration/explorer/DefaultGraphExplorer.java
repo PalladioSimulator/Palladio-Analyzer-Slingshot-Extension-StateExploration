@@ -47,7 +47,7 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  *
  * Responsible for starting the simulation runs to explore different branches.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class DefaultGraphExplorer implements GraphExplorer {
@@ -202,32 +202,26 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * otherwise {@link SimulationFinished} gets scheduled before
 	 * {@link SnapshotInitiated}.
 	 *
-	 * TODO set variation id to something meaningfull, e.g. archConfig x change
-	 *
-	 * TODO set experiment run to something meaning full
-	 *
-	 * @param variation
+	 * @param variation name of the variation.
 	 * @param duration  duration of the interval in seconds.
-	 * @return
+	 * @return {@link SimuComConfig} for the next simulation run.
 	 */
 	private SimuComConfig prepareSimuComConfig(final String variation, final double duration) {
 		// MapHelper.getValue(configuration, VARIATION_ID, String.class)
 		launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
 		launchConfigurationParams.put(SimuComConfig.VARIATION_ID, variation);
 		launchConfigurationParams.put(SimuComConfig.EXPERIMENT_RUN, this.graph.toString());
-		// launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME,
-		// String.valueOf(((long) duration) + 1));
 
 		return new SimuComConfig(launchConfigurationParams, true);
 	}
 
 	/**
+	 * Create a {@link SnapshotConfiguration} required to start a new simulation
+	 * run.
 	 *
-	 * Create the SnapshotConfiguration required to start a new simulation run.
-	 *
-	 * @param interval between two snapshots
-	 * @param init     wether or not to init on a snapshot.
-	 * @return
+	 * @param config Information from which to build the next
+	 *               {@link SnapshotConfiguration}
+	 * @return new {@link SnapshotConfiguration}
 	 */
 	private SnapshotConfiguration createSnapConfig(final SimulationInitConfiguration config) {
 
@@ -272,7 +266,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Get {@link ExplorationConfiguration.MIN_STATE_DURATION} from launch
 	 * configuration parameters map.
 	 *
-	 * @return min duration of a exploration cycles
+	 * @return minimum duration of an exploration cycles
 	 */
 	private double getMinDuration() {
 		final String minDuration = (String) launchConfigurationParams
