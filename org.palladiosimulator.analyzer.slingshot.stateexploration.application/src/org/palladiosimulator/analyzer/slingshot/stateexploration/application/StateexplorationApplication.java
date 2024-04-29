@@ -2,7 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.application;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 
 import org.eclipse.core.runtime.IPath;
@@ -26,7 +25,6 @@ import org.palladiosimulator.experimentautomation.experiments.ExperimentReposito
 import org.palladiosimulator.experimentautomation.experiments.ExperimentsPackage;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
-import de.uka.ipd.sdq.simulation.AbstractSimulationConfig;
 import de.uka.ipd.sdq.workflow.BlackboardBasedWorkflow;
 import de.uka.ipd.sdq.workflow.WorkflowFailedException;
 import de.uka.ipd.sdq.workflow.jobs.JobFailedException;
@@ -34,13 +32,17 @@ import de.uka.ipd.sdq.workflow.jobs.UserCanceledException;
 import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
 /**
- * In the field "Program arguments", provide an additional argument as shown in
- * this example:
- * <code>-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl}
- * -consoleLog D:\models\my.experiments</code>
  *
+ * Application for running a headless Stateexploration. Requires an
+ * {@link Experiment} model instance, that defines the models et cetera.
  *
- * Based on {@link ExperimentApplication}
+ * The path to the {@link Experiment} model instance must be provided as
+ * commandline argument.
+ *
+ * For OSGi runs inside Eclipse, supply the path a additional argument in the
+ * field "Program arguments".
+ *
+ * Based on {@link ExperimentApplication}.
  *
  * @author Sarah Stieß
  *
@@ -52,8 +54,6 @@ public class StateexplorationApplication implements IApplication {
 
 	@Override
 	public Object start(final IApplicationContext context) throws Exception {
-		System.out.println("plugin started");
-
 		final Path experimentsLocation = parseCommandlineArguments(context);
 
 		final Experiment experiment = getStateExplorationExperiment(experimentsLocation).orElseThrow(() -> new IllegalArgumentException(
@@ -62,9 +62,7 @@ public class StateexplorationApplication implements IApplication {
 		launchStateExploration(experiment);
 
 		return IApplication.EXIT_OK;
-
 	}
-
 
 	/**
 	 * Get command line arguments and parse them.
@@ -98,7 +96,7 @@ public class StateexplorationApplication implements IApplication {
 	}
 
 	/**
-	 *
+	 * Create and execute a workflow for preparing and running a state exploration.
 	 */
 	private void launchStateExploration(final Experiment experiment) {
 
@@ -122,8 +120,6 @@ public class StateexplorationApplication implements IApplication {
 		}
 	}
 
-
-
 	@Override
 	public void stop() {
 		// Add operations when your plugin is stopped
@@ -134,6 +130,9 @@ public class StateexplorationApplication implements IApplication {
 	 *
 	 * Uses the factory from the experiment automation and adds the exploration
 	 * specific configurations afterwards.
+	 *
+	 * Beware: For some reason, all values but booleans are expected to be of type
+	 * {@link String}.
 	 *
 	 * @param experiment  input for creating the configuration map
 	 * @param simulatorID id of the simulator
@@ -149,38 +148,11 @@ public class StateexplorationApplication implements IApplication {
 				simulatorID,
 				List.of());
 
-		map.put(ExplorationConfiguration.MAX_EXPLORATION_CYCLES, simConfig.getMaxIterations());
-		map.put(ExplorationConfiguration.MIN_STATE_DURATION, simConfig.getMinStateDuration());
-
-		// the class SimuComConfig expects map entries to have a value of type String
-		adjustMapValueTypes(map);
+		map.put(ExplorationConfiguration.MAX_EXPLORATION_CYCLES, String.valueOf(simConfig.getMaxIterations()));
+		map.put(ExplorationConfiguration.MIN_STATE_DURATION, String.valueOf(simConfig.getMinStateDuration()));
 
 		return map;
-
 	}
-
-
-
-	/**
-	 * TODO Check whether this method is actually still needed. [Lehrig] It is
-	 * needed. I get an Exception without it. [Stieß]
-	 *
-	 * Converts the values contained in the map to the data types that are expected
-	 * by {@link AbstractSimulationConfig}.
-	 *
-	 * @param map the attributes map for a run configuration.
-	 */
-	private static void adjustMapValueTypes(final Map<String, Object> map) {
-		for (final Entry<String, Object> entry : map.entrySet()) {
-			final Object value = entry.getValue();
-
-			// As an exception, Booleans are not represented by string
-			if (!(value instanceof Boolean)) {
-				entry.setValue(value.toString());
-			}
-		}
-	}
-
 
 	/**
 	 * Loads an experiments model from the given location.
