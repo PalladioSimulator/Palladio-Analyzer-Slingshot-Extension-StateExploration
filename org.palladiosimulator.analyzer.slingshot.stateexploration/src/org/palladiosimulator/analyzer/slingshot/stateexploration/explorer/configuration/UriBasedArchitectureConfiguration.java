@@ -110,11 +110,9 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 		for (final Resource resource : set.getResources()) {
 			if (resource.getContents().isEmpty()) {
-				throw new IllegalArgumentException(
-						String.format("Empty resource for : %s.", resource.getURI().toString()));
-			}
-
-			if (ArchitectureConfigurationUtil.MODEL_ECLASS_WHITELIST.contains(resource.getContents().get(0).eClass())) {
+				LOGGER.info(String.format("Empty resource for : %s.", resource.getURI().toString()));
+			} else if (ArchitectureConfigurationUtil.MODEL_ECLASS_WHITELIST
+					.contains(resource.getContents().get(0).eClass())) {
 				map.put(resource.getContents().get(0).eClass(), resource.getURI());
 			}
 		}

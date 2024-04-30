@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
@@ -45,7 +44,7 @@ public class ArchitectureConfigurationUtil {
 	 * @return resources with whitelisted models.
 	 */
 	public static List<Resource> getWhitelistedModels(final ResourceSet set) {
-		return set.getResources().stream().filter(r -> isWhitelisted(r.getContents().get(0))).toList();
+		return set.getResources().stream().filter(r -> isWhitelisted(r)).toList();
 	}
 
 	/**
@@ -54,9 +53,10 @@ public class ArchitectureConfigurationUtil {
 	 * @param model model to be checked, must not be null.
 	 * @return true if the model is whitelisted, false otherwise.
 	 */
-	public static boolean isWhitelisted(final EObject model) {
-		assert model != null;
-		return MODEL_ECLASS_WHITELIST.stream().anyMatch(allowedEClass -> allowedEClass == model.eClass());
+	public static boolean isWhitelisted(final Resource model) {
+		return model.getContents().stream()
+				.filter(o -> MODEL_ECLASS_WHITELIST.stream().anyMatch(allowedEClass -> allowedEClass == o.eClass()))
+				.findAny().isPresent();
 	}
 
 	/**
