@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
 /**
  * TODO
@@ -19,7 +20,7 @@ public interface Snapshot {
 	 *
 	 * @return
 	 */
-	public Set<DESEvent> getEvents();
+	public Set<DESEvent> getEvents(final PCMResourceSetPartition set);
 
 	/**
 	 * Adjustor of the reactive reconfiguration, if a reactive reconfiguration happened to end the state.

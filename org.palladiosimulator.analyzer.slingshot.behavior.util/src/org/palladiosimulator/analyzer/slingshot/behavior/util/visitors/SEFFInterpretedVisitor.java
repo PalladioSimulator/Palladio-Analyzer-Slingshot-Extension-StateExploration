@@ -6,15 +6,15 @@ import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFExternalActionCalled;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInterpretationFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInterpretationProgressed;
-import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
-public class SEFFInterpretedVisitor {
+public class SEFFInterpretedVisitor extends SetReferencingVisitor {
 	private final Function<DESEvent, DESEvent> cloneFactory;
-	private final CloneHelper helper = new CloneHelper();
 
-	public SEFFInterpretedVisitor() {
+	public SEFFInterpretedVisitor(final PCMResourceSetPartition set) {
+		super(set);
 		cloneFactory = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(SEFFInterpretationProgressed.class).then(this::clone)
 				.on(SEFFInterpretationFinished.class).then(this::clone)

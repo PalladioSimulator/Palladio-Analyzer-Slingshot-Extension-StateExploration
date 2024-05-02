@@ -14,6 +14,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
+import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PostIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
@@ -58,11 +59,13 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 
 	@Inject
 	public SnapshotRecordingBehavior(final SimulationEngine engine, final Allocation allocation,
-			final MonitorRepository monitorRepository, final SimulationScheduling scheduling) {
+			final MonitorRepository monitorRepository, final SimulationScheduling scheduling,
+			final PCMResourceSetPartitionProvider set) {
 		// can i somehow include this in the injection part?
 		// should work with this Model an the 'bind' instruction.
+
 		this.recorder = new LessInvasiveInMemoryRecord();
-		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine);
+		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get());
 		this.scheduling = scheduling;
 	}
 
@@ -86,7 +89,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	/**
 	 * Create JobRecord before the {@link JobInitiated} get processed, with initial
 	 * demand.
-	 * 
+	 *
 	 * @param information
 	 * @param event
 	 * @return
@@ -103,7 +106,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	/**
 	 * Update JobRecord after the {@link JobInitiated} got processed, to set
 	 * normalized demand.
-	 * 
+	 *
 	 * @param information
 	 * @param event
 	 * @param result
@@ -148,7 +151,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		// Cast to ActiveJob is feasible, because LinkingJobs are always FCFS.
 		this.scheduleProcSharingUpdatesHelper(
 				recorder.getProcSharingJobRecords().stream().map(record -> (ActiveJob) record.getJob())
-						.collect(Collectors.toSet()));
+				.collect(Collectors.toSet()));
 
 		return Result.of(new SnapshotTaken(0, snapshotInitiated.getTriggeringEvent()));
 	}

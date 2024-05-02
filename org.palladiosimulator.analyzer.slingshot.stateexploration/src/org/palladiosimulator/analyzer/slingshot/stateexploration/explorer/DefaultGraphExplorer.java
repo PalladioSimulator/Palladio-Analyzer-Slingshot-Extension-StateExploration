@@ -15,7 +15,6 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
-import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
@@ -48,7 +47,7 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  *
  * Responsible for starting the simulation runs to explore different branches.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class DefaultGraphExplorer implements GraphExplorer {
@@ -151,7 +150,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.getUri(AllocationPackage.eINSTANCE.getAllocation()).toString());
 
 		LOGGER.warn("Start with Request to these Resources: ");
-		config.getSnapToInitOn().getEvents().stream().filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
+		config.getSnapToInitOn().getEvents(this.initModels).stream()
+		.filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
 		.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
 				.getAllocationContext().getResourceContainer_AllocationContext().getId())
 		.forEach(id -> LOGGER.info(id));
@@ -161,7 +161,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
-		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents());
+		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
 		config.getEvent().ifPresent(e -> set.add(e));
 
 		final EventsToInitOnWrapper eventsToInitOn = new EventsToInitOnWrapper(set);
@@ -202,32 +202,26 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * otherwise {@link SimulationFinished} gets scheduled before
 	 * {@link SnapshotInitiated}.
 	 *
-	 * TODO set variation id to something meaningfull, e.g. archConfig x change
-	 *
-	 * TODO set experiment run to something meaning full
-	 *
-	 * @param variation
+	 * @param variation name of the variation.
 	 * @param duration  duration of the interval in seconds.
-	 * @return
+	 * @return {@link SimuComConfig} for the next simulation run.
 	 */
 	private SimuComConfig prepareSimuComConfig(final String variation, final double duration) {
 		// MapHelper.getValue(configuration, VARIATION_ID, String.class)
 		launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
 		launchConfigurationParams.put(SimuComConfig.VARIATION_ID, variation);
 		launchConfigurationParams.put(SimuComConfig.EXPERIMENT_RUN, this.graph.toString());
-		//launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
-
 
 		return new SimuComConfig(launchConfigurationParams, true);
 	}
 
 	/**
+	 * Create a {@link SnapshotConfiguration} required to start a new simulation
+	 * run.
 	 *
-	 * Create the SnapshotConfiguration required to start a new simulation run.
-	 *
-	 * @param interval between two snapshots
-	 * @param init     wether or not to init on a snapshot.
-	 * @return
+	 * @param config Information from which to build the next
+	 *               {@link SnapshotConfiguration}
+	 * @return new {@link SnapshotConfiguration}
 	 */
 	private SnapshotConfiguration createSnapConfig(final SimulationInitConfiguration config) {
 
@@ -243,14 +237,16 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Replace all resources in {@code initModels} with the resources from the
 	 * architecture configuration of the upcoming simulation run.
 	 *
+	 * Currently, {@code PCMResourceSetPartitionProvider} is a singleton, and
+	 * already references {@code this.initModels}. Thus, as we only change the
+	 * contents of {initModels} we need not update the partition provided by the
+	 * partition provider.
+	 *
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
 		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
-		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
-				.getInstance(PCMResourceSetPartitionProvider.class);
-		provider.set(this.initModels); // this is probably not needed.
 	}
 
 	/**
@@ -270,7 +266,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Get {@link ExplorationConfiguration.MIN_STATE_DURATION} from launch
 	 * configuration parameters map.
 	 *
-	 * @return min duration of a exploration cycles
+	 * @return minimum duration of an exploration cycles
 	 */
 	private double getMinDuration() {
 		final String minDuration = (String) launchConfigurationParams

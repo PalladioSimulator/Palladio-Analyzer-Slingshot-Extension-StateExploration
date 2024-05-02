@@ -17,6 +17,7 @@ import org.palladiosimulator.pcm.usagemodel.UsagemodelPackage;
 import org.palladiosimulator.semanticspd.SemanticspdPackage;
 import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 import org.palladiosimulator.spd.SpdPackage;
+import org.scaledl.usageevolution.UsageevolutionPackage;
 
 /**
  *
@@ -34,7 +35,8 @@ public class ArchitectureConfigurationUtil {
 			MonitorRepositoryPackage.eINSTANCE.getMonitorRepository(),
 			MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository(), SpdPackage.eINSTANCE.getSPD(),
 			SemanticspdPackage.eINSTANCE.getConfiguration(),
-			ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository());
+			ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository(),
+			UsageevolutionPackage.eINSTANCE.getUsageEvolution());
 
 	/**
 	 * Get all {@link Resource}s from the given {@link ResourceSet} that contain a

@@ -7,17 +7,18 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.int
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserStarted;
-import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 
-public class UserChangedEventVisitor {
+public class UserChangedEventVisitor extends SetReferencingVisitor {
 	private final Function<DESEvent, DESEvent> visitor;
-	private final CloneHelper helper = new CloneHelper();
 
-	public UserChangedEventVisitor() {
+	public UserChangedEventVisitor(final PCMResourceSetPartition set) {
+		super(set);
+
 		this.visitor = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(ClosedWorkloadUserInitiated.class).then(this::clone)
 				.on(UserFinished.class).then(this::clone)

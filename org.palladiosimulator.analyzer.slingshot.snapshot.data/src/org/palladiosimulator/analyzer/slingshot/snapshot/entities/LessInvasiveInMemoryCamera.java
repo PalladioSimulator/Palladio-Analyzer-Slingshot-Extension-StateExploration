@@ -23,6 +23,7 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
 import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
 
@@ -34,9 +35,17 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 
 	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
 
-	public LessInvasiveInMemoryCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine) {
+	private final CloneHelper helper;
+
+	private final PCMResourceSetPartition set;
+
+	public LessInvasiveInMemoryCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
+			final PCMResourceSetPartition set) {
 		this.record = record;
 		this.engine = engine;
+
+		this.helper = new CloneHelper(set);
+		this.set = set;
 
 		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(UsageModelPassedElement.class).then(this::clone)
@@ -53,19 +62,19 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	}
 
 	private DESEvent clone(final IntervalPassed event) {
-		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
+		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
 	private DESEvent clone(final UsageModelPassedElement<?> event) {
-		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
+		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
 	private DESEvent clone(final ClosedWorkloadUserInitiated event) {
-		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
+		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
 	private DESEvent clone(final InterArrivalUserInitiated event) {
-		return (new CloneHelper()).clone(event, engine.getSimulationInformation().currentSimulationTime());
+		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
 	/**
@@ -94,7 +103,7 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		relevantEvents.addAll(record.getRecordedCalculators());
 
 		final Set<DESEvent> offsettedEvents = relevantEvents.stream().map(adjustOffset).collect(Collectors.toSet());
-		final Set<DESEvent> clonedEvents = (new CloneHelperWithVisitor()).clone(offsettedEvents);
+		final Set<DESEvent> clonedEvents = (new CloneHelperWithVisitor(set)).clone(offsettedEvents);
 
 		this.log(clonedEvents);
 
