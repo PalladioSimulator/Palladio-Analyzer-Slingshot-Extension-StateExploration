@@ -1,5 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import java.util.Set;
+
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
 /**
@@ -10,6 +12,10 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
  *
  */
 public interface RawModelState {
+
+	public RawTransition getIncomingTransition();
+
+	public Set<RawTransition> getOutgoingTransitions();
 
 	/**
 	 * Get everything PCM.

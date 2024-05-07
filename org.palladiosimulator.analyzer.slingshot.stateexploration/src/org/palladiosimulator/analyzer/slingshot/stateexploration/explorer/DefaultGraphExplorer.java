@@ -7,7 +7,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -23,7 +22,6 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiate
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.ExplorationPlanner;
@@ -67,8 +65,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
 
-	private final SimpleDirectedGraph jGraphGraph;
-
 	private final MDSDBlackboard blackboard;
 
 	public DefaultGraphExplorer(final PCMResourceSetPartition partition, final SimulationDriver driver,
@@ -84,8 +80,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		this.graph = new DefaultGraph(this.createRoot());
 		this.blackbox = new ExplorationPlanner(this.graph, this.getMinDuration());
-
-		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
 	}
 
 	@Override
@@ -122,7 +116,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.createRootArchConfig(this.initModels.getResourceSet());
 		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
 
-		final DefaultState root = new DefaultState(0.0, rootConfig);
+		final DefaultState root = new DefaultState(0.0, rootConfig, this.graph);
 		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null, null)));
 		root.setSnapshot(initSnapshot);
 		return root;
@@ -227,8 +221,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final double interval = config.getExplorationDuration();
 
-		final Set<RawTransition> rootOutEdges = this.graph.outgoingEdgesOf(this.graph.getRoot());
-		final boolean notRootSuccesor = rootOutEdges.stream()
+		final boolean notRootSuccesor = this.graph.getRoot().getOutgoingTransitions().stream()
 				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
 
 		return new SnapshotConfiguration(interval, notRootSuccesor, 0.5);

@@ -1,14 +1,11 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
 import java.util.Optional;
-import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ModelElementDifference;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
-import org.palladiosimulator.pcm.core.entity.Entity;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 
 /**
  * Transition between two RawModelStates.
@@ -43,15 +40,6 @@ public interface RawTransition {
 	 * @return
 	 */
 	public Optional<Change> getChange();
-
-	/**
-	 * actually, you can also calculate this from the source and target model instances.
-	 * dont know whether it makes sense to provide this.
-	 *
-	 * @return
-	 */
-	public Set<ModelElementDifference<Entity>> getModelDifferences();
-
 
 	/**
 	 *

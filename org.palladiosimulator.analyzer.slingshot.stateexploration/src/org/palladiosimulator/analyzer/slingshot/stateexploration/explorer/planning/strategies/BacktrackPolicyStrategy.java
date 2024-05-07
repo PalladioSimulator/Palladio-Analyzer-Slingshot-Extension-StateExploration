@@ -57,7 +57,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 
 	/**
 	 * Check whether {@code state} already transitioned to a successor, via the
-	 * given policy. Or wether it is already planned to explore that (i.e.
+	 * given policy. Or whether it is already planned to explore that (i.e.
 	 * corresponding change in the fringe)
 	 *
 	 * @param state

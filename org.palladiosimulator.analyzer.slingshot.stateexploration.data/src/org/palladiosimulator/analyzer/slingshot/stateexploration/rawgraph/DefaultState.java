@@ -1,8 +1,11 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
+import java.util.Set;
+
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
@@ -18,16 +21,14 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
  */
 public class DefaultState implements RawModelState {
 
+	private final DefaultGraph graph;
+
 	/* known at start */
 	private final double startTime;
 	private final ArchitectureConfiguration archConfig;
 
 	/* known at the end */
 	private double duration;
-	/**
-	 * at first misused to get the snapshot to init on into the simulation. Later on
-	 * set to the actual snapshot of the events at the end of this state.
-	 */
 	private Snapshot snapshot;
 	private ReasonToLeave reasonToLeave;
 	private boolean decreaseInterval = false;
@@ -35,7 +36,9 @@ public class DefaultState implements RawModelState {
 	/* known after configuration of the simulation run */
 	private ExperimentSetting experimentSetting;
 
-	public DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig) {
+	public DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
+			final DefaultGraph graph) {
+		this.graph = graph;
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
 		this.reasonToLeave = ReasonToLeave.interval;
@@ -109,6 +112,19 @@ public class DefaultState implements RawModelState {
 	@Override
 	public String toString() {
 		return "DefaultState [archConfig=" + archConfig.getSegment() + ", reasonToLeave=" + reasonToLeave + "]";
+	}
+
+	@Override
+	public RawTransition getIncomingTransition() {
+		assert this.graph.incomingEdgesOf(this).size() == 1 : String.format("Illegal number of incoming edges for state %s.", this.toString());
+
+		return this.graph.incomingEdgesOf(this).stream().findFirst().orElseThrow(
+				() -> new IllegalStateException(String.format("Missing incoming edge for state %s.", this.toString())));
+	}
+
+	@Override
+	public Set<RawTransition> getOutgoingTransitions() {
+		return this.graph.outgoingEdgesOf(this);
 	}
 
 }

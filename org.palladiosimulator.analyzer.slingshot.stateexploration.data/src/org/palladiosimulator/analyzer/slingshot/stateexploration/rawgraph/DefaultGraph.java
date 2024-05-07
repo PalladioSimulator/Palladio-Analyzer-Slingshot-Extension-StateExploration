@@ -65,21 +65,21 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 	public boolean hasInFringe(final DefaultState state, final ScalingPolicy matchee) {
 		return this.fringe.stream()
-				.filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent()
-						&& todo.getChange().get() instanceof final Reconfiguration r)
-				.map(todo -> ((Reconfiguration) todo.getChange().get()).getAppliedPolicy())
-				.filter(policy -> policy.getId().equals(matchee.getId()))
-				.findAny().isPresent();
+				.filter(todo -> todo.getStart().equals(state)
+						&& todo.getChange().isPresent()
+						&& todo.getChange().get() instanceof Reconfiguration
+						&& ((Reconfiguration) todo.getChange().get()).getAppliedPolicy().getId()
+								.equals(matchee.getId()))
+				.findAny()
+				.isPresent();
 
 	}
 
 	public boolean hasOutTransitionFor(final RawModelState vertex, final ScalingPolicy matchee) {
 		return this.outgoingEdgesOf(vertex).stream()
-				.filter(t -> t.getChange().isPresent())
-				.map(t -> t.getChange().get())
-				.filter(c -> c instanceof final Reconfiguration r)
-				.map(c -> ((Reconfiguration) c).getAppliedPolicy())
-				.filter(policy -> policy.getId().equals(matchee.getId()))
+				.filter(t -> t.getChange().isPresent()
+						&& t.getChange().get() instanceof Reconfiguration
+						&& ((Reconfiguration) t.getChange().get()).getAppliedPolicy().getId().equals(matchee.getId()))
 				.findAny()
 				.isPresent();
 	}
