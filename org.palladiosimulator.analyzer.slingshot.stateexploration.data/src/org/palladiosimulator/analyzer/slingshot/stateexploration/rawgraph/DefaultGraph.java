@@ -1,6 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,8 +27,6 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 */
 	private static final long serialVersionUID = -7468814179743463536L;
 
-	private final ArrayDeque<ToDoChange> fringe;
-
 	private final DefaultState root;
 
 	/**
@@ -42,21 +39,9 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 		this.root = this.insertStateFor(0.0, rootArchConfig);
 		this.root.setSnapshot(new InMemorySnapshot(Set.of()));
-
-		this.fringe = new ArrayDeque<ToDoChange>();
 	}
 
-	/**
-	 * Select the change for the next exploration cycle.
-	 *
-	 * Current strategy is FIFO, but should be improved to something more
-	 * intelligent later on.
-	 *
-	 * @return
-	 */
-	public ToDoChange getNext() {
-		return this.fringe.poll();
-	}
+
 
 	public DefaultTransition insertTransitionFor(final Optional<Change> change, final RawModelState source,
 			final RawModelState target) {
@@ -70,34 +55,6 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 		final DefaultState newState = new DefaultState(pointInTime, archConfig, this);
 		this.addVertex(newState);
 		return newState;
-	}
-
-	/**
-	 *
-	 * @return true, iff there's another change to explore, false otherwise
-	 */
-	public Boolean hasNext() {
-		return !this.fringe.isEmpty();
-	}
-
-	/**
-	 * The fringe are the Changes to be
-	 * @param edge
-	 */
-	public void addFringeEdge(final ToDoChange edge) {
-		fringe.add(edge);
-	}
-
-	public boolean hasInFringe(final DefaultState state, final ScalingPolicy matchee) {
-		return this.fringe.stream()
-				.filter(todo -> todo.getStart().equals(state)
-						&& todo.getChange().isPresent()
-						&& todo.getChange().get() instanceof Reconfiguration
-						&& ((Reconfiguration) todo.getChange().get()).getAppliedPolicy().getId()
-						.equals(matchee.getId()))
-				.findAny()
-				.isPresent();
-
 	}
 
 	public boolean hasOutTransitionFor(final RawModelState vertex, final ScalingPolicy matchee) {

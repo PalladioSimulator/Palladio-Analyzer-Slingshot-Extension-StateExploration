@@ -26,6 +26,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.Exp
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -57,6 +58,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final ExplorationPlanner blackbox;
 
 	private final DefaultGraph graph;
+	private final DefaultGraphFringe fringe;
 
 	private final IProgressMonitor monitor;
 
@@ -77,11 +79,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		this.graph = new DefaultGraph(
 				UriBasedArchitectureConfiguration.createRootArchConfig(this.initModels.getResourceSet()));
+		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
 				new StateExploredMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
 
-		this.blackbox = new ExplorationPlanner(this.graph, this.getMinDuration());
+		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, this.getMinDuration());
 	}
 
 	@Override
@@ -90,7 +93,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		for (int i = 0; i < this.getMaxIterations(); i++) { // just random.
 			LOGGER.warn("********** Iteration " + i + "**********");
-			if (!this.graph.hasNext()) {
+			if (this.fringe.isEmpty()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
 				break;
 			}
