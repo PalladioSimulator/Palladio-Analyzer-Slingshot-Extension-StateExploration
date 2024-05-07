@@ -36,7 +36,7 @@ public class DefaultState implements RawModelState {
 	/* known after configuration of the simulation run */
 	private ExperimentSetting experimentSetting;
 
-	public DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
+	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
 			final DefaultGraph graph) {
 		this.graph = graph;
 		this.startTime = pointInTime;

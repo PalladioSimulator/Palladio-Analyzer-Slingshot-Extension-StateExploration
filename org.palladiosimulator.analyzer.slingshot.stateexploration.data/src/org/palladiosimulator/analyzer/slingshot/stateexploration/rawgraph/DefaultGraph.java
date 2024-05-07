@@ -1,12 +1,16 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.ArrayDeque;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -28,23 +32,44 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 	private final DefaultState root;
 
-	public DefaultGraph(final DefaultState root) {
+	/**
+	 *
+	 *
+	 * @param rootArchConfig architecture configuration for the root node.
+	 */
+	public DefaultGraph(final ArchitectureConfiguration rootArchConfig) {
 		super(RawTransition.class);
-		this.addVertex(root);
+
+		this.root = this.insertStateFor(0.0, rootArchConfig);
+		this.root.setSnapshot(new InMemorySnapshot(Set.of()));
 
 		this.fringe = new ArrayDeque<ToDoChange>();
-		this.root = root;
 	}
 
 	/**
 	 * Select the change for the next exploration cycle.
 	 *
-	 * Current strategy is FIFO, but should be imroved to something more intelligent later on.
+	 * Current strategy is FIFO, but should be improved to something more
+	 * intelligent later on.
 	 *
 	 * @return
 	 */
 	public ToDoChange getNext() {
 		return this.fringe.poll();
+	}
+
+	public DefaultTransition insertTransitionFor(final Optional<Change> change, final RawModelState source,
+			final RawModelState target) {
+		final DefaultTransition newTransition = new DefaultTransition(change, this);
+		this.addEdge(source, target, newTransition);
+		return newTransition;
+
+	}
+
+	public DefaultState insertStateFor(final double pointInTime, final ArchitectureConfiguration archConfig) {
+		final DefaultState newState = new DefaultState(pointInTime, archConfig, this);
+		this.addVertex(newState);
+		return newState;
 	}
 
 	/**
@@ -69,7 +94,7 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 						&& todo.getChange().isPresent()
 						&& todo.getChange().get() instanceof Reconfiguration
 						&& ((Reconfiguration) todo.getChange().get()).getAppliedPolicy().getId()
-								.equals(matchee.getId()))
+						.equals(matchee.getId()))
 				.findAny()
 				.isPresent();
 

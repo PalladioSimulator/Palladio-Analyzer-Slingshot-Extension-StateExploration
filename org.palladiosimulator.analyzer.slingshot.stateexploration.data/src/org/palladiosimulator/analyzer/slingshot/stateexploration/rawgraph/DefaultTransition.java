@@ -11,7 +11,7 @@ public class DefaultTransition implements RawTransition {
 
 	private final DefaultGraph graph;
 
-	public DefaultTransition(final Optional<Change> change, final DefaultGraph graph) {
+	protected DefaultTransition(final Optional<Change> change, final DefaultGraph graph) {
 		super();
 		this.change = change;
 		this.graph = graph;

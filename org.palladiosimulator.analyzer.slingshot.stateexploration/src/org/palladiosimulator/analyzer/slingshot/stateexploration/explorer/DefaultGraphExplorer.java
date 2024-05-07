@@ -15,11 +15,8 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
-import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
@@ -78,7 +75,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		this.graph = new DefaultGraph(this.createRoot());
+		this.graph = new DefaultGraph(
+				UriBasedArchitectureConfiguration.createRootArchConfig(this.initModels.getResourceSet()));
+
+		systemDriver.postEvent(
+				new StateExploredMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
+
 		this.blackbox = new ExplorationPlanner(this.graph, this.getMinDuration());
 	}
 
@@ -105,21 +107,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.graph.getTransitions().stream().forEach(
 				t -> LOGGER.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
 		return this.graph;
-	}
-
-	/**
-	 * Create root node for the graph. Sadly, ExperimentSettings for root are null
-	 * :/
-	 */
-	private DefaultState createRoot() {
-		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration
-				.createRootArchConfig(this.initModels.getResourceSet());
-		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
-
-		final DefaultState root = new DefaultState(0.0, rootConfig, this.graph);
-		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null, null)));
-		root.setSnapshot(initSnapshot);
-		return root;
 	}
 
 	/**

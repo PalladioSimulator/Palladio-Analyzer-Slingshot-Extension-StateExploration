@@ -15,7 +15,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planni
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -156,12 +155,9 @@ public class ExplorationPlanner {
 		final DefaultState predecessor = next.getStart();
 
 		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
-		final DefaultState newNode = new DefaultState(predecessor.getEndTime(), newConfig, this.rawgraph);
+		final DefaultState newNode = this.rawgraph.insertStateFor(minDuration, newConfig);
 
-		this.rawgraph.addVertex(newNode);
-
-		final DefaultTransition nextTransition = new DefaultTransition(next.getChange(), this.rawgraph);
-		this.rawgraph.addEdge(predecessor, newNode, nextTransition);
+		this.rawgraph.insertTransitionFor(next.getChange(), predecessor, newNode);
 
 		return newNode;
 	}
