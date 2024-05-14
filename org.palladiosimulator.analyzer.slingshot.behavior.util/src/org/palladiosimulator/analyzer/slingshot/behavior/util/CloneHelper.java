@@ -641,6 +641,10 @@ public final class CloneHelper {
 				? Optional.of(getMatchingPCMElement(scenarioContext.getNextAction().get()))
 						: Optional.empty();
 
+		final Optional<UsageScenarioBehaviorContext> parent = scenarioContext.getParent().isPresent()
+				? Optional.of(cloneUsageScenarioBehaviorContext(scenarioContext.getParent().get()))
+						: Optional.empty();
+
 		if (scenarioContext instanceof RootScenarioContext) {
 
 			clonedContext = RootScenarioContext.builder()
@@ -652,10 +656,18 @@ public final class CloneHelper {
 			// TODO : Dont care about "current action, as it is updated by the enclosing
 			// Interpretaiton context(?)"
 		} else if (scenarioContext instanceof BranchScenarioContext) {
-			throw new IllegalArgumentException("Not yet Implemented");
+			clonedContext = BranchScenarioContext.builder()
+					.withNextAction(abstractUserAction)
+					.withParent(parent)
+					.withScenarioBehavior(scenarioBehaviour)
+					.build();
 
-		} else if (scenarioContext instanceof LoopScenarioBehaviorContext) {
-			throw new IllegalArgumentException("Not yet Implemented");
+		} else if (scenarioContext instanceof final LoopScenarioBehaviorContext loopContext) {
+			clonedContext = loopContext.update()
+					.withNextAction(abstractUserAction)
+					.withParent(parent)
+					.withScenarioBehavior(scenarioBehaviour)
+					.build();
 
 		} else {
 			throw new IllegalArgumentException(String.format("Unexpected %s of type %s",
