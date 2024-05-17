@@ -120,9 +120,9 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		final double calculationValue = value.doubleValue(value.getUnit());
 
-		final MeasurementSpecification point = event.getEntity().getProcessingType().getMeasurementSpecification();
+		final MeasurementSpecification spec = event.getEntity().getProcessingType().getMeasurementSpecification();
 
-		for (final ValueRange range : mp2range.get(point)) {
+		for (final ValueRange range : mp2range.get(spec)) {
 			if (range.isViolatedBy(calculationValue)) {
 				state.setReasonToLeave(ReasonToLeave.closenessToSLO);
 				this.mp2range.clear(); // reset to avoid additional Snapshot Initiations.
