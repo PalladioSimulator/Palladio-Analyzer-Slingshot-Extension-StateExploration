@@ -22,8 +22,10 @@ import org.palladiosimulator.analyzer.slingshot.ui.events.ArchitectureModelsTabB
 import de.uka.ipd.sdq.workflow.launchconfig.tabs.TabHelper;
 
 /**
- * TODO Straight Copy from Slingshot version.
- * @author stiesssh
+ * Straight Copy from Slingshot version. Cannot use the Slingshot implementation
+ * because it is not exported.
+ *
+ * @author Sarah Stieß
  *
  */
 public class SimulationArchitectureModelsTab extends AbstractLaunchConfigurationTab {

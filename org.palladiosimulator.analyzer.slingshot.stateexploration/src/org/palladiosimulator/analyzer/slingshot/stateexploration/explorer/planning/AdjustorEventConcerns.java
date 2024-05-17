@@ -24,6 +24,10 @@ public class AdjustorEventConcerns {
 	private static final Logger LOGGER = Logger.getLogger(AdjustorEventConcerns.class.getName());
 
 	public AdjustorEventConcerns(final ArchitectureConfiguration config) {
+		if (config.getSPD().isEmpty()) {
+			throw new IllegalArgumentException(String.format(
+					"No SPD model in architecture configuration %s, but SPD model is required.", config.getSegment()));
+		}
 		this.config = config;
 	}
 
@@ -51,7 +55,8 @@ public class AdjustorEventConcerns {
 	 */
 	private ScalingPolicy getMatchingPolicy(final ScalingPolicy appliedPolicy) {
 
-		final Optional<ScalingPolicy> copiedPolicy = config.getSPD().getScalingPolicies().stream().filter(policy -> policy.getId().equals(appliedPolicy.getId())).findAny();
+		final Optional<ScalingPolicy> copiedPolicy = config.getSPD().get().getScalingPolicies().stream()
+				.filter(policy -> policy.getId().equals(appliedPolicy.getId())).findAny();
 		if (copiedPolicy.isEmpty()) {
 			throw new NoSuchElementException(String.format(
 					"No Scaling Policy matching ID %s in new Architectur Configuration.", appliedPolicy.getId()));

@@ -6,7 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshot
 import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelProvider;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.SLOModelProvider;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 import org.palladiosimulator.spd.ScalingPolicy;
 
