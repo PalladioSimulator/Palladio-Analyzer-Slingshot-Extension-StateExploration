@@ -24,13 +24,13 @@ public final class SnapshotConfiguration {
 
 	private final double interval;
 	private final double minDuration;
-	private final double significance;
+	private final double sensitivity;
 	private final boolean startFromSnapshot;
 
-	public SnapshotConfiguration(final double interval, final boolean startFromSnapshot, final double significance, final double minDuration) {
+	public SnapshotConfiguration(final double interval, final boolean startFromSnapshot, final double sensitivity, final double minDuration) {
 		this.interval = interval;
 		this.startFromSnapshot = startFromSnapshot;
-		this.significance = significance;
+		this.sensitivity = sensitivity;
 		this.minDuration = minDuration;
 	}
 
@@ -38,8 +38,8 @@ public final class SnapshotConfiguration {
 		return this.minDuration;
 	}
 
-	public double getSignificance() {
-		return this.significance;
+	public double getSensitivity() {
+		return this.sensitivity;
 	}
 
 	public double getSnapinterval() {

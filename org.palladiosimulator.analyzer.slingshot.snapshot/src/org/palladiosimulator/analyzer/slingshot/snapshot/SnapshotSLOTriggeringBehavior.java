@@ -21,8 +21,6 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotC
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.edp2.util.MetricDescriptionUtility;
-import org.palladiosimulator.metricspec.BaseMetricDescription;
 import org.palladiosimulator.metricspec.MetricDescription;
 import org.palladiosimulator.monitorrepository.MeasurementSpecification;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
@@ -41,7 +39,7 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveReposito
  *
  *
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 @OnEvent(when = MeasurementUpdated.class, then = SnapshotInitiated.class)
@@ -56,8 +54,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	/* Calculate mapping to save time later on (probably) */
 	private final Map<MeasurementSpecification, Set<ValueRange>> mp2range;
 
-	// TODO make configurable
-	private final double significance;
+	private final double sensitivity;
 	private final double minDuration;
 
 	@Inject
@@ -71,7 +68,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		this.sloRepo = sloRepo;
 
 		this.minDuration = activated ? config.getMinDuration() : 0;
-		this.significance = activated ? config.getSignificance() : 0;
+		this.sensitivity = activated ? config.getSensitivity() : 0;
 
 		this.mp2range = new HashMap<>();
 		for (final ServiceLevelObjective slo : sloRepo.getServicelevelobjectives()) {
@@ -93,12 +90,12 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 			}
 			if (slo.getLowerThreshold() == null) {
 				mp2range.get(mp).add(new SingleEndedRange(
-						(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(), significance));
+						(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(), sensitivity));
 			} else {
 				mp2range.get(mp)
 				.add(new DoubleEndedRange(
 						(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(),
-						(Measure<Object, Quantity>) slo.getLowerThreshold().getThresholdLimit(), significance));
+						(Measure<Object, Quantity>) slo.getLowerThreshold().getThresholdLimit(), sensitivity));
 			}
 		}
 	}
@@ -119,18 +116,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		final MetricDescription base = event.getEntity().getProcessingType().getMeasurementSpecification()
 				.getMetricDescription();
 
-		// cannot access values via getter because of base vs. tuple metrics foo. // Why
-		// is it base metric for usage scenario MP???
-		// final Measure<Double, Quantity> value = (Measure<Double, Quantity>)
-		// event.getEntity().getMeasuringValue().asArray()[1];
-
 		final Measure<Double, Quantity> value = event.getEntity().getMeasuringValue().getMeasureForMetric(base);
-
-		//		final Amount<? extends Quantity> area = Amount.valueOf(value.getValue(), value.getUnit());
-		//		area.times(0.5);
-
-		final BaseMetricDescription[] bases = MetricDescriptionUtility
-				.toBaseMetricDescriptions(event.getEntity().getMeasuringValue().getMetricDesciption());
 
 		final double calculationValue = value.doubleValue(value.getUnit());
 
@@ -138,7 +124,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		for (final ValueRange range : mp2range.get(point)) {
 			if (range.isViolatedBy(calculationValue)) {
-				state.setReasonToLeave(ReasonToLeave.significantChange);
+				state.setReasonToLeave(ReasonToLeave.closenessToSLO);
 				this.mp2range.clear(); // reset to avoid additional Snapshot Initiations.
 				return Result.of(new SnapshotInitiated(0.0));
 			}
@@ -161,7 +147,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	 *
 	 */
 	private abstract class ValueRange {
-		protected final double significance;
+		protected final double sensitivity;
 		protected final double upper;
 		protected final double lower;
 
@@ -169,20 +155,20 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		 *
 		 * @param upper       Upper Threshold of SLO
 		 * @param lower       Lower Threshold of SLO
-		 * @param sensibility Number in [0,1] where 0 is insensible, and 1 is very
+		 * @param sensitivity Number in [0,1] where 0 is insensible, and 1 is very
 		 *                    sensible.
 		 */
 		public ValueRange(final Measure<?, Quantity> upper, final Measure<?, Quantity> lower,
-				final double sensibility) {
-			this.significance = sensibility;
+				final double sensitivity) {
+			this.sensitivity = sensitivity;
 
 			final double u = upper.doubleValue(upper.getUnit());
 			final double l = lower.doubleValue(lower.getUnit());
 
 			final double middle = (u - l) / 2.0;
 
-			this.upper = u - this.significance * middle;
-			this.lower = l + this.significance * middle;
+			this.upper = u - this.sensitivity * middle;
+			this.lower = l + this.sensitivity * middle;
 		}
 
 		/**
