@@ -28,12 +28,12 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 	public void onArchitectureModelsTab(final ExplorationConfigTabBuilderStarted event) {
 		event.newFieldDefinition()
 		.label(MAX_EXPLORATION_CYCLES)
-		.promptTitle(String.valueOf(DEFAULT_MAX_EXPLORATION_CYCLES))
+		.defaultValue(String.valueOf(DEFAULT_MAX_EXPLORATION_CYCLES))
 		.build();
 
 		event.newFieldDefinition()
 		.label(MIN_STATE_DURATION)
-		.promptTitle(String.valueOf(DEFAULT_MIN_STATE_DURATION))
+		.defaultValue(String.valueOf(DEFAULT_MIN_STATE_DURATION))
 		.build();
 	}
 

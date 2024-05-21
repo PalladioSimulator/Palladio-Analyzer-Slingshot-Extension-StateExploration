@@ -1,11 +1,9 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
-
-import javax.inject.Inject;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking;
 
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.SlingshotWebsocketClient;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.TestMessage;
 
 
 
@@ -16,7 +14,7 @@ public class ExplorationMessageDispatcher implements SystemBehaviorExtension {
 	 * If gson is setup correctly, the incoming message gets called and dispatched automatically resulting in the subscribers to be called
 	 */
 	@Subscribe
-	public void onStateExplored(TestMessage sim) {
+	public void onStateExplored(final TestMessage sim) {
 		System.out.println(sim.getPayload());
 	}
 }

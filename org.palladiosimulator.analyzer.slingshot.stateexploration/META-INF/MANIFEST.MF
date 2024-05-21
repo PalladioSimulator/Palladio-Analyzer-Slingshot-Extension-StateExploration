@@ -31,7 +31,7 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.jgrapht.core,
  org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
  org.palladiosimulator.analyzer.slingshot.planner,
- org.palladiosimulator.analyzer.slingshot.networking,
  org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
  com.google.gson,
- org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events
+ org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
+ org.palladiosimulator.analyzer.slingshot.networking.data

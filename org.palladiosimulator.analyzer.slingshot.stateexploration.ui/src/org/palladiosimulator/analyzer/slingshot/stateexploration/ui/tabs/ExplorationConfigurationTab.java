@@ -26,7 +26,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.Explo
  *
  * Tab in the run configuration to set exploration specific configurations.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab {
@@ -40,6 +40,7 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 	private final Map<TextField, Text> texts = new HashMap<>();
 
 	private final ModifyListener modifyListener;
+
 	private Composite container;
 
 	public ExplorationConfigurationTab() {
@@ -74,8 +75,18 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 
 			texts.put(textField, text);
 		});
+
 	}
 
+
+	/**
+	 * For Test input
+	 *
+	 * @param modifyListener
+	 * @param textField
+	 * @param group
+	 * @return
+	 */
 	protected Text createGroupField(final ModifyListener modifyListener, final TextField textField,
 			final Group group) {
 		final Label timeLabel = new Label(group, SWT.NONE);
@@ -97,9 +108,9 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 	public void initializeFrom(final ILaunchConfiguration configuration) {
 		texts.forEach((textField, text) -> {
 			try {
-				text.setText(configuration.getAttribute(textField.getLabel(), textField.getPromptTitle()));
+				text.setText(configuration.getAttribute(textField.getLabel(), textField.getdefaultValue()));
 			} catch (final CoreException e) {
-				text.setText(textField.getPromptTitle());
+				text.setText(textField.getdefaultValue());
 			}
 		});
 	}
