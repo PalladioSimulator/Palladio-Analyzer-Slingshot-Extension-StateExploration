@@ -6,12 +6,13 @@ Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: Planner
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: org.palladiosimulator.edp2,
- org.palladiosimulator.analyzer.slingshot.stateexploration.data,
  org.palladiosimulator.edp2.util,
  org.palladiosimulator.servicelevelobjective,
  org.palladiosimulator.spd,
  org.palladiosimulator.monitorrepository,
  org.palladiosimulator.analyzer.slingshot.core,
+ org.apache.log4j,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.data,
  org.apache.log4j
 Export-Package: org.palladiosimulator.analyzer.slingshot.planner.data,
  org.palladiosimulator.analyzer.slingshot.planner.runner
