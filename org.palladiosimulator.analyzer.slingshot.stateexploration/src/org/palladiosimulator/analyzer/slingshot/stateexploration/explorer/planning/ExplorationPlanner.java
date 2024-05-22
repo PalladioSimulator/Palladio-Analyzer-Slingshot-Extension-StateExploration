@@ -158,7 +158,7 @@ public class ExplorationPlanner {
 		final DefaultState predecessor = next.getStart();
 
 		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
-		final DefaultState newNode = this.rawgraph.insertStateFor(minDuration, newConfig);
+		final DefaultState newNode = this.rawgraph.insertStateFor(predecessor.getEndTime(), newConfig);
 
 		this.rawgraph.insertTransitionFor(next.getChange(), predecessor, newNode);
 
@@ -191,11 +191,11 @@ public class ExplorationPlanner {
 	 */
 	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
 		spd.getScalingPolicies().stream()
-				.filter(policy -> policy.isActive() && policy.getScalingTrigger() instanceof BaseTrigger)
-				.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
-				.filter(trigger -> trigger.getStimulus() instanceof SimulationTime
+		.filter(policy -> policy.isActive() && policy.getScalingTrigger() instanceof BaseTrigger)
+		.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
+		.filter(trigger -> trigger.getStimulus() instanceof SimulationTime
 				&& trigger.getExpectedValue() instanceof ExpectedTime)
-				.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
+		.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
 
 		ResourceUtils.saveResource(spd.eResource());
 	}

@@ -8,6 +8,7 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPar
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AnnounceGraphExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
@@ -70,7 +71,13 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 		final int iterations = Integer.valueOf((String) this.configuration.getlaunchConfigParams()
 				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));
 		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(iterations));
-		Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+
+		if ((Boolean) this.configuration.getlaunchConfigParams()
+				.get(ExplorationConfiguration.IDLE_EXPLORATION)) {
+			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+		} else {
+			Slingshot.getInstance().getSystemDriver().postEvent(new ResetExplorerEvent());
+		}
 
 		// Start exploration. On every explored state we send a message, which alloes the external planner component to react
 		// explorer.start();

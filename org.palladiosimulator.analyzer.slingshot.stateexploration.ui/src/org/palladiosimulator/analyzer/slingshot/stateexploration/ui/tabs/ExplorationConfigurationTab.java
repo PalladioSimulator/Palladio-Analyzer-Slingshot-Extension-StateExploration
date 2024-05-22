@@ -11,14 +11,19 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.ExplorationAdditionalConfigTabBuilderStarted;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.ExplorationAdditionalConfigTabBuilderStarted.Checkbox;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.ExplorationConfigTabBuilderStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.ExplorationConfigTabBuilderStarted.TextField;
 
@@ -39,6 +44,9 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 	private Iterator<TextField> iterator;
 	private final Map<TextField, Text> texts = new HashMap<>();
 
+	private Iterator<Checkbox> additionalIterator;
+	private final Map<Checkbox, Button> additionalWidgets = new HashMap<>();
+
 	private final ModifyListener modifyListener;
 
 	private Composite container;
@@ -49,6 +57,11 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 		final ExplorationConfigTabBuilderStarted event = new ExplorationConfigTabBuilderStarted();
 		systemDriver.postEventAndThen(event, () -> {
 			iterator = event.iterator();
+		});
+
+		final ExplorationAdditionalConfigTabBuilderStarted additionalEvent = new ExplorationAdditionalConfigTabBuilderStarted();
+		systemDriver.postEventAndThen(additionalEvent, () -> {
+			additionalIterator = additionalEvent.iterator();
 		});
 
 		this.modifyListener = modifyEvent -> {
@@ -72,12 +85,27 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 
 		this.iterator.forEachRemaining(textField -> {
 			final Text text = this.createGroupField(modifyListener, textField, group);
-
 			texts.put(textField, text);
 		});
 
+
+		createStopCheckbox();
 	}
 
+	private void createStopCheckbox() {
+
+		final Group group = new Group(this.container, SWT.NONE);
+		group.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		final GridLayout gridLayout_1 = new GridLayout();
+		gridLayout_1.numColumns = 2;
+		group.setLayout(gridLayout_1);
+		group.setText("Additional Settings");
+
+		this.additionalIterator.forEachRemaining(checkbox -> {
+			final Button button = this.createGroupField(checkbox, group);
+			additionalWidgets.put(checkbox, button);
+		});
+	}
 
 	/**
 	 * For Test input
@@ -99,6 +127,37 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 		return timeField;
 	}
 
+	/**
+	 *
+	 * @param textField
+	 * @param group
+	 * @return
+	 */
+	protected Button createGroupField(final Checkbox textField,
+			final Group group) {
+		final Label timeLabel = new Label(group, SWT.NONE);
+		timeLabel.setText(textField.getLabel());
+
+		final Button timeField = new Button(group, SWT.CHECK);
+		timeField.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		timeField.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(final SelectionEvent e) {
+				setDirty(true);
+				updateLaunchConfigurationDialog();
+			}
+
+			@Override
+			public void widgetDefaultSelected(final SelectionEvent e) {
+				setDirty(true);
+				updateLaunchConfigurationDialog();
+			}
+		});
+
+		return timeField;
+	}
+
 	@Override
 	public void setDefaults(final ILaunchConfigurationWorkingCopy configuration) {
 
@@ -113,6 +172,14 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 				text.setText(textField.getdefaultValue());
 			}
 		});
+
+		additionalWidgets.forEach((textField, text) -> {
+			try {
+				text.setSelection(configuration.getAttribute(textField.getLabel(), textField.getdefaultValue()));
+			} catch (final CoreException e) {
+				text.setSelection(textField.getdefaultValue());
+			}
+		});
 	}
 
 	@Override
@@ -120,6 +187,11 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 		texts.forEach((textField, text) -> {
 			configuration.setAttribute(textField.getLabel(), text.getText());
 		});
+
+		additionalWidgets.forEach((textField, text) -> {
+			configuration.setAttribute(textField.getLabel(), text.getSelection());
+		});
+
 	}
 
 	@Override

@@ -1,0 +1,196 @@
+diff --cc org.palladiosimulator.analyzer.slingshot.stateexploration.ui/src/org/palladiosimulator/analyzer/slingshot/stateexploration/ui/tabs/ExplorationConfigurationTab.java
+index 1bb957d,bdee130..0000000
+--- a/org.palladiosimulator.analyzer.slingshot.stateexploration.ui/src/org/palladiosimulator/analyzer/slingshot/stateexploration/ui/tabs/ExplorationConfigurationTab.java
++++ b/org.palladiosimulator.analyzer.slingshot.stateexploration.ui/src/org/palladiosimulator/analyzer/slingshot/stateexploration/ui/tabs/ExplorationConfigurationTab.java
+@@@ -39,7 -44,11 +44,14 @@@ public class ExplorationConfigurationTa
+  	private Iterator<TextField> iterator;
+  	private final Map<TextField, Text> texts = new HashMap<>();
+  
++ 	private Iterator<CheckBox> boxIterator;
++ 	private final Map<CheckBox, Button> boxes = new HashMap<>();
++ 
+  	private final ModifyListener modifyListener;
+++<<<<<<< Updated upstream
+++=======
++ 	private final SelectionListener selectionListener;
+++>>>>>>> Stashed changes
+  
+  	private Composite container;
+  
+@@@ -76,8 -104,32 +107,37 @@@
+  			texts.put(textField, text);
+  		});
+  
+++<<<<<<< Updated upstream
+ +	}
+ +
+++=======
++ 		this.boxIterator.forEachRemaining(textField -> {
++ 			final Button text = this.createGroupField(modifyListener, textField, group);
++ 
++ 			boxes.put(textField, text);
++ 		});
++ 	}
++ 
++ 	/**
++ 	 * For Checkboxes
++ 	 *
++ 	 * @param modifyListener
++ 	 * @param textField
++ 	 * @param group
++ 	 * @return
++ 	 */
++ 	protected Button createGroupField(final ModifyListener modifyListener, final CheckBox textField,
++ 			final Group group) {
++ 		final Label timeLabel = new Label(group, SWT.NONE);
++ 		timeLabel.setText(textField.getLabel());
++ 
++ 		final Button timeField = new Button(group, SWT.CHECK);
++ 		timeField.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
++ 		timeField.addSelectionListener(selectionListener);
++ 
++ 		return timeField;
++ 	}
+++>>>>>>> Stashed changes
+  
+  	/**
+  	 * For Test input
+diff --cc org.palladiosimulator.analyzer.slingshot.stateexploration/META-INF/MANIFEST.MF
+index c2171fe,ec1ae1f..0000000
+--- a/org.palladiosimulator.analyzer.slingshot.stateexploration/META-INF/MANIFEST.MF
++++ b/org.palladiosimulator.analyzer.slingshot.stateexploration/META-INF/MANIFEST.MF
+@@@ -30,8 -30,8 +30,16 @@@ Require-Bundle: org.palladiosimulator.e
+   org.palladiosimulator.spd.semantic,
+   org.jgrapht.core,
+   org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
+++<<<<<<< Updated upstream
+ + org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
+ + com.google.gson,
+ + org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
+ + org.palladiosimulator.analyzer.slingshot.networking.data,
+ + org.palladiosimulator.analyzer.slingshot.planner
+++=======
++  org.palladiosimulator.analyzer.slingshot.planner,
++  org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
++  com.google.gson,
++  org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
++  org.palladiosimulator.analyzer.slingshot.networking.data
+++>>>>>>> Stashed changes
+diff --cc org.palladiosimulator.analyzer.slingshot.stateexploration/plugin.xml
+index f5c288d,2b0c619..0000000
+--- a/org.palladiosimulator.analyzer.slingshot.stateexploration/plugin.xml
++++ b/org.palladiosimulator.analyzer.slingshot.stateexploration/plugin.xml
+@@@ -10,8 -10,7 +10,12 @@@
+              module="org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule">
+        </slingshot-extension>
+        <slingshot-extension
+++<<<<<<< Updated upstream
+ +            module="org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.ExplorationNetworkingModule">
+ +      </slingshot-extension>
+++=======
++             module="org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.ExplorationNetworkingModule"></slingshot-extension>
+++>>>>>>> Stashed changes
+     </extension>
+  
+  </plugin>
+diff --cc org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/ExplorationModule.java
+index 2e0fa91,c8ef814..0000000
+--- a/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/ExplorationModule.java
++++ b/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/ExplorationModule.java
+@@@ -1,12 -1,10 +1,19 @@@
+  package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
+  
+  import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
+++<<<<<<< Updated upstream
+ +import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.ExplorerControllerSystemBehaviour;
+ +import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
+ +import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelConfiguration;
+ +import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelProvider;
+ +import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+ +
+++=======
++ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
++ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelConfiguration;
++ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.SLOModelProvider;
++ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
+++>>>>>>> Stashed changes
+  
+  public class ExplorationModule extends AbstractSlingshotExtension {
+  
+@@@ -14,9 -12,7 +21,13 @@@
+  	protected void configure() {
+  		install(ExplorationConfiguration.class);
+  		install(SLOModelConfiguration.class);
+++<<<<<<< Updated upstream
+ +		provideModel(ServiceLevelObjective.class, SLOModelProvider.class);
+ +
+ +		install(ExplorerControllerSystemBehaviour.class);
+++=======
++ 		provideModel(ServiceLevelObjectiveRepository.class, SLOModelProvider.class);
+++>>>>>>> Stashed changes
+  	}
+  
+  }
+diff --cc org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/ui/ExplorationConfiguration.java
+index 69c82ef,b2bba6e..0000000
+--- a/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/ui/ExplorationConfiguration.java
++++ b/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/ui/ExplorationConfiguration.java
+@@@ -20,9 -22,13 +22,19 @@@ public class ExplorationConfiguration i
+  
+  	public static final String MAX_EXPLORATION_CYCLES = "Max Exploration Cycles";
+  	public static final String MIN_STATE_DURATION = "Min State Duration";
+++<<<<<<< Updated upstream
+ +
+ +	public static final int DEFAULT_MAX_EXPLORATION_CYCLES = 20;
+ +	public static final int DEFAULT_MIN_STATE_DURATION = 20;
+++=======
++ 	public static final String SENSIBILITY = "Sensitivity [0, 1 (most sensitive)] ";
++ 	public static final String NETWORKING = "Enable Networking";
++ 
++ 	public static final int DEFAULT_MAX_EXPLORATION_CYCLES = 20;
++ 	public static final int DEFAULT_MIN_STATE_DURATION = 20;
++ 	public static final int DEFAULT_SENSIBILITY = 0;
++ 	public static final boolean DEFAULT_NETWORKING = true;
+++>>>>>>> Stashed changes
+  
+  	@Subscribe
+  	public void onArchitectureModelsTab(final ExplorationConfigTabBuilderStarted event) {
+@@@ -34,6 -40,19 +46,22 @@@
+  		event.newFieldDefinition()
+  		.label(MIN_STATE_DURATION)
+  		.defaultValue(String.valueOf(DEFAULT_MIN_STATE_DURATION))
+++<<<<<<< Updated upstream
+++=======
++ 		.build();
++ 
++ 		event.newFieldDefinition()
++ 		.label(SENSIBILITY)
++ 		.defaultValue(String.valueOf(DEFAULT_SENSIBILITY))
++ 		.build();
++ 	}
++ 
++ 	@Subscribe
++ 	public void onArchitectureModelsTab(final ExplorationNetworkingConfigTabBuilderStarted event) {
++ 		event.newFieldDefinition()
++ 		.label(NETWORKING)
++ 		.defaultValue(DEFAULT_NETWORKING)
+++>>>>>>> Stashed changes
+  		.build();
+  	}
+  
+diff --git a/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/controller/ExplorerControllerSystemBehaviour.java b/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/controller/ExplorerControllerSystemBehaviour.java
+index 38ea9fa..7a26953 100644
+--- a/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/controller/ExplorerControllerSystemBehaviour.java
++++ b/org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/controller/ExplorerControllerSystemBehaviour.java
+@@ -51,7 +51,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
+ 		if (explorer == null) {
+ 			this.explorer = event.getExplorer();
+ 		}
+-		// TODO handling if explorer already set
++		// TODO handling if explorer already set ?
+ 	}
+ 
+ 	/**
+* Unmerged path org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/networking/messages/SimTestMessage.java
+* Unmerged path org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/networking/messages/StateExploredMessage.java
+* Unmerged path org.palladiosimulator.analyzer.slingshot.stateexploration/src/org/palladiosimulator/analyzer/slingshot/stateexploration/explorer/networking/messages/TestMessage.java

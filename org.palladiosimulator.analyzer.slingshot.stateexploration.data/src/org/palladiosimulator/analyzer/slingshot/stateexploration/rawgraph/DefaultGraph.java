@@ -51,8 +51,14 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 	}
 
-	public DefaultState insertStateFor(final double pointInTime, final ArchitectureConfiguration archConfig) {
-		final DefaultState newState = new DefaultState(pointInTime, archConfig, this);
+	/**
+	 *
+	 * @param startPointInTime
+	 * @param archConfig
+	 * @return
+	 */
+	public DefaultState insertStateFor(final double startPointInTime, final ArchitectureConfiguration archConfig) {
+		final DefaultState newState = new DefaultState(startPointInTime, archConfig, this);
 		this.addVertex(newState);
 		return newState;
 	}
