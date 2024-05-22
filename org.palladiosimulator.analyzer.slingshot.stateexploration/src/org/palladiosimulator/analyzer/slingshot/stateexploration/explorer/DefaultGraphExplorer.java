@@ -259,7 +259,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	@Override
 	public boolean hasNext() {
-		return this.graph.hasNext();
+		return !this.fringe.isEmpty();
 	}
 
 	@Override
