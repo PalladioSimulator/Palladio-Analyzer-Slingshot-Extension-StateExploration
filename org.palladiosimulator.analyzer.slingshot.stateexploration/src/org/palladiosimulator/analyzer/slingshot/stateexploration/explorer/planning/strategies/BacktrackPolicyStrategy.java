@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -25,9 +26,11 @@ import org.palladiosimulator.spd.ScalingPolicy;
 public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 
 	private final DefaultGraph graph;
+	private final DefaultGraphFringe fringe;
 
-	public BacktrackPolicyStrategy(final DefaultGraph graph) {
+	public BacktrackPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe) {
 		this.graph = graph;
+		this.fringe = fringe;
 	}
 
 	@Override
@@ -57,7 +60,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 
 	/**
 	 * Check whether {@code state} already transitioned to a successor, via the
-	 * given policy. Or wether it is already planned to explore that (i.e.
+	 * given policy. Or whether it is already planned to explore that (i.e.
 	 * corresponding change in the fringe)
 	 *
 	 * @param state
@@ -65,7 +68,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @return
 	 */
 	private boolean policyAlreadyExploredAtState(final DefaultState state, final ScalingPolicy policy) {
-		return state.hasOutTransitionFor(policy) || this.graph.hasInFringe(state, policy);
+		return this.graph.hasOutTransitionFor(state, policy) || this.fringe.containsTodoFor(state, policy);
 	}
 
 	/**

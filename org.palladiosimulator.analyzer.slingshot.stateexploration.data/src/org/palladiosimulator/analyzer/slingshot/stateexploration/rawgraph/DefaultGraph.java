@@ -1,12 +1,15 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -17,64 +20,50 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * @author stiesssh
  *
  */
-public class DefaultGraph implements RawStateGraph{
+public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, RawTransition> implements RawStateGraph {
 
-	private final Set<RawModelState> nodes;
-	private final Set<RawTransition> transitions;
-
-	private final ArrayDeque<ToDoChange> fringe;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -7468814179743463536L;
 
 	private final DefaultState root;
 
-	public DefaultGraph(final DefaultState root) {
-		super();
-		this.nodes = new HashSet<RawModelState>();
-		this.transitions = new HashSet<RawTransition>();
-		this.fringe = new ArrayDeque<ToDoChange>();
-		this.root = root;
-
-		this.nodes.add(root);
-	}
-
-	/**
-	 * Select the change for the next exploration cycle.
-	 *
-	 * Current strategy is FIFO, but should be imroved to something more intelligent later on.
-	 *
-	 * @return
-	 */
-	public ToDoChange getNext() {
-		return this.fringe.poll();
-	}
-
 	/**
 	 *
-	 * @return true, iff there's another change to explore, false otherwise
+	 *
+	 * @param rootArchConfig architecture configuration for the root node.
 	 */
-	public Boolean hasNext() {
-		return !this.fringe.isEmpty();
+	public DefaultGraph(final ArchitectureConfiguration rootArchConfig) {
+		super(RawTransition.class);
+
+		this.root = this.insertStateFor(0.0, rootArchConfig);
+		this.root.setSnapshot(new InMemorySnapshot(Set.of()));
 	}
 
-	public void addNode(final RawModelState node) {
-		this.nodes.add(node);
+
+
+	public DefaultTransition insertTransitionFor(final Optional<Change> change, final RawModelState source,
+			final RawModelState target) {
+		final DefaultTransition newTransition = new DefaultTransition(change, this);
+		this.addEdge(source, target, newTransition);
+		return newTransition;
+
 	}
 
-	/**
-	 * The fringe are the Changes to be
-	 * @param edge
-	 */
-	public void addFringeEdge(final ToDoChange edge) {
-		fringe.add(edge);
+	public DefaultState insertStateFor(final double pointInTime, final ArchitectureConfiguration archConfig) {
+		final DefaultState newState = new DefaultState(pointInTime, archConfig, this);
+		this.addVertex(newState);
+		return newState;
 	}
 
-	public boolean hasInFringe(final DefaultState state, final ScalingPolicy matchee) {
-		return this.fringe.stream()
-				.filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent()
-						&& todo.getChange().get() instanceof final Reconfiguration r)
-				.map(todo -> ((Reconfiguration) todo.getChange().get()).getAppliedPolicy())
-				.filter(policy -> policy.getId().equals(matchee.getId()))
-				.findAny().isPresent();
-
+	public boolean hasOutTransitionFor(final RawModelState vertex, final ScalingPolicy matchee) {
+		return this.outgoingEdgesOf(vertex).stream()
+				.filter(t -> t.getChange().isPresent()
+						&& t.getChange().get() instanceof Reconfiguration
+						&& ((Reconfiguration) t.getChange().get()).getAppliedPolicy().getId().equals(matchee.getId()))
+				.findAny()
+				.isPresent();
 	}
 
 	@Override
@@ -84,11 +73,11 @@ public class DefaultGraph implements RawStateGraph{
 
 	@Override
 	public Set<RawModelState> getStates() {
-		return this.nodes;
+		return this.vertexSet();
 	}
 
 	@Override
 	public Set<RawTransition> getTransitions() {
-		return this.nodes.stream().map(state -> state.getOutTransitions()).reduce(new HashSet<>(), (s,t) -> {s.addAll(t); return s;});
+		return this.edgeSet();
 	}
 }

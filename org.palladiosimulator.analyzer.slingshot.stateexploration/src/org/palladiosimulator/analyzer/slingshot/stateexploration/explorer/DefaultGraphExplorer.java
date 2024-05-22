@@ -7,7 +7,6 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -16,14 +15,10 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
-import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.ExplorationPlanner;
@@ -31,6 +26,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.Exp
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -62,12 +58,11 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final ExplorationPlanner blackbox;
 
 	private final DefaultGraph graph;
+	private final DefaultGraphFringe fringe;
 
 	private final IProgressMonitor monitor;
 
 	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
-
-	private final SimpleDirectedGraph jGraphGraph;
 
 	private final MDSDBlackboard blackboard;
 
@@ -82,10 +77,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		this.graph = new DefaultGraph(this.createRoot());
-		this.blackbox = new ExplorationPlanner(this.graph, this.getMinDuration());
+		this.graph = new DefaultGraph(
+				UriBasedArchitectureConfiguration.createRootArchConfig(this.initModels.getResourceSet()));
+		this.fringe = new DefaultGraphFringe();
 
-		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
+		systemDriver.postEvent(
+				new StateExploredMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
+
+		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, this.getMinDuration());
 	}
 
 	@Override
@@ -94,7 +93,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		for (int i = 0; i < this.getMaxIterations(); i++) { // just random.
 			LOGGER.warn("********** Iteration " + i + "**********");
-			if (!this.graph.hasNext()) {
+			if (this.fringe.isEmpty()) {
 				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
 				break;
 			}
@@ -111,21 +110,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.graph.getTransitions().stream().forEach(
 				t -> LOGGER.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
 		return this.graph;
-	}
-
-	/**
-	 * Create root node for the graph. Sadly, ExperimentSettings for root are null
-	 * :/
-	 */
-	private DefaultState createRoot() {
-		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration
-				.createRootArchConfig(this.initModels.getResourceSet());
-		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
-
-		final DefaultState root = new DefaultState(0.0, rootConfig);
-		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null, null)));
-		root.setSnapshot(initSnapshot);
-		return root;
 	}
 
 	/**
@@ -227,7 +211,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final double interval = config.getExplorationDuration();
 
-		final boolean notRootSuccesor = this.graph.getRoot().getOutTransitions().stream()
+		final boolean notRootSuccesor = this.graph.getRoot().getOutgoingTransitions().stream()
 				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
 
 		return new SnapshotConfiguration(interval, notRootSuccesor, 0.5);
