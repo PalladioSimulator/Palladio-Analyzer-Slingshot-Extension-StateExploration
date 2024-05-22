@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
@@ -19,22 +20,22 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
  */
 public class FocusOnStatesEvent extends AbstractExplorationControllerEvent {
 
-	private final List<RawModelState> path;
+	private final Collection<RawModelState> focusStates;
 
 	/**
 	 *
-	 * @param path non-null, non-empty sequence of states.
+	 * @param focusStates non-null, non-empty collection of states.
 	 */
-	public FocusOnStatesEvent(final List<RawModelState> path) {
+	public FocusOnStatesEvent(final Collection<RawModelState> focusStates) {
 		super();
-		if (path == null || path.isEmpty()) {
+		if (focusStates == null || focusStates.isEmpty()) {
 			throw new IllegalArgumentException(
-					String.format("Path must not be null or empty, but is %s.", path == null ? "null" : "empty"));
+					String.format("Path must not be null or empty, but is %s.", focusStates == null ? "null" : "empty"));
 		}
-		this.path = List.copyOf(path);
+		this.focusStates = Set.copyOf(focusStates);
 	}
 
-	public List<RawModelState> getPath() {
-		return path;
+	public Collection<RawModelState> getFocusStates() {
+		return focusStates;
 	}
 }

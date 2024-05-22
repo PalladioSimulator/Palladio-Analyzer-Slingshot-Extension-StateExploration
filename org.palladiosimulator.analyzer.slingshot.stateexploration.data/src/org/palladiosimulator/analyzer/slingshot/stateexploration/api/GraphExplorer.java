@@ -1,58 +1,63 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import java.util.Collection;
+
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+
+/**
+ *
+ * Explores the state graph.
+ *
+ * @author Sarah Stieß
+ *
+ */
 public interface GraphExplorer {
 
 	/**
-	 * Start an exploration.
-	 *
-	 * TODO (1) : for now, we assume, that the planner requests a exploration
-	 * (blocking), waits until the exploration is done and receives the
-	 * RawStateGraph as result. For the future, it's more desirable, to have
-	 * Planning and Exploration run independently, and the exploration notifies the
-	 * Planning about updates in the RawStateGraph.
-	 *
-	 *
-	 * @return a graph of explored states.
+	 * Explore the next state.
 	 */
-	public void start();
+	public void exploreNextState();
 
-	/**
-	 * stop + Reset the Graphexplorer.
-	 *
-	 * Clear the explored states and the fringe.
-	 */
-	public void reset();
-
-	/**
-	 * reset + start;
-	 */
-	public void restart();
-
-	/**
-	 * in accurate name. rename.
-	 *
-	 * @return
-	 */
-	public boolean hasNext();
 
 	/**
 	 *
-	 * @return
+	 * @return true, iff more unexplored changes are available.
+	 */
+	public boolean hasUnexploredChanges();
+
+	/**
+	 *
+	 * @return the state graph
 	 */
 	public RawStateGraph getGraph();
 
 	/**
 	 *
-	 * Focus exploration on {@code modelState}.
+	 * Focus exploration on the given model states by removing all
+	 * {@link ToDoChange}s that are unrelated to the given states from the fringe.
 	 *
-	 * Maybe also with the plan. But i'm not
-	 *
-	 * 5. [onEvent] Wenn (E) Plan vom Planer erhält: * exploration am Ende des plans
-	 * weiter machen / fokusieren.
-	 *
-	 *
-	 * @param modelState
+	 * @param focusStates states to focus on.
 	 */
-	public void focus(RawModelState modelState);
+	public void focus(Collection<RawModelState> focusStates);
 
+	/**
+	 *
+	 * Add the given model states back into focus by (re-)adding {@link ToDoChange}s
+	 * for the given states to the fringe.
+	 *
+	 * Only adds {@link ToDoChange}s for unexplored futures, i.e. for already fully
+	 * explored state, no new changes are added.
+	 *
+	 * @param focusStates states to refocus on.
+	 */
+	public void refocus(Collection<RawModelState> focusStates);
+
+	/**
+	 *
+	 * Remove all elements from the fringe that explore futures that start in the
+	 * past.
+	 *
+	 * @param time current time in the real system
+	 */
+	public void pruneByTime(double time);
 }

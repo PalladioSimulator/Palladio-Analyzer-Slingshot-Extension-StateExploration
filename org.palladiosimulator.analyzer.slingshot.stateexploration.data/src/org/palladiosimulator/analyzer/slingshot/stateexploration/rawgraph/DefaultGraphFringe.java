@@ -1,6 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.function.Predicate;
+
+import javax.measure.quantity.Force;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -17,7 +21,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * @author Sarah Stieß
  *
  */
-public class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
+public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 
 	/**
 	 *
@@ -42,6 +46,18 @@ public class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 						.equals(matchee.getId()))
 				.findAny()
 				.isPresent();
+	}
+
+	/**
+	 * Remove all {@link ToDoChange}s matching the given criteria from this fringe.
+	 *
+	 * @param pruningCriteria non-null criteria {@link Force} changes to be removed.
+	 */
+	public void prune(final Predicate<ToDoChange> pruningCriteria) {
+		final Collection<ToDoChange> toBePruned = this.stream().filter(pruningCriteria).toList();
+
+		this.removeAll(toBePruned);
+
 	}
 
 

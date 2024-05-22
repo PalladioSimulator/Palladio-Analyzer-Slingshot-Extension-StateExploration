@@ -1,8 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -20,6 +22,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiate
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.TransitionType;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.StateExploredMessage;
@@ -30,6 +33,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.Event
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
@@ -43,7 +47,7 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 /**
  * Core Component of the Exploration.
  *
- * Responsible for starting the simulation runs to explore different branches.
+ * Responsible for exploring new states.
  *
  * @author Sarah Stieß
  *
@@ -90,7 +94,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	@Override
-	public void start() {
+	public void exploreNextState() {
 		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
 		final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
@@ -246,19 +250,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	@Override
-	public void reset() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void restart() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public boolean hasNext() {
+	public boolean hasUnexploredChanges() {
 		return !this.fringe.isEmpty();
 	}
 
@@ -267,10 +259,55 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		return this.graph;
 	}
 
+	/**
+	 * Can currently only refocus state with out outgoing transitions.
+	 *
+	 * @param focusedStates
+	 */
 	@Override
-	public void focus(final RawModelState modelState) {
-		// TODO Auto-generated method stub
+	public void refocus(final Collection<RawModelState> focusedStates) {
 
+		// find states to be refocused in the graph.
+
+		for (final RawModelState rawModelState : focusedStates) {
+
+			final boolean gotNopped = this.graph.outgoingEdgesOf(rawModelState).stream()
+					.anyMatch(t -> t.getType() == TransitionType.NOP);
+
+			if (gotNopped) {
+				continue;
+			} else {
+				// add NOP TODO change to Fringe.
+			}
+
+		}
+
+		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+
+		this.fringe.prune(pruningCriteria);
 	}
+
+	/**
+	 *
+	 * @param focusedStates
+	 */
+	@Override
+	public void focus(final Collection<RawModelState> focusedStates) {
+		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+
+		this.fringe.prune(pruningCriteria);
+	}
+
+	/**
+	 *
+	 * @param time
+	 */
+	@Override
+	public void pruneByTime(final double time) {
+		final Predicate<ToDoChange> pruningCriteria = change -> change.getStart().getStartTime() < time;
+
+		this.fringe.prune(pruningCriteria);
+	}
+
 
 }
