@@ -18,6 +18,7 @@ import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConvert
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
@@ -89,28 +90,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	@Override
-	public RawStateGraph start() {
-		LOGGER.info("********** DefaultGraphExplorer.start **********");
+	public void start() {
+		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
-		for (int i = 0; i < this.getMaxIterations(); i++) { // just random.
-			LOGGER.warn("********** Iteration " + i + "**********");
-			if (this.fringe.isEmpty()) {
-				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
-				break;
-			}
-			final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
+		final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
 
-			this.exploreBranch(config);
-		}
-		LOGGER.warn("********** DefaultGraphExplorer is done :) **********");
-		LOGGER.warn("********** States : ");
-		this.graph.getStates()
-		.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
-				s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
-		LOGGER.warn("********** Transitions : ");
-		this.graph.getTransitions().stream().forEach(
-				t -> LOGGER.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
-		return this.graph;
+		this.exploreBranch(config);
 	}
 
 	/**
@@ -258,6 +243,34 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.get(ExplorationConfiguration.MIN_STATE_DURATION);
 
 		return Double.valueOf(minDuration);
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void restart() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public boolean hasNext() {
+		return this.graph.hasNext();
+	}
+
+	@Override
+	public RawStateGraph getGraph() {
+		return this.graph;
+	}
+
+	@Override
+	public void focus(final RawModelState modelState) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

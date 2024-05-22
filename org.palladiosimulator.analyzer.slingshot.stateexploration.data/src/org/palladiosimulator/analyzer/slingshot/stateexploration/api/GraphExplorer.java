@@ -11,10 +11,48 @@ public interface GraphExplorer {
 	 * Planning and Exploration run independently, and the exploration notifies the
 	 * Planning about updates in the RawStateGraph.
 	 *
-	 * TODO (2) : at some point, we gotta feed some configurations into the
-	 * explorer, e.g. the horizon.
 	 *
 	 * @return a graph of explored states.
 	 */
-	public RawStateGraph start();
+	public void start();
+
+	/**
+	 * stop + Reset the Graphexplorer.
+	 *
+	 * Clear the explored states and the fringe.
+	 */
+	public void reset();
+
+	/**
+	 * reset + start;
+	 */
+	public void restart();
+
+	/**
+	 * in accurate name. rename.
+	 *
+	 * @return
+	 */
+	public boolean hasNext();
+
+	/**
+	 *
+	 * @return
+	 */
+	public RawStateGraph getGraph();
+
+	/**
+	 *
+	 * Focus exploration on {@code modelState}.
+	 *
+	 * Maybe also with the plan. But i'm not
+	 *
+	 * 5. [onEvent] Wenn (E) Plan vom Planer erhält: * exploration am Ende des plans
+	 * weiter machen / fokusieren.
+	 *
+	 *
+	 * @param modelState
+	 */
+	public void focus(RawModelState modelState);
+
 }

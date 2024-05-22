@@ -6,7 +6,11 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AnnounceGraphExplorerEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -60,8 +64,16 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver,
 				this.configuration.getlaunchConfigParams(), monitor, this.blackboard);
+
+		Slingshot.getInstance().getSystemDriver().postEvent(new AnnounceGraphExplorerEvent(explorer));
+
+		final int iterations = Integer.valueOf((String) this.configuration.getlaunchConfigParams()
+				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));
+		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(iterations));
+		Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+
 		// Start exploration. On every explored state we send a message, which alloes the external planner component to react
-		explorer.start();
+		// explorer.start();
 
 		// TODO : decent injection, such that i can hide the implementation class of the explorer.
 
