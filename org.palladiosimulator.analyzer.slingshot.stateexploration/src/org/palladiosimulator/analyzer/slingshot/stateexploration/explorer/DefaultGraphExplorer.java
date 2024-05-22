@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -274,10 +275,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			final boolean gotNopped = this.graph.outgoingEdgesOf(rawModelState).stream()
 					.anyMatch(t -> t.getType() == TransitionType.NOP);
 
-			if (gotNopped) {
+			final boolean gonnaGetNopped = this.fringe.containsNopTodoFor(rawModelState);
+
+			if (gotNopped || gonnaGetNopped) {
 				continue;
 			} else {
-				// add NOP TODO change to Fringe.
+				this.fringe.add(new ToDoChange(Optional.empty(), (DefaultState) rawModelState));
 			}
 
 		}

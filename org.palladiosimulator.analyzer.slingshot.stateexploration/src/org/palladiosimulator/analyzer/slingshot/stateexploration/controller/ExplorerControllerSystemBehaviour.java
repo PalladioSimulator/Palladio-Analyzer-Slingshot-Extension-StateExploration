@@ -1,11 +1,15 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AnnounceGraphExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
@@ -18,7 +22,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networ
 /**
  *
  * can i rely on the order of the system events? i.e. first published, first
- * received?
+ * received? YES!
  *
  * @author Sarah Stieß
  *
@@ -51,7 +55,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		if (explorer == null) {
 			this.explorer = event.getExplorer();
 		}
-		// TODO handling if explorer already set
+		// TODO handling if explorer already set?
 	}
 
 	/**
@@ -76,6 +80,25 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		}
 
 		logGraph();
+
+		// testFocusHandlind();
+
+	}
+
+	/**
+	 * DONT USE THIS. TO BE DELETED. I DONT HAVE ANY OTHERWAY TO TEST THE FOCUSING
+	 * RIGHT NOW.
+	 */
+	@Deprecated
+	private void testFocusHandlind() {
+		final Set<RawModelState> someStates = new HashSet<>();
+		someStates.addAll(this.explorer.getGraph().getStates());
+		someStates.remove(this.explorer.getGraph().getRoot());
+
+		Slingshot.getInstance().getSystemDriver().postEvent(new ReFocusOnStatesEvent(someStates));
+
+		Slingshot.getInstance().getSystemDriver()
+		.postEvent(new ReFocusOnStatesEvent(Set.of(this.explorer.getGraph().getRoot())));
 	}
 
 	/**

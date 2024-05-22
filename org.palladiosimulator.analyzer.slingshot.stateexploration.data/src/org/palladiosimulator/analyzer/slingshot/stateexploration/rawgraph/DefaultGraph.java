@@ -79,11 +79,11 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 	@Override
 	public Set<RawModelState> getStates() {
-		return this.vertexSet();
+		return Set.copyOf(this.vertexSet());
 	}
 
 	@Override
 	public Set<RawTransition> getTransitions() {
-		return this.edgeSet();
+		return Set.copyOf(this.edgeSet());
 	}
 }

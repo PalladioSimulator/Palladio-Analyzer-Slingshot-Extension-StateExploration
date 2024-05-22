@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
-import java.util.List;
+import java.util.Collection;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
@@ -28,7 +28,7 @@ public class ReFocusOnStatesEvent extends FocusOnStatesEvent {
 	 *
 	 * @param path non-null, non-empty sequence of states.
 	 */
-	public ReFocusOnStatesEvent(final List<RawModelState> states) {
+	public ReFocusOnStatesEvent(final Collection<RawModelState> states) {
 		super(states);
 	}
 }

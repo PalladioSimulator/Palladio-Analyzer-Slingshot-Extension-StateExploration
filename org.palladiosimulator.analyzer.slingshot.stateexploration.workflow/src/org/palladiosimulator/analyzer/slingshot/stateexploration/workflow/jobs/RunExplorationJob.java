@@ -24,9 +24,9 @@ import de.uka.ipd.sdq.workflow.jobs.UserCanceledException;
 import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
 /**
- * This class is responsible for starting the planner.
+ * This class is responsible for starting the explorer.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  */
 public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboard> {
 
@@ -79,16 +79,10 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 			Slingshot.getInstance().getSystemDriver().postEvent(new ResetExplorerEvent());
 		}
 
-		// Start exploration. On every explored state we send a message, which alloes the external planner component to react
-		// explorer.start();
 
-		// TODO : decent injection, such that i can hide the implementation class of the explorer.
-
-		//		simulationDriver.init(simuComConfig, monitor);
 		monitor.worked(1);
 
 		monitor.subTask("Start simulation");
-		//		simulationDriver.start();
 		monitor.worked(1);
 
 		monitor.subTask("Restore");

@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import javax.measure.quantity.Force;
 
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -35,15 +36,36 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 	 * @param state
 	 * @param matchee
 	 * @return true if a {@link ToDoChange} that applies {@code matchee} to
-	 *         {@code state} if in the fringe, false otherwise.
+	 *         {@code state} is in the fringe, false otherwise.
 	 */
-	public boolean containsTodoFor(final DefaultState state, final ScalingPolicy matchee) {
+	public boolean containsTodoFor(final RawModelState state, final ScalingPolicy matchee) {
+		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
+				&& todo.getChange().isPresent()
+				&& todo.getChange().get() instanceof Reconfiguration
+				&& ((Reconfiguration) todo.getChange().get()).getAppliedPolicy().getId()
+				.equals(matchee.getId());
+
+		return containsTodoFor(pred);
+	}
+
+	/**
+	 * Check, whether the fringe already contains a {@link ToDoChange} that applies
+	 * no reconfiguration to the given state.
+	 *
+	 * @param state
+	 * @return true if a {@link ToDoChange} that without reconfiguration is the
+	 *         fringe, false otherwise.
+	 */
+	public boolean containsNopTodoFor(final RawModelState state) {
+		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
+				&& todo.getChange().isEmpty();
+
+		return containsTodoFor(pred);
+	}
+
+	private boolean containsTodoFor(final Predicate<ToDoChange> predicate) {
 		return this.stream()
-				.filter(todo -> todo.getStart().equals(state)
-						&& todo.getChange().isPresent()
-						&& todo.getChange().get() instanceof Reconfiguration
-						&& ((Reconfiguration) todo.getChange().get()).getAppliedPolicy().getId()
-						.equals(matchee.getId()))
+				.filter(predicate)
 				.findAny()
 				.isPresent();
 	}
