@@ -5,8 +5,9 @@ import java.lang.reflect.Type;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 import org.palladiosimulator.analyzer.slingshot.planner.data.events.StateExploredEventMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.SimTestMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.TestMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.GreetingMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.gson.JsonElement;
@@ -16,6 +17,7 @@ import com.google.gson.JsonSerializer;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 
+// system extension??
 public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 	@Override
@@ -27,7 +29,7 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 		messageBinder.addBinding("Test").toInstance(TestMessage.class);
 		messageBinder.addBinding("TestSimEvent").toInstance(SimTestMessage.class);
-
+		messageBinder.addBinding(GreetingMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(GreetingMessage.class);
 
 		messageBinder.addBinding("StateExplored").toInstance(StateExploredEventMessage.class);
 
@@ -47,7 +49,7 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 				jsonScalingPolicy.addProperty("id", src.getId());
 				jsonScalingPolicy.addProperty("name", src.getEntityName());
-				jsonScalingPolicy.addProperty("uri", src.eResource().getURI().toString());
+				// jsonScalingPolicy.addProperty("uri", src.eResource().getURI().toString());
 
 				return jsonScalingPolicy;
 			}

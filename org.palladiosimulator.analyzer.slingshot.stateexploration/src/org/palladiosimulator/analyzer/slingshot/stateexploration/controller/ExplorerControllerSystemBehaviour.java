@@ -18,7 +18,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ReFocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.TestMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 
 /**
  *

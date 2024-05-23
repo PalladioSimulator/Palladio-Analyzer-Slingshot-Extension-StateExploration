@@ -3,7 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.netwo
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.TestMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 
 
 

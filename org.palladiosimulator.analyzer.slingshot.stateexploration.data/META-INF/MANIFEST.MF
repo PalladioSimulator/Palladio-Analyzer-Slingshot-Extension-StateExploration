@@ -5,7 +5,8 @@ Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.d
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.data
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.api,
+Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.messages,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.change.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events,
  org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph
@@ -18,4 +19,5 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  org.jgrapht.core;bundle-version="1.5.0",
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
  org.palladiosimulator.analyzer.slingshot.common.utils,
- org.scaledl.usageevolution
+ org.scaledl.usageevolution,
+ org.palladiosimulator.analyzer.slingshot.networking.data
