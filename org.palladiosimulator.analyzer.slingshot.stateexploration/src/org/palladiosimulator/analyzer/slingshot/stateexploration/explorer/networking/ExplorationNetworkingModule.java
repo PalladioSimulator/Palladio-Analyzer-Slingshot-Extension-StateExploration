@@ -4,8 +4,8 @@ import java.lang.reflect.Type;
 
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
+import org.palladiosimulator.analyzer.slingshot.planner.data.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.SimTestMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.StateExploredMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.TestMessage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -29,7 +29,7 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 		messageBinder.addBinding("TestSimEvent").toInstance(SimTestMessage.class);
 
 
-		messageBinder.addBinding("StateExplored").toInstance(StateExploredMessage.class);
+		messageBinder.addBinding("StateExplored").toInstance(StateExploredEventMessage.class);
 
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);

@@ -9,6 +9,6 @@ import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSystemEven
  * @author Sarah Stieß
  *
  */
-public class AbstractExplorationControllerEvent extends AbstractSystemEvent {
+public abstract class AbstractExplorationControllerEvent extends AbstractSystemEvent {
 
 }

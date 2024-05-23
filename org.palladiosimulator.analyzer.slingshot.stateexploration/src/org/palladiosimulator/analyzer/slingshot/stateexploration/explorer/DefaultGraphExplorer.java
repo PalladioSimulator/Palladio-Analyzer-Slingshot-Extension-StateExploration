@@ -11,12 +11,13 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
+import org.palladiosimulator.analyzer.slingshot.planner.data.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
@@ -26,7 +27,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGra
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.TransitionType;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.messages.StateExploredMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.ExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
@@ -89,7 +89,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
-				new StateExploredMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
+				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
 
 		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, this.getMinDuration());
 	}
@@ -154,7 +154,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
 
 		systemDriver.postEvent(
-				new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
+				new StateExploredEventMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
 
 		// reset Additional Configurations
@@ -290,10 +290,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe.prune(pruningCriteria);
 	}
 
-	/**
-	 *
-	 * @param focusedStates
-	 */
 	@Override
 	public void focus(final Collection<RawModelState> focusedStates) {
 		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
@@ -301,10 +297,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe.prune(pruningCriteria);
 	}
 
-	/**
-	 *
-	 * @param time
-	 */
 	@Override
 	public void pruneByTime(final double time) {
 		final Predicate<ToDoChange> pruningCriteria = change -> change.getStart().getStartTime() < time;

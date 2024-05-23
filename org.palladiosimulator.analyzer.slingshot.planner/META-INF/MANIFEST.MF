@@ -13,6 +13,8 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.core,
  org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.stateexploration.data,
- org.apache.log4j
+ org.apache.log4j,
+ org.palladiosimulator.analyzer.slingshot.networking.data
 Export-Package: org.palladiosimulator.analyzer.slingshot.planner.data,
+ org.palladiosimulator.analyzer.slingshot.planner.data.events,
  org.palladiosimulator.analyzer.slingshot.planner.runner

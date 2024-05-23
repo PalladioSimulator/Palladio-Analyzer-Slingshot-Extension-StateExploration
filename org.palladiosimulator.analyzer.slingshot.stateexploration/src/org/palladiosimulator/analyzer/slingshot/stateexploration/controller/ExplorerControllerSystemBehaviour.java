@@ -10,6 +10,7 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AbstractExplorationControllerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AnnounceGraphExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
@@ -21,8 +22,14 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networ
 
 /**
  *
- * can i rely on the order of the system events? i.e. first published, first
- * received? YES!
+ * System behavior to control the exploration of the state graph according to
+ * received {@link AbstractExplorationControllerEvent} instances.
+ *
+ * Exploration cycles cannot be interrupted. I.e. the controller waits, until
+ * one cycle or batch af explorations is finished and only reacts to the next
+ * event after that.
+ *
+ * Relies on the order of the system events, which should be FIFO.
  *
  * @author Sarah Stieß
  *
@@ -81,7 +88,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 		logGraph();
 
-		// testFocusHandlind();
+		// testFocusHandling();
 
 	}
 
@@ -90,7 +97,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 * RIGHT NOW.
 	 */
 	@Deprecated
-	private void testFocusHandlind() {
+	private void testFocusHandling() {
 		final Set<RawModelState> someStates = new HashSet<>();
 		someStates.addAll(this.explorer.getGraph().getStates());
 		someStates.remove(this.explorer.getGraph().getRoot());
