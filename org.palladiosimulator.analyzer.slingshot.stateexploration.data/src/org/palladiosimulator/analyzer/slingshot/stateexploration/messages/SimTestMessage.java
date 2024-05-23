@@ -4,8 +4,10 @@ import org.palladiosimulator.analyzer.slingshot.networking.data.SimulationEventM
 
 public class SimTestMessage extends SimulationEventMessage<String> {
 
+	public static final String MESSAGE_MAPPING_IDENTIFIER = "TestSimEvent";
+
 	public SimTestMessage(final String payload) {
-		super("TestSimEvent", payload);
+		super(MESSAGE_MAPPING_IDENTIFIER, payload);
 	}
 
 }

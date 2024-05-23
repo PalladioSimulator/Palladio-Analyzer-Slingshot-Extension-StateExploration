@@ -27,11 +27,12 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 		final var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {}, new TypeLiteral<Class<? extends Message<?>>>() {});
 
-		messageBinder.addBinding("Test").toInstance(TestMessage.class);
-		messageBinder.addBinding("TestSimEvent").toInstance(SimTestMessage.class);
+		messageBinder.addBinding(TestMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(TestMessage.class);
+		messageBinder.addBinding(SimTestMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(SimTestMessage.class);
 		messageBinder.addBinding(GreetingMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(GreetingMessage.class);
 
-		messageBinder.addBinding("StateExplored").toInstance(StateExploredEventMessage.class);
+		messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
+				.toInstance(StateExploredEventMessage.class);
 
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);

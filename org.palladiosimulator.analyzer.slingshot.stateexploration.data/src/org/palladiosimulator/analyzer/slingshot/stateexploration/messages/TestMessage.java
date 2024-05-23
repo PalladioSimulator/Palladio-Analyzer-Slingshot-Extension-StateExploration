@@ -7,7 +7,9 @@ import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
  */
 public class TestMessage extends EventMessage<String> {
 
-	public TestMessage(String payload) {
-		super("Test", payload);
+	public static final String MESSAGE_MAPPING_IDENTIFIER = "Test";
+
+	public TestMessage(final String payload) {
+		super(MESSAGE_MAPPING_IDENTIFIER, payload);
 	}
 }
