@@ -6,7 +6,11 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcon
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 
 
-
+/**
+ *
+ * Proof of concept --> to be deleted?
+ *
+ */
 @OnEvent(when = TestMessage.class)
 public class ExplorationMessageDispatcher implements SystemBehaviorExtension {
 	/**

@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 
 /**
@@ -9,25 +10,25 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplor
  * @author Sarah Stieß
  *
  */
-public class TriggerExplorationEvent extends AbstractExplorationControllerEvent {
+public class TriggerExplorationEvent extends EventMessage<Integer> implements ExplorationControllerEvent {
 
-	private final int iterations;
+	public static final String MESSAGE_MAPPING_IDENTIFIER = TriggerExplorationEvent.class.getSimpleName();
 
 	/**
 	 *
 	 * @param iterations non-negative number of new state to explore.
 	 */
 	public TriggerExplorationEvent(final int iterations) {
-		super();
-		if (0 > iterations) {
+		super(MESSAGE_MAPPING_IDENTIFIER, iterations);
+
+		if (iterations < 0) {
 			throw new IllegalArgumentException(
 					String.format("Number of iterations must not be negative, but is %d.", iterations));
 		}
-		this.iterations = iterations;
 	}
 
 	public int getIterations() {
-		return this.iterations;
+		return this.getPayload();
 	}
 
 }

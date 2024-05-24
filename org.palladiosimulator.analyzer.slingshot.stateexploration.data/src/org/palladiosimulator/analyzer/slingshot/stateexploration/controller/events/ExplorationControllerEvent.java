@@ -1,7 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
-import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSystemEvent;
-
 /**
  *
  * Events for controlling the Exploration.
@@ -9,6 +7,6 @@ import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSystemEven
  * @author Sarah Stieß
  *
  */
-public abstract class AbstractExplorationControllerEvent extends AbstractSystemEvent {
+public interface ExplorationControllerEvent {
 
 }

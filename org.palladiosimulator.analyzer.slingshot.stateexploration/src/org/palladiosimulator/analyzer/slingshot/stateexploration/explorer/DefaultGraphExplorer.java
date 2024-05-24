@@ -92,6 +92,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
 
 		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, this.getMinDuration());
+
 	}
 
 	@Override

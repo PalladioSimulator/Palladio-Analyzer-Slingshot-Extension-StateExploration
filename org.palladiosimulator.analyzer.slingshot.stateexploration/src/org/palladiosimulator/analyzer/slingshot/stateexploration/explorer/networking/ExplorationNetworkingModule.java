@@ -5,6 +5,8 @@ import java.lang.reflect.Type;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 import org.palladiosimulator.analyzer.slingshot.planner.data.events.StateExploredEventMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.GreetingMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
@@ -17,7 +19,15 @@ import com.google.gson.JsonSerializer;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 
-// system extension??
+/**
+ *
+ *
+ *
+ *
+ *
+ * @author Raphael Straub, Sarah Stieß
+ *
+ */
 public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 	@Override
@@ -31,9 +41,18 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 		messageBinder.addBinding(SimTestMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(SimTestMessage.class);
 		messageBinder.addBinding(GreetingMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(GreetingMessage.class);
 
+		// das hier muss rüber in den planner.
 		messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
-				.toInstance(StateExploredEventMessage.class);
+		.toInstance(StateExploredEventMessage.class);
 
+		messageBinder.addBinding(TriggerExplorationEvent.MESSAGE_MAPPING_IDENTIFIER)
+		.toInstance(TriggerExplorationEvent.class);
+
+		messageBinder.addBinding(FocusOnStatesEvent.MESSAGE_MAPPING_IDENTIFIER)
+		.toInstance(FocusOnStatesEvent.class);
+
+
+		// proof of concept -> to be deleted?
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
 		install(SimulationBehaviourReactionTest.class);
@@ -55,6 +74,27 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 				return jsonScalingPolicy;
 			}
 		});
+
+		//		gsonBinder.addBinding(RawModelState.class).toInstance(new JsonSerializer<RawModelState>() {
+		//
+		//			@Override
+		//			public JsonElement serialize(final RawModelState src, final Type typeOfSrc,
+		//					final JsonSerializationContext context) {
+		//				return new JsonPrimitive(src.getId());
+		//			}
+		//		});
+		//
+		//		gsonBinder.addBinding(RawModelState.class).toInstance(new JsonDeserializer<RawModelState>() {
+		//
+		//			@Override
+		//			public RawModelState deserialize(final JsonElement json, final Type typeOfT,
+		//					final JsonDeserializationContext context)
+		//					throws JsonParseException {
+		//				final String foo = json.getAsString();
+		//				return null;
+		//			}
+		//
+		//		});
 	}
 
 }

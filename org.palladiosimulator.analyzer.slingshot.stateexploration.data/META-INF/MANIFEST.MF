@@ -20,4 +20,4 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
  org.palladiosimulator.analyzer.slingshot.common.utils,
  org.scaledl.usageevolution,
- org.palladiosimulator.analyzer.slingshot.networking.data
+ org.palladiosimulator.analyzer.slingshot.networking.data;visibility:=reexport

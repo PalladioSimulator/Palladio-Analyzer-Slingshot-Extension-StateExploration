@@ -1,9 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
 import java.util.Collection;
+import java.util.Set;
 
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 
 /**
@@ -22,13 +23,25 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoCh
  * @author Sarah Stieß
  *
  */
-public class ReFocusOnStatesEvent extends FocusOnStatesEvent {
+public class ReFocusOnStatesEvent extends EventMessage<Collection<String>>
+		implements ExplorationControllerEvent {
+
+	public static final String MESSAGE_MAPPING_IDENTIFIER = FocusOnStatesEvent.class.getSimpleName();
 
 	/**
 	 *
-	 * @param path non-null, non-empty sequence of states.
+	 * @param focusStateIds non-null, non-empty collection of state ids.
 	 */
-	public ReFocusOnStatesEvent(final Collection<RawModelState> states) {
-		super(states);
+	public ReFocusOnStatesEvent(final Collection<String> focusStateIds) {
+		super(MESSAGE_MAPPING_IDENTIFIER, focusStateIds);
+		if (focusStateIds == null || focusStateIds.isEmpty()) {
+			throw new IllegalArgumentException(
+					String.format("Ids of states to focus on must not be null or empty, but is %s.",
+							focusStateIds == null ? "null" : "empty"));
+		}
+	}
+
+	public Collection<String> getFocusStateIds() {
+		return Set.copyOf(this.getPayload());
 	}
 }

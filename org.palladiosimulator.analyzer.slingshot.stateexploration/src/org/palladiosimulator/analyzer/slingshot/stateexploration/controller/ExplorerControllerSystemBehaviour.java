@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,8 +11,8 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AbstractExplorationControllerEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AnnounceGraphExplorerEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorerCreated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.PruneFringeByTime;
@@ -23,7 +24,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMe
 /**
  *
  * System behavior to control the exploration of the state graph according to
- * received {@link AbstractExplorationControllerEvent} instances.
+ * received {@link ExplorationControllerEvent} instances.
  *
  * Exploration cycles cannot be interrupted. I.e. the controller waits, until
  * one cycle or batch af explorations is finished and only reacts to the next
@@ -35,7 +36,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMe
  *
  */
 @OnEvent(when = TestMessage.class)
-@OnEvent(when = AnnounceGraphExplorerEvent.class)
+@OnEvent(when = ExplorerCreated.class)
 @OnEvent(when = TriggerExplorationEvent.class)
 @OnEvent(when = IdleTriggerExplorationEvent.class)
 @OnEvent(when = FocusOnStatesEvent.class)
@@ -58,7 +59,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	}
 
 	@Subscribe
-	public void onAnnounceGraphExplorerEvent(final AnnounceGraphExplorerEvent event) {
+	public void onAnnounceGraphExplorerEvent(final ExplorerCreated event) {
 		if (explorer == null) {
 			this.explorer = event.getExplorer();
 		}
@@ -88,7 +89,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 		logGraph();
 
-		// testFocusHandling();
+		testFocusHandling();
 
 	}
 
@@ -102,10 +103,11 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		someStates.addAll(this.explorer.getGraph().getStates());
 		someStates.remove(this.explorer.getGraph().getRoot());
 
-		Slingshot.getInstance().getSystemDriver().postEvent(new ReFocusOnStatesEvent(someStates));
+		Slingshot.getInstance().getSystemDriver()
+		.postEvent(new ReFocusOnStatesEvent(someStates.stream().map(s -> s.getId()).toList()));
 
 		Slingshot.getInstance().getSystemDriver()
-		.postEvent(new ReFocusOnStatesEvent(Set.of(this.explorer.getGraph().getRoot())));
+		.postEvent(new ReFocusOnStatesEvent(Set.of(this.explorer.getGraph().getRoot().getId())));
 	}
 
 	/**
@@ -124,12 +126,12 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 	@Subscribe
 	public void onFocusOnStatesEvent(final FocusOnStatesEvent event) {
-		this.explorer.focus(event.getFocusStates());
+		this.explorer.focus(this.mapStateIdsToState(event.getFocusStateIds()));
 	}
 
 	@Subscribe
 	public void onReFocusOnStatesEvent(final ReFocusOnStatesEvent event) {
-		this.explorer.refocus(event.getFocusStates());
+		this.explorer.refocus(this.mapStateIdsToState(event.getFocusStateIds()));
 	}
 
 	@Subscribe
@@ -141,5 +143,15 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	public void onResetExplorerEvent(final ResetExplorerEvent event) {
 		this.explorer = null;
 		// und dann..? wo krieg ich jetzt 'nen neuen explorere her?
+	}
+
+	/**
+	 *
+	 * @param stateIds
+	 * @return
+	 */
+	private Collection<RawModelState> mapStateIdsToState(final Collection<String> stateIds) {
+		return this.explorer.getGraph().getStates().stream().filter(s -> stateIds.contains(s.getId())).toList();
+
 	}
 }

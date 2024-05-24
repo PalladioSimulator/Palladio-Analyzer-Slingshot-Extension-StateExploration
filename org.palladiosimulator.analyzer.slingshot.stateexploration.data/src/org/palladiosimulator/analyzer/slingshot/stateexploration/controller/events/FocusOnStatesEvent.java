@@ -3,8 +3,8 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.eve
 import java.util.Collection;
 import java.util.Set;
 
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 
 /**
  *
@@ -18,24 +18,25 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
  * @author Sarah Stieß
  *
  */
-public class FocusOnStatesEvent extends AbstractExplorationControllerEvent {
+public class FocusOnStatesEvent extends EventMessage<Collection<String>>
+implements ExplorationControllerEvent {
 
-	private final Collection<RawModelState> focusStates;
+	public static final String MESSAGE_MAPPING_IDENTIFIER = FocusOnStatesEvent.class.getSimpleName();
 
 	/**
 	 *
-	 * @param focusStates non-null, non-empty collection of states.
+	 * @param focusStateIds non-null, non-empty collection of state ids.
 	 */
-	public FocusOnStatesEvent(final Collection<RawModelState> focusStates) {
-		super();
-		if (focusStates == null || focusStates.isEmpty()) {
+	public FocusOnStatesEvent(final Collection<String> focusStateIds) {
+		super(MESSAGE_MAPPING_IDENTIFIER, focusStateIds);
+		if (focusStateIds == null || focusStateIds.isEmpty()) {
 			throw new IllegalArgumentException(
-					String.format("Path must not be null or empty, but is %s.", focusStates == null ? "null" : "empty"));
+					String.format("Ids of states to focus on must not be null or empty, but is %s.",
+							focusStateIds == null ? "null" : "empty"));
 		}
-		this.focusStates = Set.copyOf(focusStates);
 	}
 
-	public Collection<RawModelState> getFocusStates() {
-		return focusStates;
+	public Collection<String> getFocusStateIds() {
+		return Set.copyOf(this.getPayload());
 	}
 }

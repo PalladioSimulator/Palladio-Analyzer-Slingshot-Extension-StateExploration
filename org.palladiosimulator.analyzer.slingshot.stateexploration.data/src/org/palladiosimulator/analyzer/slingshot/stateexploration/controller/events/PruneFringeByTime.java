@@ -1,21 +1,26 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
+
 /**
  * TODO
  *
  * @author Sarah Stieß
  *
  */
-public class PruneFringeByTime extends AbstractExplorationControllerEvent {
+public class PruneFringeByTime extends EventMessage<Double> implements ExplorationControllerEvent {
 
-	private final double currentTime;
+	public static final String MESSAGE_MAPPING_IDENTIFIER = PruneFringeByTime.class.getSimpleName();
 
 	public PruneFringeByTime(final double currentTime) {
-		super();
-		this.currentTime = currentTime;
+		super(MESSAGE_MAPPING_IDENTIFIER, currentTime);
+		if (currentTime < 0) {
+			throw new IllegalArgumentException(
+					String.format("Argument must be greater equal 0, but is %d.", currentTime));
+		}
 	}
 
 	public double getCurrentTime() {
-		return currentTime;
+		return this.getPayload();
 	}
 }

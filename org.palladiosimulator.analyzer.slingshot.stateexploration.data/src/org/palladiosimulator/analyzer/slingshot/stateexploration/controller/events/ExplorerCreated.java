@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
+import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSystemEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 
 /**
@@ -12,11 +13,11 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplor
  * @author Sarah Stieß
  *
  */
-public class AnnounceGraphExplorerEvent extends AbstractExplorationControllerEvent {
+public class ExplorerCreated extends AbstractSystemEvent implements ExplorationControllerEvent {
 
 	private final GraphExplorer explorer;
 
-	public AnnounceGraphExplorerEvent(final GraphExplorer explorer) {
+	public ExplorerCreated(final GraphExplorer explorer) {
 		super();
 		if (explorer == null) {
 			throw new IllegalArgumentException(String.format("Explorer must not be null but is."));

@@ -6,7 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.AnnounceGraphExplorerEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorerCreated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
@@ -66,7 +66,7 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver,
 				this.configuration.getlaunchConfigParams(), monitor, this.blackboard);
 
-		Slingshot.getInstance().getSystemDriver().postEvent(new AnnounceGraphExplorerEvent(explorer));
+		Slingshot.getInstance().getSystemDriver().postEvent(new ExplorerCreated(explorer));
 
 		final int iterations = Integer.valueOf((String) this.configuration.getlaunchConfigParams()
 				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));

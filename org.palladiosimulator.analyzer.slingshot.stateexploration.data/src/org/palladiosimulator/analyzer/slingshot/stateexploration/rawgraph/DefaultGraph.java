@@ -17,7 +17,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * Default implementation of the RawStateGraph.
  *
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, RawTransition> implements RawStateGraph {

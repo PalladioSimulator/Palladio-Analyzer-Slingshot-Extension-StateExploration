@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
+import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSystemEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 
 /**
@@ -9,8 +10,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplor
  * @author Sarah Stieß
  *
  */
-public class IdleTriggerExplorationEvent extends TriggerExplorationEvent {
+public class IdleTriggerExplorationEvent extends AbstractSystemEvent implements ExplorationControllerEvent {
 	public IdleTriggerExplorationEvent() {
-		super(1);
+		super();
 	}
 }
