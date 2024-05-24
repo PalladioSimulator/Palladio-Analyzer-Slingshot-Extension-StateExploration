@@ -1,8 +1,15 @@
-package org.palladiosimulator.analyzer.slingshot.planner.data.events;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.messages;
 
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
-import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
 
+/**
+ *
+ * Announces that a new state was explored.
+ *
+ * @author Raphael Straub, Sarah Stieß
+ *
+ */
 public class StateExploredEventMessage extends EventMessage<StateGraphNode> {
 
 	public static final String MESSAGE_MAPPING_IDENTIFIER = "StateExplored";

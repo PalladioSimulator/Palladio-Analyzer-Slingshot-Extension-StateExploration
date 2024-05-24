@@ -4,11 +4,11 @@ import java.lang.reflect.Type;
 
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
-import org.palladiosimulator.analyzer.slingshot.planner.data.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.GreetingMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
