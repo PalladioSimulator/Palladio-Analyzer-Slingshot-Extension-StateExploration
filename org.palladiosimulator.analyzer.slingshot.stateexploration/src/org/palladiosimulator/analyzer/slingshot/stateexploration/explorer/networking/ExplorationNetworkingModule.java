@@ -2,8 +2,11 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.netwo
 
 import java.lang.reflect.Type;
 
+import javax.inject.Named;
+
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
+import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.GreetingMessage;
@@ -16,6 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 
@@ -56,6 +60,12 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
 		install(SimulationBehaviourReactionTest.class);
+	}
+
+	@Provides
+	@Named(NetworkingConstants.CLIENT_NAME)
+	public String clientName() {
+		return "Explorer";
 	}
 
 	private void configureGson() {
