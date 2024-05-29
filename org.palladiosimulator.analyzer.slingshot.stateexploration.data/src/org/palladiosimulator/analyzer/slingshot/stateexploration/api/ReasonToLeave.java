@@ -9,5 +9,5 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
  *
  */
 public enum ReasonToLeave {
-	interval, reactiveReconfiguration, significantChange;
+	interval, reactiveReconfiguration, closenessToSLO;
 }

@@ -10,6 +10,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.palladiosimulator.analyzer.slingshot.core.extension.ModelProvider;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 
 /**
@@ -19,7 +20,7 @@ import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
  * @author Sarah Stieß
  */
 @Singleton
-public class SLOModelProvider implements ModelProvider<ServiceLevelObjective> {
+public class SLOModelProvider implements ModelProvider<ServiceLevelObjectiveRepository> {
 
 	private static final Logger LOGGER = Logger.getLogger(SLOModelProvider.class);
 
@@ -31,13 +32,14 @@ public class SLOModelProvider implements ModelProvider<ServiceLevelObjective> {
 	}
 
 	@Override
-	public ServiceLevelObjective get() {
-		final List<EObject> slos = provider.get().getElement(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjective());
+	public ServiceLevelObjectiveRepository get() {
+		final List<EObject> slos = provider.get()
+				.getElement(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository());
 		if (slos.size() == 0) {
 			LOGGER.warn("SLOs not present: List size is 0.");
 			return null;
 		}
-		return (ServiceLevelObjective) slos.get(0);
+		return (ServiceLevelObjectiveRepository) slos.get(0);
 	}
 
 }
