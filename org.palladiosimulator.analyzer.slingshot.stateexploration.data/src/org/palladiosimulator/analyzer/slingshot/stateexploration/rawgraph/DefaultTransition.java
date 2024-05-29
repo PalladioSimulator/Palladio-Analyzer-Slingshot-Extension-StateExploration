@@ -1,51 +1,35 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ModelElementDifference;
-import org.palladiosimulator.pcm.core.entity.Entity;
 
 public class DefaultTransition implements RawTransition {
 	private final Optional<Change> change;
-	private final Set<ModelElementDifference<Entity>> modelDiff;
-	private final DefaultState start;
-	private final DefaultState end;
 
+	private final DefaultGraph graph;
 
-	public DefaultTransition(final Optional<Change> change, final DefaultState start, final DefaultState end) {
+	protected DefaultTransition(final Optional<Change> change, final DefaultGraph graph) {
 		super();
 		this.change = change;
-		this.start = start;
-		this.end = end;
-		this.modelDiff = new HashSet<>();
+		this.graph = graph;
 	}
 
-	public void addDifferences(final Set<ModelElementDifference<Entity>> diffs) {
-		this.modelDiff.addAll(diffs);
-	}
 
 	@Override
 	public RawModelState getSource() {
-		return this.start;
+		return this.graph.getEdgeSource(this);
 	}
 
 	@Override
 	public RawModelState getTarget() {
-		return this.end;
+		return this.graph.getEdgeTarget(this);
 	}
 
 	@Override
 	public Optional<Change> getChange() {
 		return this.change;
-	}
-
-	@Override
-	public Set<ModelElementDifference<Entity>> getModelDifferences() {
-		return this.modelDiff;
 	}
 }

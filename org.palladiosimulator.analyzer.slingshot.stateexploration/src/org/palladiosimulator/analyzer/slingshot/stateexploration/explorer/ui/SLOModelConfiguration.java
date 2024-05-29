@@ -26,11 +26,12 @@ public class SLOModelConfiguration implements SystemBehaviorExtension {
 	@Subscribe
 	public void onArchitectureModelsTab(final ArchitectureModelsTabBuilderStarted event) {
 		event.newModelDefinition()
-		.fileName(FILE_NAME)
-		.fileExtensions(FILE_EXTENSIONS)
-		.modelClass(ServiceLevelObjective.class)
-		.label("Service Level Objectives")
-		.build();
+				.fileName(FILE_NAME)
+				.fileExtensions(FILE_EXTENSIONS)
+				.optional(true)
+				.modelClass(ServiceLevelObjective.class)
+				.label("Service Level Objectives")
+				.build();
 	}
 
 	@Subscribe

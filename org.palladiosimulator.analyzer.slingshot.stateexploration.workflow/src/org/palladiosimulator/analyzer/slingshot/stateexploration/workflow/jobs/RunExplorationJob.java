@@ -6,7 +6,12 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorerCreated;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -19,9 +24,9 @@ import de.uka.ipd.sdq.workflow.jobs.UserCanceledException;
 import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
 /**
- * This class is responsible for starting the planner.
+ * This class is responsible for starting the explorer.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  */
 public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboard> {
 
@@ -60,16 +65,24 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		final GraphExplorer explorer = new DefaultGraphExplorer(partition, simulationDriver,
 				this.configuration.getlaunchConfigParams(), monitor, this.blackboard);
-		// Start exploration. On every explored state we send a message, which alloes the external planner component to react
-		explorer.start();
 
-		// TODO : decent injection, such that i can hide the implementation class of the explorer.
+		Slingshot.getInstance().getSystemDriver().postEvent(new ExplorerCreated(explorer));
 
-		//		simulationDriver.init(simuComConfig, monitor);
+		final int iterations = Integer.valueOf((String) this.configuration.getlaunchConfigParams()
+				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));
+		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(iterations));
+
+		if ((Boolean) this.configuration.getlaunchConfigParams()
+				.get(ExplorationConfiguration.IDLE_EXPLORATION)) {
+			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+		} else {
+			Slingshot.getInstance().getSystemDriver().postEvent(new ResetExplorerEvent());
+		}
+
+
 		monitor.worked(1);
 
 		monitor.subTask("Start simulation");
-		//		simulationDriver.start();
 		monitor.worked(1);
 
 		monitor.subTask("Restore");

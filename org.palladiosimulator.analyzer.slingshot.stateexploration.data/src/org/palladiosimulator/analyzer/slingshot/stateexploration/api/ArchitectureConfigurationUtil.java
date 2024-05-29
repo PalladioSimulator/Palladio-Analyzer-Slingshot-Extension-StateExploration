@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -20,23 +21,44 @@ import org.palladiosimulator.spd.SpdPackage;
 import org.scaledl.usageevolution.UsageevolutionPackage;
 
 /**
+ * Util class for the {@link ArchitectureConfiguration}.
  *
+ * Provides Helpers for persisting Model from an
+ * {@link ArchitectureConfiguration}.
+ *
+ * @author Sarah Stieß
  *
  */
 public class ArchitectureConfigurationUtil {
 
 	/**
-	 * EClasses of all models that are persisted as part of the
-	 * {@link ArchitectureConfiguration}
+	 * EClasses of all models that must be provided to simulate with Slingshot.
 	 */
-	public static final Set<EClass> MODEL_ECLASS_WHITELIST = Set.of(RepositoryPackage.eINSTANCE.getRepository(),
+	public static final Set<EClass> MANDATORY_MODEL_ECLASS = Set.of(RepositoryPackage.eINSTANCE.getRepository(),
 			AllocationPackage.eINSTANCE.getAllocation(), UsagemodelPackage.eINSTANCE.getUsageModel(),
-			SystemPackage.eINSTANCE.getSystem(), ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment(),
+			SystemPackage.eINSTANCE.getSystem(), ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment());
+
+	/**
+	 * EClasses of all models that are simulated by Slingshot, if provided.
+	 */
+	public static final Set<EClass> OPTIONAL_MODEL_ECLASSES = Set.of(
 			MonitorRepositoryPackage.eINSTANCE.getMonitorRepository(),
 			MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository(), SpdPackage.eINSTANCE.getSPD(),
 			SemanticspdPackage.eINSTANCE.getConfiguration(),
 			ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository(),
 			UsageevolutionPackage.eINSTANCE.getUsageEvolution());
+
+	private static final Set<EClass> MERGED_MODEL_ECLASSES = new HashSet<>();
+	static {
+		MERGED_MODEL_ECLASSES.addAll(MANDATORY_MODEL_ECLASS);
+		MERGED_MODEL_ECLASSES.addAll(OPTIONAL_MODEL_ECLASSES);
+	}
+
+	/**
+	 * EClasses of all models that maybe persisted as part of the
+	 * {@link ArchitectureConfiguration}
+	 */
+	public static final Set<EClass> MODEL_ECLASS_WHITELIST = Set.copyOf(MERGED_MODEL_ECLASSES);
 
 	/**
 	 * Get all {@link Resource}s from the given {@link ResourceSet} that contain a

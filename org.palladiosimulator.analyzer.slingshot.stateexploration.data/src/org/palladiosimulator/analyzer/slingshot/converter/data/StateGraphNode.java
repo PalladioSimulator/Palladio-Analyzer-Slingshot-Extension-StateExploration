@@ -1,9 +1,9 @@
-package org.palladiosimulator.analyzer.slingshot.planner.data;
+package org.palladiosimulator.analyzer.slingshot.converter.data;
 
 import java.util.List;
 
-import org.palladiosimulator.analyzer.slingshot.planner.data.Utility.UtilityData;
-import org.palladiosimulator.analyzer.slingshot.planner.data.Utility.UtilityType;
+import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityData;
+import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityType;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.common.base.Objects;

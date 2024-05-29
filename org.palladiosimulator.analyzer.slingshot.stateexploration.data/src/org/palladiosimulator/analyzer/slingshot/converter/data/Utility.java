@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.planner.data;
+package org.palladiosimulator.analyzer.slingshot.converter.data;
 
 import java.util.LinkedList;
 import java.util.List;

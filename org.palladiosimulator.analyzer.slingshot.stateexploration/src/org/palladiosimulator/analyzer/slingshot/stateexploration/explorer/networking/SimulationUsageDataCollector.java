@@ -1,34 +1,31 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
-
-import javax.inject.Inject;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserEntryRequested;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.GsonProvider;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.Message;
-import org.palladiosimulator.analyzer.slingshot.networking.ws.SlingshotWebsocketClient;
+import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 
 
 @OnEvent(when = UserEntryRequested.class)
 public class SimulationUsageDataCollector implements SimulationBehaviorExtension {
-	@Inject
-	private GsonProvider gsonProvider;
-	@Inject
-	private SlingshotWebsocketClient client;
-	
-	
+	//	@Inject
+	//	private GsonProvider gsonProvider;
+	//	@Inject
+	//	private SlingshotWebsocketClient client;
+
+
 	public record EntryData(String userId, String entityName, String signatureName, String signatureId) {}
-	
+
 	public class EntryDataMessage extends Message<EntryData> {
-		public EntryDataMessage(EntryData payload) {
+		public EntryDataMessage(final EntryData payload) {
 			super("Entry", payload, "Explorer");
 		}
 	}
-	
+
 	@Subscribe
-	public void onUserEntryRequest(UserEntryRequested request) {
+	public void onUserEntryRequest(final UserEntryRequested request) {
+		// send to system bus first.
 		/*
 		try {
 			client.sendMessage(new EntryDataMessage(new EntryData(
@@ -41,7 +38,7 @@ public class SimulationUsageDataCollector implements SimulationBehaviorExtension
 			ee.printStackTrace();
 			System.exit(0);
 		}
-		*/
+		 */
 	}
 
 }
