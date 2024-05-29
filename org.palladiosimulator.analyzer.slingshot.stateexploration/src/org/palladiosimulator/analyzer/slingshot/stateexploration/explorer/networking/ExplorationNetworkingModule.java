@@ -9,7 +9,6 @@ import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.GreetingMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
@@ -43,9 +42,7 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 		messageBinder.addBinding(TestMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(TestMessage.class);
 		messageBinder.addBinding(SimTestMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(SimTestMessage.class);
-		messageBinder.addBinding(GreetingMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(GreetingMessage.class);
 
-		// das hier muss rüber in den planner.
 		messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
 		.toInstance(StateExploredEventMessage.class);
 
@@ -54,7 +51,6 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 		messageBinder.addBinding(FocusOnStatesEvent.MESSAGE_MAPPING_IDENTIFIER)
 		.toInstance(FocusOnStatesEvent.class);
-
 
 		// proof of concept -> to be deleted?
 		install(ExplorationMessageDispatcher.class);
