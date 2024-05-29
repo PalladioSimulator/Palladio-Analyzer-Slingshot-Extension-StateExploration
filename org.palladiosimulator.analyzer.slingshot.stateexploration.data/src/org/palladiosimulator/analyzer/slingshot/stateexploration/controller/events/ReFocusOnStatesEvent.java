@@ -24,9 +24,9 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoCh
  *
  */
 public class ReFocusOnStatesEvent extends EventMessage<Collection<String>>
-		implements ExplorationControllerEvent {
+implements ExplorationControllerEvent {
 
-	public static final String MESSAGE_MAPPING_IDENTIFIER = FocusOnStatesEvent.class.getSimpleName();
+	public static final String MESSAGE_MAPPING_IDENTIFIER = ReFocusOnStatesEvent.class.getSimpleName();
 
 	/**
 	 *

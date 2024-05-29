@@ -48,9 +48,9 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	private static final Logger LOGGER = Logger.getLogger(ExplorerControllerSystemBehaviour.class.getName());
 
 	private GraphExplorer explorer = null;
-	
+
 	private IdleExploration doIdle = IdleExploration.BLOCKED;
-	
+
 	private enum IdleExploration {
 		ONHOLD, BLOCKED, DOING;
 	}
@@ -104,7 +104,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 		logGraph();
 
-		//testFocusHandling();
+		// testFocusHandling();
 
 	}
 
@@ -119,7 +119,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		someStates.remove(this.explorer.getGraph().getRoot());
 
 		Slingshot.getInstance().getSystemDriver()
-		.postEvent(new ReFocusOnStatesEvent(someStates.stream().map(s -> s.getId()).toList()));
+		.postEvent(new FocusOnStatesEvent(someStates.stream().map(s -> s.getId()).toList()));
 
 		Slingshot.getInstance().getSystemDriver()
 		.postEvent(new ReFocusOnStatesEvent(Set.of(this.explorer.getGraph().getRoot().getId())));
