@@ -71,31 +71,34 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		this.sensitivity = activated ? config.getSensitivity() : 0;
 
 		this.mp2range = new HashMap<>();
-		for (final ServiceLevelObjective slo : sloRepo.getServicelevelobjectives()) {
 
-			if (slo.getLowerThreshold() == null && slo.getUpperThreshold() == null) {
-				LOGGER.debug(
-						String.format("No thresholds for %s [%s], will be ignored", slo.getName(), slo.getId()));
-				continue;
-			}
-			if (slo.getLowerThreshold() != null && slo.getUpperThreshold() == null) {
-				LOGGER.debug(
-						String.format("No upper threshold for %s [%s], will be ignored", slo.getName(), slo.getId()));
-				continue;
-			}
+		if (activated) {
+			for (final ServiceLevelObjective slo : sloRepo.getServicelevelobjectives()) {
 
-			final MeasurementSpecification mp = slo.getMeasurementSpecification();
-			if (!mp2range.containsKey(mp)) {
-				mp2range.put(mp, new HashSet<>());
-			}
-			if (slo.getLowerThreshold() == null) {
-				mp2range.get(mp).add(new SingleEndedRange(
-						(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(), sensitivity));
-			} else {
-				mp2range.get(mp)
-				.add(new DoubleEndedRange(
-						(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(),
-						(Measure<Object, Quantity>) slo.getLowerThreshold().getThresholdLimit(), sensitivity));
+				if (slo.getLowerThreshold() == null && slo.getUpperThreshold() == null) {
+					LOGGER.debug(
+							String.format("No thresholds for %s [%s], will be ignored", slo.getName(), slo.getId()));
+					continue;
+				}
+				if (slo.getLowerThreshold() != null && slo.getUpperThreshold() == null) {
+					LOGGER.debug(
+							String.format("No upper threshold for %s [%s], will be ignored", slo.getName(), slo.getId()));
+					continue;
+				}
+
+				final MeasurementSpecification mp = slo.getMeasurementSpecification();
+				if (!mp2range.containsKey(mp)) {
+					mp2range.put(mp, new HashSet<>());
+				}
+				if (slo.getLowerThreshold() == null) {
+					mp2range.get(mp).add(new SingleEndedRange(
+							(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(), sensitivity));
+				} else {
+					mp2range.get(mp)
+					.add(new DoubleEndedRange(
+							(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(),
+							(Measure<Object, Quantity>) slo.getLowerThreshold().getThresholdLimit(), sensitivity));
+				}
 			}
 		}
 	}
