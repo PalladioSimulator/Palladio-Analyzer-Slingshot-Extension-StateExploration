@@ -75,7 +75,7 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 				jsonScalingPolicy.addProperty("id", src.getId());
 				jsonScalingPolicy.addProperty("name", src.getEntityName());
-				// jsonScalingPolicy.addProperty("uri", src.eResource().getURI().toString());
+				jsonScalingPolicy.addProperty("uri", src.eResource().getURI().toString());
 
 				return jsonScalingPolicy;
 			}

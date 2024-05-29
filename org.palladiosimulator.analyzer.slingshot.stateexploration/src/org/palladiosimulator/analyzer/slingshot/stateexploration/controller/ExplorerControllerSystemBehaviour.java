@@ -48,6 +48,12 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	private static final Logger LOGGER = Logger.getLogger(ExplorerControllerSystemBehaviour.class.getName());
 
 	private GraphExplorer explorer = null;
+	
+	private IdleExploration doIdle = IdleExploration.BLOCKED;
+	
+	private enum IdleExploration {
+		ONHOLD, BLOCKED, DOING;
+	}
 
 	/**
 	 *
@@ -72,8 +78,13 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Subscribe
 	public void onIdleTrigger(final IdleTriggerExplorationEvent event) {
-		this.explorer.exploreNextState();
-		Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+		if (this.explorer.hasUnexploredChanges()) {
+			this.explorer.exploreNextState();
+			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+		} else {
+			doIdle = IdleExploration.ONHOLD;
+			LOGGER.info("No Unexplored Changes, stop Idle exploration.");
+		}
 	}
 
 	/**
@@ -86,10 +97,14 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		for (int i = 0; i < event.getIterations() && this.explorer.hasUnexploredChanges(); i++) {
 			this.explorer.exploreNextState();
 		}
+		if (doIdle == IdleExploration.ONHOLD) {
+			doIdle = IdleExploration.DOING;
+			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+		}
 
 		logGraph();
 
-		testFocusHandling();
+		//testFocusHandling();
 
 	}
 
