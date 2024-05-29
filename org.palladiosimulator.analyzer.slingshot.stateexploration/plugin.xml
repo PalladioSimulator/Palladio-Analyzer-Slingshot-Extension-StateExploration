@@ -9,6 +9,9 @@
       <slingshot-extension
             module="org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule">
       </slingshot-extension>
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.ExplorationNetworkingModule">
+      </slingshot-extension>
    </extension>
 
 </plugin>

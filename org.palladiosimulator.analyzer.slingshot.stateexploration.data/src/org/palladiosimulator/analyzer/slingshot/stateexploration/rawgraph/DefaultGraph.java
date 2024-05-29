@@ -17,7 +17,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * Default implementation of the RawStateGraph.
  *
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, RawTransition> implements RawStateGraph {
@@ -51,8 +51,14 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 	}
 
-	public DefaultState insertStateFor(final double pointInTime, final ArchitectureConfiguration archConfig) {
-		final DefaultState newState = new DefaultState(pointInTime, archConfig, this);
+	/**
+	 *
+	 * @param startPointInTime
+	 * @param archConfig
+	 * @return
+	 */
+	public DefaultState insertStateFor(final double startPointInTime, final ArchitectureConfiguration archConfig) {
+		final DefaultState newState = new DefaultState(startPointInTime, archConfig, this);
 		this.addVertex(newState);
 		return newState;
 	}
@@ -73,11 +79,11 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 	@Override
 	public Set<RawModelState> getStates() {
-		return this.vertexSet();
+		return Set.copyOf(this.vertexSet());
 	}
 
 	@Override
 	public Set<RawTransition> getTransitions() {
-		return this.edgeSet();
+		return Set.copyOf(this.edgeSet());
 	}
 }
