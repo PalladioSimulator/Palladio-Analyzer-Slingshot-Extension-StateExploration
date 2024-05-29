@@ -74,7 +74,10 @@ public class ExplorationPlanner {
 		final DefaultState start = next.getStart();
 		final DefaultState end = this.createNewGraphNode(next);
 
-		this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD(), start.getDuration());
+		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
+			this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD().get(),
+					start.getDuration());
+		}
 
 		return createConfigBasedOnChange(next.getChange(), start, end);
 

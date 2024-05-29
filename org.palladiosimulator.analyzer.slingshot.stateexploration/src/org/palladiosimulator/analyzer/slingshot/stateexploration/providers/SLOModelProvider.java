@@ -1,10 +1,11 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 
 import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EObject;
 import org.palladiosimulator.analyzer.slingshot.core.extension.ModelProvider;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
@@ -20,6 +21,8 @@ import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 @Singleton
 public class SLOModelProvider implements ModelProvider<ServiceLevelObjective> {
 
+	private static final Logger LOGGER = Logger.getLogger(SLOModelProvider.class);
+
 	private final PCMResourceSetPartitionProvider provider;
 
 	@Inject
@@ -31,7 +34,8 @@ public class SLOModelProvider implements ModelProvider<ServiceLevelObjective> {
 	public ServiceLevelObjective get() {
 		final List<EObject> slos = provider.get().getElement(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjective());
 		if (slos.size() == 0) {
-			throw new IllegalStateException("SLOs not present: List size is 0.");
+			LOGGER.warn("SLOs not present: List size is 0.");
+			return null;
 		}
 		return (ServiceLevelObjective) slos.get(0);
 	}
