@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: PolicyInjection
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.injection;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.injection
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: org.palladiosimulator.analyzer.slingshot.networking.data;bundle-version="1.0.0",
+ org.palladiosimulator.spd;bundle-version="1.0.0",
+ org.palladiosimulator.analyzer.slingshot.core;bundle-version="1.0.0",
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
+ org.apache.log4j,
+ com.google.gson
