@@ -11,14 +11,16 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
 
 /**
  *
- * @author stiesssh
+ * Snaphshot of a Simulation run that holds all information in memory.
+ * 
+ * @author Sarah Stieß
  *
  */
 public final class InMemorySnapshot implements Snapshot {
 
 	private final Set<DESEvent> events;
 
-	private Optional<ModelAdjustmentRequested> adjustorEvent;
+	private Optional<ModelAdjustmentRequested> modelAdjustmentRequestedEvent;
 
 	public InMemorySnapshot() {
 		this(Set.of());
@@ -27,7 +29,7 @@ public final class InMemorySnapshot implements Snapshot {
 
 	public InMemorySnapshot(final Set<DESEvent> events) {
 		this.events = events;
-		this.adjustorEvent = Optional.empty();
+		this.modelAdjustmentRequestedEvent = Optional.empty();
 	}
 
 
@@ -39,11 +41,11 @@ public final class InMemorySnapshot implements Snapshot {
 
 	@Override
 	public Optional<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent() {
-		return this.adjustorEvent;
+		return this.modelAdjustmentRequestedEvent;
 	}
 
 	@Override
 	public void setModelAdjustmentRequestedEvent(final ModelAdjustmentRequested event) {
-		this.adjustorEvent = Optional.of(event);
+		this.modelAdjustmentRequestedEvent = Optional.of(event);
 	}
 }

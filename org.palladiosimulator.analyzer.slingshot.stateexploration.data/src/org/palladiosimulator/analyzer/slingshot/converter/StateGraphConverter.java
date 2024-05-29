@@ -1,11 +1,11 @@
-package org.palladiosimulator.analyzer.slingshot.planner.runner;
+package org.palladiosimulator.analyzer.slingshot.converter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.palladiosimulator.analyzer.slingshot.planner.data.MeasurementSet;
-import org.palladiosimulator.analyzer.slingshot.planner.data.SLO;
-import org.palladiosimulator.analyzer.slingshot.planner.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
+import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.monitorrepository.Monitor;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;

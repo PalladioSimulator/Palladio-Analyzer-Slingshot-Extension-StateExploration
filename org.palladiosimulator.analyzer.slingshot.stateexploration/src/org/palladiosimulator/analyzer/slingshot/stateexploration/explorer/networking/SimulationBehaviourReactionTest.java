@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking;
 
 import javax.inject.Inject;
 
@@ -7,7 +7,8 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehavio
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.networking.SimulationEventBuffer;
+import org.palladiosimulator.analyzer.slingshot.networking.data.SimulationEventBuffer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
 
 @OnEvent(when = SimTestMessage.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class)

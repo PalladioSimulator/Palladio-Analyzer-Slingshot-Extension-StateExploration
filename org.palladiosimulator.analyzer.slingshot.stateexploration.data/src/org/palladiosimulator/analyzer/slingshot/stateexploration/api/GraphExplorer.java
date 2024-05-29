@@ -1,20 +1,63 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import java.util.Collection;
+
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+
+/**
+ *
+ * Explores the state graph.
+ *
+ * @author Sarah Stieß
+ *
+ */
 public interface GraphExplorer {
 
 	/**
-	 * Start an exploration.
-	 *
-	 * TODO (1) : for now, we assume, that the planner requests a exploration
-	 * (blocking), waits until the exploration is done and receives the
-	 * RawStateGraph as result. For the future, it's more desirable, to have
-	 * Planning and Exploration run independently, and the exploration notifies the
-	 * Planning about updates in the RawStateGraph.
-	 *
-	 * TODO (2) : at some point, we gotta feed some configurations into the
-	 * explorer, e.g. the horizon.
-	 *
-	 * @return a graph of explored states.
+	 * Explore the next state.
 	 */
-	public RawStateGraph start();
+	public void exploreNextState();
+
+
+	/**
+	 *
+	 * @return true, iff more unexplored changes are available.
+	 */
+	public boolean hasUnexploredChanges();
+
+	/**
+	 *
+	 * @return the state graph
+	 */
+	public RawStateGraph getGraph();
+
+	/**
+	 *
+	 * Focus exploration on the given model states by removing all
+	 * {@link ToDoChange}s that are unrelated to the given states from the fringe.
+	 *
+	 * @param focusStates states to focus on.
+	 */
+	public void focus(Collection<RawModelState> focusStates);
+
+	/**
+	 *
+	 * Add the given model states back into focus by (re-)adding {@link ToDoChange}s
+	 * for the given states to the fringe.
+	 *
+	 * Only adds {@link ToDoChange}s for unexplored futures, i.e. for already fully
+	 * explored state, no new changes are added.
+	 *
+	 * @param focusStates states to refocus on.
+	 */
+	public void refocus(Collection<RawModelState> focusStates);
+
+	/**
+	 *
+	 * Remove all elements from the fringe that explore futures that start in the
+	 * past.
+	 *
+	 * @param time current time in the real system
+	 */
+	public void pruneByTime(double time);
 }

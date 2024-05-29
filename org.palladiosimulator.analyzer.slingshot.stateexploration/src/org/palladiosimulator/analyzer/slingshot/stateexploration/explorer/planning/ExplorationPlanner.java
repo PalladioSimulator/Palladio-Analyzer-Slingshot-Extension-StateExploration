@@ -14,8 +14,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.config
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.BacktrackPolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -37,18 +37,20 @@ public class ExplorationPlanner {
 	private static final Logger LOGGER = Logger.getLogger(ExplorationPlanner.class.getName());
 
 	private final DefaultGraph rawgraph;
+	private final DefaultGraphFringe fringe;
 	private final CutOffConcerns cutOffConcerns;
 
 	private final ProactivePolicyStrategy proactivePolicyStrategy;
 
 	private final double minDuration;
 
-	public ExplorationPlanner(final DefaultGraph graph, final double minDuration) {
+	public ExplorationPlanner(final DefaultGraph graph, final DefaultGraphFringe fringe, final double minDuration) {
 		this.rawgraph = graph;
+		this.fringe = fringe;
 		this.minDuration = minDuration;
 		this.cutOffConcerns = new CutOffConcerns();
 
-		this.proactivePolicyStrategy = new BacktrackPolicyStrategy(this.rawgraph);
+		this.proactivePolicyStrategy = new BacktrackPolicyStrategy(this.rawgraph, this.fringe);
 
 		this.updateGraphFringePostSimulation(graph.getRoot());
 	}
@@ -59,14 +61,14 @@ public class ExplorationPlanner {
 	 * @return Configuration for the next simulation run
 	 */
 	public SimulationInitConfiguration createConfigForNextSimualtionRun() {
-		assert this.rawgraph.hasNext();
+		assert !this.fringe.isEmpty();
 
-		ToDoChange next = this.rawgraph.getNext();
+		ToDoChange next = this.fringe.poll();
 
 		while (!this.cutOffConcerns.shouldExplore(next)) {
 			LOGGER.debug(String.format("Future %s is bad, won't explore.", next.toString()));
 			// TODO : Exception if the entire fringe is bad.
-			next = this.rawgraph.getNext();
+			next = this.fringe.poll();
 		}
 
 		final DefaultState start = next.getStart();
@@ -125,20 +127,20 @@ public class ExplorationPlanner {
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
 		// NOP Always
-		this.rawgraph.addFringeEdge(new ToDoChange(Optional.empty(), start));
+		this.fringe.add(new ToDoChange(Optional.empty(), start));
 		// Reactive Reconfiguration - Always.
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
 			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
 
 			// reactive reconf to the next state.
-			this.rawgraph.addFringeEdge(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+			this.fringe.add(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
 
 		// proactive reconf.
 		final List<ToDoChange> proactiveChanges = this.proactivePolicyStrategy.createProactiveChanges(start);
 
 		for (final ToDoChange toDoChange : proactiveChanges) {
-			this.rawgraph.addFringeEdge(toDoChange);
+			this.fringe.add(toDoChange);
 		}
 	}
 
@@ -159,12 +161,9 @@ public class ExplorationPlanner {
 		final DefaultState predecessor = next.getStart();
 
 		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
-		final DefaultState newNode = new DefaultState(predecessor.getEndTime(), newConfig);
+		final DefaultState newNode = this.rawgraph.insertStateFor(predecessor.getEndTime(), newConfig);
 
-		this.rawgraph.addNode(newNode);
-
-		final DefaultTransition nextTransition = new DefaultTransition(next.getChange(), predecessor, newNode);
-		predecessor.addOutTransition(nextTransition);
+		this.rawgraph.insertTransitionFor(next.getChange(), predecessor, newNode);
 
 		return newNode;
 	}
@@ -194,13 +193,12 @@ public class ExplorationPlanner {
 	 * @param offset duration of the previous state
 	 */
 	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
-
-		// get all triggers on Fixed point in time.
-		spd.getScalingPolicies().stream().filter(policy -> policy.isActive()).map(policy -> policy.getScalingTrigger())
-		.filter(BaseTrigger.class::isInstance).map(BaseTrigger.class::cast)
-		.filter(trigger -> trigger.getStimulus() instanceof SimulationTime)
-		.map(trigger -> trigger.getExpectedValue()).filter(ExpectedTime.class::isInstance)
-		.map(ExpectedTime.class::cast).forEach(time -> this.updateValue(time, offset));
+		spd.getScalingPolicies().stream()
+		.filter(policy -> policy.isActive() && policy.getScalingTrigger() instanceof BaseTrigger)
+		.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
+		.filter(trigger -> trigger.getStimulus() instanceof SimulationTime
+				&& trigger.getExpectedValue() instanceof ExpectedTime)
+		.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
 
 		ResourceUtils.saveResource(spd.eResource());
 	}
@@ -208,8 +206,8 @@ public class ExplorationPlanner {
 	/**
 	 * update value helper.
 	 *
-	 * @param time
-	 * @param previousStateDuration
+	 * @param time                  model element to be updated
+	 * @param previousStateDuration duration to subtract from {@code time}.
 	 */
 	private void updateValue(final ExpectedTime time, final double previousStateDuration) {
 		final double triggerTime = time.getValue();

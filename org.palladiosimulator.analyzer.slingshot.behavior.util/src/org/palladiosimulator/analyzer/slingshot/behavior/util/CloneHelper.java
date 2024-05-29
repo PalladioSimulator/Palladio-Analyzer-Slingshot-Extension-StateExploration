@@ -203,9 +203,7 @@ public final class CloneHelper {
 	public Job clone(final ActiveJob job) {
 		final ResourceDemandRequest clonedRequest = clone(job.getRequest());
 
-
 		final AllocationContext matchedAllocContext = getMatchingPCMElement(job.getAllocationContext());
-
 
 		final Job clonedJob = ActiveJob.builder().withDemand(job.getDemand()).withId(job.getId())
 				.withProcessingResourceType(job.getProcessingResourceType()).withRequest(clonedRequest)
@@ -360,10 +358,10 @@ public final class CloneHelper {
 		}
 
 		if (context.getCallOverWireRequest().isPresent()) { // TODO probably like above
-			//			if (calledFrom == null) {
-			//				throw new IllegalStateException(
-			//						"If the Call over wire is present, there must also be a caller (i think)!");
-			//			}
+			// if (calledFrom == null) {
+			// throw new IllegalStateException(
+			// "If the Call over wire is present, there must also be a caller (i think)!");
+			// }
 			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get(), calledFrom);
 		}
 
@@ -606,7 +604,6 @@ public final class CloneHelper {
 			final ThinkTime thinkTime = ((ClosedWorkloadUserInterpretationContext) userInterpretationContext)
 					.getThinkTime();
 
-
 			clonedUserInterpretationContext = ClosedWorkloadUserInterpretationContext.builder()
 					.withUser(clonedUser).withScenario(usageScenario)
 					.withCurrentAction(firstAction).withThinkTime(thinkTime)
@@ -674,7 +671,6 @@ public final class CloneHelper {
 					UsageScenarioBehaviorContext.class.getSimpleName(), scenarioContext.getClass().getSimpleName()));
 		}
 
-
 		return clonedContext;
 	}
 
@@ -723,7 +719,8 @@ public final class CloneHelper {
 	public GeneralEntryRequest cloneGeneralEntryRequest(final GeneralEntryRequest generalEntryRequest,
 			final SEFFInterpretationContext SEFFIC_requestFrom) {
 
-		final SEFFInterpretationContext clonedSEFFIC = SEFFIC_requestFrom.update().withCaller(SEFFIC_requestFrom).build();
+		final SEFFInterpretationContext clonedSEFFIC = SEFFIC_requestFrom.update().withCaller(SEFFIC_requestFrom)
+				.build();
 
 		final EList<VariableUsage> inputParameterUsages = new BasicEList<>(
 				generalEntryRequest.getInputVariableUsages().stream().map(usage -> getMatchingPCMElement(usage))
@@ -752,30 +749,44 @@ public final class CloneHelper {
 	 * @param seffBehaviorWrapper
 	 * @return
 	 */
-	//	public SeffBehaviorWrapper cloneSeffBehaviorWrapper(final SeffBehaviorWrapper seffBehaviorWrapper) {
+	// public SeffBehaviorWrapper cloneSeffBehaviorWrapper(final SeffBehaviorWrapper
+	// seffBehaviorWrapper) {
 	//
-	//		final ResourceDemandingBehaviour rdBehaviour = seffBehaviorWrapper.getBehavior();
-	//		final SeffBehaviorContextHolder clonedSeffBehaviorContextHolder = cloneSeffBehaviorContextHolder(
-	//				seffBehaviorWrapper.getContext(), null);
+	// final ResourceDemandingBehaviour rdBehaviour =
+	// seffBehaviorWrapper.getBehavior();
+	// final SeffBehaviorContextHolder clonedSeffBehaviorContextHolder =
+	// cloneSeffBehaviorContextHolder(
+	// seffBehaviorWrapper.getContext(), null);
 	//
-	//		final SeffBehaviorWrapper clonedSeffBehaviorWrapper = new SeffBehaviorWrapper(rdBehaviour,
-	//				clonedSeffBehaviorContextHolder);
+	// final SeffBehaviorWrapper clonedSeffBehaviorWrapper = new
+	// SeffBehaviorWrapper(rdBehaviour,
+	// clonedSeffBehaviorContextHolder);
 	//
-	//		return clonedSeffBehaviorWrapper;
-	//	}
+	// return clonedSeffBehaviorWrapper;
+	// }
 
 	/**
 	 * Finds a model element in {@code this} helper's resource set that is equal to
 	 * the given element.
 	 *
+	 * If {@code element} is {@code null}, it matches to {@code null}. This is
+	 * important, because some Reference to PCM elements in the Slingshot entities
+	 * are deliberately {@code null}, e.g. if no next action exits.
+	 *
 	 *
 	 * @param <T>     Type of the element to be matched
-	 * @param element element to be matched, must be contained in a resource.
-	 * @return matching element from {@code this}' resource set.
+	 * @param element element to be matched, if it is not null, it must be contained
+	 *                in a resource.
+	 * @return matching element from {@code this}' resource set, or {@code null}.,
+	 *         if {@code element} was {@code null}.
 	 */
 	private <T extends EObject> T getMatchingPCMElement(final T element) {
-		assert element.eResource() != null
+		assert element == null || (element != null && element.eResource() != null)
 				: String.format("Element %s is not contained in a resource, but must be.", element.toString());
+
+		if (element == null) {
+			return null;
+		}
 
 		final String fragment = EcoreUtil.getURI(element).fragment();
 

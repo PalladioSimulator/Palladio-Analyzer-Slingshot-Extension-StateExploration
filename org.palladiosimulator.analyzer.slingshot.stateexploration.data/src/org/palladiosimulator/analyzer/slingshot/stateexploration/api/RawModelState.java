@@ -13,6 +13,10 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
  */
 public interface RawModelState {
 
+	public RawTransition getIncomingTransition();
+
+	public Set<RawTransition> getOutgoingTransitions();
+
 	/**
 	 * Get everything PCM.
 	 *
@@ -26,13 +30,6 @@ public interface RawModelState {
 	 * @return
 	 */
 	public ExperimentSetting getMeasurements();
-
-	/**
-	 * Get RawTransitions that start at the current state.
-	 *
-	 * @return
-	 */
-	public Set<RawTransition> getOutTransitions();
 
 	/**
 	 * Get the point in time the state started
