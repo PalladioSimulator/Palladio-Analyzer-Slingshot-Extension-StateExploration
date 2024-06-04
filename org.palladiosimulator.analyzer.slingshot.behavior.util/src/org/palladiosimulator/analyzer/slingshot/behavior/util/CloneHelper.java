@@ -329,7 +329,7 @@ public final class CloneHelper {
 		SEFFInterpretationContext clonedParent = null;
 		SeffBehaviorContextHolder seffBehaviorContextHolder = null;
 		RequestProcessingContext requestProcessingContext = null;
-		SEFFInterpretationContext calledFrom = null;
+		Optional<SEFFInterpretationContext> calledFrom = Optional.empty();
 		CallOverWireRequest clonedCallOverWireRequest = null;
 		SimulatedStackframe<Object> clonedStackFrame = null;
 
@@ -340,14 +340,14 @@ public final class CloneHelper {
 			requestProcessingContext = clonedParent.getRequestProcessingContext();
 			seffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(),
 					clonedParent.getBehaviorContext().getCurrentProcessedBehavior());
-			calledFrom = clonedParent.getCaller().orElseGet(() -> null);
+			calledFrom = clonedParent.getCaller();
 
 		} else {
 			requestProcessingContext = cloneRequestProcessingContext(context.getRequestProcessingContext());
 			seffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(), null);
 
 			if (context.getCaller().isPresent()) {
-				calledFrom = cloneContext(context.getCaller().get());
+				calledFrom = Optional.of(cloneContext(context.getCaller().get()));
 			}
 		}
 
@@ -358,11 +358,11 @@ public final class CloneHelper {
 		}
 
 		if (context.getCallOverWireRequest().isPresent()) { // TODO probably like above
-			// if (calledFrom == null) {
-			// throw new IllegalStateException(
-			// "If the Call over wire is present, there must also be a caller (i think)!");
-			// }
-			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get(), calledFrom);
+			if (calledFrom.isEmpty()) {
+				throw new IllegalStateException(
+						"If the Call over wire is present, there must also be a caller (i think)!");
+			}
+			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get(), calledFrom.get());
 		}
 
 		final SEFFInterpretationContext clonedContext = SEFFInterpretationContext.builder().withParent(clonedParent)
@@ -719,7 +719,8 @@ public final class CloneHelper {
 	public GeneralEntryRequest cloneGeneralEntryRequest(final GeneralEntryRequest generalEntryRequest,
 			final SEFFInterpretationContext SEFFIC_requestFrom) {
 
-		final SEFFInterpretationContext clonedSEFFIC = SEFFIC_requestFrom.update().withCaller(SEFFIC_requestFrom)
+		final SEFFInterpretationContext clonedSEFFIC = SEFFIC_requestFrom.update()
+				.withCaller(Optional.of(SEFFIC_requestFrom))
 				.build();
 
 		final EList<VariableUsage> inputParameterUsages = new BasicEList<>(
