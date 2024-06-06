@@ -2,7 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.injection;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -67,40 +66,15 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
      * Update plan and publish event to trigger first step of the (new) plan.
      *
      * @param event
-     *            event holding the new plan. All already executed step must also be the prefix of
-     *            the new plan and the point in time of divergence between current and new plan must
-     *            be in the future.
+     *            event holding the new plan.
      * @return event to trigger the first step of the new plan.
      */
     @Subscribe
     public Result<ExecutionIntervalPassed> onPlanUpdated(final PlanUpdated event) {
-
-        if (!this.plan.hasCommonHistory(event.getPlan())) {
-            throw new IllegalArgumentException(String.format("no common hisotry"));
-        }
-
-        final Optional<Double> pointInTimeOfDivergence = this.plan.getPointInTimeOfDivergence(event.getPlan());
-
-        if (pointInTimeOfDivergence.isEmpty()) {
-            LOGGER.info(String.format("Plans do not diverge, no updated."));
-
-            return Result.empty();
-        }
-
-        if (pointInTimeOfDivergence.get() < event.time()) {
-            throw new IllegalArgumentException(String.format(
-                    "Reveived plan %p diverging from current plan at t=%f, but simulation is already a t=%f.",
-                    event.getPlan()
-                        .getId(),
-                    pointInTimeOfDivergence.get(), event.time()));
-        }
-
         this.plan = event.getPlan();
-        this.plan.forwardPlanTo(pointInTimeOfDivergence.get());
+        this.plan.forwardPlanTo(event.time());
 
-        final double delay = this.plan.getTimeOfNextStep() - event.time();
-
-        return Result.of(new ExecutionIntervalPassed(this.plan, delay));
+        return Result.of(createTriggerForNextStep(event.time()));
     }
 
     /**
@@ -158,6 +132,7 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
     /**
      *
      * @param pointInTime
+     *            current time of the simulation
      * @return
      */
     private Set<ExecutionIntervalPassed> createTriggerForNextStep(final double pointInTime) {
