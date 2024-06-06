@@ -47,13 +47,16 @@ public class Plan {
      * must also be part of the other plan.
      *
      *
+     * TODO keep for a while in case we need it again.
+     *
      * @param other
      *            a new plan
      * @return point in time of the first step, where {@code other} differs from {@code this}, or
      *         {@link Optional#empty()} if there is no common prefix of not executed steps, or if
      *         {@code other} is contained in this plan.
      */
-    public Optional<Double> getPointInTimeOfDivergence(final Plan other) {
+    @Deprecated
+    private Optional<Double> getPointInTimeOfDivergence(final Plan other) {
 
         Preconditions.checkNotNull(other);
         Preconditions.checkArgument(this.hasCommonHistory(other),
@@ -99,12 +102,17 @@ public class Plan {
      *
      * It might also happen that the entire new plan is already in the history.
      *
+     *
+     * TODO keep for a while in case we need it again.
+     *
+     *
      * @param other
      *            new plan without any executed steps.
      * @return true, if the executed steps of this plan are the starting sequence of the new plan.
      *
      */
-    public boolean hasCommonHistory(final Plan other) {
+    @Deprecated
+    private boolean hasCommonHistory(final Plan other) {
         final Iterator<Entry<Double, Set<ScalingPolicy>>> itExecuted = this.executedSteps.entrySet()
             .iterator();
 
