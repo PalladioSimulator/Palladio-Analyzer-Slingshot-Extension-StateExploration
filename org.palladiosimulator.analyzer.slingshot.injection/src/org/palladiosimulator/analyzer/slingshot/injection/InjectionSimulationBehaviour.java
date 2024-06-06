@@ -1,6 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.injection;
 
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -15,11 +17,11 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.injection.data.ExecutionIntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.injection.data.Link;
 import org.palladiosimulator.analyzer.slingshot.injection.data.Plan;
-import org.palladiosimulator.analyzer.slingshot.injection.data.PlanUpdated;
-import org.palladiosimulator.spd.ScalingPolicy;
+import org.palladiosimulator.analyzer.slingshot.injection.data.StatesBlackboard;
+import org.palladiosimulator.analyzer.slingshot.injection.events.ExecutionIntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.injection.events.PlanUpdated;
 
 /**
  *
@@ -37,13 +39,19 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
     private final static Logger LOGGER = Logger.getLogger(InjectionSimulationBehaviour.class);
 
     private final Link linkToSystem;
+    private final StatesBlackboard states;
+
     private Plan plan;
 
     @Inject
-    public InjectionSimulationBehaviour(final Link link, final SimulationScheduling scheduling) {
+    public InjectionSimulationBehaviour(final Link link, final SimulationScheduling scheduling,
+            final StatesBlackboard states) {
         this.linkToSystem = link;
         this.linkToSystem.setScheduling(scheduling);
 
+        this.states = states;
+
+        this.plan = new Plan(Map.of());
     }
 
     /**
@@ -56,27 +64,39 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
 
     /**
      *
-     * Update plan and publish event to trigger first step of the plan.
+     * Update plan and publish event to trigger first step of the (new) plan.
      *
      * @param event
-     *            event holding the new plan. All steps of the new plan must be in the future.
-     * @return event to trigger the first step of the plan.
+     *            event holding the new plan. All already executed step must also be the prefix of
+     *            the new plan and the point in time of divergence between current and new plan must
+     *            be in the future.
+     * @return event to trigger the first step of the new plan.
      */
     @Subscribe
     public Result<ExecutionIntervalPassed> onPlanUpdated(final PlanUpdated event) {
 
-        if (event.getPlan()
-            .getTimeOfNextStep() < event.time()) {
+        if (!this.plan.hasCommonHistory(event.getPlan())) {
+            throw new IllegalArgumentException(String.format("no common hisotry"));
+        }
+
+        final Optional<Double> pointInTimeOfDivergence = this.plan.getPointInTimeOfDivergence(event.getPlan());
+
+        if (pointInTimeOfDivergence.isEmpty()) {
+            LOGGER.info(String.format("Plans do not diverge, no updated."));
+
+            return Result.empty();
+        }
+
+        if (pointInTimeOfDivergence.get() < event.time()) {
             throw new IllegalArgumentException(String.format(
-                    "Reveived plan %p starting with reconfigurations at t=%f, but simulation is already a t=%f",
+                    "Reveived plan %p diverging from current plan at t=%f, but simulation is already a t=%f.",
                     event.getPlan()
                         .getId(),
-                    event.getPlan()
-                        .getTimeOfNextStep(),
-                    event.time()));
+                    pointInTimeOfDivergence.get(), event.time()));
         }
 
         this.plan = event.getPlan();
+        this.plan.forwardPlanTo(pointInTimeOfDivergence.get());
 
         final double delay = this.plan.getTimeOfNextStep() - event.time();
 
@@ -85,9 +105,11 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
 
     /**
      *
-     * Publish {@link ModelAdjustmentRequested} events for all reconfigurations of triggered step in
-     * plan. If the plan has more steps, also publish an {@link ExecutionIntervalPassed} event to
-     * trigger the step after the just triggered step of the plan in due time.
+     * Publish {@link ModelAdjustmentRequested} events for all reconfigurations of the triggered
+     * step in the plan. If the plan has more steps, also publish an {@link ExecutionIntervalPassed}
+     * event to trigger the step after the just triggered step in due time.
+     *
+     * Requires that this plan has more steps to be executed.
      *
      * @param event
      *            triggers the next step in the plan.
@@ -104,6 +126,13 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
             return Result.of();
         }
 
+        if (this.plan.getPlanSteps()
+            .isEmpty()) {
+            throw new IllegalArgumentException(String.format(
+                    "Event %s wants to trigger next step of plan %s which has no more steps to be executed",
+                    event.getId(), plan.getId()));
+        }
+
         if (event.getPlan()
             .getTimeOfNextStep() != event.time()) {
             throw new IllegalArgumentException(String.format(
@@ -116,21 +145,31 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
 
         final Set<DESEvent> events = new HashSet<>();
 
-        for (final ScalingPolicy policy : this.plan.getReconfigruations(event.time())) {
-            events.add(new ModelAdjustmentRequested(policy));
-        }
+        events.addAll(this.plan.executeNextStep());
+        events.addAll(createTriggerForNextStep(event.time()));
 
-        this.plan.forwardPlanTo(this.plan.getTimeOfNextStep());
-
-        if (!this.plan.isEmpty()) {
-            final double delay = this.plan.getTimeOfNextStep() - event.time();
-            events.add(new ExecutionIntervalPassed(this.plan, delay));
-        } else {
-            LOGGER.info(String.format("Plan %s is empty. No new events will be scheduled.", event.getPlan()
-                .getId()));
-        }
+        this.states.cleanUp(event.time()); // what if plan comes in, that references old states, but
+                                           // i
+                                           // already cleaned them up?!
 
         return Result.of(events);
+    }
+
+    /**
+     *
+     * @param pointInTime
+     * @return
+     */
+    private Set<ExecutionIntervalPassed> createTriggerForNextStep(final double pointInTime) {
+        if (!this.plan.isEmpty()) {
+            final double delay = this.plan.getTimeOfNextStep() - pointInTime;
+
+            return Set.of(new ExecutionIntervalPassed(this.plan, delay));
+
+        } else {
+            LOGGER.info(String.format("Plan %s is empty. No new events will be scheduled.", this.plan.getId()));
+            return Set.of();
+        }
     }
 
     @Override
