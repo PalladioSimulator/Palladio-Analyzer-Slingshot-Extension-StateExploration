@@ -8,7 +8,8 @@ import javax.inject.Named;
 
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
-import org.palladiosimulator.analyzer.slingshot.injection.data.ApplyPolicyEventMessage;
+import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanCreatedEventMessage;
+import org.palladiosimulator.analyzer.slingshot.injection.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.spd.SPD;
@@ -48,13 +49,20 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
         }, new TypeLiteral<Class<? extends Message<?>>>() {
         });
 
-        messageBinder.addBinding(ApplyPolicyEventMessage.MESSAGE_MAPPING_IDENTIFIER)
-            .toInstance(ApplyPolicyEventMessage.class);
+        messageBinder.addBinding(PlanCreatedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
+            .toInstance(PlanCreatedEventMessage.class);
+        messageBinder.addBinding(PlanCreatedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
+            .toInstance(PlanCreatedEventMessage.class);
+
+        messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
+            .toInstance(StateExploredEventMessage.class);
 
         final var gsonBinder = MapBinder.newMapBinder(binder(), Type.class, Object.class);
 
         gsonBinder.addBinding(ScalingPolicy.class)
             .toInstance(this.createDeserializerForScalingPolicy());
+//        gsonBinder.addBinding(StateGraphNode.class)
+//            .toInstance(this.createDeserializerForStateGraphNode());
 
     }
 
@@ -72,8 +80,15 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
             public ScalingPolicy deserialize(final JsonElement json, final Type typeOfT,
                     final JsonDeserializationContext context) throws JsonParseException {
                 // request a new with each execution, in case the model changed.
-                spd = Slingshot.getInstance()
-                    .getInstance(SPD.class);
+
+                try {
+                    spd = Slingshot.getInstance().getInstance(SPD.class);
+                } catch (final Exception e) {
+                    throw new JsonParseException(String.format(
+                            "Cannot deserialise json \"%s\" because SPD model is not available. The model is only available once managed system has started.",
+                            json.toString()), e);
+                }
+
 
                 if (spd == null) {
                     throw new JsonParseException(String
