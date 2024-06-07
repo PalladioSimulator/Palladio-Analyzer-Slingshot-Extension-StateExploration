@@ -36,6 +36,9 @@ public class MeasurementSet {
 		this.elements.addAll(c);
 	}
 	
+	public List<Measurement<Number>> getElements() {
+		return this.elements;
+	}
 	
 	
 	public String getMetricName() {
