@@ -17,8 +17,10 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 import de.uka.ipd.sdq.workflow.mdsd.blackboard.ResourceSetPartition;
 
 /**
- * Based on
- * {@link org.palladiosimulator.experimentautomation.SetModelsInBlackboardJob.jobs.LoadModelsIntoBlackboardJob}
+ * Stripped down version of
+ * {@link org.palladiosimulator.experimentautomation.application.jobs.LoadModelsIntoBlackboardJob}
+ *
+ * @author Sarah Stieß
  */
 public class SetModelsInBlackboardJob extends SequentialBlackboardInteractingJob<MDSDBlackboard> {
 
@@ -26,28 +28,23 @@ public class SetModelsInBlackboardJob extends SequentialBlackboardInteractingJob
 
 	private final InitialModel initialModel;
 
-	/** Allows to deactivate model loading, e.g., when models are already in a blackboard. */
-	private final boolean loadDefaultPcmModels;
-
-	public SetModelsInBlackboardJob(final InitialModel initialModel, final boolean loadModels) {
+	public SetModelsInBlackboardJob(final InitialModel initialModel) {
 		super(false);
 		this.initialModel = initialModel;
-		this.loadDefaultPcmModels = loadModels;
 	}
 
 	@Override
 	public void execute(final IProgressMonitor monitor) throws JobFailedException, UserCanceledException {
 		// Load the PCM models
 		final List<EObject> pcmModels = new ArrayList<EObject>();
-		if (this.loadDefaultPcmModels) {
-			pcmModels.add(this.initialModel.getRepository());
-			pcmModels.add(this.initialModel.getSystem());
-			pcmModels.add(this.initialModel.getResourceEnvironment());
-			pcmModels.add(this.initialModel.getAllocation());
-			pcmModels.add(this.initialModel.getUsageModel());
-			pcmModels.add(this.initialModel.getMiddlewareRepository());
-			pcmModels.add(this.initialModel.getEventMiddleWareRepository());
-		}
+
+		pcmModels.add(this.initialModel.getRepository());
+		pcmModels.add(this.initialModel.getSystem());
+		pcmModels.add(this.initialModel.getResourceEnvironment());
+		pcmModels.add(this.initialModel.getAllocation());
+		pcmModels.add(this.initialModel.getUsageModel());
+		pcmModels.add(this.initialModel.getMiddlewareRepository());
+		pcmModels.add(this.initialModel.getEventMiddleWareRepository());
 
 		pcmModels.add(this.initialModel.getScalingDefinitions());
 		pcmModels.add(this.initialModel.getSpdSemanticConfiguration());
@@ -71,14 +68,11 @@ public class SetModelsInBlackboardJob extends SequentialBlackboardInteractingJob
 	}
 
 	private static void loadIfExisting(final ResourceSetPartition resourceSetPartition, final EObject eObject) {
-		if (eObject != null) {
+		if (eObject != null && eObject.eResource() != null) {
 			if (LOGGER.isEnabledFor(Level.INFO)) {
-				LOGGER.info("Loading " + eObject.eResource().getURI());
+				LOGGER.info("Load " + eObject.eResource().getURI());
 			}
 			resourceSetPartition.loadModel(eObject.eResource().getURI());
-			if (LOGGER.isEnabledFor(Level.INFO)) {
-				LOGGER.info("Loaded " + eObject.eResource().getURI());
-			}
 		}
 	}
 
@@ -87,6 +81,6 @@ public class SetModelsInBlackboardJob extends SequentialBlackboardInteractingJob
 	 */
 	@Override
 	public String getName() {
-		return "Perform AT PCM Model Load";
+		return "Get Initial Models into Blackboard";
 	}
 }

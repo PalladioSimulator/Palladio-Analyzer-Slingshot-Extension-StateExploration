@@ -9,7 +9,7 @@ Bundle-ClassPath: lib/json-20240303.jar,
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.explorer,
  org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui,
- org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers
+ org.palladiosimulator.analyzer.slingshot.stateexploration.providers
 Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.snapshot.data,
  org.apache.log4j,
@@ -29,21 +29,13 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.behavior.util,
  org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
  org.palladiosimulator.analyzer.slingshot.workflow,
- org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
  org.palladiosimulator.spd.semantic,
  org.jgrapht.core,
  org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
- org.palladiosimulator.analyzer.slingshot.planner,
- org.palladiosimulator.analyzer.slingshot.networking,
  org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
  com.google.gson,
- org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events
- com.google.gson,
- org.eclipse.emf.ecore,
- org.eclipse.emf.common
-Import-Package: com.google.gson;version="2.8.8",
- org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities,
- org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events,
- org.palladiosimulator.analyzer.slingshot.networking,
- org.palladiosimulator.analyzer.slingshot.planner.data,
- org.palladiosimulator.analyzer.slingshot.planner.runner
+ org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
+ org.palladiosimulator.analyzer.slingshot.networking.data,
+ org.scaledl.usageevolution,
+ org.palladiosimulator.analyzer.slingshot.networking
+

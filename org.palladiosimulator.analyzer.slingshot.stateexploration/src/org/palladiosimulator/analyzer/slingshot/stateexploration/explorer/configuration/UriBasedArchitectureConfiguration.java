@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
@@ -27,6 +28,7 @@ import org.palladiosimulator.pcm.repository.Repository;
 import org.palladiosimulator.pcm.repository.RepositoryPackage;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceenvironmentPackage;
+import org.palladiosimulator.pcm.system.System;
 import org.palladiosimulator.pcm.system.SystemPackage;
 import org.palladiosimulator.pcm.usagemodel.UsageModel;
 import org.palladiosimulator.pcm.usagemodel.UsagemodelPackage;
@@ -36,19 +38,20 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveReposito
 import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.SpdPackage;
+import org.scaledl.usageevolution.UsageEvolution;
+import org.scaledl.usageevolution.UsageevolutionPackage;
 
 /**
  *
  * A {@link ArchitectureConfiguration} represents a set of PCM models for one
  * state in the state exploration.
  *
- * For this {@link UriBasedArchitectureConfiguration}, all PCM models are
- * always persisted to the file system. I.e. this configuration represents (and
- * gives access) to a set of PCM-Models, as they are persisted in the file
- * system.
+ * For this {@link UriBasedArchitectureConfiguration}, all PCM models are always
+ * persisted to the file system. I.e. this configuration represents (and gives
+ * access) to a set of PCM-Models, as they are persisted in the file system.
  *
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class UriBasedArchitectureConfiguration implements ArchitectureConfiguration {
@@ -75,8 +78,10 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * @param idSegment
 	 */
 	private UriBasedArchitectureConfiguration(final Map<EClass, URI> uris, final String idSegment) {
-		assert uris.keySet().containsAll(ArchitectureConfigurationUtil.MODEL_ECLASS_WHITELIST)
-		: "Missing EClass mappings";
+		assert uris.keySet().containsAll(ArchitectureConfigurationUtil.MANDATORY_MODEL_ECLASS)
+		: String.format(
+				"Architecture configuration %s misses URIs for some mandatory models. The configuration has URIs for: %s",
+				idSegment, uris.keySet());
 
 		this.uris = uris;
 		this.idSegment = idSegment;
@@ -110,11 +115,9 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 		for (final Resource resource : set.getResources()) {
 			if (resource.getContents().isEmpty()) {
-				throw new IllegalArgumentException(
-						String.format("Empty resource for : %s.", resource.getURI().toString()));
-			}
-
-			if (ArchitectureConfigurationUtil.MODEL_ECLASS_WHITELIST.contains(resource.getContents().get(0).eClass())) {
+				LOGGER.info(String.format("Empty resource for : %s.", resource.getURI().toString()));
+			} else if (ArchitectureConfigurationUtil.MODEL_ECLASS_WHITELIST
+					.contains(resource.getContents().get(0).eClass())) {
 				map.put(resource.getContents().get(0).eClass(), resource.getURI());
 			}
 		}
@@ -132,10 +135,12 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * resources.
 	 *
 	 * @param <T> type of the model
-	 * @param uri uri of the {@link Resource} to be accessed.
+	 * @param uri non-null uri of the {@link Resource} to be accessed.
 	 * @return model from the {@link Resource} with the given URI.
 	 */
 	private final <T> T get(final URI uri) {
+		assert uri != null : "Parameter uri is null but must not be.";
+
 		final Resource res = this.set.getResource(uri, true);
 
 		if (res.getContents().isEmpty()) {
@@ -235,60 +240,77 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	}
 
 	@Override
-	public SPD getSPD() {
-		return get(uris.get(SpdPackage.eINSTANCE.getSPD()));
-	}
-
-	@Override
-	public Configuration getSemanticSPDConfiguration() {
-		return get(uris.get(SemanticspdPackage.eINSTANCE.getConfiguration()));
-	}
-
-	// not called in explorer
-	@Override
-	public ServiceLevelObjectiveRepository getSLOs() {
-		return get(uris.get(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository()));
-	}
-
-	// not called in explorer
-	@Override
-	public MonitorRepository getMonitorRepository() {
-		return get(uris.get(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository()));
-	}
-
-	// not called in explorer
-	@Override
 	public Allocation getAllocation() {
 		return get(uris.get(AllocationPackage.eINSTANCE.getAllocation()));
 	}
 
-	// not called in explorer
 	@Override
 	public ResourceEnvironment getResourceEnvironment() {
 		return get(uris.get(ResourceenvironmentPackage.eINSTANCE.getResourceEnvironment()));
 	}
 
-	// not called in explorer
 	@Override
-	public org.palladiosimulator.pcm.system.System getSystem() {
+	public System getSystem() {
 		return get(uris.get(SystemPackage.eINSTANCE.getSystem()));
 	}
 
-	// not called in explorer
-	@Override
-	public MeasuringPointRepository getMeasuringPointRepository() {
-		return get(uris.get(MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository()));
-	}
-
-	// not called in explorer
 	@Override
 	public UsageModel getUsageModel() {
 		return get(uris.get(UsagemodelPackage.eINSTANCE.getUsageModel()));
 	}
 
-	// not called in explorer
 	@Override
 	public Repository getRepository() {
 		return get(uris.get(RepositoryPackage.eINSTANCE.getRepository()));
+	}
+
+	@Override
+	public Optional<SPD> getSPD() {
+		if (uris.containsKey(SpdPackage.eINSTANCE.getSPD())) {
+			return Optional.of(get(uris.get(SpdPackage.eINSTANCE.getSPD())));
+		}
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<Configuration> getSemanticSPDConfiguration() {
+		if (uris.containsKey(SemanticspdPackage.eINSTANCE.getConfiguration())) {
+			return Optional.of(get(uris.get(SemanticspdPackage.eINSTANCE.getConfiguration())));
+		}
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<ServiceLevelObjectiveRepository> getSLOs() {
+		if (uris.containsKey(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository())) {
+			return Optional
+					.of(get(uris.get(ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository())));
+		}
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<MonitorRepository> getMonitorRepository() {
+		if (uris.containsKey(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository())) {
+			return Optional.of(get(uris.get(MonitorRepositoryPackage.eINSTANCE.getMonitorRepository())));
+		}
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<MeasuringPointRepository> getMeasuringPointRepository() {
+		if (uris.containsKey(MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository())) {
+			return Optional.of(get(uris.get(MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository())));
+		}
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<UsageEvolution> getUsageEvolution() {
+		if (uris.containsKey(UsageevolutionPackage.eINSTANCE.getUsageEvolution())) {
+			return Optional.of(get(uris.get(UsageevolutionPackage.eINSTANCE.getUsageEvolution())));
+		}
+		return Optional.empty();
+
 	}
 }

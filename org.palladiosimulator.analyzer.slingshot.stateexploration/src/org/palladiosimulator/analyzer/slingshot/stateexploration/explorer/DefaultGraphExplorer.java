@@ -1,38 +1,40 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.jgrapht.graph.SimpleDirectedGraph;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated; // TODO DELETE, for DEUBG only!!
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
-import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
-import org.palladiosimulator.analyzer.slingshot.planner.runner.StateGraphConverter;
-import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.TransitionType;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.DefaultExplorationPlanner;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.ExplorationPlanner;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.AdditionalConfigurationModule;
-import org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.EventsToInitOnWrapper;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
@@ -46,9 +48,9 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 /**
  * Core Component of the Exploration.
  *
- * Responsible for starting the simulation runs to explore different branches.
+ * Responsible for exploring new states.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class DefaultGraphExplorer implements GraphExplorer {
@@ -60,15 +62,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final Map<String, Object> launchConfigurationParams;
 
-	private final DefaultExplorationPlanner blackbox;
+	private final ExplorationPlanner blackbox;
 
 	private final DefaultGraph graph;
+	private final DefaultGraphFringe fringe;
 
 	private final IProgressMonitor monitor;
 
 	private final SystemDriver systemDriver = Slingshot.getInstance().getSystemDriver();
-
-	private final SimpleDirectedGraph jGraphGraph;
 
 	private final MDSDBlackboard blackboard;
 
@@ -83,50 +84,24 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		this.graph = new DefaultGraph(this.createRoot());
-		this.blackbox = new DefaultExplorationPlanner(this.graph, this.getMinDuration());
+		this.graph = new DefaultGraph(
+				UriBasedArchitectureConfiguration.createRootArchConfig(this.initModels.getResourceSet()));
+		this.fringe = new DefaultGraphFringe();
 
-		this.jGraphGraph = new SimpleDirectedGraph<>(RawTransition.class);
+		systemDriver.postEvent(
+				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
+
+		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, this.getMinDuration());
+
 	}
 
 	@Override
-	public RawStateGraph start() {
-		LOGGER.info("********** DefaultGraphExplorer.start **********");
+	public void exploreNextState() {
+		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
-		for (int i = 0; i < this.getMaxIterations(); i++) { // just random.
-			LOGGER.warn("********** Iteration " + i + "**********");
-			if (!this.graph.hasNext()) {
-				LOGGER.info(String.format("Fringe is empty. Stop Exloration after %d iterations.", i));
-				break;
-			}
-			final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
+		final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
 
-			this.exploreBranch(config);
-		}
-		LOGGER.warn("********** DefaultGraphExplorer is done :) **********");
-		LOGGER.warn("********** States : ");
-		this.graph.getStates()
-		.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
-				s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
-		LOGGER.warn("********** Transitions : ");
-		this.graph.getTransitions().stream().forEach(
-				t -> LOGGER.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
-		return this.graph;
-	}
-
-	/**
-	 * Create root node for the graph. Sadly, ExperimentSettings for root are null
-	 * :/
-	 */
-	private DefaultState createRoot() {
-		final ArchitectureConfiguration rootConfig = UriBasedArchitectureConfiguration
-				.createRootArchConfig(this.initModels.getResourceSet());
-		final Snapshot initSnapshot = new InMemorySnapshot(Set.of());
-
-		final DefaultState root = new DefaultState(0.0, rootConfig);
-		systemDriver.postEvent(new StateExploredMessage(StateGraphConverter.convertState(root, null, null)));
-		root.setSnapshot(initSnapshot);
-		return root;
+		this.exploreBranch(config);
 	}
 
 	/**
@@ -151,7 +126,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.getUri(AllocationPackage.eINSTANCE.getAllocation()).toString());
 
 		LOGGER.warn("Start with Request to these Resources: ");
-		config.getSnapToInitOn().getEvents().stream().filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
+		config.getSnapToInitOn().getEvents(this.initModels).stream()
+		.filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
 		.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
 				.getAllocationContext().getResourceContainer_AllocationContext().getId())
 		.forEach(id -> LOGGER.info(id));
@@ -161,7 +137,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
-		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents());
+		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
 		config.getEvent().ifPresent(e -> set.add(e));
 
 		final EventsToInitOnWrapper eventsToInitOn = new EventsToInitOnWrapper(set);
@@ -179,7 +155,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
 
 		systemDriver.postEvent(
-				new StateExploredMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
+				new StateExploredEventMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
 
 		// reset Additional Configurations
@@ -202,55 +178,51 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * otherwise {@link SimulationFinished} gets scheduled before
 	 * {@link SnapshotInitiated}.
 	 *
-	 * TODO set variation id to something meaningfull, e.g. archConfig x change
-	 *
-	 * TODO set experiment run to something meaning full
-	 *
-	 * @param variation
+	 * @param variation name of the variation.
 	 * @param duration  duration of the interval in seconds.
-	 * @return
+	 * @return {@link SimuComConfig} for the next simulation run.
 	 */
 	private SimuComConfig prepareSimuComConfig(final String variation, final double duration) {
 		// MapHelper.getValue(configuration, VARIATION_ID, String.class)
 		launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
 		launchConfigurationParams.put(SimuComConfig.VARIATION_ID, variation);
 		launchConfigurationParams.put(SimuComConfig.EXPERIMENT_RUN, this.graph.toString());
-		//launchConfigurationParams.put(SimuComConfig.SIMULATION_TIME, String.valueOf(((long) duration) + 1));
-
 
 		return new SimuComConfig(launchConfigurationParams, true);
 	}
 
 	/**
+	 * Create a {@link SnapshotConfiguration} required to start a new simulation
+	 * run.
 	 *
-	 * Create the SnapshotConfiguration required to start a new simulation run.
-	 *
-	 * @param interval between two snapshots
-	 * @param init     wether or not to init on a snapshot.
-	 * @return
+	 * @param config Information from which to build the next
+	 *               {@link SnapshotConfiguration}
+	 * @return new {@link SnapshotConfiguration}
 	 */
 	private SnapshotConfiguration createSnapConfig(final SimulationInitConfiguration config) {
 
 		final double interval = config.getExplorationDuration();
 
-		final boolean notRootSuccesor = this.graph.getRoot().getOutTransitions().stream()
+		final boolean notRootSuccesor = this.graph.getRoot().getOutgoingTransitions().stream()
 				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
 
-		return new SnapshotConfiguration(interval, notRootSuccesor, 0.5);
+		return new SnapshotConfiguration(interval, notRootSuccesor, this.getSensibility(), this.getMinDuration());
 	}
 
 	/**
 	 * Replace all resources in {@code initModels} with the resources from the
 	 * architecture configuration of the upcoming simulation run.
 	 *
+	 * Currently, {@code PCMResourceSetPartitionProvider} is a singleton, and
+	 * already references {@code this.initModels}. Thus, as we only change the
+	 * contents of {initModels} we need not update the partition provided by the
+	 * partition provider.
+	 *
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
 		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
-		final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
-				.getInstance(PCMResourceSetPartitionProvider.class);
-		provider.set(this.initModels); // this is probably not needed.
 	}
 
 	/**
@@ -270,13 +242,82 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * Get {@link ExplorationConfiguration.MIN_STATE_DURATION} from launch
 	 * configuration parameters map.
 	 *
-	 * @return min duration of a exploration cycles
+	 * @return minimum duration of an exploration cycles
 	 */
 	private double getMinDuration() {
 		final String minDuration = (String) launchConfigurationParams
 				.get(ExplorationConfiguration.MIN_STATE_DURATION);
 
 		return Double.valueOf(minDuration);
+	}
+
+	/**
+	 *
+	 *
+	 * Get {@link ExplorationConfiguration.SENSIBILITY} from launch configuration
+	 * parameters map.
+	 *
+	 * @return sensibility for stopping regarding SLOs.
+	 */
+	private double getSensibility() {
+		final String minDuration = (String) launchConfigurationParams
+				.get(ExplorationConfiguration.SENSIBILITY);
+
+		return Double.valueOf(minDuration);
+	}
+
+	@Override
+	public boolean hasUnexploredChanges() {
+		return !this.fringe.isEmpty();
+	}
+
+	@Override
+	public RawStateGraph getGraph() {
+		return this.graph;
+	}
+
+	/**
+	 * Can currently only refocus state with out outgoing transitions.
+	 *
+	 * @param focusedStates
+	 */
+	@Override
+	public void refocus(final Collection<RawModelState> focusedStates) {
+
+		// find states to be refocused in the graph.
+
+		for (final RawModelState rawModelState : focusedStates) {
+
+			final boolean gotNopped = this.graph.outgoingEdgesOf(rawModelState).stream()
+					.anyMatch(t -> t.getType() == TransitionType.NOP);
+
+			final boolean gonnaGetNopped = this.fringe.containsNopTodoFor(rawModelState);
+
+			if (gotNopped || gonnaGetNopped) {
+				continue;
+			} else {
+				this.fringe.add(new ToDoChange(Optional.empty(), (DefaultState) rawModelState));
+			}
+
+		}
+
+		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+
+		this.fringe.prune(pruningCriteria);
+	}
+
+	@Override
+	public void focus(final Collection<RawModelState> focusedStates) {
+		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+
+		this.fringe.prune(pruningCriteria);
+	}
+
+	@Override
+	public void pruneByTime(final double time) {
+		final Predicate<ToDoChange> pruningCriteria = change -> change.getStart().getStartTime() < time;
+
+		this.fringe.prune(pruningCriteria);
 	}
 
 }

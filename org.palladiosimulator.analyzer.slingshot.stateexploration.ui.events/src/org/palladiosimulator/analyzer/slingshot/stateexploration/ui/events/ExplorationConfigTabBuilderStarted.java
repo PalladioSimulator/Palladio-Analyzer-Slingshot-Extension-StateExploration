@@ -21,7 +21,7 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 
 	public final class Builder {
 		private String label;
-		private String promptTitle;
+		private String defaultValue;
 		private boolean optional = false;
 
 		public Builder label(final String label) {
@@ -29,8 +29,8 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 			return this;
 		}
 
-		public Builder promptTitle(final String title) {
-			this.promptTitle = title;
+		public Builder defaultValue(final String title) {
+			this.defaultValue = title;
 			return this;
 		}
 
@@ -40,8 +40,8 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 		}
 
 		public void build() {
-			if (this.promptTitle == null) {
-				this.promptTitle = "Select " + this.label;
+			if (this.defaultValue == null) {
+				this.defaultValue = "Select " + this.label;
 			}
 
 			if (this.optional) {
@@ -55,12 +55,12 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 	public static final class TextField implements Comparable<TextField> {
 
 		private final String label;
-		private final String promptTitle;
+		private final String defaultValue;
 		private final boolean optional;
 
 		private TextField(final Builder builder) {
 			this.label = builder.label;
-			this.promptTitle = builder.promptTitle;
+			this.defaultValue = builder.defaultValue;
 			this.optional = builder.optional;
 		}
 
@@ -68,8 +68,8 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 			return label;
 		}
 
-		public String getPromptTitle() {
-			return promptTitle;
+		public String getdefaultValue() {
+			return defaultValue;
 		}
 
 		public boolean isOptional() {

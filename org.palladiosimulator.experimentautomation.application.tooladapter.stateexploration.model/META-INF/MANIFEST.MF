@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model;singleton:=true
+Automatic-Module-Name: org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model
 Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: .
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
-Automatic-Module-Name: org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model,
  org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl,
  org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.util

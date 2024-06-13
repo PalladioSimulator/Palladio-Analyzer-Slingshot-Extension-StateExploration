@@ -3,18 +3,17 @@ package org.palladiosimulator.analyzer.slingshot.behavior.util.visitors;
 import java.util.function.Function;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
-import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.pcm.usagemodel.Start;
 import org.palladiosimulator.pcm.usagemodel.Stop;
 
-public class ModelElementPassedVisitor {
-    private final Function<DESEvent, DESEvent> jobCloneFactory;
+public class ModelElementPassedVisitor extends SetReferencingVisitor {
+	private final Function<DESEvent, DESEvent> jobCloneFactory;
 
-	private final CloneHelper helper = new CloneHelper();
-
-	public ModelElementPassedVisitor() {
+	public ModelElementPassedVisitor(final PCMResourceSetPartition set) {
+		super(set);
 		jobCloneFactory = new LambdaVisitor<DESEvent, DESEvent>().
 				on(UsageModelPassedElement.class).then(this::clone);
 	}

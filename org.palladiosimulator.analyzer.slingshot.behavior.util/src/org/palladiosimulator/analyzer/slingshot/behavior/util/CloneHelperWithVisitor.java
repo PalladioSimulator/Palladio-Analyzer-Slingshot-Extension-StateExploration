@@ -22,31 +22,33 @@ import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.SEFFInter
 import org.palladiosimulator.analyzer.slingshot.behavior.util.visitors.UserChangedEventVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
 public class CloneHelperWithVisitor {
 
 	private static final Logger LOGGER = Logger.getLogger(CloneHelperWithVisitor.class);
 
-	CloneHelper helper = new CloneHelper();
+	private final CloneHelper helper;
 
 
-    private final Function<DESEvent, DESEvent> cloneFactory;
+	private final Function<DESEvent, DESEvent> cloneFactory;
 
-    public CloneHelperWithVisitor() {
-    	 super();
+	public CloneHelperWithVisitor(final PCMResourceSetPartition set) {
+		this.helper = new CloneHelper(set);
 
-         cloneFactory = new LambdaVisitor<DESEvent, DESEvent>().
-        		 on(UsageModelPassedElement.class).then(e->(new ModelElementPassedVisitor()).visit(e)).
-        		 on(AbstractUserChangedEvent.class).then(e->(new UserChangedEventVisitor()).visit(e)).
-        		 on(SEFFInterpreted.class).then(e->(new SEFFInterpretedVisitor()).visit(e)).
-				 on(AbstractJobEvent.class).then(e -> (new JobEventVisitor()).visit(e)).
-        		 on(ResourceDemandRequested.class).then(this::clone).
-        		 on(ActiveResourceFinished.class).then(this::clone).
-        		 on(UserRequestFinished.class).then(this::clone).
-				 on(UserEntryRequested.class).then(this::clone).
-				 on(InterArrivalUserInitiated.class).then(this::clone).
-				 on(IntervalPassed.class).then(this::clone).
-         		 on(DESEvent.class).then(this::log);
+		cloneFactory = new LambdaVisitor<DESEvent, DESEvent>().
+				on(UsageModelPassedElement.class).then(e -> (new ModelElementPassedVisitor(set)).visit(e))
+				.on(AbstractUserChangedEvent.class).then(e -> (new UserChangedEventVisitor(set)).visit(e))
+				.on(SEFFInterpreted.class).then(e -> (new SEFFInterpretedVisitor(set)).visit(e))
+				.on(AbstractJobEvent.class).then(e -> (new JobEventVisitor(set)).visit(e))
+				.
+				on(ResourceDemandRequested.class).then(this::clone).
+				on(ActiveResourceFinished.class).then(this::clone).
+				on(UserRequestFinished.class).then(this::clone).
+				on(UserEntryRequested.class).then(this::clone).
+				on(InterArrivalUserInitiated.class).then(this::clone).
+				on(IntervalPassed.class).then(this::clone).
+				on(DESEvent.class).then(this::log);
 	}
 
 	private DESEvent log(final DESEvent event) {
@@ -85,7 +87,7 @@ public class CloneHelperWithVisitor {
 		final UserInterpretationContext clonedContext = helper.cloneUserInterpretationContext(clonee.getUserContext());
 		return new UserRequestFinished(clonedRequest, clonedContext);
 	}
-	
+
 	private DESEvent clone(final IntervalPassed clonee) {
 		return new IntervalPassed(clonee);
 	}

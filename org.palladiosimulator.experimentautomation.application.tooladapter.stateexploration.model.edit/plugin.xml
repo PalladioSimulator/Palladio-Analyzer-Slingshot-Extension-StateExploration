@@ -25,4 +25,5 @@
             uri="http://palladiosimulator.org/ExperimentAutomation/Experiments/1.0"
             class="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.provider.StateExplorationToolAdapterItemProviderAdapterFactory$ExperimentsChildCreationExtender"/>
    </extension>
+
 </plugin>

@@ -7,7 +7,10 @@
             module="org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ExplorationModule">
       </slingshot-extension>
       <slingshot-extension
-            module="org.palladiosimulator.analyzer.slingshot.ui.workflow.planner.providers.AdditionalConfigurationModule">
+            module="org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule">
+      </slingshot-extension>
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.networking.ExplorationNetworkingModule">
       </slingshot-extension>
    </extension>
 

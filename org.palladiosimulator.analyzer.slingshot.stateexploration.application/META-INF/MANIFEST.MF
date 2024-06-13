@@ -17,4 +17,5 @@ Require-Bundle: org.eclipse.equinox.app,
  org.palladiosimulator.experimentautomation,
  org.palladiosimulator.analyzer.slingshot.stateexploration.workflow,
  org.palladiosimulator.analyzer.slingshot.stateexploration,
- org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model
+ org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model,
+ org.palladiosimulator.experimentautomation.application

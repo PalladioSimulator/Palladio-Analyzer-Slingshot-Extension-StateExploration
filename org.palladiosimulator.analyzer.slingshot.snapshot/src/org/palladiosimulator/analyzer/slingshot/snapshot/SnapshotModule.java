@@ -9,5 +9,6 @@ public class SnapshotModule extends AbstractSlingshotExtension {
 		install(SnapshotRecordingBehavior.class);
 		install(SnapshotGraphStateBehaviour.class);
 		install(SnapshotTriggeringBehavior.class);
+		install(SnapshotSLOTriggeringBehavior.class);
 	}
 }

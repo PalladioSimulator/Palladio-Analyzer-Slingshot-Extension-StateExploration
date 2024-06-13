@@ -20,4 +20,5 @@
             type="stateexplorationtooladapter"
             class="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.util.StateExplorationToolAdapterResourceFactoryImpl"/>
    </extension>
+
 </plugin>
