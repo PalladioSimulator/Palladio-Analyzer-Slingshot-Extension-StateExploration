@@ -10,27 +10,28 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.networking.data.SimulationEventBuffer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
 
+// can be deleted.
 @OnEvent(when = SimTestMessage.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class)
 public class SimulationBehaviourReactionTest implements SimulationBehaviorExtension {
 	@Inject
 	private SimulationEventBuffer simulationEventBuffer;
 	@Subscribe
-	public void onStateExplored(SimTestMessage sim) {
+	public void onStateExplored(final SimTestMessage sim) {
 		System.out.println(sim.getPayload());
 		System.out.print("Success!!!");
 		System.exit(0);
 	}
-	
+
 	@Subscribe
-	public Result<?> onPreSimulationConfigurationStarted(PreSimulationConfigurationStarted sim) {
+	public Result<?> onPreSimulationConfigurationStarted(final PreSimulationConfigurationStarted sim) {
 		System.out.print("INTERCEPT: "
 				+ "PreSimulationConfigurationStarted");
-		var event = simulationEventBuffer.poll();
+		final var event = simulationEventBuffer.poll();
 		if(event == null) {
 			return Result.empty();
 		}
 		return Result.of(event);
-		
+
 	}
 }

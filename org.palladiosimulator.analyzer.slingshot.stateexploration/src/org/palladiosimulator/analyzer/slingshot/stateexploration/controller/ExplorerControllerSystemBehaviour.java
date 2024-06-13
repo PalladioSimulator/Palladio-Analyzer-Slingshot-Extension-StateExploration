@@ -19,6 +19,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ReFocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 
 /**
@@ -157,6 +158,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	@Subscribe
 	public void onResetExplorerEvent(final ResetExplorerEvent event) {
 		this.explorer = null;
+		this.explorer = Slingshot.getInstance().getInstance(DefaultGraphExplorer.class);
 		// und dann..? wo krieg ich jetzt 'nen neuen explorere her?
 	}
 

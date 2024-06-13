@@ -10,7 +10,7 @@ import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
  */
 public class ResetExplorerEvent extends EventMessage<String> implements ExplorationControllerEvent {
 
-	public static final String MESSAGE_MAPPING_IDENTIFIER = FocusOnStatesEvent.class.getSimpleName();
+	public static final String MESSAGE_MAPPING_IDENTIFIER = "ResetSystem";
 
 	public ResetExplorerEvent() {
 		super(MESSAGE_MAPPING_IDENTIFIER, null);

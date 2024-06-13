@@ -6,7 +6,8 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 
-
+// Das braucht raphael / jonas noch
+// Nochmal an gucken @ S3
 @OnEvent(when = UserEntryRequested.class)
 public class SimulationUsageDataCollector implements SimulationBehaviorExtension {
 	//	@Inject
