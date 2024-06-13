@@ -103,7 +103,7 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
         if (this.plan.getPlanSteps()
             .isEmpty()) {
             throw new IllegalArgumentException(String.format(
-                    "Event %s wants to trigger next step of plan %s which has no more steps to be executed",
+                    "Event %s wants to trigger next step of plan %s, but the plan has no more steps to be executed",
                     event.getId(), plan.getId()));
         }
 
@@ -133,7 +133,7 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
      *
      * @param pointInTime
      *            current time of the simulation
-     * @return
+     * @return {@link ExecutionIntervalPassed} event for triggering the next step in the plan.
      */
     private Set<ExecutionIntervalPassed> createTriggerForNextStep(final double pointInTime) {
         if (!this.plan.isEmpty()) {
