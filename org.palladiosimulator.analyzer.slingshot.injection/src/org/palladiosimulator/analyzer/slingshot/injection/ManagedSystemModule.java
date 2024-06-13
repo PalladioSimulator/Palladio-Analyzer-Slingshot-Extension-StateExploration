@@ -8,6 +8,7 @@ import javax.inject.Named;
 
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
+import org.palladiosimulator.analyzer.slingshot.injection.messages.ManagedSystemTimeEventMessage;
 import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.injection.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
@@ -45,17 +46,21 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
         install(InjectionSystemBehaviour.class);
         install(InjectionSimulationBehaviour.class);
 
+        // for testing
+        install(TestBehaviour.class);
+
         final var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {
         }, new TypeLiteral<Class<? extends Message<?>>>() {
         });
 
         messageBinder.addBinding(PlanCreatedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
             .toInstance(PlanCreatedEventMessage.class);
-        messageBinder.addBinding(PlanCreatedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
-            .toInstance(PlanCreatedEventMessage.class);
-
         messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
             .toInstance(StateExploredEventMessage.class);
+
+        // for testing
+        messageBinder.addBinding(ManagedSystemTimeEventMessage.MESSAGE_MAPPING_IDENTIFIER)
+            .toInstance(ManagedSystemTimeEventMessage.class);
 
         final var gsonBinder = MapBinder.newMapBinder(binder(), Type.class, Object.class);
 
