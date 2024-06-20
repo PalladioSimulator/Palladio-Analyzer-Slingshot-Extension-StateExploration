@@ -327,9 +327,9 @@ public final class CloneHelper {
 
 		// 1 define all content.
 		SEFFInterpretationContext clonedParent = null;
-		SeffBehaviorContextHolder seffBehaviorContextHolder = null;
-		RequestProcessingContext requestProcessingContext = null;
-		Optional<SEFFInterpretationContext> calledFrom = Optional.empty();
+		SeffBehaviorContextHolder clonedSeffBehaviorContextHolder = null;
+		RequestProcessingContext clonedRequestProcessingContext = null;
+		Optional<SEFFInterpretationContext> clonedCalledFrom = Optional.empty();
 		CallOverWireRequest clonedCallOverWireRequest = null;
 		SimulatedStackframe<Object> clonedStackFrame = null;
 
@@ -337,37 +337,38 @@ public final class CloneHelper {
 		if (context.getParent().isPresent()) {
 			clonedParent = cloneContext(context.getParent().get());
 
-			requestProcessingContext = clonedParent.getRequestProcessingContext();
-			seffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(),
+			clonedRequestProcessingContext = clonedParent.getRequestProcessingContext();
+			clonedSeffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(),
 					clonedParent.getBehaviorContext().getCurrentProcessedBehavior());
-			calledFrom = clonedParent.getCaller();
+			clonedCalledFrom = clonedParent.getCaller();
 
 		} else {
-			requestProcessingContext = cloneRequestProcessingContext(context.getRequestProcessingContext());
-			seffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(), null);
+			clonedRequestProcessingContext = cloneRequestProcessingContext(context.getRequestProcessingContext());
+			clonedSeffBehaviorContextHolder = cloneSeffBehaviorContextHolder(context.getBehaviorContext(), null);
 
 			if (context.getCaller().isPresent()) {
-				calledFrom = Optional.of(cloneContext(context.getCaller().get()));
+				clonedCalledFrom = Optional.of(cloneContext(context.getCaller().get()));
+				// eigentlich darf ich den nicht einfach neu clonen...
 			}
 		}
 
 		if (context.getCurrentResultStackframe() != null) {
 			// acutally no, the result stackframe seems to be a completely different
 			// stackframe, that is not part of the user stack.
-			clonedStackFrame = requestProcessingContext.getUser().getStack().currentStackFrame();
+			clonedStackFrame = clonedRequestProcessingContext.getUser().getStack().currentStackFrame();
 		}
 
 		if (context.getCallOverWireRequest().isPresent()) { // TODO probably like above
-			if (calledFrom.isEmpty()) {
+			if (clonedCalledFrom.isEmpty()) {
 				throw new IllegalStateException(
 						"If the Call over wire is present, there must also be a caller (i think)!");
 			}
-			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get(), calledFrom.get());
+			clonedCallOverWireRequest = clone(context.getCallOverWireRequest().get(), clonedCalledFrom.get());
 		}
 
 		final SEFFInterpretationContext clonedContext = SEFFInterpretationContext.builder().withParent(clonedParent)
-				.withCallOverWireRequest(clonedCallOverWireRequest).withBehaviorContext(seffBehaviorContextHolder)
-				.withCaller(calledFrom).withRequestProcessingContext(requestProcessingContext)
+				.withCallOverWireRequest(clonedCallOverWireRequest).withBehaviorContext(clonedSeffBehaviorContextHolder)
+				.withCaller(clonedCalledFrom).withRequestProcessingContext(clonedRequestProcessingContext)
 				.withAssemblyContext(assemblyContext).withResultStackframe(clonedStackFrame).build();
 
 		return clonedContext;
@@ -513,10 +514,12 @@ public final class CloneHelper {
 		final OperationSignature signature = getMatchingPCMElement(userRequest.getOperationSignature());
 		final EList<VariableUsage> inputParameterUsages = new BasicEList<>(
 				userRequest.getVariableUsages().stream().map(usage -> getMatchingPCMElement(usage)).toList());
+		final EList<VariableUsage> outputParameterUsages = new BasicEList<>(
+				userRequest.getOutVariableUsages().stream().map(usage -> getMatchingPCMElement(usage)).toList());
 
 		final UserRequest clonedUserRequest = UserRequest.builder().withUser(user)
 				.withOperationProvidedRole(opProvidedRole).withOperationSignature(signature)
-				.withVariableUsages(inputParameterUsages).build();
+				.withVariableUsages(inputParameterUsages).withOutVariableUsages(outputParameterUsages).build();
 		return clonedUserRequest;
 	}
 
@@ -719,10 +722,6 @@ public final class CloneHelper {
 	public GeneralEntryRequest cloneGeneralEntryRequest(final GeneralEntryRequest generalEntryRequest,
 			final SEFFInterpretationContext SEFFIC_requestFrom) {
 
-		final SEFFInterpretationContext clonedSEFFIC = SEFFIC_requestFrom.update()
-				.withCaller(Optional.of(SEFFIC_requestFrom))
-				.build();
-
 		final EList<VariableUsage> inputParameterUsages = new BasicEList<>(
 				generalEntryRequest.getInputVariableUsages().stream().map(usage -> getMatchingPCMElement(usage))
 				.toList());
@@ -734,7 +733,8 @@ public final class CloneHelper {
 
 		final GeneralEntryRequest clonedGeneralEntryRequest = GeneralEntryRequest.builder()
 				.withInputVariableUsages(inputParameterUsages)
-				.withOutputVariableUsages(outputParameterUsages).withRequestFrom(clonedSEFFIC)
+				.withOutputVariableUsages(outputParameterUsages)
+				.withRequestFrom(SEFFIC_requestFrom)
 				.withRequiredRole(requiredRole)
 				.withSignature(signature)
 				.withUser(SEFFIC_requestFrom.getRequestProcessingContext().getUser()).build();
