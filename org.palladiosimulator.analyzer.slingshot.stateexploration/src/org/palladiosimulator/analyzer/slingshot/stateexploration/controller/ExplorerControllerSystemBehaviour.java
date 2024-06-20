@@ -96,6 +96,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	public void onDoGraphExplorationCycle(final TriggerExplorationEvent event) {
 
 		for (int i = 0; i < event.getIterations() && this.explorer.hasUnexploredChanges(); i++) {
+			LOGGER.info("Iteration " + i);
 			this.explorer.exploreNextState();
 		}
 		if (doIdle == IdleExploration.ONHOLD) {

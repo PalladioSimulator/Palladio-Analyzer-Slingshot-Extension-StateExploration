@@ -11,6 +11,7 @@ import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
@@ -132,7 +133,9 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 */
 	@Subscribe
 	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
-		assert snapshotConfig.isStartFromSnapshot();
+		assert snapshotConfig.isStartFromSnapshot()
+				|| this.eventsToInitOn.stream().allMatch(ModelAdjustmentRequested.class::isInstance)
+		: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
 
 		this.initOffsets(this.eventsToInitOn);
 		this.initIntervallPased(this.eventsToInitOn);
