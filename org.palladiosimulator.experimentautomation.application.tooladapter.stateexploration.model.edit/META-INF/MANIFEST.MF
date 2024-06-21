@@ -8,7 +8,7 @@ Bundle-ClassPath: .
 Bundle-Activator: org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.provider.StateexplorationtooladapterEditPlugin$Implementation
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.provider
 Require-Bundle: org.eclipse.core.runtime,
  org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model;visibility:=reexport,

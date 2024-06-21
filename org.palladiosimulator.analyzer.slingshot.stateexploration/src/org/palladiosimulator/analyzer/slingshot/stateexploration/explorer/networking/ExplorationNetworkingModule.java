@@ -10,6 +10,8 @@ import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConsta
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ArchitectureMessageDispatcher;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.RequestArchitectureMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
@@ -54,12 +56,16 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 		.toInstance(FocusOnStatesEvent.class);
 
 		messageBinder.addBinding(ResetExplorerEvent.MESSAGE_MAPPING_IDENTIFIER)
-				.toInstance(ResetExplorerEvent.class);
+		.toInstance(ResetExplorerEvent.class);
+
+		messageBinder.addBinding("RequestArchitecture").toInstance(RequestArchitectureMessage.class);
 
 		// proof of concept -> to be deleted?
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
 		install(SimulationBehaviourReactionTest.class);
+		install(ArchitectureMessageDispatcher.class);
+
 	}
 
 	@Provides
