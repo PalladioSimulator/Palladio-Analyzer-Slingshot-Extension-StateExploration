@@ -5,21 +5,21 @@ import java.util.Collection;
 import java.util.List;
 /**
  * Simplified version of ArrayList<Measurment<Double>> with the additional method for median and average.
- * 
+ *
  * @author Jonas Edlhuber
  *
  */
 public class MeasurementSet {
-	
+
 	public record Measurement<T>(T measure, double timeStamp) {
-		
+
 	}
-	
-	private List<Measurement<Number>> elements = new ArrayList<>();
+
+	private final List<Measurement<Number>> elements = new ArrayList<>();
 
 	private Double measurementsSetMedian;
 	private Double measurementsSetAverage;
-	
+
 	private String name;
 	private String monitorId;
 	private String monitorName;
@@ -27,22 +27,24 @@ public class MeasurementSet {
 	private String specificationName;
 	private String metricName;
 	private String metricDescription;
-	
+
 	public MeasurementSet() {
 		super();
 	}
 
-	public MeasurementSet(Collection<? extends Measurement<Number>> c) {
+	public MeasurementSet(final Collection<? extends Measurement<Number>> c) {
 		this.elements.addAll(c);
 	}
-	
-	
-	
+
+	public List<Measurement<Number>> getElements() {
+		return this.elements;
+	}
+
 	public String getMetricName() {
 		return metricName;
 	}
 
-	public void setMetricName(String metricName) {
+	public void setMetricName(final String metricName) {
 		this.metricName = metricName;
 	}
 
@@ -50,7 +52,7 @@ public class MeasurementSet {
 		return metricDescription;
 	}
 
-	public void setMetricDescription(String metricDescription) {
+	public void setMetricDescription(final String metricDescription) {
 		this.metricDescription = metricDescription;
 	}
 
@@ -58,7 +60,7 @@ public class MeasurementSet {
 		return specificationId;
 	}
 
-	public void setSpecificationId(String specificationId) {
+	public void setSpecificationId(final String specificationId) {
 		this.specificationId = specificationId;
 	}
 
@@ -66,16 +68,16 @@ public class MeasurementSet {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
-	
-	
+
+
 	public String getMonitorId() {
 		return monitorId;
 	}
 
-	public void setMonitorId(String monitorId) {
+	public void setMonitorId(final String monitorId) {
 		this.monitorId = monitorId;
 	}
 
@@ -83,7 +85,7 @@ public class MeasurementSet {
 		return monitorName;
 	}
 
-	public void setMonitorName(String monitorName) {
+	public void setMonitorName(final String monitorName) {
 		this.monitorName = monitorName;
 	}
 
@@ -93,12 +95,12 @@ public class MeasurementSet {
 			return 0;
 		}
 		if (measurementsSetMedian == null) {
-			double[] doubles = elements.stream().mapToDouble(x -> x.measure().doubleValue()).sorted().toArray();
+			final double[] doubles = elements.stream().mapToDouble(x -> x.measure().doubleValue()).sorted().toArray();
 			measurementsSetMedian = doubles[doubles.length/2];
 		}
 		return measurementsSetMedian;
 	}
-	
+
 	public double getAverage() {
 		if (elements.size() < 1) {
 			return 0;
@@ -110,12 +112,12 @@ public class MeasurementSet {
 	}
 
 
-	public boolean add(Measurement<Number> e) {
+	public boolean add(final Measurement<Number> e) {
 		resetCalcuationCaches();
 		return elements.add(e);
 	}
 
-	
+
 	private void resetCalcuationCaches() {
 		this.measurementsSetAverage = null;
 		this.measurementsSetMedian = null;
@@ -125,7 +127,7 @@ public class MeasurementSet {
 		return specificationName;
 	}
 
-	public void setSpecificationName(String specificationName) {
+	public void setSpecificationName(final String specificationName) {
 		this.specificationName = specificationName;
 	}
 }
