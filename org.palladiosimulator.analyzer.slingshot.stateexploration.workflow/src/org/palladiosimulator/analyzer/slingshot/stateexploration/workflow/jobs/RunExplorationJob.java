@@ -72,8 +72,10 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));
 		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(iterations));
 
-		if (Boolean.valueOf((String) this.configuration.getlaunchConfigParams()
-				.get(ExplorationConfiguration.IDLE_EXPLORATION))) {
+		// [S3] do the valueOf twice, because for some reason the type is either boolean
+		// or String, depending on whether the simulator is started headless, or not.
+		if (Boolean.valueOf(String.valueOf(this.configuration.getlaunchConfigParams()
+				.get(ExplorationConfiguration.IDLE_EXPLORATION)))) {
 			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
 		} else {
 			Slingshot.getInstance().getSystemDriver().postEvent(new ResetExplorerEvent());
