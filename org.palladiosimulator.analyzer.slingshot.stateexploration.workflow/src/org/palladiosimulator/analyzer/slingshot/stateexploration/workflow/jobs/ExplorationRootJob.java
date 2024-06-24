@@ -9,6 +9,16 @@ import de.uka.ipd.sdq.workflow.jobs.ICompositeJob;
 import de.uka.ipd.sdq.workflow.jobs.SequentialBlackboardInteractingJob;
 import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
+/**
+ *
+ * Root Job to run an exploration.
+ *
+ * Prepares the Blackboar, the Partition within the Blackboard, and starts the
+ * exploration itself.
+ *
+ * @author Sarah Stieß
+ *
+ */
 public class ExplorationRootJob extends SequentialBlackboardInteractingJob<MDSDBlackboard> implements ICompositeJob {
 
 	public ExplorationRootJob(final ExplorationWorkflowConfiguration config, final ILaunch launch) {
@@ -20,7 +30,7 @@ public class ExplorationRootJob extends SequentialBlackboardInteractingJob<MDSDB
 
 		this.addJob(new PreparePCMBlackboardPartitionJob());
 		config.getPCMModelFiles()
-				.forEach(modelFile -> LoadModelIntoBlackboardJob.parseUriAndAddModelLoadJob(modelFile, this));
+		.forEach(modelFile -> LoadModelIntoBlackboardJob.parseUriAndAddModelLoadJob(modelFile, this));
 		this.addJob(new RunExplorationJob(config));
 
 

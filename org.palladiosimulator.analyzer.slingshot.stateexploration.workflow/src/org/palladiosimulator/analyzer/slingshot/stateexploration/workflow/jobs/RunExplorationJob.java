@@ -3,11 +3,9 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
-import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorerCreated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.LaunchPrepared;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
@@ -30,16 +28,12 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 	private static final Logger LOGGER = Logger.getLogger(RunExplorationJob.class.getName());
 
 	private MDSDBlackboard blackboard;
-
-	private final SimulationDriver simulationDriver;
 	private final PCMResourceSetPartitionProvider pcmResourceSetPartition;
 
 	private final ExplorationWorkflowConfiguration configuration;
 
 	public RunExplorationJob(final ExplorationWorkflowConfiguration config) {
 		this.configuration = config;
-
-		this.simulationDriver = Slingshot.getInstance().getSimulationDriver();
 		this.pcmResourceSetPartition = Slingshot.getInstance().getInstance(PCMResourceSetPartitionProvider.class);
 	}
 
@@ -60,7 +54,7 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 		monitor.subTask("Initialize driver");
 
 		Slingshot.getInstance().getSystemDriver()
-				.postEvent(new ExplorerCreated(configuration.getPCMModelFiles(), simulationDriver,
+		.postEvent(new LaunchPrepared(configuration.getPCMModelFiles(),
 				this.configuration.getlaunchConfigParams(), monitor, this.blackboard));
 
 		final int iterations = Integer.valueOf((String) this.configuration.getlaunchConfigParams()
@@ -72,8 +66,6 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 		if (Boolean.valueOf(String.valueOf(this.configuration.getlaunchConfigParams()
 				.get(ExplorationConfiguration.IDLE_EXPLORATION)))) {
 			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
-		} else {
-			Slingshot.getInstance().getSystemDriver().postEvent(new ResetExplorerEvent());
 		}
 
 		monitor.worked(1);

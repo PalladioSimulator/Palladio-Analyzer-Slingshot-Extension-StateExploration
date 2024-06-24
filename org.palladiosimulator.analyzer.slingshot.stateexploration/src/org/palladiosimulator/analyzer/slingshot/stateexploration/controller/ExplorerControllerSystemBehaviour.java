@@ -12,9 +12,9 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcon
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorerCreated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.LaunchPrepared;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.PruneFringeByTime;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ReFocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
@@ -44,7 +44,7 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  *
  */
 @OnEvent(when = TestMessage.class)
-@OnEvent(when = ExplorerCreated.class)
+@OnEvent(when = LaunchPrepared.class)
 @OnEvent(when = TriggerExplorationEvent.class)
 @OnEvent(when = IdleTriggerExplorationEvent.class)
 @OnEvent(when = FocusOnStatesEvent.class)
@@ -56,7 +56,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	private static final Logger LOGGER = Logger.getLogger(ExplorerControllerSystemBehaviour.class.getName());
 
 	private GraphExplorer explorer = null;
-	private ExplorerCreated initEvent = null;
+	private LaunchPrepared initEvent = null;
 
 	private IdleExploration doIdle = IdleExploration.BLOCKED;
 
@@ -78,14 +78,14 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	}
 
 	@Subscribe
-	public void onAnnounceGraphExplorerEvent(final ExplorerCreated event) {
+	public void onLaunchPrepared(final LaunchPrepared event) {
 		if (explorer != null) {
 			throw new IllegalStateException("Cannot create new explorer because explorer is already set.");
 		} else {
 			this.initEvent = event;
 
-			this.explorer = new DefaultGraphExplorer(event.getDriver(), event.getLaunchConfigurationParams(),
-					event.getMonitor(), event.getBlackboard());
+			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+					this.initEvent.getMonitor(), this.initEvent.getBlackboard());
 		}
 	}
 
@@ -176,8 +176,8 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	public void onResetExplorerEvent(final ResetExplorerEvent event) {
 		final MDSDBlackboard blackboard = recreatedInitialBlackboard();
 
-		this.explorer = new DefaultGraphExplorer(this.initEvent.getDriver(),
-				this.initEvent.getLaunchConfigurationParams(), this.initEvent.getMonitor(),
+		this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+				this.initEvent.getMonitor(),
 				blackboard);
 	}
 
