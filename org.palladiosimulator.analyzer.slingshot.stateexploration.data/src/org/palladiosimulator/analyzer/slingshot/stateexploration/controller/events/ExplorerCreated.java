@@ -1,7 +1,14 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSystemEvent;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
+
+import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
 /**
  * Event to announce a new {@link GraphExplorer} to the
@@ -15,18 +22,44 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplor
  */
 public class ExplorerCreated extends AbstractSystemEvent implements ExplorationControllerEvent {
 
-	private final GraphExplorer explorer;
+	private final List<String> pcmModelFiles;
+	private final SimulationDriver driver;
+	private final Map<String, Object> launchConfigurationParams;
+	private final IProgressMonitor monitor;
+	private final MDSDBlackboard blackboard;
 
-	public ExplorerCreated(final GraphExplorer explorer) {
-		super();
-		if (explorer == null) {
-			throw new IllegalArgumentException(String.format("Explorer must not be null but is."));
-		}
-		this.explorer = explorer;
+
+
+	public ExplorerCreated(final List<String> pcmModelFiles, final SimulationDriver driver,
+			final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
+			final MDSDBlackboard blackboard)
+	{
+		this.pcmModelFiles = pcmModelFiles;
+		this.driver = driver;
+		this.launchConfigurationParams = launchConfigurationParams;
+		this.monitor = monitor;
+		this.blackboard = blackboard;
 	}
 
-	public GraphExplorer getExplorer() {
-		return explorer;
+
+
+	public List<String> getPcmModelFiles() {
+		return pcmModelFiles;
 	}
 
+	public SimulationDriver getDriver() {
+		return driver;
+	}
+
+	public Map<String, Object> getLaunchConfigurationParams() {
+		return launchConfigurationParams;
+	}
+
+	public IProgressMonitor getMonitor() {
+		return monitor;
+	}
+
+	public MDSDBlackboard getBlackboard() {
+		return blackboard;
+	}
 }

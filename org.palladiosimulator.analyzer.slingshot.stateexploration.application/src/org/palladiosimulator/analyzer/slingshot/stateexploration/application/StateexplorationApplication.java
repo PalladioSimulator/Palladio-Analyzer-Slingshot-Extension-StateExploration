@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.application;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -15,14 +16,14 @@ import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.RunExplorationJob;
-import org.palladiosimulator.analyzer.workflow.jobs.PreparePCMBlackboardPartitionJob;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.ExplorationRootJob;
 import org.palladiosimulator.experimentautomation.application.ExperimentApplication;
 import org.palladiosimulator.experimentautomation.application.tooladapter.abstractsimulation.AbstractSimulationConfigFactory;
 import org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration;
 import org.palladiosimulator.experimentautomation.experiments.Experiment;
 import org.palladiosimulator.experimentautomation.experiments.ExperimentRepository;
 import org.palladiosimulator.experimentautomation.experiments.ExperimentsPackage;
+import org.palladiosimulator.experimentautomation.experiments.InitialModel;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.BlackboardBasedWorkflow;
@@ -96,7 +97,10 @@ public class StateexplorationApplication implements IApplication {
 	}
 
 	/**
+	 *
 	 * Create and execute a workflow for preparing and running a state exploration.
+	 *
+	 * @param experiment
 	 */
 	private void launchStateExploration(final Experiment experiment) {
 
@@ -105,19 +109,45 @@ public class StateexplorationApplication implements IApplication {
 		final SimuComConfig simuComconfig = new SimuComConfig(configMap, false);
 		final ExplorationWorkflowConfiguration config = new ExplorationWorkflowConfiguration(simuComconfig, configMap);
 
+		this.setModelFilesInConfig(experiment.getInitialModel(), config);
 
 		final BlackboardBasedWorkflow<MDSDBlackboard> workflow = new BlackboardBasedWorkflow<MDSDBlackboard>(
-				new PreparePCMBlackboardPartitionJob(),
+				new ExplorationRootJob(config, null),
 				new MDSDBlackboard());
-
-		workflow.add(new SetModelsInBlackboardJob(experiment.getInitialModel()));
-		workflow.add(new RunExplorationJob(config));
 
 		try {
 			workflow.execute(new NullProgressMonitor());
 		} catch (JobFailedException | UserCanceledException e) {
 			throw new WorkflowFailedException("Workflow failed", e);
 		}
+	}
+
+	/**
+	 *
+	 * @param experiment
+	 * @param config
+	 */
+	private void setModelFilesInConfig(final InitialModel experiment, final ExplorationWorkflowConfiguration config) {
+		this.setModelUri(experiment.getAllocation(), s -> config.setAllocationFiles(List.of(s)));
+		this.setModelUri(experiment.getUsageModel(), s -> config.setUsageModelFile(s));
+
+		this.setModelUri(experiment.getScalingDefinitions(), s -> config.addOtherModelFile(s));
+		this.setModelUri(experiment.getSpdSemanticConfiguration(), s -> config.addOtherModelFile(s));
+		this.setModelUri(experiment.getMonitorRepository(), s -> config.addOtherModelFile(s));
+		this.setModelUri(experiment.getServiceLevelObjectives(), s -> config.addOtherModelFile(s));
+		this.setModelUri(experiment.getUsageEvolution(), s -> config.addOtherModelFile(s));
+	}
+
+	/**
+	 *
+	 * @param model
+	 * @param consumer
+	 */
+	private void setModelUri(final EObject model, final Consumer<String> consumer) {
+		if (model == null) {
+			return;
+		}
+		consumer.accept(model.eResource().getURI().toString());
 	}
 
 	@Override
