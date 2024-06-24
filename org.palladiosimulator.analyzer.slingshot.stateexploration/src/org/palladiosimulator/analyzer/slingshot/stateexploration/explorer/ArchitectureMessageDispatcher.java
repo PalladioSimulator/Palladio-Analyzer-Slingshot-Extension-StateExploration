@@ -13,13 +13,13 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
-import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ModelAccess;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.RequestArchitectureMessage;
-import org.palladiosimulator.spd.SpdPackage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 
 
 /**
@@ -51,17 +51,21 @@ public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 	public void onMessageRecieved(final RequestArchitectureMessage sim) {
 		try {
 			LOGGER.info("Reacting to RequestArchitectureMessage");
-			final PCMResourceSetPartitionProvider pcmResourceSetPartition = Slingshot.getInstance().getInstance(PCMResourceSetPartitionProvider.class);
+			final DefaultState state = Slingshot.getInstance().getInstance(DefaultState.class);
+			if (state == null) {
+				LOGGER.info(
+						"Cannot post Architecture, because current state is null. Did you already start the exploration?");
+				return;
+			}
+			final ModelAccess access = state.getArchitecureConfiguration();
 
+			final var allocationResource = access.getAllocation().eResource();
+			final var systemResource = access.getSystem().eResource();
+			final var resourceEnvironmentResource = access.getResourceEnvironment().eResource();
+			final var repositoryResource = access.getRepository().eResource();
 
-			final var allocationResource = pcmResourceSetPartition.get().getAllocation().eResource();
-			final var systemResource = pcmResourceSetPartition.get().getSystem().eResource();
-			final var resourceEnvironmentResource = pcmResourceSetPartition.get().getResourceEnvironment().eResource();
-			final var repositoryResource = pcmResourceSetPartition.get().getRepositories().stream().findFirst()
-					.orElseThrow(() -> new ArchitectureResourceAccessException("Could not access repository")).eResource();
-			final var spdResource = pcmResourceSetPartition.get().getElement(SpdPackage.eINSTANCE.getSPD()).stream().findFirst()
-					.orElseThrow(() -> new ArchitectureResourceAccessException("Could not access repository")).eResource();
-
+			final var spdResource = access.getSPD()
+					.orElseThrow(() -> new ArchitectureResourceAccessException("Could not access spd")).eResource();
 
 			final var resources = List.of(allocationResource, systemResource, resourceEnvironmentResource, repositoryResource, spdResource);
 
