@@ -14,9 +14,13 @@ public class ExplorationRootJob extends SequentialBlackboardInteractingJob<MDSDB
 	public ExplorationRootJob(final ExplorationWorkflowConfiguration config, final ILaunch launch) {
 		super(ExplorationRootJob.class.getName(), false);
 
+		if (launch == null) {
+			// Nothing. just stay aware that lunch is null, if it is a headless run.
+		}
+
 		this.addJob(new PreparePCMBlackboardPartitionJob());
 		config.getPCMModelFiles()
-		.forEach(modelFile -> LoadModelIntoBlackboardJob.parseUriAndAddModelLoadJob(modelFile, this));
+				.forEach(modelFile -> LoadModelIntoBlackboardJob.parseUriAndAddModelLoadJob(modelFile, this));
 		this.addJob(new RunExplorationJob(config));
 
 
