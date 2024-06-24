@@ -150,6 +150,8 @@ public class StateexplorationApplication implements IApplication {
 
 		map.put(ExplorationConfiguration.MAX_EXPLORATION_CYCLES, String.valueOf(simConfig.getMaxIterations()));
 		map.put(ExplorationConfiguration.MIN_STATE_DURATION, String.valueOf(simConfig.getMinStateDuration()));
+		map.put(ExplorationConfiguration.SENSIBILITY, String.valueOf(simConfig.getSensitivity()));
+		map.put(ExplorationConfiguration.IDLE_EXPLORATION, String.valueOf(simConfig.isDoIdleExploration()));
 
 		return map;
 	}
