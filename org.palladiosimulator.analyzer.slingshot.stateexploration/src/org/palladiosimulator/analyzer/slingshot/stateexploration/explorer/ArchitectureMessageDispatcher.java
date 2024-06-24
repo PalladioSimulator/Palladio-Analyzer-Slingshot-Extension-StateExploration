@@ -7,8 +7,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.inject.Inject;
-
 import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -19,21 +17,25 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPar
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.networking.SlingshotWebsocketClient;
-import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
-import org.palladiosimulator.analyzer.slingshot.networking.util.GsonProvider;
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.RequestArchitectureMessage;
 import org.palladiosimulator.spd.SpdPackage;
 
 
+/**
+ *
+ * Dispatches one {@link ArchitectureMessage} per model resource.
+ *
+ *
+ * @author Raphael Straub, Sarah Stieß
+ *
+ */
 @OnEvent(when = RequestArchitectureMessage.class)
 public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(ArchitectureMessageDispatcher.class.getName());
-	@Inject
-	private GsonProvider gsonProvider;
-	@Inject
-	private SlingshotWebsocketClient client;
 
-	public class ArchitectureMessage extends Message<String> {
+
+	public class ArchitectureMessage extends EventMessage<String> {
 		public ArchitectureMessage(final String payload) {
 			super("ArchitectureMessage", payload, "Explorer");
 		}
@@ -48,7 +50,7 @@ public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 	@Subscribe
 	public void onMessageRecieved(final RequestArchitectureMessage sim) {
 		try {
-			System.out.println("Reacting to RequestArchitectureMessage");
+			LOGGER.info("Reacting to RequestArchitectureMessage");
 			final PCMResourceSetPartitionProvider pcmResourceSetPartition = Slingshot.getInstance().getInstance(PCMResourceSetPartitionProvider.class);
 
 
@@ -68,7 +70,9 @@ public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 				try {
 					final var fileBytes = Files.readAllBytes(path);
 					final var message = new String(fileBytes, StandardCharsets.UTF_8);
-					client.sendMessage(new ArchitectureMessage(message));
+
+					Slingshot.getInstance().getSystemDriver().postEvent(new ArchitectureMessage(message));
+
 				} catch (final IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -81,18 +85,41 @@ public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 
 	}
 
+	/**
+	 *
+	 * Get absolute path from {@code resource}.
+	 *
+	 * The URI of {@code resource} must either be a platform or a file URI. The
+	 * former is usually used in normal simulation runs, the latter in usually used
+	 * in headless simualtion runs.
+	 *
+	 * @param resource
+	 * @return absolute path to resource.
+	 */
 	private String getAbsolutePath(final Resource resource) {
-		final var uri = resource.getURI().toPlatformString(false);
-		final String projectName = uri.split("/")[1];
-		final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
-		final IPath location = project.getLocation();  // This gets the absolute path to the linked resource
-		System.out.println("Linked resource absolute path: " + location.toOSString());
+		if (!(resource.getURI().isPlatform() || resource.getURI().isFile())) {
+			throw new IllegalArgumentException(String.format("Resource must have platform or file URI, but uri is %s",
+					resource.getURI().toString()));
+		}
+		if (resource.getURI().isPlatform()) {
 
-		final var res = Arrays.stream(uri.split("/"))
-				.filter(x -> !("".equals(x) || projectName.equals(x)))
-				.reduce(location.toOSString(), (x,y) -> x+"/"+y);
+			final var uri = resource.getURI().toPlatformString(false);
+			// this breaks on file URI, as will be used in headless run.
+			// file:/Users/[...]/05a21509-7995-4c51-9928-a67bdc28f4b8/default.allocation
 
-		return res;
+			final String projectName = uri.split("/")[1];
+			final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+			final IPath location = project.getLocation();  // This gets the absolute path to the linked resource
+			System.out.println("Linked resource absolute path: " + location.toOSString());
+
+			final var res = Arrays.stream(uri.split("/"))
+					.filter(x -> !("".equals(x) || projectName.equals(x)))
+					.reduce(location.toOSString(), (x,y) -> x+"/"+y);
+
+			return res;
+		} else {
+			return resource.getURI().toFileString();
+		}
 	}
 
 
