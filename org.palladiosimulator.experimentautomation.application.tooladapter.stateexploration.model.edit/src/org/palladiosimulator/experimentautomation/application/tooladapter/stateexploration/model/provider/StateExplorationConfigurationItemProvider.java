@@ -51,6 +51,8 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 
 			addMinStateDurationPropertyDescriptor(object);
 			addMaxIterationsPropertyDescriptor(object);
+			addSensitivityPropertyDescriptor(object);
+			addDoIdleExplorationPropertyDescriptor(object);
 		}
 		return itemPropertyDescriptors;
 	}
@@ -100,6 +102,50 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 	}
 
 	/**
+	 * This adds a property descriptor for the Sensitivity feature.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void addSensitivityPropertyDescriptor(Object object) {
+		itemPropertyDescriptors.add
+			(createItemPropertyDescriptor
+				(((ComposeableAdapterFactory)adapterFactory).getRootAdapterFactory(),
+				 getResourceLocator(),
+				 getString("_UI_StateExplorationConfiguration_sensitivity_feature"),
+				 getString("_UI_PropertyDescriptor_description", "_UI_StateExplorationConfiguration_sensitivity_feature", "_UI_StateExplorationConfiguration_type"),
+				 StateExplorationToolAdapterPackage.Literals.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY,
+				 true,
+				 false,
+				 false,
+				 ItemPropertyDescriptor.REAL_VALUE_IMAGE,
+				 null,
+				 null));
+	}
+
+	/**
+	 * This adds a property descriptor for the Do Idle Exploration feature.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void addDoIdleExplorationPropertyDescriptor(Object object) {
+		itemPropertyDescriptors.add
+			(createItemPropertyDescriptor
+				(((ComposeableAdapterFactory)adapterFactory).getRootAdapterFactory(),
+				 getResourceLocator(),
+				 getString("_UI_StateExplorationConfiguration_doIdleExploration_feature"),
+				 getString("_UI_PropertyDescriptor_description", "_UI_StateExplorationConfiguration_doIdleExploration_feature", "_UI_StateExplorationConfiguration_type"),
+				 StateExplorationToolAdapterPackage.Literals.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION,
+				 true,
+				 false,
+				 false,
+				 ItemPropertyDescriptor.BOOLEAN_VALUE_IMAGE,
+				 null,
+				 null));
+	}
+
+	/**
 	 * This returns StateExplorationConfiguration.gif.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -139,6 +185,8 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 		switch (notification.getFeatureID(StateExplorationConfiguration.class)) {
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MIN_STATE_DURATION:
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS:
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY:
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION:
 				fireNotifyChanged(new ViewerNotification(notification, notification.getNotifier(), false, true));
 				return;
 		}

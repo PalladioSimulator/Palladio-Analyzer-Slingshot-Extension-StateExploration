@@ -139,13 +139,31 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 	int STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 1;
 
 	/**
+	 * The feature id for the '<em><b>Sensitivity</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STATE_EXPLORATION_CONFIGURATION__SENSITIVITY = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 2;
+
+	/**
+	 * The feature id for the '<em><b>Do Idle Exploration</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 3;
+
+	/**
 	 * The number of structural features of the '<em>State Exploration Configuration</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int STATE_EXPLORATION_CONFIGURATION_FEATURE_COUNT = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 2;
+	int STATE_EXPLORATION_CONFIGURATION_FEATURE_COUNT = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 4;
 
 
 	/**
@@ -179,6 +197,28 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 	 * @generated
 	 */
 	EAttribute getStateExplorationConfiguration_MaxIterations();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getSensitivity <em>Sensitivity</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Sensitivity</em>'.
+	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getSensitivity()
+	 * @see #getStateExplorationConfiguration()
+	 * @generated
+	 */
+	EAttribute getStateExplorationConfiguration_Sensitivity();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#isDoIdleExploration <em>Do Idle Exploration</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Do Idle Exploration</em>'.
+	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#isDoIdleExploration()
+	 * @see #getStateExplorationConfiguration()
+	 * @generated
+	 */
+	EAttribute getStateExplorationConfiguration_DoIdleExploration();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -227,6 +267,22 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 		 * @generated
 		 */
 		EAttribute STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS = eINSTANCE.getStateExplorationConfiguration_MaxIterations();
+
+		/**
+		 * The meta object literal for the '<em><b>Sensitivity</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STATE_EXPLORATION_CONFIGURATION__SENSITIVITY = eINSTANCE.getStateExplorationConfiguration_Sensitivity();
+
+		/**
+		 * The meta object literal for the '<em><b>Do Idle Exploration</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION = eINSTANCE.getStateExplorationConfiguration_DoIdleExploration();
 
 	}
 

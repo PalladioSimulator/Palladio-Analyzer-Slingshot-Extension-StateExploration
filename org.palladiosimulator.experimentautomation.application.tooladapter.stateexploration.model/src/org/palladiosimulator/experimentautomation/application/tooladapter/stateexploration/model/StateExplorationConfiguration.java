@@ -17,6 +17,8 @@ import org.palladiosimulator.experimentautomation.abstractsimulation.AbstractSim
  * <ul>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getMinStateDuration <em>Min State Duration</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getMaxIterations <em>Max Iterations</em>}</li>
+ *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getSensitivity <em>Sensitivity</em>}</li>
+ *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#isDoIdleExploration <em>Do Idle Exploration</em>}</li>
  * </ul>
  *
  * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration()
@@ -67,5 +69,49 @@ public interface StateExplorationConfiguration extends EObject, AbstractSimulati
 	 * @generated
 	 */
 	void setMaxIterations(int value);
+
+	/**
+	 * Returns the value of the '<em><b>Sensitivity</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Sensitivity</em>' attribute.
+	 * @see #setSensitivity(double)
+	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration_Sensitivity()
+	 * @model required="true"
+	 * @generated
+	 */
+	double getSensitivity();
+
+	/**
+	 * Sets the value of the '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getSensitivity <em>Sensitivity</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Sensitivity</em>' attribute.
+	 * @see #getSensitivity()
+	 * @generated
+	 */
+	void setSensitivity(double value);
+
+	/**
+	 * Returns the value of the '<em><b>Do Idle Exploration</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Do Idle Exploration</em>' attribute.
+	 * @see #setDoIdleExploration(boolean)
+	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration_DoIdleExploration()
+	 * @model required="true"
+	 * @generated
+	 */
+	boolean isDoIdleExploration();
+
+	/**
+	 * Sets the value of the '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#isDoIdleExploration <em>Do Idle Exploration</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Do Idle Exploration</em>' attribute.
+	 * @see #isDoIdleExploration()
+	 * @generated
+	 */
+	void setDoIdleExploration(boolean value);
 
 } // StateExplorationConfiguration

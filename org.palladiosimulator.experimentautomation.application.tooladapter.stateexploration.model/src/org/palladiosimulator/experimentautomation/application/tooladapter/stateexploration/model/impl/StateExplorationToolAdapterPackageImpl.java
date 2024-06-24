@@ -181,6 +181,26 @@ public class StateExplorationToolAdapterPackageImpl extends EPackageImpl impleme
 	 * @generated
 	 */
 	@Override
+	public EAttribute getStateExplorationConfiguration_Sensitivity() {
+		return (EAttribute)stateExplorationConfigurationEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStateExplorationConfiguration_DoIdleExploration() {
+		return (EAttribute)stateExplorationConfigurationEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public StateExplorationToolAdapterFactory getStateExplorationToolAdapterFactory() {
 		return (StateExplorationToolAdapterFactory)getEFactoryInstance();
 	}
@@ -207,6 +227,8 @@ public class StateExplorationToolAdapterPackageImpl extends EPackageImpl impleme
 		stateExplorationConfigurationEClass = createEClass(STATE_EXPLORATION_CONFIGURATION);
 		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__MIN_STATE_DURATION);
 		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS);
+		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__SENSITIVITY);
+		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION);
 	}
 
 	/**
@@ -247,6 +269,8 @@ public class StateExplorationToolAdapterPackageImpl extends EPackageImpl impleme
 		initEClass(stateExplorationConfigurationEClass, StateExplorationConfiguration.class, "StateExplorationConfiguration", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStateExplorationConfiguration_MinStateDuration(), theEcorePackage.getEDouble(), "minStateDuration", null, 1, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStateExplorationConfiguration_MaxIterations(), theEcorePackage.getEInt(), "maxIterations", null, 1, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStateExplorationConfiguration_Sensitivity(), theEcorePackage.getEDouble(), "sensitivity", null, 1, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStateExplorationConfiguration_DoIdleExploration(), theEcorePackage.getEBoolean(), "doIdleExploration", null, 1, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);

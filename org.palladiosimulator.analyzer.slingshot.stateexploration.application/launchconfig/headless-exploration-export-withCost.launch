@@ -6,7 +6,7 @@
     <stringAttribute key="bootstrap" value=""/>
     <stringAttribute key="checked" value="[NONE]"/>
     <booleanAttribute key="clearConfig" value="true"/>
-    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/headless-exploration-WIP-withApp-withCost"/>
+    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/headless-exploration-export-withCost"/>
     <booleanAttribute key="default" value="true"/>
     <booleanAttribute key="default_auto_start" value="true"/>
     <intAttribute key="default_start_level" value="4"/>
@@ -491,8 +491,8 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor.processingtype.feedthrough@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor.utils@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor@default:default"/>
+        <setEntry value="org.palladiosimulator.analyzer.slingshot.networking.data@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.networking@default:default"/>
-        <setEntry value="org.palladiosimulator.analyzer.slingshot.planner@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.snapshot.data@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.snapshot@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.stateexploration.application@default:default"/>

@@ -23,6 +23,8 @@ import org.palladiosimulator.experimentautomation.application.tooladapter.statee
  * <ul>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getMinStateDuration <em>Min State Duration</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getMaxIterations <em>Max Iterations</em>}</li>
+ *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getSensitivity <em>Sensitivity</em>}</li>
+ *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#isDoIdleExploration <em>Do Idle Exploration</em>}</li>
  * </ul>
  *
  * @generated
@@ -67,6 +69,46 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 	 * @ordered
 	 */
 	protected int maxIterations = MAX_ITERATIONS_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getSensitivity() <em>Sensitivity</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getSensitivity()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final double SENSITIVITY_EDEFAULT = 0.0;
+
+	/**
+	 * The cached value of the '{@link #getSensitivity() <em>Sensitivity</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getSensitivity()
+	 * @generated
+	 * @ordered
+	 */
+	protected double sensitivity = SENSITIVITY_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #isDoIdleExploration() <em>Do Idle Exploration</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #isDoIdleExploration()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final boolean DO_IDLE_EXPLORATION_EDEFAULT = false;
+
+	/**
+	 * The cached value of the '{@link #isDoIdleExploration() <em>Do Idle Exploration</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #isDoIdleExploration()
+	 * @generated
+	 * @ordered
+	 */
+	protected boolean doIdleExploration = DO_IDLE_EXPLORATION_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -139,12 +181,62 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 	 * @generated
 	 */
 	@Override
+	public double getSensitivity() {
+		return sensitivity;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setSensitivity(double newSensitivity) {
+		double oldSensitivity = sensitivity;
+		sensitivity = newSensitivity;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY, oldSensitivity, sensitivity));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public boolean isDoIdleExploration() {
+		return doIdleExploration;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setDoIdleExploration(boolean newDoIdleExploration) {
+		boolean oldDoIdleExploration = doIdleExploration;
+		doIdleExploration = newDoIdleExploration;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION, oldDoIdleExploration, doIdleExploration));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MIN_STATE_DURATION:
 				return getMinStateDuration();
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS:
 				return getMaxIterations();
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY:
+				return getSensitivity();
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION:
+				return isDoIdleExploration();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -162,6 +254,12 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return;
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS:
 				setMaxIterations((Integer)newValue);
+				return;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY:
+				setSensitivity((Double)newValue);
+				return;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION:
+				setDoIdleExploration((Boolean)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -181,6 +279,12 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS:
 				setMaxIterations(MAX_ITERATIONS_EDEFAULT);
 				return;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY:
+				setSensitivity(SENSITIVITY_EDEFAULT);
+				return;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION:
+				setDoIdleExploration(DO_IDLE_EXPLORATION_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -197,6 +301,10 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return minStateDuration != MIN_STATE_DURATION_EDEFAULT;
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS:
 				return maxIterations != MAX_ITERATIONS_EDEFAULT;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY:
+				return sensitivity != SENSITIVITY_EDEFAULT;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION:
+				return doIdleExploration != DO_IDLE_EXPLORATION_EDEFAULT;
 		}
 		return super.eIsSet(featureID);
 	}
@@ -215,6 +323,10 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 		result.append(minStateDuration);
 		result.append(", maxIterations: ");
 		result.append(maxIterations);
+		result.append(", sensitivity: ");
+		result.append(sensitivity);
+		result.append(", doIdleExploration: ");
+		result.append(doIdleExploration);
 		result.append(')');
 		return result.toString();
 	}

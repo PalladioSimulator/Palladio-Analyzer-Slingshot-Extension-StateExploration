@@ -72,13 +72,12 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));
 		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(iterations));
 
-		if ((Boolean) this.configuration.getlaunchConfigParams()
-				.get(ExplorationConfiguration.IDLE_EXPLORATION)) {
+		if (Boolean.valueOf((String) this.configuration.getlaunchConfigParams()
+				.get(ExplorationConfiguration.IDLE_EXPLORATION))) {
 			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
 		} else {
 			Slingshot.getInstance().getSystemDriver().postEvent(new ResetExplorerEvent());
 		}
-
 
 		monitor.worked(1);
 
