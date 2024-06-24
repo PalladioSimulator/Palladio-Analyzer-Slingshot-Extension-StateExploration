@@ -73,8 +73,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final MDSDBlackboard blackboard;
 
-	public DefaultGraphExplorer(final SimulationDriver driver,
-			final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
+	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
 		super();
 		this.initModels = (PCMResourceSetPartition) blackboard

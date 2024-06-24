@@ -123,27 +123,38 @@ public class StateexplorationApplication implements IApplication {
 	}
 
 	/**
+	 * Get the file location of the initial models, and put the into the
+	 * {@code config}.
 	 *
-	 * @param experiment
-	 * @param config
+	 * This is necessary, to use the {@link ExplorationRootJob}, which load the
+	 * model as defined in the {@link ExplorationWorkflowConfiguration}.
+	 *
+	 * @param models initial models, as defined in the experiments file.
+	 * @param config configuration to start the exploration on.
 	 */
-	private void setModelFilesInConfig(final InitialModel experiment, final ExplorationWorkflowConfiguration config) {
-		this.setModelUri(experiment.getAllocation(), s -> config.setAllocationFiles(List.of(s)));
-		this.setModelUri(experiment.getUsageModel(), s -> config.setUsageModelFile(s));
+	private void setModelFilesInConfig(final InitialModel models, final ExplorationWorkflowConfiguration config) {
+		this.consumeModelLocation(models.getAllocation(), s -> config.setAllocationFiles(List.of(s)));
+		this.consumeModelLocation(models.getUsageModel(), s -> config.setUsageModelFile(s));
 
-		this.setModelUri(experiment.getScalingDefinitions(), s -> config.addOtherModelFile(s));
-		this.setModelUri(experiment.getSpdSemanticConfiguration(), s -> config.addOtherModelFile(s));
-		this.setModelUri(experiment.getMonitorRepository(), s -> config.addOtherModelFile(s));
-		this.setModelUri(experiment.getServiceLevelObjectives(), s -> config.addOtherModelFile(s));
-		this.setModelUri(experiment.getUsageEvolution(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getScalingDefinitions(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getSpdSemanticConfiguration(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getMonitorRepository(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getServiceLevelObjectives(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getUsageEvolution(), s -> config.addOtherModelFile(s));
 	}
 
 	/**
 	 *
-	 * @param model
-	 * @param consumer
+	 * Make {@code consumer} accept the URI of {@code model}, if it is not
+	 * {@code null}.
+	 *
+	 * If {@code model} is {@code null}, nothing happens.
+	 *
+	 * @param model    model who's URI will be consumed. May be {@code null}.
+	 * @param consumer consumer to consume the model's URI.
 	 */
-	private void setModelUri(final EObject model, final Consumer<String> consumer) {
+	private void consumeModelLocation(final EObject model, final Consumer<String> consumer) {
+		assert consumer != null;
 		if (model == null) {
 			return;
 		}
