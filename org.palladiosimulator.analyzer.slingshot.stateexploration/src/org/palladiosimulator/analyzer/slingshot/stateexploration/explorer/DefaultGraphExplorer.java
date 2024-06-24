@@ -36,6 +36,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Defaul
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
+import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
@@ -72,11 +73,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final MDSDBlackboard blackboard;
 
-	public DefaultGraphExplorer(final PCMResourceSetPartition partition, final SimulationDriver driver,
+	public DefaultGraphExplorer(final SimulationDriver driver,
 			final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
 		super();
-		this.initModels = partition;
+		this.initModels = (PCMResourceSetPartition) blackboard
+				.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID);
 		this.launchConfigurationParams = launchConfigurationParams;
 		this.monitor = monitor;
 		this.blackboard = blackboard;
