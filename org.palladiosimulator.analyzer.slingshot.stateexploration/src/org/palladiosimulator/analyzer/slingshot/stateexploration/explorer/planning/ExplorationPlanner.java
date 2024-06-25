@@ -123,7 +123,7 @@ public class ExplorationPlanner {
 	 * are set. If we want to add more proactive changes later on, this operation is
 	 * where we should insert them.
 	 *
-	 * @param start
+	 * @param start state that we just finished exploring.
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
 		// NOP Always
