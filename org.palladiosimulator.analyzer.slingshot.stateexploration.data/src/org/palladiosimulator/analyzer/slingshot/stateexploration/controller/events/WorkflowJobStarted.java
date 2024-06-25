@@ -15,14 +15,14 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  * @author Sarah Stieß
  *
  */
-public class LaunchPrepared extends AbstractSystemEvent implements ExplorationControllerEvent {
+public class WorkflowJobStarted extends AbstractSystemEvent implements ExplorationControllerEvent {
 
 	private final List<String> pcmModelFiles;
 	private final Map<String, Object> launchConfigurationParams;
 	private final IProgressMonitor monitor;
 	private final MDSDBlackboard blackboard;
 
-	public LaunchPrepared(final List<String> pcmModelFiles,
+	public WorkflowJobStarted(final List<String> pcmModelFiles,
 			final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
 		this.pcmModelFiles = pcmModelFiles;

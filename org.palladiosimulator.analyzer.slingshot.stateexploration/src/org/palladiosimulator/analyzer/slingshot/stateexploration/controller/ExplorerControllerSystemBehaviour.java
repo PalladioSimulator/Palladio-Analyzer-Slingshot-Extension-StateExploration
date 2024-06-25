@@ -14,11 +14,12 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.LaunchPrepared;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.PruneFringeByTime;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ReFocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 import org.palladiosimulator.analyzer.workflow.jobs.LoadModelIntoBlackboardJob;
@@ -44,7 +45,8 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  *
  */
 @OnEvent(when = TestMessage.class)
-@OnEvent(when = LaunchPrepared.class)
+@OnEvent(when = WorkflowJobStarted.class)
+@OnEvent(when = WorkflowJobDone.class)
 @OnEvent(when = TriggerExplorationEvent.class)
 @OnEvent(when = IdleTriggerExplorationEvent.class)
 @OnEvent(when = FocusOnStatesEvent.class)
@@ -56,7 +58,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	private static final Logger LOGGER = Logger.getLogger(ExplorerControllerSystemBehaviour.class.getName());
 
 	private GraphExplorer explorer = null;
-	private LaunchPrepared initEvent = null;
+	private WorkflowJobStarted initEvent = null;
 
 	private IdleExploration doIdle = IdleExploration.BLOCKED;
 
@@ -65,7 +67,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	}
 
 	public ExplorerControllerSystemBehaviour() {
-		System.out.println("Fooo");
+
 	}
 
 	/**
@@ -77,8 +79,15 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(5));
 	}
 
+	/**
+	 * Creates the explorer, once the workflow job has prepare all the necessary
+	 * things, such as the blackboard and the parameters from the launch
+	 * configuration.
+	 *
+	 * @param event
+	 */
 	@Subscribe
-	public void onLaunchPrepared(final LaunchPrepared event) {
+	public void onWorkflowJobStarted(final WorkflowJobStarted event) {
 		if (explorer != null) {
 			throw new IllegalStateException("Cannot create new explorer because explorer is already set.");
 		} else {
@@ -87,6 +96,21 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
 					this.initEvent.getMonitor(), this.initEvent.getBlackboard());
 		}
+	}
+
+	/**
+	 * Reset attributes to initial values such that a new exploration may start.
+	 *
+	 * Intended for graphical runs. With headless runs it is only ever one
+	 * exploration.
+	 *
+	 * @param event
+	 */
+	@Subscribe
+	public void onWorkflowJobDone(final WorkflowJobDone event) {
+		this.explorer = null;
+		this.initEvent = null;
+		this.doIdle = IdleExploration.BLOCKED;
 	}
 
 	/**
