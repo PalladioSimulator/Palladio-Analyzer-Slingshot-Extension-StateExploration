@@ -3,9 +3,12 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.controller;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
+import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
@@ -22,6 +25,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
+import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.analyzer.workflow.jobs.LoadModelIntoBlackboardJob;
 import org.palladiosimulator.analyzer.workflow.jobs.PreparePCMBlackboardPartitionJob;
 
@@ -56,6 +61,8 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtension {
 
 	private static final Logger LOGGER = Logger.getLogger(ExplorerControllerSystemBehaviour.class.getName());
+
+	private final Lock explorerLock = new ReentrantLock(true);
 
 	private GraphExplorer explorer = null;
 	private WorkflowJobStarted initEvent = null;
@@ -119,9 +126,15 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Subscribe
 	public void onIdleTrigger(final IdleTriggerExplorationEvent event) {
+		this.explorerLock.lock();
 		if (this.explorer.hasUnexploredChanges()) {
-			this.explorer.exploreNextState();
+			try {
+				this.explorer.exploreNextState();
+			} finally {
+				this.explorerLock.unlock();
+			}
 			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+			// TODO this will end in an stack overflow error
 		} else {
 			doIdle = IdleExploration.ONHOLD;
 			LOGGER.info("No Unexplored Changes, stop Idle exploration.");
@@ -137,7 +150,12 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 		for (int i = 0; i < event.getIterations() && this.explorer.hasUnexploredChanges(); i++) {
 			LOGGER.info("Iteration " + i);
-			this.explorer.exploreNextState();
+			this.explorerLock.lock();
+			try {
+				this.explorer.exploreNextState();
+			} finally {
+				this.explorerLock.unlock();
+			}
 		}
 		if (doIdle == IdleExploration.ONHOLD) {
 			doIdle = IdleExploration.DOING;
@@ -183,26 +201,48 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 	@Subscribe
 	public void onFocusOnStatesEvent(final FocusOnStatesEvent event) {
-		this.explorer.focus(this.mapStateIdsToState(event.getFocusStateIds()));
+		try {
+			this.explorer.focus(this.mapStateIdsToState(event.getFocusStateIds()));
+		} finally {
+			this.explorerLock.unlock();
+		}
 	}
 
 	@Subscribe
 	public void onReFocusOnStatesEvent(final ReFocusOnStatesEvent event) {
-		this.explorer.refocus(this.mapStateIdsToState(event.getFocusStateIds()));
+		try {
+			this.explorer.refocus(this.mapStateIdsToState(event.getFocusStateIds()));
+		} finally {
+			this.explorerLock.unlock();
+		}
 	}
 
 	@Subscribe
 	public void onPruneFringeByTime(final PruneFringeByTime event) {
-		this.explorer.pruneByTime(event.getCurrentTime());
+		try {
+			this.explorer.pruneByTime(event.getCurrentTime());
+		} finally {
+			this.explorerLock.unlock();
+		}
 	}
 
 	@Subscribe
 	public void onResetExplorerEvent(final ResetExplorerEvent event) {
-		final MDSDBlackboard blackboard = recreatedInitialBlackboard();
+		this.explorerLock.lock();
+		try {
+			final MDSDBlackboard blackboard = recreatedInitialBlackboard();
 
-		this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
-				this.initEvent.getMonitor(),
-				blackboard);
+			final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
+					.getInstance(PCMResourceSetPartitionProvider.class);
+			provider.set((PCMResourceSetPartition) blackboard
+					.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID));
+
+			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+					this.initEvent.getMonitor(),
+					blackboard);
+		} finally {
+			this.explorerLock.unlock();
+		}
 	}
 
 	/**
@@ -224,7 +264,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		try {
 			job.execute(this.initEvent.getMonitor());
 		} catch (JobFailedException | UserCanceledException e) {
-			throw new IllegalStateException("Reseting Explorere Failed, cannot continue exploration.", e);
+			throw new IllegalStateException("Reseting Explorer Failed, cannot continue exploration.", e);
 		}
 
 		return newBlackboard;
