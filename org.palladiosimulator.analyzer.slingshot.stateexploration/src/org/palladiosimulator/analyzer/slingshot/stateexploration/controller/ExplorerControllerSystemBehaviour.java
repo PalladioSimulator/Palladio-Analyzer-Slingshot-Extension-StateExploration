@@ -16,7 +16,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplor
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.PruneFringeByTime;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ReFocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
@@ -53,7 +52,6 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 @OnEvent(when = WorkflowJobStarted.class)
 @OnEvent(when = WorkflowJobDone.class)
 @OnEvent(when = TriggerExplorationEvent.class)
-@OnEvent(when = IdleTriggerExplorationEvent.class)
 @OnEvent(when = FocusOnStatesEvent.class)
 @OnEvent(when = ReFocusOnStatesEvent.class)
 @OnEvent(when = ResetExplorerEvent.class)
@@ -67,12 +65,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	private GraphExplorer explorer = null;
 	private WorkflowJobStarted initEvent = null;
 
-	private IdleExploration doIdle = IdleExploration.BLOCKED;
 	private ExplorationState explorationState = ExplorationState.NOTRUNNING;
-
-	private enum IdleExploration {
-		ONHOLD, BLOCKED, DOING;
-	}
 
 	private enum ExplorationState {
 		RUNNING, NOTRUNNING;
@@ -122,28 +115,6 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	@Subscribe
 	public void onWorkflowJobDone(final WorkflowJobDone event) {
 		this.explorationState = ExplorationState.NOTRUNNING;
-		this.doIdle = IdleExploration.BLOCKED;
-	}
-
-	/**
-	 *
-	 * @param event
-	 */
-	@Subscribe
-	public void onIdleTrigger(final IdleTriggerExplorationEvent event) {
-		this.explorerLock.lock();
-		if (this.explorer.hasUnexploredChanges()) {
-			try {
-				this.explorer.exploreNextState();
-			} finally {
-				this.explorerLock.unlock();
-			}
-			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
-			// TODO this will end in an stack overflow error
-		} else {
-			doIdle = IdleExploration.ONHOLD;
-			LOGGER.info("No Unexplored Changes, stop Idle exploration.");
-		}
 	}
 
 	/**
@@ -152,7 +123,6 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Subscribe
 	public void onDoGraphExplorationCycle(final TriggerExplorationEvent event) {
-
 		if (this.explorationState != ExplorationState.RUNNING) {
 			throw new IllegalStateException(
 					String.format("Cannot Trigger Exploration, Current Explorer is not running, instead it's %s",
@@ -167,11 +137,6 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 			} finally {
 				this.explorerLock.unlock();
 			}
-		}
-		if (doIdle == IdleExploration.ONHOLD) {
-			doIdle = IdleExploration.DOING;
-			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent()); // recursion, this
-			// is bad :(
 		}
 
 		logGraph();
@@ -213,6 +178,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 	@Subscribe
 	public void onFocusOnStatesEvent(final FocusOnStatesEvent event) {
+		this.explorerLock.lock();
 		try {
 			this.explorer.focus(this.mapStateIdsToState(event.getFocusStateIds()));
 		} finally {
@@ -222,6 +188,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 	@Subscribe
 	public void onReFocusOnStatesEvent(final ReFocusOnStatesEvent event) {
+		this.explorerLock.lock();
 		try {
 			this.explorer.refocus(this.mapStateIdsToState(event.getFocusStateIds()));
 		} finally {
@@ -231,6 +198,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 	@Subscribe
 	public void onPruneFringeByTime(final PruneFringeByTime event) {
+		this.explorerLock.lock();
 		try {
 			this.explorer.pruneByTime(event.getCurrentTime());
 		} finally {
