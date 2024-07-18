@@ -4,10 +4,9 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
@@ -60,13 +59,21 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		final int iterations = Integer.valueOf((String) this.configuration.getlaunchConfigParams()
 				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));
-		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(iterations));
 
 		// [S3] do the valueOf twice, because for some reason the type is either boolean
 		// or String, depending on whether the simulator is started headless, or not.
 		if (Boolean.valueOf(String.valueOf(this.configuration.getlaunchConfigParams()
 				.get(ExplorationConfiguration.IDLE_EXPLORATION)))) {
-			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+
+			final Runnable run = () -> {
+				while (true) {
+					Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(1));
+				}
+			};
+
+			Slingshot.getInstance().getSystemDriver().postEventAndThen(new TriggerExplorationEvent(iterations), run);
+		} else {
+			Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(iterations));
 		}
 
 		monitor.worked(1);
@@ -79,8 +86,7 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		monitor.done();
 
-		Slingshot.getInstance().getSystemDriver()
-				.postEvent(new WorkflowJobDone());
+		Slingshot.getInstance().getSystemDriver().postEvent(new WorkflowJobDone());
 
 		LOGGER.info("**** SimulationJob.execute  - Done ****");
 	}
