@@ -83,16 +83,16 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 			final @Nullable SimuComConfig simuComConfig,
 			final Allocation allocation) {
 
-		assert halfDoneState.getSnapshot() == null : "Snapshot already set!";
+		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null;
 
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 		this.allocation = allocation;
 
-		this.activated = this.halfDoneState != null && this.snapshotConfig != null && this.simuComConfig != null;
 
 		if (activated) {
+			assert halfDoneState.getSnapshot() == null : "Snapshot already set, but should not be!";
 			this.eventsToInitOn = eventsToInitOn.getEventsToInitOn();
 		} else {
 			this.eventsToInitOn = Set.of();
@@ -134,7 +134,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	@Subscribe
 	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
 		assert snapshotConfig.isStartFromSnapshot()
-				|| this.eventsToInitOn.stream().allMatch(ModelAdjustmentRequested.class::isInstance)
+		|| this.eventsToInitOn.stream().allMatch(ModelAdjustmentRequested.class::isInstance)
 		: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
 
 		this.initOffsets(this.eventsToInitOn);
