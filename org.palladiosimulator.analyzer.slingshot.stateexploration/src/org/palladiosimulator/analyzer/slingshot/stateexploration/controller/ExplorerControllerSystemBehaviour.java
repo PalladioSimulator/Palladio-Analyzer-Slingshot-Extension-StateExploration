@@ -68,9 +68,14 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	private WorkflowJobStarted initEvent = null;
 
 	private IdleExploration doIdle = IdleExploration.BLOCKED;
+	private ExplorationState explorationState = ExplorationState.NOTRUNNING;
 
 	private enum IdleExploration {
 		ONHOLD, BLOCKED, DOING;
+	}
+
+	private enum ExplorationState {
+		RUNNING, NOTRUNNING;
 	}
 
 	public ExplorerControllerSystemBehaviour() {
@@ -95,13 +100,14 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Subscribe
 	public void onWorkflowJobStarted(final WorkflowJobStarted event) {
-		if (explorer != null) {
-			throw new IllegalStateException("Cannot create new explorer because explorer is already set.");
+		if (explorationState == ExplorationState.RUNNING) {
+			throw new IllegalStateException("Cannot start new explorer because exploration is already running.");
 		} else {
 			this.initEvent = event;
 
 			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
 					this.initEvent.getMonitor(), this.initEvent.getBlackboard());
+			this.explorationState = ExplorationState.RUNNING;
 		}
 	}
 
@@ -115,8 +121,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Subscribe
 	public void onWorkflowJobDone(final WorkflowJobDone event) {
-		this.explorer = null;
-		this.initEvent = null;
+		this.explorationState = ExplorationState.NOTRUNNING;
 		this.doIdle = IdleExploration.BLOCKED;
 	}
 
@@ -148,6 +153,12 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	@Subscribe
 	public void onDoGraphExplorationCycle(final TriggerExplorationEvent event) {
 
+		if (this.explorationState != ExplorationState.RUNNING) {
+			throw new IllegalStateException(
+					String.format("Cannot Trigger Exploration, Current Explorer is not running, instead it's %s",
+							this.explorationState.toString()));
+		}
+
 		for (int i = 0; i < event.getIterations() && this.explorer.hasUnexploredChanges(); i++) {
 			LOGGER.info("Iteration " + i);
 			this.explorerLock.lock();
@@ -159,7 +170,8 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		}
 		if (doIdle == IdleExploration.ONHOLD) {
 			doIdle = IdleExploration.DOING;
-			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent()); // recursion, this
+			// is bad :(
 		}
 
 		logGraph();
@@ -226,6 +238,11 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		}
 	}
 
+	/**
+	 * Reset the explorer, does not care about state of explorer.
+	 *
+	 * @param event
+	 */
 	@Subscribe
 	public void onResetExplorerEvent(final ResetExplorerEvent event) {
 		this.explorerLock.lock();
