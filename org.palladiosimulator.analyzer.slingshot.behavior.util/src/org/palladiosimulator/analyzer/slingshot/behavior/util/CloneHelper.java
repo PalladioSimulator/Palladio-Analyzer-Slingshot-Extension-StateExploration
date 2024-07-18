@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -77,6 +79,8 @@ public final class CloneHelper {
 	public static final Logger LOGGER = Logger.getLogger(CloneHelper.class);
 
 	private final PCMResourceSetPartition set;
+
+	private final Map<String, User> alreadyClonedUsers = new HashMap<>();
 
 	public CloneHelper(final PCMResourceSetPartition set) {
 		this.set = set;
@@ -535,6 +539,11 @@ public final class CloneHelper {
 	 * @return clone of the given user.
 	 */
 	public User cloneUser(final User user) {
+
+		if (this.alreadyClonedUsers.containsKey(user.getId())) {
+			return this.alreadyClonedUsers.get(user.getId());
+		}
+
 		try (ByteArrayOutputStream fileOutputStream = new ByteArrayOutputStream();
 				ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
 
@@ -545,6 +554,13 @@ public final class CloneHelper {
 					ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
 
 				final User clone = (User) objectInputStream.readObject();
+
+				assert (clone.getStack().size() == user.getStack().size())
+				: String.format("inconsistent stack size, original is %d, clone is %d", user.getStack().size(),
+						clone.getStack().size());
+
+				this.alreadyClonedUsers.put(user.getId(), clone);
+
 				return clone;
 			} catch (final ClassNotFoundException e) {
 				e.printStackTrace();
