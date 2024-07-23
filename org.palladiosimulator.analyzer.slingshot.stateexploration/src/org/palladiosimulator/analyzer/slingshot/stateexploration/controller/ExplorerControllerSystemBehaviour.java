@@ -213,6 +213,10 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Subscribe
 	public void onResetExplorerEvent(final ResetExplorerEvent event) {
+		if (this.initEvent == null) {
+			LOGGER.info("Cannot Reset, Workflow not yet started");
+			return;
+		}
 		this.explorerLock.lock();
 		try {
 			final MDSDBlackboard blackboard = recreatedInitialBlackboard();
