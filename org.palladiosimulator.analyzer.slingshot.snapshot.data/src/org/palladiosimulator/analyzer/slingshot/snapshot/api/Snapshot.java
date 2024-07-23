@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -29,6 +30,17 @@ public interface Snapshot {
 	 * @return events to initialise the next simulation run on.
 	 */
 	public Set<DESEvent> getEvents(final PCMResourceSetPartition set);
+
+	/**
+	 * Insert events that are for initialisation only into the snapshot.
+	 *
+	 * Currently, such events are e.g. the event for initialising the states of the
+	 * SPD-Interpreter. They differ from the other snapshotted events, because they
+	 * never were part of the simulation, and exist for initialisation only.
+	 *
+	 * @param events events to be inserted to the snapshot.
+	 */
+	public void insertStateInitialisationEvents(final Collection<DESEvent> events);
 
 	/**
 	 *

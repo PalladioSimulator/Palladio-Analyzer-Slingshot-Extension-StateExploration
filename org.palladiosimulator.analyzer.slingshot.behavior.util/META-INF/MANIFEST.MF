@@ -19,6 +19,7 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.spd,
  org.palladiosimulator.servicelevelobjective,
  org.palladiosimulator.spd.semantic,
- org.palladiosimulator.analyzer.slingshot.cost
+ org.palladiosimulator.analyzer.slingshot.cost,
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data
 Export-Package: org.palladiosimulator.analyzer.slingshot.behavior.util,
  org.palladiosimulator.analyzer.slingshot.common.utils

@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -12,7 +13,7 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
 /**
  *
  * Snaphshot of a Simulation run that holds all information in memory.
- * 
+ *
  * @author Sarah Stieß
  *
  */
@@ -47,5 +48,10 @@ public final class InMemorySnapshot implements Snapshot {
 	@Override
 	public void setModelAdjustmentRequestedEvent(final ModelAdjustmentRequested event) {
 		this.modelAdjustmentRequestedEvent = Optional.of(event);
+	}
+
+	@Override
+	public void insertStateInitialisationEvents(final Collection<DESEvent> events) {
+		this.events.addAll(events);
 	}
 }
