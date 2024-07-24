@@ -1,10 +1,15 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
@@ -19,6 +24,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Defaul
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
+import org.palladiosimulator.spd.constraints.policy.CooldownConstraint;
 import org.palladiosimulator.spd.triggers.BaseTrigger;
 import org.palladiosimulator.spd.triggers.expectations.ExpectedTime;
 import org.palladiosimulator.spd.triggers.stimuli.SimulationTime;
@@ -97,21 +103,86 @@ public class ExplorationPlanner {
 		final double duration = this.calculateRunDuration(start);
 
 		if (change.isEmpty()) {
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null, start.getId());
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null,
+					this.createStateInitEvents(start.getAdjustorStateValues()), start.getId());
 		}
 
 		if (change.get() instanceof final Reconfiguration reconf) {
 			LOGGER.debug("Create InitConfiguration for Reconfiguration (Pro- or Reactive)");
 
+			final Collection<SPDAdjustorStateValues> initValues = updateInitValues(reconf.getAppliedPolicy(),
+					start.getAdjustorStateValues());
 
 			final ModelAdjustmentRequested initEvent = (new AdjustorEventConcerns(end.getArchitecureConfiguration()))
 					.copy(reconf.getReactiveReconfigurationEvent());
 
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvent, start.getId());
-
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvent,
+					this.createStateInitEvents(initValues),
+					start.getId());
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");
+	}
+
+	/**
+	 *
+	 * Adapt initialisation values to represent the application of the reactive or
+	 * proactive reconfigurations.
+	 *
+	 * Reconfigurations at the beginning of the next simulation run are applied by
+	 * injecting the respective {@link ModelAdjustmentRequested} event. Thus the
+	 * adjustment request does not pass the trigger chain, and the policy
+	 * application is not represented in the state of the SPD adjustor.
+	 *
+	 * To mitigate this, this operation manually updates the counters and times in
+	 * the initialisation values. This is necessary for both proactive and reactive
+	 * reconfiguration, as the {@code DefaultState} always holds the state of the
+	 * adjustors prior to reconfiguration application.
+	 *
+	 * @param policy     policy to be applied at the beginning of the next
+	 *                   simulation run.
+	 * @param initValues values to initialise the {@code SPDAdjustorContext} on.
+	 * @return collection of update values.
+	 */
+	private Collection<SPDAdjustorStateValues> updateInitValues(final ScalingPolicy policy,
+			final Collection<SPDAdjustorStateValues> initValues) {
+
+		final Collection<SPDAdjustorStateValues> rvals = new HashSet<>(initValues);
+
+		final Optional<CooldownConstraint> cooldownConstraint = policy.getPolicyConstraints().stream()
+				.filter(CooldownConstraint.class::isInstance).map(CooldownConstraint.class::cast).findAny();
+
+		if (cooldownConstraint.isEmpty()) {
+			return rvals;
+		}
+
+		int numberscales = 0;
+		double cooldownEnd = 0;
+		int numberscalesinCD = 0;
+
+		final Optional<SPDAdjustorStateValues> matchingValues = initValues.stream()
+				.filter(v -> v.scalingPolicyId().equals(policy.getId())).findAny();
+
+		if (matchingValues.isPresent()) {
+			numberscales = matchingValues.get().numberScales();
+			cooldownEnd = matchingValues.get().coolDownEnd();
+			numberscalesinCD = matchingValues.get().numberOfScalesInCooldown();
+			rvals.remove(matchingValues.get());
+		}
+
+		if (numberscalesinCD < cooldownConstraint.get().getMaxScalingOperations()) {
+			numberscalesinCD++;
+		} else {
+			numberscalesinCD = 0;
+			cooldownEnd = cooldownConstraint.get().getCooldownTime();
+		}
+
+		final SPDAdjustorStateValues newvalues = new SPDAdjustorStateValues(policy.getId(), 0.0, numberscales + 1,
+				cooldownEnd, numberscalesinCD);
+
+		rvals.add(newvalues);
+
+		return rvals;
 	}
 
 	/**
@@ -143,9 +214,6 @@ public class ExplorationPlanner {
 			this.fringe.add(toDoChange);
 		}
 	}
-
-
-
 
 	/**
 	 * Create a new graph note with a new arch configuration.
@@ -222,5 +290,10 @@ public class ExplorationPlanner {
 			LOGGER.debug(String.format("Reduce Triggertime of Policy %s by %f to %f.", policy.getEntityName(),
 					previousStateDuration, time.getValue()));
 		}
+	}
+
+	private Collection<DESEvent> createStateInitEvents(
+			final Collection<SPDAdjustorStateValues> values) {
+		return values.stream().map(value -> (DESEvent) new SPDAdjustorStateInitialized(value)).toList();
 	}
 }

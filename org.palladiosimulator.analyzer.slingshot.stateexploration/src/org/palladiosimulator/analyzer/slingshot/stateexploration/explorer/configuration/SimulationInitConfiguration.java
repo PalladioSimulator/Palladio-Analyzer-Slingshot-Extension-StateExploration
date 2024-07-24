@@ -1,15 +1,18 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 
 /**
+ * Configuration that holds all (most?) information for starting a new
+ * simulation cycle with the exploration.
  *
- *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class SimulationInitConfiguration {
@@ -18,17 +21,22 @@ public class SimulationInitConfiguration {
 	private final DefaultState stateToExplore;
 	private final double explorationDuration;
 
+	/** Events that are not part of the simulation, but only for initialising it. */
+	private final Collection<DESEvent> initializationEvents;
+
 	private final Optional<ModelAdjustmentRequested> event;
 	private final String parentId;
 
 
 	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore,
-			final double explorationDuration, final ModelAdjustmentRequested event, final String parentId) {
+			final double explorationDuration, final ModelAdjustmentRequested event,
+			final Collection<DESEvent> initializationEvents, final String parentId) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
 		this.event = Optional.ofNullable(event);
+		this.initializationEvents = initializationEvents;
 		this.parentId = parentId;
 	}
 
@@ -40,6 +48,10 @@ public class SimulationInitConfiguration {
 	}
 	public double getExplorationDuration() {
 		return this.explorationDuration;
+	}
+
+	public Collection<DESEvent> getinitializationEvents() {
+		return this.initializationEvents;
 	}
 
 	/**

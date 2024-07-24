@@ -139,6 +139,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
 		config.getEvent().ifPresent(e -> set.add(e));
+		set.addAll(config.getinitializationEvents());
 
 		final EventsToInitOnWrapper eventsToInitOn = new EventsToInitOnWrapper(set);
 

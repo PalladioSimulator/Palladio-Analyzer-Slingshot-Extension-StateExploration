@@ -1,7 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
@@ -36,12 +39,16 @@ public class DefaultState implements RawModelState {
 	/* known after configuration of the simulation run */
 	private ExperimentSetting experimentSetting;
 
+	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
+
 	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
 			final DefaultGraph graph) {
 		this.graph = graph;
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
 		this.reasonToLeave = ReasonToLeave.interval;
+
+		this.adjustorStateValues = new HashSet<>();
 	}
 
 	public ExperimentSetting getExperimentSetting() {
@@ -74,6 +81,14 @@ public class DefaultState implements RawModelState {
 
 	public void setDuration(final double duration) {
 		this.duration = duration;
+	}
+
+	public void addAdjustorStateValues(final Collection<SPDAdjustorStateValues> adjustorStateValues) {
+		this.adjustorStateValues.addAll(adjustorStateValues);
+	}
+
+	public Collection<SPDAdjustorStateValues> getAdjustorStateValues() {
+		return Set.copyOf(this.adjustorStateValues);
 	}
 
 	/* to match the interface */

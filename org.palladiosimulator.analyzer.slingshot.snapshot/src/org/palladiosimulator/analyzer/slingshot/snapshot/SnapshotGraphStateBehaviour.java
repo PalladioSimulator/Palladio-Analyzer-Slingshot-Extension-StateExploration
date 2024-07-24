@@ -12,6 +12,8 @@ import javax.inject.Inject;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
@@ -52,10 +54,14 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
  *
  */
 @OnEvent(when = CalculatorRegistered.class, then = {})
-@OnEvent(when = SimulationStarted.class, then = AbstractEntityChangedEvent.class, cardinality = EventCardinality.MANY)
+@OnEvent(when = SimulationStarted.class, then = { AbstractEntityChangedEvent.class,
+		SPDAdjustorStateInitialized.class }, cardinality = EventCardinality.MANY)
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
-@OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class)
+@OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class, cardinality = EventCardinality.SINGLE)
 @OnEvent(when = ModelAdjusted.class, then = {})
+
+@OnEvent(when = SPDAdjustorStateInitialized.class, then = {})
+
 public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension {
 
 	private final Logger LOGGER = Logger.getLogger(SnapshotGraphStateBehaviour.class);
@@ -68,6 +74,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	private final DefaultState halfDoneState;
 	/* Snapshotted events taken from earlier simulation run */
 	private final Set<DESEvent> eventsToInitOn;
+
+	private final Map<String, SPDAdjustorStateValues> policyIdToValues;
 
 	/* helper */
 	private final Map<UsageModelPassedElement<?>, Double> event2offset;
@@ -90,7 +98,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.simuComConfig = simuComConfig;
 		this.allocation = allocation;
 
-
 		if (activated) {
 			assert halfDoneState.getSnapshot() == null : "Snapshot already set, but should not be!";
 			this.eventsToInitOn = eventsToInitOn.getEventsToInitOn();
@@ -100,6 +107,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 		this.event2offset = new HashMap<>();
 		this.resourceContainer2intervalPassed = new HashMap<>();
+		this.policyIdToValues = new HashMap<>();
 	}
 
 	@Override
@@ -134,7 +142,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	@Subscribe
 	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
 		assert snapshotConfig.isStartFromSnapshot()
-		|| this.eventsToInitOn.stream().allMatch(ModelAdjustmentRequested.class::isInstance)
+		|| this.eventsToInitOn.stream().allMatch(
+				e -> e instanceof ModelAdjustmentRequested || e instanceof SPDAdjustorStateInitialized)
 		: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
 
 		this.initOffsets(this.eventsToInitOn);
@@ -202,6 +211,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	/**
 	 * Catch {@link IntervalPassed} (cost) from the snapshot abort them, because for
 	 * costs, we use the events of the current simulation run.
+	 *
+	 * TODO: why am i even including them in the snapshot to begin with?
 	 *
 	 * @param information interception information
 	 * @param event       intercepted event
@@ -293,6 +304,10 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	public Result<SimulationFinished> onSnapshotFinished(final SnapshotFinished event) {
 		halfDoneState.setSnapshot(event.getEntity());
 		halfDoneState.setDuration(event.time());
+
+		halfDoneState.addAdjustorStateValues(
+				this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time())).toList());
+
 		// Do not add the state anywhere, just finalise it. Assumption is, it already is
 		// in the graph.
 		return Result.of(new SimulationFinished());
@@ -310,11 +325,22 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
+	 * Subscribe to the {@link SPDAdjustorStateInitialized} events, because we also
+	 * need those states for the next simulation.
+	 *
+	 * @param event
+	 */
+	@Subscribe
+	public void onAdjustorStateUpdated(final SPDAdjustorStateInitialized event) {
+		this.policyIdToValues.put(event.getStateValues().scalingPolicyId(), event.getStateValues());
+	}
+
+	/**
 	 *
 	 * Extract offset (encoded into the time field of the events) from the events
 	 * into a map and set the event's time to 0.
 	 *
-	 * @param events events ot extract offset from.
+	 * @param events events to extract offset from.
 	 */
 	private void initOffsets(final Set<DESEvent> events) {
 		events.stream().filter(event -> event instanceof UsageModelPassedElement<?>).forEach(event -> {
@@ -333,5 +359,27 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		events.stream().filter(event -> event instanceof IntervalPassed)
 		.forEach(event -> resourceContainer2intervalPassed
 				.put(((IntervalPassed) event).getTargetResourceContainer().getId(), (IntervalPassed) event));
+	}
+
+	/**
+	 * Adjust the time of the latest adjustment and the time of the cooldown to the
+	 * reference time.
+	 *
+	 * If the latest adjustment was at t = 5 s, the cooldown ends at t = 15 s, and
+	 * the reference time is t = 10 s, then the adjusted values will be latest
+	 * adjustment at t = -5 s and cooldown end at t = 5 s.
+	 *
+	 * @param stateValues   values to be adjusted
+	 * @param referenceTime time to adjust to.
+	 * @return adjusted values.
+	 */
+	private SPDAdjustorStateValues setOffsets(final SPDAdjustorStateValues stateValues, final double referenceTime) {
+		final double latestAdjustmentAtSimulationTime = stateValues.latestAdjustmentAtSimulationTime() - referenceTime;
+		final int numberScales = stateValues.numberScales();
+		final double coolDownEnd = stateValues.coolDownEnd() > 0.0 ? stateValues.coolDownEnd() - referenceTime : 0.0;
+		final int numberOfScalesInCooldown = stateValues.numberOfScalesInCooldown();
+
+		return new SPDAdjustorStateValues(stateValues.scalingPolicyId(), latestAdjustmentAtSimulationTime, numberScales,
+				coolDownEnd, numberOfScalesInCooldown);
 	}
 }
