@@ -2,10 +2,13 @@ package org.palladiosimulator.analyzer.slingshot.behavior.util.visitors;
 
 import java.util.function.Function;
 
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
+import org.palladiosimulator.pcm.seff.StartAction;
+import org.palladiosimulator.pcm.seff.StopAction;
 import org.palladiosimulator.pcm.usagemodel.Start;
 import org.palladiosimulator.pcm.usagemodel.Stop;
 
@@ -15,7 +18,8 @@ public class ModelElementPassedVisitor extends SetReferencingVisitor {
 	public ModelElementPassedVisitor(final PCMResourceSetPartition set) {
 		super(set);
 		jobCloneFactory = new LambdaVisitor<DESEvent, DESEvent>().
-				on(UsageModelPassedElement.class).then(this::clone);
+				on(UsageModelPassedElement.class).then(this::clone)
+				.on(SEFFModelPassedElement.class).then(this::clone);
 	}
 
 	private DESEvent clone(final UsageModelPassedElement<?> event) {
@@ -29,6 +33,21 @@ public class ModelElementPassedVisitor extends SetReferencingVisitor {
 		if (Stop.class.isAssignableFrom(event.getGenericType())) {
 			clonedEvent = new UsageModelPassedElement<Stop>((Stop) event.getEntity(),
 					helper.cloneUserInterpretationContext(event.getContext()));
+		}
+		return clonedEvent;
+	}
+
+	private DESEvent clone(final SEFFModelPassedElement<?> event) {
+		SEFFModelPassedElement<?> clonedEvent = null;
+
+		if (StartAction.class.isAssignableFrom(event.getGenericType())) {
+			clonedEvent = new SEFFModelPassedElement<StartAction>((StartAction) event.getEntity(),
+					helper.cloneContext(event.getContext()));
+			clonedEvent.setTime(event.time());
+		}
+		if (StopAction.class.isAssignableFrom(event.getGenericType())) {
+			clonedEvent = new SEFFModelPassedElement<StopAction>((StopAction) event.getEntity(),
+					helper.cloneContext(event.getContext()));
 		}
 		return clonedEvent;
 	}

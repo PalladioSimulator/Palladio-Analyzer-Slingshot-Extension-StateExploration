@@ -4,9 +4,12 @@ import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
-import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
+import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.JobRecord;
+import org.palladiosimulator.pcm.seff.StartAction;
+import org.palladiosimulator.pcm.seff.StopAction;
 import org.palladiosimulator.pcm.usagemodel.Start;
 import org.palladiosimulator.pcm.usagemodel.Stop;
 
@@ -33,7 +36,7 @@ public interface EventRecord {
 	 *
 	 * @return event to recreate calculator states.
 	 */
-	public Set<AbstractEntityChangedEvent<?>> getRecordedCalculators();
+	public Set<ModelPassedEvent<?>> getRecordedCalculators();
 
 	/**
 	 * Get records for jobs currently processed at a FCFS resource, i.e. the
@@ -61,11 +64,27 @@ public interface EventRecord {
 
 
 	/**
-	 * Remove event that started the calculation finished by the given event from the record.
+	 * Remove event that started the calculation finished by the given event from
+	 * the record.
 	 *
-	 * @param event event that finishd a calculation.
+	 * @param event event that finished a calculation.
 	 */
 	public void removeFinishedCalculator(final UsageModelPassedElement<Stop> event);
+
+	/**
+	 * Store the given event, as it started a calculation at a calculator.
+	 *
+	 * @param event event that started a calculation.
+	 */
+	public void addInitiatedCalculator(final SEFFModelPassedElement<StartAction> event);
+
+	/**
+	 * Remove event that started the calculation finished by the given event from
+	 * the record.
+	 *
+	 * @param event event that finished a calculation.
+	 */
+	public void removeFinishedCalculator(final SEFFModelPassedElement<StopAction> event);
 
 	/**
 	 * Create and store record for the job entity in the given event.

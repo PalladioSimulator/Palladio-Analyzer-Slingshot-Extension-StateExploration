@@ -28,6 +28,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entiti
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorContextHolder;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorWrapper;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.user.RequestProcessingContext;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.InterArrivalTime;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.ThinkTime;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.User;
@@ -58,6 +59,7 @@ import org.palladiosimulator.pcm.repository.Signature;
 import org.palladiosimulator.pcm.resourceenvironment.LinkingResource;
 import org.palladiosimulator.pcm.seff.AbstractAction;
 import org.palladiosimulator.pcm.seff.ResourceDemandingBehaviour;
+import org.palladiosimulator.pcm.seff.StartAction;
 import org.palladiosimulator.pcm.seff.seff_performance.ParametricResourceDemand;
 import org.palladiosimulator.pcm.usagemodel.AbstractUserAction;
 import org.palladiosimulator.pcm.usagemodel.ScenarioBehaviour;
@@ -140,6 +142,30 @@ public final class CloneHelper {
 			final double offset = simulationTime - event.time();
 			final UsageModelPassedElement<Start> clonedEvent = new UsageModelPassedElement<Start>((Start) modelElement,
 					cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()));
+
+			clonedEvent.setTime(offset);
+			return clonedEvent;
+		}
+		return event;
+	}
+
+	/**
+	 * Clone a {@link SEFFModelPassedElement} event but also calculate the offset
+	 * for the next simulation run and safe it in the {@code time} field.
+	 *
+	 * This is not optimal but still the best option to save the offset for later.
+	 *
+	 * @param event          event to be cloned
+	 * @param simulationTime time to calculate offset
+	 * @return clone of given event with offset as time.
+	 */
+	public DESEvent clone(final SEFFModelPassedElement<?> event, final double simulationTime) {
+
+		final Object modelElement = event.getModelElement();
+		if (modelElement instanceof Start && event.time() <= simulationTime) {
+			final double offset = simulationTime - event.time();
+			final SEFFModelPassedElement<StartAction> clonedEvent = new SEFFModelPassedElement<>(
+					(StartAction) modelElement, cloneContext(event.getContext()));
 
 			clonedEvent.setTime(offset);
 			return clonedEvent;

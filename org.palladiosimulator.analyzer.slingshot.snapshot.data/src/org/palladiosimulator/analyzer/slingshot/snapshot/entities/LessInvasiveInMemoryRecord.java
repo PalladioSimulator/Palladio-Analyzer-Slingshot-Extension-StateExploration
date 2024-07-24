@@ -14,18 +14,20 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.LinkingJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.User;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
-import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.pcm.resourceenvironment.ProcessingResourceSpecification;
+import org.palladiosimulator.pcm.seff.StartAction;
+import org.palladiosimulator.pcm.seff.StopAction;
 import org.palladiosimulator.pcm.usagemodel.Start;
 import org.palladiosimulator.pcm.usagemodel.Stop;
 
 /**
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class LessInvasiveInMemoryRecord implements EventRecord {
@@ -46,6 +48,30 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	@Override
 	public void addInitiatedCalculator(final UsageModelPassedElement<Start> event) {
 		final User user = event.getContext().getUser();
+
+		addInitialCalculator(event, user);
+	}
+
+	@Override
+	public void removeFinishedCalculator(final UsageModelPassedElement<Stop> event) {
+		final User user = event.getContext().getUser();
+		removeFinishedCalculator(user);
+	}
+
+	@Override
+	public void addInitiatedCalculator(final SEFFModelPassedElement<StartAction> event) {
+		final User user = event.getContext().getRequestProcessingContext().getUser();
+
+		addInitialCalculator(event, user);
+	}
+
+	@Override
+	public void removeFinishedCalculator(final SEFFModelPassedElement<StopAction> event) {
+		final User user = event.getContext().getRequestProcessingContext().getUser();
+		removeFinishedCalculator(user);
+	}
+
+	private void addInitialCalculator(final ModelPassedEvent<?> event, final User user) {
 		if (!openCalculators.containsKey(user)) {
 			openCalculators.put(user, new ArrayDeque<>());
 		}
@@ -54,9 +80,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 		openCalculators.get(user).push(event);
 	}
 
-	@Override
-	public void removeFinishedCalculator(final UsageModelPassedElement<Stop> event) {
-		final User user = event.getContext().getUser();
+	private void removeFinishedCalculator(final User user) {
 		if (openCalculators.containsKey(user)) {
 			openCalculators.get(user).pop();
 		}
@@ -69,7 +93,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 
 	/**
 	 * TODO
-	 * 
+	 *
 	 * @param njob
 	 * @return
 	 */
@@ -108,8 +132,8 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	}
 
 	@Override
-	public Set<AbstractEntityChangedEvent<?>> getRecordedCalculators() {
-		final Set<AbstractEntityChangedEvent<?>> rval = new HashSet<>();
+	public Set<ModelPassedEvent<?>> getRecordedCalculators() {
+		final Set<ModelPassedEvent<?>> rval = new HashSet<>();
 		openCalculators.values().stream().forEach(adq -> rval.addAll(adq));
 		return rval;
 	}
@@ -136,7 +160,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 		if (job instanceof LinkingJob) {
 			return true;
 		}
-		if (job instanceof ActiveJob activeJob) {
+		if (job instanceof final ActiveJob activeJob) {
 			return jobIsOfType(activeJob, FCFS_ID);
 		}
 		LOGGER.debug(String.format("Job of unknown type %s", job.getClass().getSimpleName()));
@@ -152,7 +176,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 		if (job instanceof LinkingJob) {
 			return false;
 		}
-		if (job instanceof ActiveJob activeJob) {
+		if (job instanceof final ActiveJob activeJob) {
 			return jobIsOfType(activeJob, PROCSHARING_ID);
 		}
 		LOGGER.debug(String.format("Job of unknown type %s", job.getClass().getSimpleName()));
@@ -160,7 +184,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param job
 	 * @param type_ID
 	 * @return
