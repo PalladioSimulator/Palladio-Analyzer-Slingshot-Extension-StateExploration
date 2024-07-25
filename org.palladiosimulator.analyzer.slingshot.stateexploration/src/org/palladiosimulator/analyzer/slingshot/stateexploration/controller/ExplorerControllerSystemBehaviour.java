@@ -76,15 +76,6 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	}
 
 	/**
-	 *
-	 */
-	@Subscribe
-	public void onTestMessage(final TestMessage sim) {
-		System.out.println(sim.getPayload());
-		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(5));
-	}
-
-	/**
 	 * Creates the explorer, once the workflow job has prepare all the necessary
 	 * things, such as the blackboard and the parameters from the launch
 	 * configuration.
@@ -96,11 +87,16 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		if (explorationState == ExplorationState.RUNNING) {
 			throw new IllegalStateException("Cannot start new explorer because exploration is already running.");
 		} else {
-			this.initEvent = event;
 
-			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
-					this.initEvent.getMonitor(), this.initEvent.getBlackboard());
-			this.explorationState = ExplorationState.RUNNING;
+			this.explorerLock.lock();
+			try {
+				this.initEvent = event;
+				this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+						this.initEvent.getMonitor(), this.initEvent.getBlackboard());
+				this.explorationState = ExplorationState.RUNNING;
+			} finally {
+				this.explorerLock.unlock();
+			}
 		}
 	}
 
@@ -217,8 +213,15 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 			LOGGER.info("Cannot Reset, Workflow not yet started");
 			return;
 		}
+
 		this.explorerLock.lock();
 		try {
+
+			if (this.explorationState == ExplorationState.NOTRUNNING) {
+				this.explorer = null;
+				return;
+			}
+
 			final MDSDBlackboard blackboard = recreatedInitialBlackboard();
 
 			final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
