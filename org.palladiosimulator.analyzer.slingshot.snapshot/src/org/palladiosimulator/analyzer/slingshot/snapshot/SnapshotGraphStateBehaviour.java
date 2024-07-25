@@ -14,7 +14,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -78,7 +77,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	private final Map<String, SPDAdjustorStateValues> policyIdToValues;
 
 	/* helper */
-	private final Map<UsageModelPassedElement<?>, Double> event2offset;
+	private final Map<ModelPassedEvent<?>, Double> event2offset;
 	private final Map<String, IntervalPassed> resourceContainer2intervalPassed;
 
 	private final boolean activated;
@@ -198,7 +197,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 */
 	@PreIntercept
 	public InterceptionResult preInterceptModelPassedEvent(final InterceptorInformation information,
-			final UsageModelPassedElement<?> event) {
+			final ModelPassedEvent<?> event) {
 		if (event2offset.containsKey(event)) {
 			final double offset = event2offset.remove(event);
 			event.setTime(-offset);
@@ -343,8 +342,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 * @param events events to extract offset from.
 	 */
 	private void initOffsets(final Set<DESEvent> events) {
-		events.stream().filter(event -> event instanceof UsageModelPassedElement<?>).forEach(event -> {
-			event2offset.put((UsageModelPassedElement<?>) event, event.time());
+		events.stream().filter(event -> event instanceof ModelPassedEvent<?>).forEach(event -> {
+			event2offset.put((ModelPassedEvent<?>) event, event.time());
 			event.setTime(0);
 		});
 	}

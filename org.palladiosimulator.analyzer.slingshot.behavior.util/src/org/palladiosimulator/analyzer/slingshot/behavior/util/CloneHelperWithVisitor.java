@@ -10,6 +10,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorSta
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ActiveResourceFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ResourceDemandRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInterpreted;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.UserRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.UserInterpretationContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.AbstractUserChangedEvent;
@@ -39,6 +40,7 @@ public class CloneHelperWithVisitor {
 
 		cloneFactory = new LambdaVisitor<DESEvent, DESEvent>().
 				on(UsageModelPassedElement.class).then(e -> (new ModelElementPassedVisitor(set)).visit(e))
+				.on(SEFFModelPassedElement.class).then(e -> (new ModelElementPassedVisitor(set)).visit(e))
 				.on(AbstractUserChangedEvent.class).then(e -> (new UserChangedEventVisitor(set)).visit(e))
 				.on(SEFFInterpreted.class).then(e -> (new SEFFInterpretedVisitor(set)).visit(e))
 				.on(AbstractJobEvent.class).then(e -> (new JobEventVisitor(set)).visit(e))
