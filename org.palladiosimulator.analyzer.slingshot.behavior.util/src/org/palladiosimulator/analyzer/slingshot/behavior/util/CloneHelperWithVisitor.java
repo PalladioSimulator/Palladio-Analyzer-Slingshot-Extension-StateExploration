@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.AbstractJobEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ActiveResourceFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ResourceDemandRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInterpreted;
@@ -50,6 +51,7 @@ public class CloneHelperWithVisitor {
 				on(UserEntryRequested.class).then(this::clone).
 				on(InterArrivalUserInitiated.class).then(this::clone).
 				on(IntervalPassed.class).then(this::clone).
+				on(SPDAdjustorStateInitialized.class).then(this::clone).
 				on(DESEvent.class).then(this::log);
 	}
 
@@ -74,6 +76,7 @@ public class CloneHelperWithVisitor {
 	private DESEvent clone(final ResourceDemandRequested clonee) {
 		return new ResourceDemandRequested(helper.clone(clonee.getEntity()), clonee.delay());
 	}
+
 	private DESEvent clone(final ActiveResourceFinished clonee) {
 		return new ActiveResourceFinished(helper.clone(clonee.getEntity()), clonee.delay());
 	}
@@ -92,5 +95,9 @@ public class CloneHelperWithVisitor {
 
 	private DESEvent clone(final IntervalPassed clonee) {
 		return new IntervalPassed(clonee);
+	}
+
+	private DESEvent clone(final SPDAdjustorStateInitialized clonee) {
+		return new SPDAdjustorStateInitialized(clonee.getStateValues());
 	}
 }

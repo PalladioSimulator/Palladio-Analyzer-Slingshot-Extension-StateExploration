@@ -181,9 +181,11 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Schedule exactly on fake {@link JobInitiated} to each {@link AllocationContext} with a processor sharing resource.
+	 * Schedule exactly one fake {@link JobInitiated} to each
+	 * {@link AllocationContext} with a processor sharing resource.
 	 *
-	 * They are scheduled directly to the {@ SimulationScheduling}, to have them posted before the {@link SnapshotTaken}.
+	 * They are scheduled directly to the {@link SimulationScheduling}, to have them
+	 * posted before the {@link SnapshotTaken}.
 	 *
 	 * @param procSharingJobs
 	 */
@@ -205,7 +207,9 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * TODO
+	 * Create a copy of the given job, but replace the id with
+	 * {@link SnapshotRecordingBehavior#FAKE}, such that the job can be recognised
+	 * and filtered out later on.
 	 *
 	 * @param job blueprint to copy from
 	 * @return fake job
