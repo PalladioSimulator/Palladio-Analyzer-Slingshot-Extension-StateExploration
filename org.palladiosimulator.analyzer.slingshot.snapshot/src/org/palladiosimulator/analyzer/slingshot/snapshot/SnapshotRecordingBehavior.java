@@ -11,7 +11,9 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
+import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
@@ -33,6 +35,8 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
+import org.palladiosimulator.pcm.seff.StartAction;
+import org.palladiosimulator.pcm.seff.StopAction;
 import org.palladiosimulator.pcm.usagemodel.Start;
 import org.palladiosimulator.pcm.usagemodel.Stop;
 
@@ -43,7 +47,7 @@ import org.palladiosimulator.pcm.usagemodel.Stop;
  * @author stiesssh
  *
  */
-@OnEvent(when = UsageModelPassedElement.class, then = {})
+@OnEvent(when = ModelPassedEvent.class, then = {})
 @OnEvent(when = JobFinished.class, then = {})
 @OnEvent(when = SnapshotTaken.class, then = SnapshotFinished.class)
 @OnEvent(when = SnapshotInitiated.class, then = SnapshotTaken.class)
@@ -73,8 +77,6 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.activated = true;
 	}
 
-
-
 	@Subscribe(reified = Start.class)
 	public void onUsageScenarioStarted(final UsageModelPassedElement<Start> event) {
 		this.recorder.addInitiatedCalculator(event);
@@ -82,6 +84,17 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 	@Subscribe(reified = Stop.class)
 	public void onUsageScenarioStoped(final UsageModelPassedElement<Stop> event) {
+		this.recorder.removeFinishedCalculator(event);
+	}
+
+	@Subscribe(reified = StartAction.class)
+	public void onSEFFStarted(final SEFFModelPassedElement<StartAction> event) {
+		this.recorder.addInitiatedCalculator(event);
+
+	}
+
+	@Subscribe(reified = StopAction.class)
+	public void onSEFFStoped(final SEFFModelPassedElement<StopAction> event) {
 		this.recorder.removeFinishedCalculator(event);
 	}
 
