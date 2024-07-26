@@ -188,14 +188,14 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	 * @param evt
 	 */
 	private void log(final Set<DESEvent> evt) {
-		LOGGER.warn("DEMANDS");
+		LOGGER.info("DEMANDS");
 		evt.stream().filter(e -> (e instanceof JobInitiated)).map(e -> (JobInitiated) e)
-		.forEach(e -> LOGGER.warn(e.getEntity().getDemand()));
-		LOGGER.warn("TIMES");
+				.forEach(e -> LOGGER.info(e.getEntity().getDemand()));
+		LOGGER.info("TIMES");
 		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e)
-		.forEach(e -> LOGGER.warn(e.time()));
-		LOGGER.warn("CWUI");
+				.forEach(e -> LOGGER.info(e.time()));
+		LOGGER.info("CWUI");
 		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e)
-		.forEach(e -> LOGGER.warn(e.delay() + " " + e.time()));
+				.forEach(e -> LOGGER.info(e.delay() + " " + e.time()));
 	}
 }

@@ -56,7 +56,8 @@ public class CloneHelperWithVisitor {
 	}
 
 	private DESEvent log(final DESEvent event) {
-		LOGGER.warn(String.format("Did not clone %s. Missing visitor for type %s.", event.toString(), event.getClass().getCanonicalName()));
+		LOGGER.info(String.format("Did not clone %s. Missing visitor for type %s.", event.toString(),
+				event.getClass().getCanonicalName()));
 		return null;
 	}
 
