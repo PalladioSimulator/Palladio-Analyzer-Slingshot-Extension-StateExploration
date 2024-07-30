@@ -219,22 +219,22 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 * @param event       intercepted event
 	 * @return always success
 	 */
-	@PreIntercept
-	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
-			final IntervalPassed event) {
-		if (resourceContainer2intervalPassed.isEmpty()) {
-			return InterceptionResult.success();
-		}
-
-		final String target = event.getTargetResourceContainer().getId();
-
-		if (resourceContainer2intervalPassed.containsKey(target)) {
-			resourceContainer2intervalPassed.remove(target);
-			return InterceptionResult.abort();
-		}
-
-		return InterceptionResult.success();
-	}
+	//	@PreIntercept
+	//	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
+	//			final IntervalPassed event) {
+	//		if (resourceContainer2intervalPassed.isEmpty()) {
+	//			return InterceptionResult.success();
+	//		}
+	//
+	//		final String target = event.getTargetResourceContainer().getId();
+	//
+	//		if (resourceContainer2intervalPassed.containsKey(target)) {
+	//			resourceContainer2intervalPassed.remove(target);
+	//			return InterceptionResult.abort();
+	//		}
+	//
+	//		return InterceptionResult.success();
+	//	}
 
 	/**
 	 * Add the measurements to the raw state.
@@ -357,9 +357,10 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 * @param events events to collect resource containers from.
 	 */
 	private Set<DESEvent> initIntervallPased(final Set<DESEvent> events) {
-		events.stream().filter(event -> event instanceof IntervalPassed)
-		.forEach(event -> resourceContainer2intervalPassed
-				.put(((IntervalPassed) event).getTargetResourceContainer().getId(), (IntervalPassed) event));
+		// events.stream().filter(event -> event instanceof IntervalPassed)
+		// .forEach(event -> resourceContainer2intervalPassed
+		// .put(((IntervalPassed) event).getTargetResourceContainer().getId(),
+		// (IntervalPassed) event));
 
 		return events.stream().filter(Predicate.not(IntervalPassed.class::isInstance)).collect(Collectors.toSet());
 	}
