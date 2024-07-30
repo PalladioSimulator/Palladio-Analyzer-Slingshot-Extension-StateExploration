@@ -63,6 +63,7 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 		// proof of concept -> to be deleted?
 		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
+		// install(SimulationBehaviourReactionTest.class);
 		install(ArchitectureMessageDispatcher.class);
 
 	}

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -146,8 +147,9 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
 
 		this.initOffsets(this.eventsToInitOn);
-		this.initIntervallPased(this.eventsToInitOn);
-		return Result.of(this.eventsToInitOn);
+		final Set<DESEvent> eventsToInitOnNoIntervallPassed = this.initIntervallPased(this.eventsToInitOn);
+
+		return Result.of(eventsToInitOnNoIntervallPassed);
 	}
 
 	/**
@@ -354,10 +356,12 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 *
 	 * @param events events to collect resource containers from.
 	 */
-	private void initIntervallPased(final Set<DESEvent> events) {
+	private Set<DESEvent> initIntervallPased(final Set<DESEvent> events) {
 		events.stream().filter(event -> event instanceof IntervalPassed)
 		.forEach(event -> resourceContainer2intervalPassed
 				.put(((IntervalPassed) event).getTargetResourceContainer().getId(), (IntervalPassed) event));
+
+		return events.stream().filter(Predicate.not(IntervalPassed.class::isInstance)).collect(Collectors.toSet());
 	}
 
 	/**
