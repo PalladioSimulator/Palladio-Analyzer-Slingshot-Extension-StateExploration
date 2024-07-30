@@ -162,7 +162,7 @@ public final class CloneHelper {
 	public DESEvent clone(final SEFFModelPassedElement<?> event, final double simulationTime) {
 
 		final Object modelElement = event.getModelElement();
-		if (modelElement instanceof Start && event.time() <= simulationTime) {
+		if (modelElement instanceof StartAction && event.time() <= simulationTime) {
 			final double offset = simulationTime - event.time();
 			final SEFFModelPassedElement<StartAction> clonedEvent = new SEFFModelPassedElement<>(
 					(StartAction) modelElement, cloneContext(event.getContext()));

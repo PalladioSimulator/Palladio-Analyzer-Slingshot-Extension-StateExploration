@@ -1,6 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
+import org.eclipse.emf.ecore.EObject;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.LinkingJob;
@@ -19,6 +19,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.Use
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
+import org.palladiosimulator.pcm.core.entity.Entity;
 import org.palladiosimulator.pcm.resourceenvironment.ProcessingResourceSpecification;
 import org.palladiosimulator.pcm.seff.StartAction;
 import org.palladiosimulator.pcm.seff.StopAction;
@@ -42,7 +43,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	}
 
 	/* states that still change due to running simulation */
-	private final Map<User, ArrayDeque<ModelPassedEvent<?>>> openCalculators;
+	private final Map<User, Map<EObject, ModelPassedEvent<?>>> openCalculators;
 	private final Map<User, JobRecord> openJob;
 
 	@Override
@@ -55,7 +56,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	@Override
 	public void removeFinishedCalculator(final UsageModelPassedElement<Stop> event) {
 		final User user = event.getContext().getUser();
-		removeFinishedCalculator(user);
+		removeFinishedCalculator(user, event.getEntity());
 	}
 
 	@Override
@@ -68,21 +69,36 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	@Override
 	public void removeFinishedCalculator(final SEFFModelPassedElement<StopAction> event) {
 		final User user = event.getContext().getRequestProcessingContext().getUser();
-		removeFinishedCalculator(user);
+		removeFinishedCalculator(user, event.getEntity());
 	}
 
 	private void addInitialCalculator(final ModelPassedEvent<?> event, final User user) {
 		if (!openCalculators.containsKey(user)) {
-			openCalculators.put(user, new ArrayDeque<>());
+			openCalculators.put(user, new HashMap<>());
 		}
-		assert !openCalculators.get(user).contains(event);
+		/*
+		 * [S3] Currently, this invariant does not hold. In case of Loops in the
+		 * UsageScenario, the UsageModelPassedElement events for Start and Stop might be
+		 * delivered in the wrong order.
+		 */
+		// assert
+		// !openCalculators.get(user).containsKey(event.getEntity().eContainer());
 
-		openCalculators.get(user).push(event);
+		openCalculators.get(user).put(event.getEntity().eContainer(), event);
 	}
 
-	private void removeFinishedCalculator(final User user) {
+	private void removeFinishedCalculator(final User user, final Entity entity) {
 		if (openCalculators.containsKey(user)) {
-			openCalculators.get(user).pop();
+			/*
+			 * [S3] Currently, the UsageModelPassedElement events for Start and Stop might
+			 * be delivered in the wrong order. As result, i cannot ascertain, this
+			 * invariant and must instead accept "startless" stops.
+			 */
+			// assert openCalculators.get(user).containsKey(entity.eContainer()) : "missing
+			// start for received stop.";
+			if (openCalculators.get(user).containsKey(entity.eContainer())) {
+				openCalculators.get(user).remove(entity.eContainer());
+			}
 		}
 	}
 
@@ -134,7 +150,7 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	@Override
 	public Set<ModelPassedEvent<?>> getRecordedCalculators() {
 		final Set<ModelPassedEvent<?>> rval = new HashSet<>();
-		openCalculators.values().stream().forEach(adq -> rval.addAll(adq));
+		openCalculators.values().stream().forEach(adq -> rval.addAll(adq.values()));
 		return rval;
 	}
 

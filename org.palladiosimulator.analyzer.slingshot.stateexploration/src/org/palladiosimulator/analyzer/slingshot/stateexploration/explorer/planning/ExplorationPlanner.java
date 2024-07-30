@@ -246,7 +246,7 @@ public class ExplorationPlanner {
 		if (previous.getDuration() == 0 || previous.isDecreaseInterval()) {
 			return minDuration;
 		}
-		return 2 * previous.getDuration();
+		return previous.getDuration() < minDuration ? minDuration : 2 * previous.getDuration();
 	}
 
 	/**
