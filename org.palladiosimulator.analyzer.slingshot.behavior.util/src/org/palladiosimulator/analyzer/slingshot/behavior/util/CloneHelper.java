@@ -44,6 +44,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.Close
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InterArrivalUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
@@ -139,11 +140,11 @@ public final class CloneHelper {
 
 		final Object modelElement = event.getModelElement();
 		if (modelElement instanceof Start && event.time() <= simulationTime) {
-			final double offset = simulationTime - event.time();
-			final UsageModelPassedElement<Start> clonedEvent = new UsageModelPassedElement<Start>((Start) modelElement,
+			final UsageModelPassedElement<Start> clonedEvent = new UsageModelPassedElement<Start>(
+					this.getMatchingPCMElement((Start) modelElement),
 					cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()));
 
-			clonedEvent.setTime(offset);
+			setOffset(event.time(), simulationTime, clonedEvent);
 			return clonedEvent;
 		}
 		return event;
@@ -163,14 +164,39 @@ public final class CloneHelper {
 
 		final Object modelElement = event.getModelElement();
 		if (modelElement instanceof StartAction && event.time() <= simulationTime) {
-			final double offset = simulationTime - event.time();
 			final SEFFModelPassedElement<StartAction> clonedEvent = new SEFFModelPassedElement<>(
-					(StartAction) modelElement, cloneContext(event.getContext()));
+					this.getMatchingPCMElement((StartAction) modelElement), cloneContext(event.getContext()));
 
-			clonedEvent.setTime(offset);
+			setOffset(event.time(), simulationTime, clonedEvent);
+
 			return clonedEvent;
 		}
 		return event;
+	}
+
+	/**
+	 * Calculate an event's offset with respect to the current simulation time and
+	 * save the offset in the event's time attribute.
+	 *
+	 * If the event was created during the simulation run, the offset is the
+	 * difference between current simulation time and the event time. If the event
+	 * was created during a previous simulation run, i.e. it already entered this
+	 * simulation run with a offset into the past, the new offset is the sum of
+	 * simulation time and old offset.
+	 *
+	 * @param eventTime      publication point in time from previous simulation run
+	 * @param simulationTime current time of the simulation
+	 * @param clonedEvent    the event to be modified
+	 */
+	private void setOffset(final double eventTime, final double simulationTime,
+			final ModelPassedEvent<?> clonedEvent) {
+		if (eventTime < 0) {
+			final double offset = -(eventTime - simulationTime);
+			clonedEvent.setTime(offset);
+		} else {
+			final double offset = simulationTime - eventTime;
+			clonedEvent.setTime(offset);
+		}
 	}
 
 	/**
@@ -181,8 +207,8 @@ public final class CloneHelper {
 	 * @return
 	 */
 	public DESEvent clone(final UsageModelPassedElement<?> event) {
-		final Object modelElement = event.getModelElement();
-		return new UsageModelPassedElement<Start>((Start) modelElement,
+		final Start modelElement = this.getMatchingPCMElement((Start) event.getModelElement());
+		return new UsageModelPassedElement<Start>(modelElement,
 				cloneUserInterpretationContext(((UsageModelPassedElement<?>) event).getContext()));
 	}
 
@@ -823,7 +849,7 @@ public final class CloneHelper {
 	 * @return matching element from {@code this}' resource set, or {@code null}.,
 	 *         if {@code element} was {@code null}.
 	 */
-	private <T extends EObject> T getMatchingPCMElement(final T element) {
+	public <T extends EObject> T getMatchingPCMElement(final T element) {
 		assert element == null || (element != null && element.eResource() != null)
 				: String.format("Element %s is not contained in a resource, but must be.", element.toString());
 

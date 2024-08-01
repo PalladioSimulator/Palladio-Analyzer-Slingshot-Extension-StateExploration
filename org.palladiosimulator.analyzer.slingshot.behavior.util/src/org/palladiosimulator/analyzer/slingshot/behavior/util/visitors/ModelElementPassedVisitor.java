@@ -26,12 +26,12 @@ public class ModelElementPassedVisitor extends SetReferencingVisitor {
 		UsageModelPassedElement<?> clonedEvent = null;
 
 		if (Start.class.isAssignableFrom(event.getGenericType())) {
-			clonedEvent = new UsageModelPassedElement<Start>((Start) event.getEntity(),
+			clonedEvent = new UsageModelPassedElement<Start>(helper.getMatchingPCMElement((Start) event.getEntity()),
 					helper.cloneUserInterpretationContext(event.getContext()));
 			clonedEvent.setTime(event.time());
 		}
 		if (Stop.class.isAssignableFrom(event.getGenericType())) {
-			clonedEvent = new UsageModelPassedElement<Stop>((Stop) event.getEntity(),
+			clonedEvent = new UsageModelPassedElement<Stop>(helper.getMatchingPCMElement((Stop) event.getEntity()),
 					helper.cloneUserInterpretationContext(event.getContext()));
 		}
 		return clonedEvent;
@@ -41,12 +41,14 @@ public class ModelElementPassedVisitor extends SetReferencingVisitor {
 		SEFFModelPassedElement<?> clonedEvent = null;
 
 		if (StartAction.class.isAssignableFrom(event.getGenericType())) {
-			clonedEvent = new SEFFModelPassedElement<StartAction>((StartAction) event.getEntity(),
+			clonedEvent = new SEFFModelPassedElement<StartAction>(
+					helper.getMatchingPCMElement((StartAction) event.getEntity()),
 					helper.cloneContext(event.getContext()));
 			clonedEvent.setTime(event.time());
 		}
 		if (StopAction.class.isAssignableFrom(event.getGenericType())) {
-			clonedEvent = new SEFFModelPassedElement<StopAction>((StopAction) event.getEntity(),
+			clonedEvent = new SEFFModelPassedElement<StopAction>(
+					helper.getMatchingPCMElement((StopAction) event.getEntity()),
 					helper.cloneContext(event.getContext()));
 		}
 		return clonedEvent;
