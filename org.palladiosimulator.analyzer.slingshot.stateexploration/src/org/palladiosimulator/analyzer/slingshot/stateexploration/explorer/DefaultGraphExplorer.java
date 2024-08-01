@@ -39,7 +39,6 @@ import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationMo
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
-import org.palladiosimulator.pcm.allocation.AllocationPackage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
@@ -122,10 +121,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
 
-		LOGGER.warn("Run on Models at: " + config.getStateToExplore().getArchitecureConfiguration()
-				.getUri(AllocationPackage.eINSTANCE.getAllocation()).toString());
 
-		LOGGER.warn("Start with Request to these Resources: ");
+		LOGGER.debug("Start with Request to these Resources: ");
 		config.getSnapToInitOn().getEvents(this.initModels).stream()
 		.filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
 		.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
