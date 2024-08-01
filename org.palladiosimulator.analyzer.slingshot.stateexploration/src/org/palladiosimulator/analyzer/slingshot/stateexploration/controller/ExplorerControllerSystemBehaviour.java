@@ -23,7 +23,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.analyzer.workflow.jobs.LoadModelIntoBlackboardJob;
@@ -48,7 +47,6 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  * @author Sarah Stieß
  *
  */
-@OnEvent(when = TestMessage.class)
 @OnEvent(when = WorkflowJobStarted.class)
 @OnEvent(when = WorkflowJobDone.class)
 @OnEvent(when = TriggerExplorationEvent.class)

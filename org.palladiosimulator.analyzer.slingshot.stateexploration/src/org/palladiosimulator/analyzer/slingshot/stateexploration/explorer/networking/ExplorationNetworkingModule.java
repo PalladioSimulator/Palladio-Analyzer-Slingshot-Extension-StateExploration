@@ -12,9 +12,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ArchitectureMessageDispatcher;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.RequestArchitectureMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.SimTestMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.gson.JsonElement;
@@ -43,9 +41,6 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 		final var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {}, new TypeLiteral<Class<? extends Message<?>>>() {});
 
-		messageBinder.addBinding(TestMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(TestMessage.class);
-		messageBinder.addBinding(SimTestMessage.MESSAGE_MAPPING_IDENTIFIER).toInstance(SimTestMessage.class);
-
 		messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
 		.toInstance(StateExploredEventMessage.class);
 
@@ -60,10 +55,7 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 
 		messageBinder.addBinding("RequestArchitecture").toInstance(RequestArchitectureMessage.class);
 
-		// proof of concept -> to be deleted?
-		install(ExplorationMessageDispatcher.class);
 		install(SimulationUsageDataCollector.class);
-		// install(SimulationBehaviourReactionTest.class);
 		install(ArchitectureMessageDispatcher.class);
 
 	}
