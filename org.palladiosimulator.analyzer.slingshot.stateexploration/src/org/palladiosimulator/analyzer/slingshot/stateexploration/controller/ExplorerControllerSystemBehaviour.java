@@ -3,23 +3,35 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.controller;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
+import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorerCreated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.IdleTriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.PruneFringeByTime;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ReFocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
+import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
+import org.palladiosimulator.analyzer.workflow.jobs.LoadModelIntoBlackboardJob;
+import org.palladiosimulator.analyzer.workflow.jobs.PreparePCMBlackboardPartitionJob;
+
+import de.uka.ipd.sdq.workflow.jobs.JobFailedException;
+import de.uka.ipd.sdq.workflow.jobs.SequentialBlackboardInteractingJob;
+import de.uka.ipd.sdq.workflow.jobs.UserCanceledException;
+import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
 /**
  *
@@ -35,10 +47,9 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.TestMe
  * @author Sarah Stieß
  *
  */
-@OnEvent(when = TestMessage.class)
-@OnEvent(when = ExplorerCreated.class)
+@OnEvent(when = WorkflowJobStarted.class)
+@OnEvent(when = WorkflowJobDone.class)
 @OnEvent(when = TriggerExplorationEvent.class)
-@OnEvent(when = IdleTriggerExplorationEvent.class)
 @OnEvent(when = FocusOnStatesEvent.class)
 @OnEvent(when = ReFocusOnStatesEvent.class)
 @OnEvent(when = ResetExplorerEvent.class)
@@ -47,44 +58,57 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 	private static final Logger LOGGER = Logger.getLogger(ExplorerControllerSystemBehaviour.class.getName());
 
+	private final Lock explorerLock = new ReentrantLock(true);
+
 	private GraphExplorer explorer = null;
+	private WorkflowJobStarted initEvent = null;
 
-	private IdleExploration doIdle = IdleExploration.BLOCKED;
+	private ExplorationState explorationState = ExplorationState.NOTRUNNING;
 
-	private enum IdleExploration {
-		ONHOLD, BLOCKED, DOING;
+	private enum ExplorationState {
+		RUNNING, NOTRUNNING;
+	}
+
+	public ExplorerControllerSystemBehaviour() {
+
 	}
 
 	/**
-	 *
-	 */
-	@Subscribe
-	public void onTestMessage(final TestMessage sim) {
-		System.out.println(sim.getPayload());
-		Slingshot.getInstance().getSystemDriver().postEvent(new TriggerExplorationEvent(5));
-	}
-
-	@Subscribe
-	public void onAnnounceGraphExplorerEvent(final ExplorerCreated event) {
-		if (explorer == null) {
-			this.explorer = event.getExplorer();
-		}
-		// TODO handling if explorer already set?
-	}
-
-	/**
+	 * Creates the explorer, once the workflow job has prepare all the necessary
+	 * things, such as the blackboard and the parameters from the launch
+	 * configuration.
 	 *
 	 * @param event
 	 */
 	@Subscribe
-	public void onIdleTrigger(final IdleTriggerExplorationEvent event) {
-		if (this.explorer.hasUnexploredChanges()) {
-			this.explorer.exploreNextState();
-			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+	public void onWorkflowJobStarted(final WorkflowJobStarted event) {
+		if (explorationState == ExplorationState.RUNNING) {
+			throw new IllegalStateException("Cannot start new explorer because exploration is already running.");
 		} else {
-			doIdle = IdleExploration.ONHOLD;
-			LOGGER.info("No Unexplored Changes, stop Idle exploration.");
+
+			this.explorerLock.lock();
+			try {
+				this.initEvent = event;
+				this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+						this.initEvent.getMonitor(), this.initEvent.getBlackboard());
+				this.explorationState = ExplorationState.RUNNING;
+			} finally {
+				this.explorerLock.unlock();
+			}
 		}
+	}
+
+	/**
+	 * Reset attributes to initial values such that a new exploration may start.
+	 *
+	 * Intended for graphical runs. With headless runs it is only ever one
+	 * exploration.
+	 *
+	 * @param event
+	 */
+	@Subscribe
+	public void onWorkflowJobDone(final WorkflowJobDone event) {
+		this.explorationState = ExplorationState.NOTRUNNING;
 	}
 
 	/**
@@ -93,14 +117,20 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Subscribe
 	public void onDoGraphExplorationCycle(final TriggerExplorationEvent event) {
+		if (this.explorationState != ExplorationState.RUNNING) {
+			throw new IllegalStateException(
+					String.format("Cannot Trigger Exploration, Current Explorer is not running, instead it's %s",
+							this.explorationState.toString()));
+		}
 
 		for (int i = 0; i < event.getIterations() && this.explorer.hasUnexploredChanges(); i++) {
 			LOGGER.info("Iteration " + i);
-			this.explorer.exploreNextState();
-		}
-		if (doIdle == IdleExploration.ONHOLD) {
-			doIdle = IdleExploration.DOING;
-			Slingshot.getInstance().getSystemDriver().postEvent(new IdleTriggerExplorationEvent());
+			this.explorerLock.lock();
+			try {
+				this.explorer.exploreNextState();
+			} finally {
+				this.explorerLock.unlock();
+			}
 		}
 
 		logGraph();
@@ -142,25 +172,92 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 	@Subscribe
 	public void onFocusOnStatesEvent(final FocusOnStatesEvent event) {
-		this.explorer.focus(this.mapStateIdsToState(event.getFocusStateIds()));
+		this.explorerLock.lock();
+		try {
+			this.explorer.focus(this.mapStateIdsToState(event.getFocusStateIds()));
+		} finally {
+			this.explorerLock.unlock();
+		}
 	}
 
 	@Subscribe
 	public void onReFocusOnStatesEvent(final ReFocusOnStatesEvent event) {
-		this.explorer.refocus(this.mapStateIdsToState(event.getFocusStateIds()));
+		this.explorerLock.lock();
+		try {
+			this.explorer.refocus(this.mapStateIdsToState(event.getFocusStateIds()));
+		} finally {
+			this.explorerLock.unlock();
+		}
 	}
 
 	@Subscribe
 	public void onPruneFringeByTime(final PruneFringeByTime event) {
-		this.explorer.pruneByTime(event.getCurrentTime());
+		this.explorerLock.lock();
+		try {
+			this.explorer.pruneByTime(event.getCurrentTime());
+		} finally {
+			this.explorerLock.unlock();
+		}
 	}
 
+	/**
+	 * Reset the explorer, does not care about state of explorer.
+	 *
+	 * @param event
+	 */
 	@Subscribe
 	public void onResetExplorerEvent(final ResetExplorerEvent event) {
-		this.explorer = null;
-		// this.explorer =
-		// Slingshot.getInstance().getInstance(DefaultGraphExplorer.class);
-		// und dann..? wo krieg ich jetzt 'nen neuen explorere her?
+		if (this.initEvent == null) {
+			LOGGER.info("Cannot Reset, Workflow not yet started");
+			return;
+		}
+
+		this.explorerLock.lock();
+		try {
+
+			if (this.explorationState == ExplorationState.NOTRUNNING) {
+				this.explorer = null;
+				return;
+			}
+
+			final MDSDBlackboard blackboard = recreatedInitialBlackboard();
+
+			final PCMResourceSetPartitionProvider provider = Slingshot.getInstance()
+					.getInstance(PCMResourceSetPartitionProvider.class);
+			provider.set((PCMResourceSetPartition) blackboard
+					.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID));
+
+			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+					this.initEvent.getMonitor(),
+					blackboard);
+		} finally {
+			this.explorerLock.unlock();
+		}
+	}
+
+	/**
+	 * Create a new blackboard and load the initital models into it.
+	 *
+	 * @return new blackboard with initial models
+	 */
+	private MDSDBlackboard recreatedInitialBlackboard() {
+
+		final SequentialBlackboardInteractingJob<MDSDBlackboard> job = new SequentialBlackboardInteractingJob<MDSDBlackboard>();
+
+		job.addJob(new PreparePCMBlackboardPartitionJob());
+		this.initEvent.getPcmModelFiles()
+		.forEach(modelFile -> LoadModelIntoBlackboardJob.parseUriAndAddModelLoadJob(modelFile, job));
+
+		final MDSDBlackboard newBlackboard = new MDSDBlackboard();
+		job.setBlackboard(newBlackboard);
+
+		try {
+			job.execute(this.initEvent.getMonitor());
+		} catch (JobFailedException | UserCanceledException e) {
+			throw new IllegalStateException("Reseting Explorer Failed, cannot continue exploration.", e);
+		}
+
+		return newBlackboard;
 	}
 
 	/**

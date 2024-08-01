@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.application;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -15,14 +16,14 @@ import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.RunExplorationJob;
-import org.palladiosimulator.analyzer.workflow.jobs.PreparePCMBlackboardPartitionJob;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.ExplorationRootJob;
 import org.palladiosimulator.experimentautomation.application.ExperimentApplication;
 import org.palladiosimulator.experimentautomation.application.tooladapter.abstractsimulation.AbstractSimulationConfigFactory;
 import org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration;
 import org.palladiosimulator.experimentautomation.experiments.Experiment;
 import org.palladiosimulator.experimentautomation.experiments.ExperimentRepository;
 import org.palladiosimulator.experimentautomation.experiments.ExperimentsPackage;
+import org.palladiosimulator.experimentautomation.experiments.InitialModel;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 import de.uka.ipd.sdq.workflow.BlackboardBasedWorkflow;
@@ -96,7 +97,10 @@ public class StateexplorationApplication implements IApplication {
 	}
 
 	/**
+	 *
 	 * Create and execute a workflow for preparing and running a state exploration.
+	 *
+	 * @param experiment
 	 */
 	private void launchStateExploration(final Experiment experiment) {
 
@@ -105,19 +109,56 @@ public class StateexplorationApplication implements IApplication {
 		final SimuComConfig simuComconfig = new SimuComConfig(configMap, false);
 		final ExplorationWorkflowConfiguration config = new ExplorationWorkflowConfiguration(simuComconfig, configMap);
 
+		this.setModelFilesInConfig(experiment.getInitialModel(), config);
 
 		final BlackboardBasedWorkflow<MDSDBlackboard> workflow = new BlackboardBasedWorkflow<MDSDBlackboard>(
-				new PreparePCMBlackboardPartitionJob(),
+				new ExplorationRootJob(config, null),
 				new MDSDBlackboard());
-
-		workflow.add(new SetModelsInBlackboardJob(experiment.getInitialModel()));
-		workflow.add(new RunExplorationJob(config));
 
 		try {
 			workflow.execute(new NullProgressMonitor());
 		} catch (JobFailedException | UserCanceledException e) {
 			throw new WorkflowFailedException("Workflow failed", e);
 		}
+	}
+
+	/**
+	 * Get the file location of the initial models, and put the into the
+	 * {@code config}.
+	 *
+	 * This is necessary, to use the {@link ExplorationRootJob}, which load the
+	 * model as defined in the {@link ExplorationWorkflowConfiguration}.
+	 *
+	 * @param models initial models, as defined in the experiments file.
+	 * @param config configuration to start the exploration on.
+	 */
+	private void setModelFilesInConfig(final InitialModel models, final ExplorationWorkflowConfiguration config) {
+		this.consumeModelLocation(models.getAllocation(), s -> config.setAllocationFiles(List.of(s)));
+		this.consumeModelLocation(models.getUsageModel(), s -> config.setUsageModelFile(s));
+
+		this.consumeModelLocation(models.getScalingDefinitions(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getSpdSemanticConfiguration(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getMonitorRepository(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getServiceLevelObjectives(), s -> config.addOtherModelFile(s));
+		this.consumeModelLocation(models.getUsageEvolution(), s -> config.addOtherModelFile(s));
+	}
+
+	/**
+	 *
+	 * Make {@code consumer} accept the URI of {@code model}, if it is not
+	 * {@code null}.
+	 *
+	 * If {@code model} is {@code null}, nothing happens.
+	 *
+	 * @param model    model who's URI will be consumed. May be {@code null}.
+	 * @param consumer consumer to consume the model's URI.
+	 */
+	private void consumeModelLocation(final EObject model, final Consumer<String> consumer) {
+		assert consumer != null;
+		if (model == null) {
+			return;
+		}
+		consumer.accept(model.eResource().getURI().toString());
 	}
 
 	@Override

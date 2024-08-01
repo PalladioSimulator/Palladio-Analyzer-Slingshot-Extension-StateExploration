@@ -9,10 +9,24 @@ import de.uka.ipd.sdq.workflow.jobs.ICompositeJob;
 import de.uka.ipd.sdq.workflow.jobs.SequentialBlackboardInteractingJob;
 import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
+/**
+ *
+ * Root Job to run an exploration.
+ *
+ * Prepares the Blackboar, the Partition within the Blackboard, and starts the
+ * exploration itself.
+ *
+ * @author Sarah Stieß
+ *
+ */
 public class ExplorationRootJob extends SequentialBlackboardInteractingJob<MDSDBlackboard> implements ICompositeJob {
 
 	public ExplorationRootJob(final ExplorationWorkflowConfiguration config, final ILaunch launch) {
 		super(ExplorationRootJob.class.getName(), false);
+
+		if (launch == null) {
+			// Nothing. just stay aware that lunch is null, if it is a headless run.
+		}
 
 		this.addJob(new PreparePCMBlackboardPartitionJob());
 		config.getPCMModelFiles()
