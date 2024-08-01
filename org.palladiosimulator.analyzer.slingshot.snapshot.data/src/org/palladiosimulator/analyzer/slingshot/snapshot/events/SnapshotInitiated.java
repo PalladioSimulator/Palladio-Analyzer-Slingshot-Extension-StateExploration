@@ -13,23 +13,17 @@ import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulation
  *
  * maybe i can remove it, once we get the new framework with the preinterception
  * annotation.
- * 
+ *
  * Reminder : {@link ModelAdjustmentRequested} gets published after the spd
  * interpreter checked all triggers and constraints, and decided that a
  * reconfiguration should be executed. i.e. models have not yet changed.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public class SnapshotInitiated extends AbstractSimulationEvent {
 
 	private final Optional<ModelAdjustmentRequested> triggeringEvent;
-
-	// never called, to be remove.
-	@Deprecated
-	public SnapshotInitiated() {
-		this(0);
-	}
 
 	public SnapshotInitiated(final double delay) {
 		super("TODO", delay);
