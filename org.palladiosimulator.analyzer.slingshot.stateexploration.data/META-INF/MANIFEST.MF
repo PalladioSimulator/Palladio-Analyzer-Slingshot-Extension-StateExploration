@@ -24,4 +24,5 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  org.scaledl.usageevolution,
  org.palladiosimulator.analyzer.slingshot.networking.data;visibility:=reexport,
  org.palladiosimulator.edp2.util,
- org.palladiosimulator.analyzer.slingshot.core
+ org.palladiosimulator.analyzer.slingshot.core,
+ org.apache.log4j

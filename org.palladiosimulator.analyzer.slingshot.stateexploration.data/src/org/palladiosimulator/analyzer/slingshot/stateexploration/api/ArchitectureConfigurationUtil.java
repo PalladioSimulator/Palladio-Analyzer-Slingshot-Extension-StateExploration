@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -30,6 +31,8 @@ import org.scaledl.usageevolution.UsageevolutionPackage;
  *
  */
 public class ArchitectureConfigurationUtil {
+
+	private static final Logger LOGGER = Logger.getLogger(ArchitectureConfigurationUtil.class.getName());
 
 	/**
 	 * EClasses of all models that must be provided to simulate with Slingshot.
@@ -92,8 +95,8 @@ public class ArchitectureConfigurationUtil {
 		final List<Resource> whitelisted = getWhitelistedModels(set);
 
 		for (final Resource resource : whitelisted) {
-			System.out.println("save resource " + resource.getURI().toString());
 			ResourceUtils.saveResource(resource);
+			LOGGER.debug(String.format("Saved resource %s.", resource.getURI().toString()));
 		}
 	}
 }
