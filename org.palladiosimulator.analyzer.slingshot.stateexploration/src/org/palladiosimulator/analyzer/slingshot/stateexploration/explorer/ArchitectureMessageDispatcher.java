@@ -108,8 +108,8 @@ public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 		if (resource.getURI().isPlatform()) {
 
 			final var uri = resource.getURI().toPlatformString(false);
-			// this breaks on file URI, as will be used in headless run.
-			// file:/Users/[...]/05a21509-7995-4c51-9928-a67bdc28f4b8/default.allocation
+			// this breaks with headless run where URI already is a file URI:
+			// file:/[...]/05a21509-7995-4c51-9928-a67bdc28f4b8/default.allocation
 
 			final String projectName = uri.split("/")[1];
 			final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
