@@ -97,7 +97,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
 	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
-		return new UriBasedArchitectureConfiguration(createUriMap(set), "root");
+		return new UriBasedArchitectureConfiguration(createUriMap(set), UUID.randomUUID().toString());
 	}
 
 	/**
