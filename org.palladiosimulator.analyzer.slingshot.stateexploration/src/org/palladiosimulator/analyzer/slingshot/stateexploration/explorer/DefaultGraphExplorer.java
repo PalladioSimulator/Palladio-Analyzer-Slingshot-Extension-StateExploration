@@ -288,6 +288,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			Optional.empty();
 		}
 
+		final URI uri = URI.createURI(modelLocation);
+
+		if (!uri.isFile() && uri.hasAbsolutePath()) {
+			return Optional.of(URI.createFileURI(modelLocation));
+		}
+
 		return Optional.of(URI.createURI(modelLocation));
 	}
 
@@ -302,7 +308,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Can currently only refocus state with out outgoing transitions.
+	 * Can currently only refocus state with outgoing transitions.
 	 *
 	 * @param focusedStates
 	 */

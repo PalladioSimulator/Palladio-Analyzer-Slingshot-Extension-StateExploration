@@ -484,7 +484,6 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.core@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.cost@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.eventdriver.annotationprocessor@default:default"/>
-        <setEntry value="org.palladiosimulator.analyzer.slingshot.eventdriver.test@default:false"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.eventdriver@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor.data@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor.processingtype.aggregator@default:default"/>

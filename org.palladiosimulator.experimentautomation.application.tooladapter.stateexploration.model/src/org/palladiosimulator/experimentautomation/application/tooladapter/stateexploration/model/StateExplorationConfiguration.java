@@ -19,6 +19,7 @@ import org.palladiosimulator.experimentautomation.abstractsimulation.AbstractSim
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getMaxIterations <em>Max Iterations</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getSensitivity <em>Sensitivity</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#isDoIdleExploration <em>Do Idle Exploration</em>}</li>
+ *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getModeLocation <em>Mode Location</em>}</li>
  * </ul>
  *
  * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration()
@@ -113,5 +114,27 @@ public interface StateExplorationConfiguration extends EObject, AbstractSimulati
 	 * @generated
 	 */
 	void setDoIdleExploration(boolean value);
+
+	/**
+	 * Returns the value of the '<em><b>Mode Location</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Mode Location</em>' attribute.
+	 * @see #setModeLocation(String)
+	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration_ModeLocation()
+	 * @model
+	 * @generated
+	 */
+	String getModeLocation();
+
+	/**
+	 * Sets the value of the '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getModeLocation <em>Mode Location</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Mode Location</em>' attribute.
+	 * @see #getModeLocation()
+	 * @generated
+	 */
+	void setModeLocation(String value);
 
 } // StateExplorationConfiguration

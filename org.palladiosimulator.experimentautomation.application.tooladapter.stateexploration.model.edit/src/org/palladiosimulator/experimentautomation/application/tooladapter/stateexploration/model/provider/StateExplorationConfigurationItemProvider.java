@@ -53,6 +53,7 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 			addMaxIterationsPropertyDescriptor(object);
 			addSensitivityPropertyDescriptor(object);
 			addDoIdleExplorationPropertyDescriptor(object);
+			addModeLocationPropertyDescriptor(object);
 		}
 		return itemPropertyDescriptors;
 	}
@@ -146,6 +147,28 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 	}
 
 	/**
+	 * This adds a property descriptor for the Mode Location feature.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void addModeLocationPropertyDescriptor(Object object) {
+		itemPropertyDescriptors.add
+			(createItemPropertyDescriptor
+				(((ComposeableAdapterFactory)adapterFactory).getRootAdapterFactory(),
+				 getResourceLocator(),
+				 getString("_UI_StateExplorationConfiguration_modeLocation_feature"),
+				 getString("_UI_PropertyDescriptor_description", "_UI_StateExplorationConfiguration_modeLocation_feature", "_UI_StateExplorationConfiguration_type"),
+				 StateExplorationToolAdapterPackage.Literals.STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION,
+				 true,
+				 false,
+				 false,
+				 ItemPropertyDescriptor.GENERIC_VALUE_IMAGE,
+				 null,
+				 null));
+	}
+
+	/**
 	 * This returns StateExplorationConfiguration.gif.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -187,6 +210,7 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS:
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__SENSITIVITY:
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION:
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION:
 				fireNotifyChanged(new ViewerNotification(notification, notification.getNotifier(), false, true));
 				return;
 		}

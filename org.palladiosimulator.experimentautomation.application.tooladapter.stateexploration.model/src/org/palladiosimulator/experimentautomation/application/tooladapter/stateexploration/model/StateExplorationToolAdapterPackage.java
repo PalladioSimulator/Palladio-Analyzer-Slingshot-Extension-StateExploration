@@ -157,13 +157,22 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 	int STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 3;
 
 	/**
+	 * The feature id for the '<em><b>Mode Location</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 4;
+
+	/**
 	 * The number of structural features of the '<em>State Exploration Configuration</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int STATE_EXPLORATION_CONFIGURATION_FEATURE_COUNT = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 4;
+	int STATE_EXPLORATION_CONFIGURATION_FEATURE_COUNT = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 5;
 
 
 	/**
@@ -219,6 +228,17 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 	 * @generated
 	 */
 	EAttribute getStateExplorationConfiguration_DoIdleExploration();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getModeLocation <em>Mode Location</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Mode Location</em>'.
+	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getModeLocation()
+	 * @see #getStateExplorationConfiguration()
+	 * @generated
+	 */
+	EAttribute getStateExplorationConfiguration_ModeLocation();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -283,6 +303,14 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 		 * @generated
 		 */
 		EAttribute STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION = eINSTANCE.getStateExplorationConfiguration_DoIdleExploration();
+
+		/**
+		 * The meta object literal for the '<em><b>Mode Location</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION = eINSTANCE.getStateExplorationConfiguration_ModeLocation();
 
 	}
 
