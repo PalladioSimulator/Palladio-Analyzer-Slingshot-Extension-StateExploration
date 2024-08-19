@@ -70,18 +70,23 @@ public class ArchitectureConfigurationUtil {
 	 * @param set
 	 * @return resources with whitelisted models.
 	 */
-	public static List<Resource> getWhitelistedModels(final ResourceSet set) {
+	public static List<Resource> getWhitelistedResources(final ResourceSet set) {
 		return set.getResources().stream().filter(r -> isWhitelisted(r)).toList();
 	}
 
 	/**
-	 * Checks whether a given model is whitelisted.
+	 * Checks whether a given resource is whitelisted.
 	 *
-	 * @param model model to be checked, must not be null.
-	 * @return true if the model is whitelisted, false otherwise.
+	 * A resource is considered whitelisted if its URI is either platform resource
+	 * or file URI (pathmap excluded) and if it contains at least one model of a
+	 * whitelisted type.
+	 *
+	 * @param resource to be checked, must not be null.
+	 * @return true if the resource is whitelisted, false otherwise.
 	 */
-	public static boolean isWhitelisted(final Resource model) {
-		return model.getContents().stream()
+	public static boolean isWhitelisted(final Resource resource) {
+		assert resource.getURI() != null : "Cannot check resource, URI is null";
+		return (resource.getURI().isFile() || resource.getURI().isPlatformResource()) && resource.getContents().stream()
 				.filter(o -> MODEL_ECLASS_WHITELIST.stream().anyMatch(allowedEClass -> allowedEClass == o.eClass()))
 				.findAny().isPresent();
 	}
@@ -92,7 +97,7 @@ public class ArchitectureConfigurationUtil {
 	 * @param set
 	 */
 	public static void saveWhitelisted(final ResourceSet set) {
-		final List<Resource> whitelisted = getWhitelistedModels(set);
+		final List<Resource> whitelisted = getWhitelistedResources(set);
 
 		for (final Resource resource : whitelisted) {
 			ResourceUtils.saveResource(resource);

@@ -73,7 +73,6 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 *
 	 * Beware: Intended to be called by this class' {@code copy} operation only.
 	 *
-	 *
 	 * @param uris
 	 * @param idSegment
 	 */
@@ -93,11 +92,68 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * configuration at the very beginning of the exploration, i.e. the architecture
 	 * configuration of the stategraph's root node.
 	 *
-	 * @param set
+	 * @param set resources set with models
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
 	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
 		return new UriBasedArchitectureConfiguration(createUriMap(set), UUID.randomUUID().toString());
+	}
+
+	/**
+	 * Create a new {@code ArchitectureConfiguration} representing the architecture
+	 * configuration at the very beginning of the exploration, i.e. the architecture
+	 * configuration of the stategraph's root node, at the given {@code location}.
+	 *
+	 * Subsequently, all successor nodes are found in subfolders of the provided
+	 * location.
+	 *
+	 * @param set      resources set with models
+	 * @param location non-null path to an exiting folder in the file system.
+	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
+	 */
+	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set, final URI location) {
+		return copyModelsForRoot(location, set);
+	}
+
+	/**
+	 *
+	 * Create a copy of the models in the provided resource set at the provided
+	 * location.
+	 *
+	 * @param location location of the root node's architecture configuration.
+	 * @param set      resources set with models
+	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
+	 */
+	private static UriBasedArchitectureConfiguration copyModelsForRoot(final URI location, final ResourceSet set) {
+
+		final String nextIdSegment = UUID.randomUUID().toString();
+		String cleanLocation = location.toString();
+
+		if (location.hasTrailingPathSeparator()) {
+			cleanLocation = cleanLocation.substring(0, cleanLocation.length() - 1);
+		}
+
+		// 1. ensure that load all models are loaded.
+		EcoreUtil.resolveAll(set);
+
+		final List<Resource> whitelisted = ArchitectureConfigurationUtil.getWhitelistedResources(set);
+		final Map<EClass, URI> copyUris = new HashMap<>();
+
+		// 2. update paths
+		for (final Resource resource : whitelisted) {
+			final String file = resource.getURI().lastSegment();
+
+			final URI newUri = URI.createURI(cleanLocation).appendSegment(nextIdSegment)
+					.appendSegment(file);
+			resource.setURI(newUri);
+			copyUris.put(resource.getContents().get(0).eClass(), newUri);
+		}
+
+		// 3. save to new path (thereby create a copy)
+		ArchitectureConfigurationUtil.saveWhitelisted(set);
+
+		// create Arch Config with models at new location
+		return new UriBasedArchitectureConfiguration(copyUris, nextIdSegment);
 	}
 
 	/**
@@ -187,7 +243,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 
 		this.load(); // 1. ensure that load all models are loaded.
 
-		final List<Resource> whitelisted = ArchitectureConfigurationUtil.getWhitelistedModels(this.set);
+		final List<Resource> whitelisted = ArchitectureConfigurationUtil.getWhitelistedResources(this.set);
 		final Map<EClass, URI> copyUris = new HashMap<>();
 
 		// 2. update paths
