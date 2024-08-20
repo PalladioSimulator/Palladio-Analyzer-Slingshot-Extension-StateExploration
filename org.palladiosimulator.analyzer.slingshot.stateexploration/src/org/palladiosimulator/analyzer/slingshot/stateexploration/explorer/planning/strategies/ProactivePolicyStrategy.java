@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies;
 
-import java.util.List;
+import java.util.Collection;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
@@ -18,6 +18,6 @@ public abstract class ProactivePolicyStrategy {
 	 * @param state predecessor for created changes.
 	 * @return
 	 */
-	public abstract List<ToDoChange> createProactiveChanges(final DefaultState state);
+	public abstract Collection<ToDoChange> createProactiveChanges(final DefaultState state);
 
 }

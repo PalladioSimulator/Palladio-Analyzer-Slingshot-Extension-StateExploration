@@ -2,7 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
@@ -81,8 +80,15 @@ public class ExplorationPlanner {
 		final DefaultState end = this.createNewGraphNode(next);
 
 		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
+
+			Optional<ScalingPolicy> appliedPolicy = Optional.empty();
+
+			if (next.getChange().isPresent() && next.getChange().get() instanceof final Reconfiguration reconf) {
+				appliedPolicy = Optional.of(reconf.getAppliedPolicy());
+			}
+
 			this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD().get(),
-					start.getDuration());
+					start.getDuration(), appliedPolicy);
 		}
 
 		return createConfigBasedOnChange(next.getChange(), start, end);
@@ -200,15 +206,17 @@ public class ExplorationPlanner {
 		// NOP Always
 		this.fringe.add(new ToDoChange(Optional.empty(), start));
 		// Reactive Reconfiguration - Always.
-		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
-			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
-
-			// reactive reconf to the next state.
-			this.fringe.add(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+		if (!start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
+			// TODO : this is the "each once" implementation, but im not sure whether it's
+			// the best.
+			for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
+				// reactive reconf to the next state.
+				this.fringe.add(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+			}
 		}
 
 		// proactive reconf.
-		final List<ToDoChange> proactiveChanges = this.proactivePolicyStrategy.createProactiveChanges(start);
+		final Collection<ToDoChange> proactiveChanges = this.proactivePolicyStrategy.createProactiveChanges(start);
 
 		for (final ToDoChange toDoChange : proactiveChanges) {
 			this.fringe.add(toDoChange);
@@ -260,13 +268,15 @@ public class ExplorationPlanner {
 	 * @param spd    current scaling rules.
 	 * @param offset duration of the previous state
 	 */
-	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
+	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset,
+			final Optional<ScalingPolicy> appliedPolicy) {
 		spd.getScalingPolicies().stream()
 		.filter(policy -> policy.isActive() && policy.getScalingTrigger() instanceof BaseTrigger)
 		.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
 		.filter(trigger -> trigger.getStimulus() instanceof SimulationTime
 				&& trigger.getExpectedValue() instanceof ExpectedTime)
-		.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
+		.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset,
+				appliedPolicy));
 
 		ResourceUtils.saveResource(spd.eResource());
 	}
@@ -277,12 +287,15 @@ public class ExplorationPlanner {
 	 * @param time                  model element to be updated
 	 * @param previousStateDuration duration to subtract from {@code time}.
 	 */
-	private void updateValue(final ExpectedTime time, final double previousStateDuration) {
+	private void updateValue(final ExpectedTime time, final double previousStateDuration,
+			final Optional<ScalingPolicy> appliedPolicy) {
 		final double triggerTime = time.getValue();
 
 		final ScalingPolicy policy = (ScalingPolicy) time.eContainer().eContainer();
 
-		if (triggerTime <= previousStateDuration) {
+		if (appliedPolicy.isPresent() && appliedPolicy.get().getId().equals(policy.getId())) {
+			policy.setActive(false);
+		} else if (triggerTime < previousStateDuration) {
 			policy.setActive(false);
 			LOGGER.debug(String.format("Deactivate Policy %s as Triggertime is in the past.", policy.getEntityName()));
 		} else {

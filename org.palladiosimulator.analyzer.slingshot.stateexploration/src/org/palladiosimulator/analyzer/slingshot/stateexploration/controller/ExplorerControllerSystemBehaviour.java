@@ -164,7 +164,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		LOGGER.warn("********** States : ");
 		this.explorer.getGraph().getStates()
 		.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
-				s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
+						s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonsToLeave())));
 		LOGGER.warn("********** Transitions : ");
 		this.explorer.getGraph().getTransitions().stream().forEach(
 				t -> LOGGER.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));

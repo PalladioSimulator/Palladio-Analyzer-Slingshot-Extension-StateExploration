@@ -110,6 +110,9 @@ public final class CloneHelper {
 	/**
 	 * TODO on a closer look : what is this does not belong here, iirc o_O
 	 *
+	 * TODO this is not a deep copy... ?? (and it never bothered anyone, because i
+	 * do a second (proper deep!) copy when preparing for the next simulation run
+	 *
 	 * @param event
 	 * @param simulationTime
 	 * @return
