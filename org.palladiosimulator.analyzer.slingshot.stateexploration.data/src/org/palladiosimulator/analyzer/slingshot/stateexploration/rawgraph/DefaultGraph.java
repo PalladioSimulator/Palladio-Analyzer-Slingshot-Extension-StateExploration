@@ -86,4 +86,29 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	public Set<RawTransition> getTransitions() {
 		return Set.copyOf(this.edgeSet());
 	}
+
+	/**
+	 * Calculate the distance between the given state and one of its predecessors.
+	 *
+	 * The distance is the number of transitions in between the given states.
+	 *
+	 * @param state       any state.
+	 * @param predecessor a predecessor of the state.
+	 * @return the positive distance between the state, or 0 if they are the same.
+	 */
+	public static int distance(final RawModelState state, final RawModelState predecessor) {
+		RawModelState current = state;
+		int distance = 0;
+
+		while (!current.equals(predecessor)) {
+			if (current.getIncomingTransition().isEmpty()) {
+				throw new IllegalArgumentException(String.format("State %s is not a predecessor of state %s.",
+						predecessor.toString(), state.toString()));
+			}
+			current = current.getIncomingTransition().get().getSource();
+			distance++;
+		}
+
+		return distance;
+	}
 }
