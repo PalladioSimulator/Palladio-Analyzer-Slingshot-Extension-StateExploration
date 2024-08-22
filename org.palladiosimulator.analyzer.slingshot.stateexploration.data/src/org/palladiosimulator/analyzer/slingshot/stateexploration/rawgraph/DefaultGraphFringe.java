@@ -61,6 +61,8 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 				// the longer one is better -> the shorter one is "the least"
 				final Comparator<DefaultState> historyLengthComparator = Comparator.comparingInt(s -> s.lenghtOfHistory());
 
+				// the longer one is better -> the shorter one is "the least"
+				final Comparator<DefaultState> endTimeComparator = Comparator.comparingDouble(s -> s.getEndTime());
 
 				// the more the better -> the fewer one is "least" (end up with a line, because
 				// newest state has always zero out transitions -> "least"
@@ -80,10 +82,12 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 				};
 
 				final int historyLength = historyLengthComparator.compare(change1.getStart(), change2.getStart());
+				final int endTime = endTimeComparator.compare(change1.getStart(), change2.getStart());
 				final int cardinality = cardinalityComparator.compare(change1.getStart(), change2.getStart());
 				final int typeOfChange = typeOfChangeComparator.compare(change1, change2);
 
-				final int total = historyLength != 0 ? historyLength : cardinality != 0 ? cardinality : typeOfChange;
+				final int total = endTime != 0 ? endTime
+						: historyLength != 0 ? historyLength : cardinality != 0 ? cardinality : typeOfChange;
 
 				return total;
 			}
