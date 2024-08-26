@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -7,10 +8,10 @@ import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityTy
 import org.palladiosimulator.spd.ScalingPolicy;
 
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
-		List<SLO> slos, Utility utility, String parentId, ScalingPolicy incomingPolicy) {
+		List<SLO> slos, Utility utility, String parentId, ScalingPolicy incomingPolicy, List<ComponentStatus> componentStatus) {
 
-	public StateGraphNode(final String id, final double startTime, final double endTime, final List<MeasurementSet> measurements, final List<SLO> slos, final String parentId, final ScalingPolicy incomingPolicy) {
-		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId, incomingPolicy);
+	public StateGraphNode(final String id, final double startTime, final double endTime, final List<MeasurementSet> measurements, final List<SLO> slos, final String parentId, final ScalingPolicy incomingPolicy, final List<ComponentStatus> componentStatus) {
+		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId, incomingPolicy, componentStatus);
 	}
 
 	public double duration() {

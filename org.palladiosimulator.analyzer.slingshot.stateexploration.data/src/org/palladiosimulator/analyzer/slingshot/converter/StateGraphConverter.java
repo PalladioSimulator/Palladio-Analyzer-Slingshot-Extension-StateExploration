@@ -3,6 +3,8 @@ package org.palladiosimulator.analyzer.slingshot.converter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.palladiosimulator.analyzer.slingshot.converter.data.ComponentStatus;
+import org.palladiosimulator.analyzer.slingshot.converter.data.ComponentStatus.ProcessingInfo;
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
@@ -42,9 +44,30 @@ public class StateGraphConverter {
 		if (state.getMeasurements() != null) {
 			measuremnets = MeasurementConverter.visitExperiementSetting(state.getMeasurements());
 		}
+		
+		var componentInfoList = new ArrayList<ComponentStatus>();
+		
+		state.getArchitecureConfiguration().getSystem().getAssemblyContexts__ComposedStructure().forEach(x -> {
+			var componentInfo = new ComponentStatus(x.getId(), x.getEntityName(), x.getEncapsulatedComponent__AssemblyContext().getId(), new ArrayList<>());
+			componentInfoList.add(componentInfo);
+			x.getConfigParameterUsages__AssemblyContext().forEach(y -> {
+				y.getVariableCharacterisation_VariableUsage().forEach(z -> {
+					var pr = z.getSpecification_VariableCharacterisation().getProcessingResourceSpecification_processingRate_PCMRandomVariable();
+					var processingInfo = new ProcessingInfo(
+							pr.getId(),
+							pr.getMTTF(),
+							pr.getMTTR(),
+							pr.getNumberOfReplicas(),
+							pr.getSchedulingPolicy().getId(),
+							pr.getSchedulingPolicy().getEntityName()
+							);
+					componentInfo.processingInfos().add(processingInfo);
+				});
+			});
+		});
 
 		return new StateGraphNode(state.getId(), state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId,
-				scalingPolicy);
+				scalingPolicy, componentInfoList);
 	}
 
 	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {
