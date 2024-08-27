@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.injection;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -22,13 +22,13 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcon
 import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.InterceptorInformation;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.injection.data.Link;
-import org.palladiosimulator.analyzer.slingshot.injection.data.Plan;
-import org.palladiosimulator.analyzer.slingshot.injection.data.StatesBlackboard;
-import org.palladiosimulator.analyzer.slingshot.injection.events.ExecutionIntervalPassed;
-import org.palladiosimulator.analyzer.slingshot.injection.events.PlanUpdated;
-import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanStepAppliedEventMessage;
-import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanStepAppliedEventMessage.PlanStep;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.Link;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.Plan;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.StatesBlackboard;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.events.ExecutionIntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.events.PlanUpdated;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.PlanStepAppliedEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.PlanStepAppliedEventMessage.PlanStep;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 
 /**

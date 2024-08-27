@@ -4,10 +4,13 @@
    <extension
          point="org.palladiosimulator.analyzer.slingshot">
       <slingshot-extension
-            module="org.palladiosimulator.analyzer.slingshot.injection.ManagedSystemModule">
+            module="org.palladiosimulator.analyzer.slingshot.managedSystem.injection.InjectionModule">
       </slingshot-extension>
       <slingshot-extension
             module="org.palladiosimulator.analyzer.slingshot.managedSystem.export.ExportMeasurementsModule">
+      </slingshot-extension>
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.managedSystem.ManagedSystemModule">
       </slingshot-extension>
    </extension>
 

@@ -1,8 +1,8 @@
-package org.palladiosimulator.analyzer.slingshot.injection.messages;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages;
 
 import java.util.Set;
 
-import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanStepAppliedEventMessage.PlanStep;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.PlanStepAppliedEventMessage.PlanStep;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 
 /**

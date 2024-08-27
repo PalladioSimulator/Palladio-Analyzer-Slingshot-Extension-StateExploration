@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.injection.data;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data;
 
 import javax.inject.Singleton;
 

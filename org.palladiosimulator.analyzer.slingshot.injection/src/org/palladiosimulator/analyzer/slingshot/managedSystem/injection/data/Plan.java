@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.injection.data;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data;
 
 import java.util.HashSet;
 import java.util.Iterator;

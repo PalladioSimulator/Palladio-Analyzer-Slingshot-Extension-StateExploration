@@ -1,18 +1,15 @@
-package org.palladiosimulator.analyzer.slingshot.injection;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection;
 
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Named;
-
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
-import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanCreatedEventMessage;
-import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanStepAppliedEventMessage;
-import org.palladiosimulator.analyzer.slingshot.injection.messages.StateExploredEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.PlanCreatedEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.PlanStepAppliedEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
-import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -21,7 +18,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 
@@ -31,18 +27,10 @@ import com.google.inject.multibindings.MapBinder;
  * @author Sarah Stieß
  *
  */
-public class ManagedSystemModule extends AbstractSlingshotExtension {
-
-    @Provides
-    @Named(NetworkingConstants.CLIENT_NAME)
-    public String clientName() {
-        return "ManagedSystem";
-    }
+public class InjectionModule extends AbstractSlingshotExtension {
 
     @Override
     protected void configure() {
-        install(SlowdownBehaviour.class);
-
         install(InjectionSystemBehaviour.class);
         install(InjectionSimulationBehaviour.class);
 
