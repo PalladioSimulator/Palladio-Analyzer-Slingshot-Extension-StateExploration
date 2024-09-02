@@ -19,7 +19,6 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.IdentifieableMeasurements;
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.Interval;
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.MeasurementPair;
@@ -77,7 +76,7 @@ public class ExportSystemBehaviour implements SystemBehaviorExtension {
      * @param event
      */
     @Subscribe
-    public Result<MeasurementsExported> onMeasurementsRequested(final MeasurementsRequested event) {
+    public void onMeasurementsRequested(final MeasurementsRequested event) {
 
         if (map.isEmpty()) {
             final List<MeasurementSpecification> specs = getMeasurementSpecifications();
@@ -104,7 +103,9 @@ public class ExportSystemBehaviour implements SystemBehaviorExtension {
             rvals.add(new IdentifieableMeasurements(entry.getKey(), cutSection));
         }
 
-        return Result.of(new MeasurementsExported(rvals, clientName));
+        Slingshot.getInstance()
+            .getSystemDriver()
+            .postEvent(new MeasurementsExported(rvals, clientName));
     }
 
     /**
