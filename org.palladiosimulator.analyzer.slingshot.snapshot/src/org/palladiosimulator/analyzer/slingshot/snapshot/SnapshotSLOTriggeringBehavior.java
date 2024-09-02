@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 
 import org.apache.log4j.Logger;
+import org.eclipse.emf.common.util.EList;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
@@ -136,7 +138,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 			if (range.isViolatedBy(calculationValue)) {
 				if (range.isLowerViolatedBy(calculationValue)) {
 					if (spec.getMonitor().getMeasuringPoint() instanceof final ActiveResourceMeasuringPoint armp) {
-						if (this.isUnitMeasurement(armp)) {
+						if (this.isMinimalConfig(armp)) {
 							continue;
 						}
 					}
@@ -156,19 +158,32 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	}
 
 	/**
+	 * Checks whether a measuring point measures at an active resource, that is
+	 * already all scaled in, or whether the resource can be scaled in further.
 	 *
-	 * @param spec
-	 * @return
+	 * @param measuringPoint the measuring point whose resource is to be checked.
+	 * @return true if the measured active resource is already all scaled in, false
+	 *         otherwise or id no matching target group config is found.
 	 */
-	private boolean isUnitMeasurement(final ActiveResourceMeasuringPoint measuringPoint) {
+	private boolean isMinimalConfig(final ActiveResourceMeasuringPoint measuringPoint) {
 		final ResourceContainer container = measuringPoint.getActiveResource()
 				.getResourceContainer_ProcessingResourceSpecification();
 
-		final boolean rval = this.semanticSpd.getTargetCfgs().stream()
-				.filter(ElasticInfrastructureCfg.class::isInstance).map(ElasticInfrastructureCfg.class::cast)
-				.anyMatch(cfg -> cfg.getUnit().getId().equals(container.getId()));
+		final List<EList<ResourceContainer>> elements = this.semanticSpd.getTargetCfgs().stream()
+				.filter(ElasticInfrastructureCfg.class::isInstance).map(ElasticInfrastructureCfg.class::cast).map(cfg -> cfg.getElements())
+				.filter(set -> set.contains(container)).toList();
 
-		return rval;
+		if (elements.isEmpty()) {
+			LOGGER.warn(String.format("No matching target group configuration for %s[s%] ", container.getEntityName(),
+					container.getId()));
+			return false;
+		} else if (elements.size() > 1) {
+			throw new IllegalStateException(String.format(
+					"Container %s[%s] is in too many target group configurations. Should onyl be in one, but is in %d.",
+					container.getEntityName(), container.getId(), elements.size()));
+		} else {
+			return elements.get(0).size() == 1;
+		}
 	}
 
 
