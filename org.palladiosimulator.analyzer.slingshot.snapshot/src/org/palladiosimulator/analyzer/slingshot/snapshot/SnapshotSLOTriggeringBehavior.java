@@ -136,12 +136,10 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		for (final ValueRange range : mp2range.get(spec)) {
 			if (range.isViolatedBy(calculationValue)) {
-				if (range.isLowerViolatedBy(calculationValue)) {
-					if (spec.getMonitor().getMeasuringPoint() instanceof final ActiveResourceMeasuringPoint armp) {
-						if (this.isMinimalConfig(armp)) {
-							continue;
-						}
-					}
+				if (range.isLowerViolatedBy(calculationValue)
+						&& spec.getMonitor().getMeasuringPoint() instanceof final ActiveResourceMeasuringPoint armp
+						&& this.isMinimalConfig(armp)) {
+					continue;
 				}
 				state.setReasonToLeave(ReasonToLeave.closenessToSLO);
 				LOGGER.debug(String.format(
