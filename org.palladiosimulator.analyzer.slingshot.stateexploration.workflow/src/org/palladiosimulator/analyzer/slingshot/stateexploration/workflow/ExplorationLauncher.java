@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.workflow;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -9,6 +10,7 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.ExplorationRootJob;
 import org.palladiosimulator.analyzer.slingshot.workflow.events.WorkflowLaunchConfigurationBuilderInitialized;
 import org.palladiosimulator.analyzer.workflow.configurations.AbstractPCMLaunchConfigurationDelegate;
@@ -35,6 +37,8 @@ public class ExplorationLauncher extends AbstractPCMLaunchConfigurationDelegate<
 					throws CoreException {
 
 		LOGGER.info("PlannerLauncher.deriveConfiguration");
+		
+		EventMessage.EXPLORATION_ID = UUID.randomUUID();
 
 		final SimuComConfig config = new SimuComConfig(configuration.getAttributes(), true);
 		final ExplorationWorkflowConfiguration simulationWorkflowConfiguration = new ExplorationWorkflowConfiguration(config, configuration.getAttributes());
