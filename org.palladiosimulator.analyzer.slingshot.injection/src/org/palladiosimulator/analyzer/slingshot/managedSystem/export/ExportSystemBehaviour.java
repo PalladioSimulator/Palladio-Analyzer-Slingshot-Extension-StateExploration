@@ -23,6 +23,7 @@ import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.Identi
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.Interval;
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.MeasurementPair;
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.MeasurementPairIdentifier;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.export.data.MeasurementsExportedData;
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.messages.MeasurementsExported;
 import org.palladiosimulator.analyzer.slingshot.managedSystem.export.messages.MeasurementsRequested;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
@@ -105,7 +106,7 @@ public class ExportSystemBehaviour implements SystemBehaviorExtension {
 
         Slingshot.getInstance()
             .getSystemDriver()
-            .postEvent(new MeasurementsExported(rvals, clientName));
+            .postEvent(new MeasurementsExported(new MeasurementsExportedData(rvals, event.getPayload()), clientName));
     }
 
     /**

@@ -23,7 +23,8 @@ public record MeasurementPairIdentifier(String meausurementSpecId, String measur
         final MetricDescription md = measurement.getMeasuringType()
             .getMetric();
 
-        return new MeasurementPairIdentifier(specification.getId(), mp.getStringRepresentation(), md.getName());
+        return new MeasurementPairIdentifier(specification.getId(), specification.getMonitor()
+            .getId(), md.getName());
     }
 }
 
