@@ -89,7 +89,7 @@ public class ExportSystemBehaviour implements SystemBehaviorExtension {
 
                 if (match.isPresent()) {
                     final MeasurementRange range = getElement(match.get(), Measurement::getMeasurementRanges);
-                    final MeasurementPairIdentifier identifier = MeasurementPairIdentifier.of(match.get(), spec);
+                    final MeasurementPairIdentifier identifier = MeasurementPairIdentifier.of(spec);
 
                     map.put(identifier, range);
                 }
