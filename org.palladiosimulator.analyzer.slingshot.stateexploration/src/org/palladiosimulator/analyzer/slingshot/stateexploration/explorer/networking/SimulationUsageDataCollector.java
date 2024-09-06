@@ -6,15 +6,17 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 
-// Das braucht raphael / jonas noch
-// Nochmal an gucken @ S3
+/**
+ *
+ * Note: Please do not send messages directly via
+ * {@code SlingshotWebsocketClient#send(String)}. Instead post them to the
+ * system bus and let {@code EventMessageDispatcher} take care of it.
+ *
+ * @author
+ *
+ */
 @OnEvent(when = UserEntryRequested.class)
 public class SimulationUsageDataCollector implements SimulationBehaviorExtension {
-	//	@Inject
-	//	private GsonProvider gsonProvider;
-	//	@Inject
-	//	private SlingshotWebsocketClient client;
-
 
 	public record EntryData(String userId, String entityName, String signatureName, String signatureId) {}
 
