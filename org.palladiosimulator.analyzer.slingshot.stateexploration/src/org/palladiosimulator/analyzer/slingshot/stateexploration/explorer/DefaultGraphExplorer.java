@@ -31,7 +31,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planni
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -146,16 +145,21 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		config.getEvent().ifPresent(e -> set.add(e));
 		set.addAll(config.getinitializationEvents());
 
-		final EventsToInitOnWrapper eventsToInitOn = new EventsToInitOnWrapper(set);
-
-		AdditionalConfigurationModule.defaultStateProvider.set(config.getStateToExplore());
-		AdditionalConfigurationModule.snapConfigProvider.set(snapConfig);
-		AdditionalConfigurationModule.eventsToInitOnProvider.set(eventsToInitOn);
+		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), set);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();
 
-		// Post processing :
+		this.postProcessExplorationCycle(config);
+	}
+
+	/**
+	 *
+	 * Post {@link StateExploredEventMessage} and update fringe of graph.
+	 *
+	 * @param config configuration of exploration cycle to be post processed.
+	 */
+	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 		final DefaultState current = config.getStateToExplore();
 
 		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
@@ -163,9 +167,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		systemDriver.postEvent(
 				new StateExploredEventMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
-
-		// reset Additional Configurations
-		AdditionalConfigurationModule.reset();
 	}
 
 	/**
