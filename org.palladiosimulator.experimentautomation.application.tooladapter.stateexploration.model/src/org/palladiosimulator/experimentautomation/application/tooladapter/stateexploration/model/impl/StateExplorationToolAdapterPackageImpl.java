@@ -201,6 +201,16 @@ public class StateExplorationToolAdapterPackageImpl extends EPackageImpl impleme
 	 * @generated
 	 */
 	@Override
+	public EAttribute getStateExplorationConfiguration_ModeLocation() {
+		return (EAttribute)stateExplorationConfigurationEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public StateExplorationToolAdapterFactory getStateExplorationToolAdapterFactory() {
 		return (StateExplorationToolAdapterFactory)getEFactoryInstance();
 	}
@@ -229,6 +239,7 @@ public class StateExplorationToolAdapterPackageImpl extends EPackageImpl impleme
 		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__MAX_ITERATIONS);
 		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__SENSITIVITY);
 		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION);
+		createEAttribute(stateExplorationConfigurationEClass, STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION);
 	}
 
 	/**
@@ -271,6 +282,7 @@ public class StateExplorationToolAdapterPackageImpl extends EPackageImpl impleme
 		initEAttribute(getStateExplorationConfiguration_MaxIterations(), theEcorePackage.getEInt(), "maxIterations", null, 1, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStateExplorationConfiguration_Sensitivity(), theEcorePackage.getEDouble(), "sensitivity", null, 1, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStateExplorationConfiguration_DoIdleExploration(), theEcorePackage.getEBoolean(), "doIdleExploration", null, 1, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStateExplorationConfiguration_ModeLocation(), theEcorePackage.getEString(), "modeLocation", null, 0, 1, StateExplorationConfiguration.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);

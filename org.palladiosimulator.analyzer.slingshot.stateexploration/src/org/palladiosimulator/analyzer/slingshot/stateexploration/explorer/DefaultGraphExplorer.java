@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
@@ -83,8 +84,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		this.graph = new DefaultGraph(
-				UriBasedArchitectureConfiguration.createRootArchConfig(this.initModels.getResourceSet()));
+		final Optional<URI> modelLocation = this.getModelLocation();
+		if (modelLocation.isPresent()) {
+			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
+					.createRootArchConfig(this.initModels.getResourceSet(), modelLocation.get()));
+		} else {
+			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
+					.createRootArchConfig(this.initModels.getResourceSet()));
+		}
 		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
@@ -226,7 +233,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Get {@link ExplorationConfiguration.MAX_EXPLORATION_CYCLES} from launch
+	 * Get {@link ExplorationConfiguration#MAX_EXPLORATION_CYCLES} from launch
 	 * configuration parameters map.
 	 *
 	 * @return number of max exploration cycles
@@ -239,7 +246,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Get {@link ExplorationConfiguration.MIN_STATE_DURATION} from launch
+	 * Get {@link ExplorationConfiguration#MIN_STATE_DURATION} from launch
 	 * configuration parameters map.
 	 *
 	 * @return minimum duration of an exploration cycles
@@ -254,7 +261,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	/**
 	 *
 	 *
-	 * Get {@link ExplorationConfiguration.SENSIBILITY} from launch configuration
+	 * Get {@link ExplorationConfiguration#SENSIBILITY} from launch configuration
 	 * parameters map.
 	 *
 	 * @return sensibility for stopping regarding SLOs.
@@ -264,6 +271,30 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.get(ExplorationConfiguration.SENSIBILITY);
 
 		return Double.valueOf(minDuration);
+	}
+
+	/**
+	 *
+	 * Get {@link ExplorationConfiguration#MODEL_LOCATION} from launch configuration
+	 * parameters map, if given
+	 *
+	 * @return model location URI, or an empty optional if none was defined.
+	 */
+	private Optional<URI> getModelLocation() {
+		final String modelLocation = (String) launchConfigurationParams
+				.get(ExplorationConfiguration.MODEL_LOCATION);
+
+		if (modelLocation.isBlank()) {
+			return Optional.empty();
+		}
+
+		final URI uri = URI.createURI(modelLocation);
+
+		if (uri.isPlatform() || uri.isFile()) {
+			return Optional.of(uri);
+		} else {
+			return Optional.of(URI.createFileURI(modelLocation));
+		}
 	}
 
 	@Override
@@ -277,7 +308,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Can currently only refocus state with out outgoing transitions.
+	 * Can currently only refocus state with outgoing transitions.
 	 *
 	 * @param focusedStates
 	 */

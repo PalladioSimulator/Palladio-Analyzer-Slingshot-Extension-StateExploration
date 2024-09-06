@@ -22,7 +22,8 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 	public final class Builder {
 		private String label;
 		private String defaultValue;
-		private boolean optional = false;
+		private boolean isFolderSelection = false;
+		private boolean isOptional = false;
 
 		public Builder label(final String label) {
 			this.label = label;
@@ -34,18 +35,19 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 			return this;
 		}
 
-		public Builder optional(final boolean optional) {
-			this.optional = optional;
+		public Builder setIsOptional() {
+			this.isOptional = true;
+			return this;
+		}
+
+		public Builder setIsFolderSelection() {
+			this.isFolderSelection = true;
 			return this;
 		}
 
 		public void build() {
 			if (this.defaultValue == null) {
 				this.defaultValue = "Select " + this.label;
-			}
-
-			if (this.optional) {
-				this.label = this.label + " (Optional)";
 			}
 
 			queue.add(new TextField(this));
@@ -56,12 +58,14 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 
 		private final String label;
 		private final String defaultValue;
-		private final boolean optional;
+		private final boolean isOptional;
+		private final boolean isFolderSelection;
 
 		private TextField(final Builder builder) {
 			this.label = builder.label;
 			this.defaultValue = builder.defaultValue;
-			this.optional = builder.optional;
+			this.isOptional = builder.isOptional;
+			this.isFolderSelection = builder.isFolderSelection;
 		}
 
 		public String getLabel() {
@@ -73,15 +77,19 @@ public class ExplorationConfigTabBuilderStarted extends AbstractSystemEvent impl
 		}
 
 		public boolean isOptional() {
-			return optional;
+			return this.isOptional;
+		}
+
+		public boolean isFolderSelection() {
+			return this.isFolderSelection;
 		}
 
 		@Override
 		public int compareTo(final TextField o) {
-			if (this.optional == o.optional) {
+			if (this.isOptional == o.isOptional) {
 				return this.label.compareTo(o.label);
 			}
-			return Boolean.compare(o.optional, optional);
+			return Boolean.compare(o.isOptional, isOptional);
 		}
 
 	}

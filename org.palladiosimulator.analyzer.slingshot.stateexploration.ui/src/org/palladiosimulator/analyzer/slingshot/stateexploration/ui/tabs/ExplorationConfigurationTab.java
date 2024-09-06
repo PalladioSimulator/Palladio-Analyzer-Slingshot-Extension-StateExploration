@@ -27,6 +27,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.Explo
 import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.ExplorationConfigTabBuilderStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events.ExplorationConfigTabBuilderStarted.TextField;
 
+import de.uka.ipd.sdq.workflow.launchconfig.tabs.TabHelper;
+
 /**
  *
  * Tab in the run configuration to set exploration specific configurations.
@@ -84,14 +86,22 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 		group.setText("Exploration Settings");
 
 		this.iterator.forEachRemaining(textField -> {
-			final Text text = this.createGroupField(modifyListener, textField, group);
-			texts.put(textField, text);
+			if (textField.isFolderSelection()) {
+				final Text text = this.createFolderSelectionField(modifyListener, textField, group);
+				texts.put(textField, text);
+			} else {
+				final Text text = this.createGroupField(modifyListener, textField, group);
+				texts.put(textField, text);
+			}
 		});
 
 
 		createStopCheckbox();
 	}
 
+	/**
+	 *
+	 */
 	private void createStopCheckbox() {
 
 		final Group group = new Group(this.container, SWT.NONE);
@@ -108,7 +118,28 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 	}
 
 	/**
-	 * For Test input
+	 *
+	 * Create a folder input selection.
+	 *
+	 * @param modifyListener
+	 * @param textField
+	 * @param group
+	 * @return
+	 */
+	protected Text createFolderSelectionField(final ModifyListener modifyListener, final TextField textField,
+			final Group group) {
+
+		final Text text = new Text(container, SWT.SINGLE | SWT.BORDER);
+		TabHelper.createFolderInputSection(container, modifyListener,
+				textField.isOptional() ? textField.getLabel() + " (Optional)" : textField.getLabel(), text,
+						textField.getdefaultValue(), getShell(), "");
+
+		return text;
+
+	}
+
+	/**
+	 * Create simple TextField with label.
 	 *
 	 * @param modifyListener
 	 * @param textField
@@ -118,7 +149,11 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 	protected Text createGroupField(final ModifyListener modifyListener, final TextField textField,
 			final Group group) {
 		final Label timeLabel = new Label(group, SWT.NONE);
-		timeLabel.setText(textField.getLabel());
+		if (textField.isOptional()) {
+			timeLabel.setText(textField.getLabel() + " (Optional)");
+		} else {
+			timeLabel.setText(textField.getLabel());
+		}
 
 		final Text timeField = new Text(group, SWT.BORDER);
 		timeField.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -129,14 +164,14 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 
 	/**
 	 *
-	 * @param textField
+	 * @param checkbox
 	 * @param group
 	 * @return
 	 */
-	protected Button createGroupField(final Checkbox textField,
+	protected Button createGroupField(final Checkbox checkbox,
 			final Group group) {
 		final Label timeLabel = new Label(group, SWT.NONE);
-		timeLabel.setText(textField.getLabel());
+		timeLabel.setText(checkbox.getLabel());
 
 		final Button timeField = new Button(group, SWT.CHECK);
 		timeField.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
