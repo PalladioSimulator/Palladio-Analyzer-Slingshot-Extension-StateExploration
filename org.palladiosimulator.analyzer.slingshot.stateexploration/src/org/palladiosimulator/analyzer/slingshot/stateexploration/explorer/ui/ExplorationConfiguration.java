@@ -31,7 +31,7 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 	public static final int DEFAULT_MIN_STATE_DURATION = 20;
 	public static final boolean DEFAULT_IDLE_EXPLORATION = false;
 	public static final int DEFAULT_SENSIBILITY = 0;
-	public static final String DEFAULT_MODEL_LOCATION = "TODO";
+	public static final String DEFAULT_MODEL_LOCATION = "";
 
 	@Subscribe
 	public void onExplorationAdditionalConfigTabBuilderStarted(

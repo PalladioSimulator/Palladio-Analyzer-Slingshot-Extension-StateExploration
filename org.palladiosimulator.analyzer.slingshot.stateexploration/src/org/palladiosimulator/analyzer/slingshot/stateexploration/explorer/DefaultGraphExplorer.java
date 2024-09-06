@@ -275,27 +275,26 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	/**
 	 *
-	 *
 	 * Get {@link ExplorationConfiguration#MODEL_LOCATION} from launch configuration
-	 * parameters map.
+	 * parameters map, if given
 	 *
-	 * @return sensibility for stopping regarding SLOs.
+	 * @return model location URI, or an empty optional if none was defined.
 	 */
 	private Optional<URI> getModelLocation() {
 		final String modelLocation = (String) launchConfigurationParams
 				.get(ExplorationConfiguration.MODEL_LOCATION);
 
 		if (modelLocation.isBlank()) {
-			Optional.empty();
+			return Optional.empty();
 		}
 
 		final URI uri = URI.createURI(modelLocation);
 
-		if (!uri.isFile() && uri.hasAbsolutePath()) {
+		if (uri.isPlatform() || uri.isFile()) {
+			return Optional.of(uri);
+		} else {
 			return Optional.of(URI.createFileURI(modelLocation));
 		}
-
-		return Optional.of(URI.createURI(modelLocation));
 	}
 
 	@Override
