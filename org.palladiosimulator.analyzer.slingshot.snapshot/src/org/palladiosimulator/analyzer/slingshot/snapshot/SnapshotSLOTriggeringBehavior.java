@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Quantity;
 
 import org.apache.log4j.Logger;
+import org.eclipse.emf.common.util.EList;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
@@ -23,6 +25,10 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLea
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.metricspec.MetricDescription;
 import org.palladiosimulator.monitorrepository.MeasurementSpecification;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
+import org.palladiosimulator.pcmmeasuringpoint.ActiveResourceMeasuringPoint;
+import org.palladiosimulator.semanticspd.Configuration;
+import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 
@@ -48,6 +54,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 	private final DefaultState state;
 	private final ServiceLevelObjectiveRepository sloRepo;
+	private final Configuration semanticSpd;
 
 	private final boolean activated;
 
@@ -59,13 +66,15 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 	@Inject
 	public SnapshotSLOTriggeringBehavior(final @Nullable DefaultState state,
-			final @Nullable ServiceLevelObjectiveRepository sloRepo, final @Nullable SnapshotConfiguration config) {
+			final @Nullable ServiceLevelObjectiveRepository sloRepo, final @Nullable SnapshotConfiguration config,
+			final @Nullable Configuration semanticSpd) {
 
 		this.activated = state != null && sloRepo != null && config != null
-				&& !sloRepo.getServicelevelobjectives().isEmpty();
+				&& !sloRepo.getServicelevelobjectives().isEmpty() && semanticSpd != null;
 
 		this.state = state;
 		this.sloRepo = sloRepo;
+		this.semanticSpd = semanticSpd; // maybe optional?
 
 		this.minDuration = activated ? config.getMinDuration() : 0;
 		this.sensitivity = activated ? config.getSensitivity() : 0;
@@ -127,7 +136,17 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		for (final ValueRange range : mp2range.get(spec)) {
 			if (range.isViolatedBy(calculationValue)) {
+				if (range.isLowerViolatedBy(calculationValue)
+						&& spec.getMonitor().getMeasuringPoint() instanceof final ActiveResourceMeasuringPoint armp
+						&& this.isMinimalConfig(armp)) {
+					continue;
+				}
 				state.setReasonToLeave(ReasonToLeave.closenessToSLO);
+				LOGGER.debug(String.format(
+						"Triggering snapshot due to closeness to SLO for %s at measuring point %s. Value is %s",
+						event.getEntity().getProcessingType().getMeasurementSpecification().getMetricDescription()
+						.getName(),
+						event.getEntity().getMeasuringPoint().getStringRepresentation(), value.toString()));
 				this.mp2range.clear(); // reset to avoid additional Snapshot Initiations.
 				return Result.of(new SnapshotInitiated(0.0));
 			}
@@ -135,6 +154,36 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		return Result.empty();
 	}
+
+	/**
+	 * Checks whether a measuring point measures at an active resource, that is
+	 * already all scaled in, or whether the resource can be scaled in further.
+	 *
+	 * @param measuringPoint the measuring point whose resource is to be checked.
+	 * @return true if the measured active resource is already all scaled in, false
+	 *         otherwise or id no matching target group config is found.
+	 */
+	private boolean isMinimalConfig(final ActiveResourceMeasuringPoint measuringPoint) {
+		final ResourceContainer container = measuringPoint.getActiveResource()
+				.getResourceContainer_ProcessingResourceSpecification();
+
+		final List<EList<ResourceContainer>> elements = this.semanticSpd.getTargetCfgs().stream()
+				.filter(ElasticInfrastructureCfg.class::isInstance).map(ElasticInfrastructureCfg.class::cast).map(cfg -> cfg.getElements())
+				.filter(set -> set.contains(container)).toList();
+
+		if (elements.isEmpty()) {
+			LOGGER.warn(String.format("No matching target group configuration for %s[s%] ", container.getEntityName(),
+					container.getId()));
+			return false;
+		} else if (elements.size() > 1) {
+			throw new IllegalStateException(String.format(
+					"Container %s[%s] is in too many target group configurations. Should onyl be in one, but is in %d.",
+					container.getEntityName(), container.getId(), elements.size()));
+		} else {
+			return elements.get(0).size() == 1;
+		}
+	}
+
 
 	/**
 	 * Value range with upper and lower sensibility bound. Bounds are calculated
@@ -181,6 +230,26 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 		 * @return true, if this range is violated, false otherwise.
 		 */
 		public abstract boolean isViolatedBy(final double value);
+
+		/**
+		 * Determines, whether {@code value} violates this value range's lower boundary.
+		 *
+		 * @param value
+		 * @return true, if this range's lower boundary is violated, false otherwise.
+		 */
+		public boolean isLowerViolatedBy(final double value) {
+			return value <= this.lower;
+		}
+
+		/**
+		 * Determines, whether {@code value} violates this value range's upper boundary.
+		 *
+		 * @param value
+		 * @return true, if this range's upper boundary is violated, false otherwise.
+		 */
+		public boolean isUpperViolatedBy(final double value) {
+			return value >= this.upper;
+		}
 	}
 
 	/**
@@ -201,13 +270,13 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		@Override
 		public boolean isViolatedBy(final double value) {
-			return value >= this.upper || value <= this.lower;
+			return this.isUpperViolatedBy(value) || this.isLowerViolatedBy(value);
 		}
 	}
 
 	/**
-	 * Value range with only an upper sensibility bound. For calulation, the lower
-	 * bound i treated as zero. For checks, only the upper bound is considered.
+	 * Value range with only an upper sensibility bound. For calculation, the lower
+	 * bound is treated as zero. For checks, only the upper bound is considered.
 	 *
 	 * @author Sarah Stieß
 	 *
@@ -226,7 +295,15 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 
 		@Override
 		public boolean isViolatedBy(final double value) {
-			return value >= this.upper;
+			return this.isUpperViolatedBy(value);
+		}
+
+		/**
+		 * @return false, as there is no lower boundary to single ended range.
+		 */
+		@Override
+		public boolean isLowerViolatedBy(final double value) {
+			return false;
 		}
 	}
 }
