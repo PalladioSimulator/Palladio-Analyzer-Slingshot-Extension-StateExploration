@@ -141,7 +141,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 						&& this.isMinimalConfig(armp)) {
 					continue;
 				}
-				state.setReasonToLeave(ReasonToLeave.closenessToSLO);
+				state.addReasonToLeave(ReasonToLeave.closenessToSLO);
 				LOGGER.debug(String.format(
 						"Triggering snapshot due to closeness to SLO for %s at measuring point %s. Value is %s",
 						event.getEntity().getProcessingType().getMeasurementSpecification().getMetricDescription()
