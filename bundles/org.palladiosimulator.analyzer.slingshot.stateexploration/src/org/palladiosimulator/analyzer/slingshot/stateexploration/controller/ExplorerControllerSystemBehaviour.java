@@ -161,6 +161,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	private void logGraph() {
 		LOGGER.warn("********** DefaultGraphExplorer is done :) **********");
+		LOGGER.warn("Exploration : " + this.explorer.getGraph());
 		LOGGER.warn("********** States : ");
 		this.explorer.getGraph().getStates()
 		.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
