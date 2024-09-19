@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.injection;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,12 +12,12 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.injection.data.Link;
-import org.palladiosimulator.analyzer.slingshot.injection.data.Plan;
-import org.palladiosimulator.analyzer.slingshot.injection.data.StatesBlackboard;
-import org.palladiosimulator.analyzer.slingshot.injection.events.PlanUpdated;
-import org.palladiosimulator.analyzer.slingshot.injection.messages.PlanCreatedEventMessage;
-import org.palladiosimulator.analyzer.slingshot.injection.messages.StateExploredEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.Link;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.Plan;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.StatesBlackboard;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.events.PlanUpdated;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.PlanCreatedEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages.StateExploredEventMessage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**

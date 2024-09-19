@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.injection;
+package org.palladiosimulator.analyzer.slingshot.managedSystem;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;

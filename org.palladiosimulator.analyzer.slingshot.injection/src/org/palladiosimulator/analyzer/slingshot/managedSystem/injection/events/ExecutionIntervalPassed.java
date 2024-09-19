@@ -1,7 +1,7 @@
-package org.palladiosimulator.analyzer.slingshot.injection.events;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection.events;
 
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulationEvent;
-import org.palladiosimulator.analyzer.slingshot.injection.data.Plan;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.Plan;
 
 /**
  *

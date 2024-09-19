@@ -1,6 +1,6 @@
-package org.palladiosimulator.analyzer.slingshot.injection.messages;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages;
 
-import org.palladiosimulator.analyzer.slingshot.injection.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 
 /**

@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.injection.messages;
+package org.palladiosimulator.analyzer.slingshot.managedSystem.injection.messages;
 
 import java.util.List;
 
