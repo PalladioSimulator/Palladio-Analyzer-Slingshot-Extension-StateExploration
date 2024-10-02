@@ -50,6 +50,8 @@ public class InjectionSystemBehaviour implements SystemBehaviorExtension {
     @Subscribe
     public void onPlannerPlanCreatedEventMessage(final PlanCreatedEventMessage event) {
 
+        linkToSimulation.setExplorationID(event.getExplorationId());
+
         final Map<Double, Set<ScalingPolicy>> map = new HashMap<>();
 
         for (final String stateId : event.getPayload()) {
