@@ -27,6 +27,7 @@ public class MeasurementSet {
 	private String specificationName;
 	private String metricName;
 	private String metricDescription;
+	private String metricDescriptionId;
 
 	public MeasurementSet() {
 		super();
@@ -89,6 +90,13 @@ public class MeasurementSet {
 		this.monitorName = monitorName;
 	}
 
+	public String getMetricDescriptionId() {
+		return metricDescriptionId;
+	}
+
+	public void setMetricDescriptionId(final String metricDescriptionId) {
+		this.metricDescriptionId = metricDescriptionId;
+	}
 
 	public double getMedian() {
 		if (elements.size() < 1) {
