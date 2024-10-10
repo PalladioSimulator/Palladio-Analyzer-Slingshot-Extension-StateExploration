@@ -45,7 +45,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.Inter
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
-import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
 import org.palladiosimulator.pcm.core.CoreFactory;
@@ -116,17 +115,6 @@ public final class CloneHelper {
 	 */
 	public DESEvent clone(final InterArrivalUserInitiated event, final double simulationTime) {
 		return new InterArrivalUserInitiated(event.getEntity(), event.time() - simulationTime);
-	}
-
-	/**
-	 * TODO on a closer look : what is this does not belong here, iirc o_O
-	 *
-	 * @param event
-	 * @param simulationTime
-	 * @return
-	 */
-	public DESEvent clone(final IntervalPassed event, final double simulationTime) {
-		return new IntervalPassed(event.getTargetResourceContainer(), event.time() - simulationTime);
 	}
 
 	/**
