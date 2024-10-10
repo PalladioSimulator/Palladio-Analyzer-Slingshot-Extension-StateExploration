@@ -82,7 +82,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/* helper */
 	private final Map<ModelPassedEvent<?>, Double> event2offset;
-	private final Map<String, TakeCostMeasurement> resourceContainer2intervalPassed;
 
 	private final boolean activated;
 
@@ -109,7 +108,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		}
 
 		this.event2offset = new HashMap<>();
-		this.resourceContainer2intervalPassed = new HashMap<>();
 		this.policyIdToValues = new HashMap<>();
 	}
 
@@ -195,6 +193,21 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	Collection<TakeCostMeasurement> costMeasurementStore = new ArrayList<>();
 	boolean handleCosts = true;
 
+	/**
+	 *
+	 * Intercept {@link TakeCostMeasurement} events.
+	 *
+	 * For two reasons: Firstly, get to know all resources with cost measures to
+	 * trigger a measurement in case of a snapshot. Secondly, abort the events, if
+	 * the state starts with an adaptation. In this case, cost must only be measured
+	 * after the adaptation, c.f.
+	 * {@link SnapshotGraphStateBehaviour#onModelAdjusted(ModelAdjusted)}
+	 *
+	 *
+	 * @param information
+	 * @param event
+	 * @return success, if this state starts without adaptation, abort other wise.
+	 */
 	@PreIntercept
 	public InterceptionResult preInterceptTakeCostMeasurement(final InterceptorInformation information,
 			final TakeCostMeasurement event) {
