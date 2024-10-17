@@ -1,5 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
+import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -23,7 +26,7 @@ import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigu
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
-import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
@@ -58,10 +61,10 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 		SPDAdjustorStateInitialized.class }, cardinality = EventCardinality.MANY)
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class, cardinality = EventCardinality.SINGLE)
-@OnEvent(when = ModelAdjusted.class, then = {})
-
+@OnEvent(when = ModelAdjusted.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
+@OnEvent(when = TakeCostMeasurement.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
 @OnEvent(when = SPDAdjustorStateInitialized.class, then = {})
-
+@OnEvent(when = SnapshotInitiated.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
 public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension {
 
 	private final Logger LOGGER = Logger.getLogger(SnapshotGraphStateBehaviour.class);
@@ -79,7 +82,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/* helper */
 	private final Map<ModelPassedEvent<?>, Double> event2offset;
-	private final Map<String, IntervalPassed> resourceContainer2intervalPassed;
 
 	private final boolean activated;
 
@@ -106,7 +108,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		}
 
 		this.event2offset = new HashMap<>();
-		this.resourceContainer2intervalPassed = new HashMap<>();
 		this.policyIdToValues = new HashMap<>();
 	}
 
@@ -187,6 +188,40 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 				return InterceptionResult.success(); // won't be delivered.
 			}
 		}
+	}
+
+	Collection<TakeCostMeasurement> costMeasurementStore = new ArrayList<>();
+	boolean handleCosts = true;
+
+	/**
+	 *
+	 * Intercept {@link TakeCostMeasurement} events.
+	 *
+	 * For two reasons: Firstly, get to know all resources with cost measures to
+	 * trigger a measurement in case of a snapshot. Secondly, abort the events, if
+	 * the state starts with an adaptation. In this case, cost must only be measured
+	 * after the adaptation, c.f.
+	 * {@link SnapshotGraphStateBehaviour#onModelAdjusted(ModelAdjusted)}
+	 *
+	 *
+	 * @param information
+	 * @param event
+	 * @return success, if this state starts without adaptation, abort other wise.
+	 */
+	@PreIntercept
+	public InterceptionResult preInterceptTakeCostMeasurement(final InterceptorInformation information,
+			final TakeCostMeasurement event) {
+
+		if (handleCosts && event.time() == 0) {
+			costMeasurementStore.add(event);
+
+			if (this.eventsToInitOn.stream().filter(ModelAdjustmentRequested.class::isInstance).findAny()
+					.isPresent()) {
+				return InterceptionResult.abort();
+			}
+		}
+		return InterceptionResult.success();
+
 	}
 
 	/**
@@ -279,7 +314,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/**
 	 *
-	 * Catch {@link IntervalPassed} events (usage evolution) from the snapshot and
+	 * Catch {@link TakeCostMeasurement} events (usage evolution) from the snapshot and
 	 * offset them into the "future". Otherwise, we will get the wrong values from
 	 * the Load Intensity model.
 	 *
@@ -289,9 +324,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 */
 	@PreIntercept
 	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
-			final org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed event) {
+			final IntervalPassed event) {
 		event.setTime(event.time() + halfDoneState.getStartTime());
 		return InterceptionResult.success();
+	}
+
+	@Subscribe
+	public Result<TakeCostMeasurement> onSnapshotInitiated(final SnapshotInitiated event) {
+		return Result.of(costMeasurementStore);
 	}
 
 	/**
@@ -321,8 +361,11 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 * @param modelAdjusted
 	 */
 	@Subscribe
-	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
+	public Result<TakeCostMeasurement> onModelAdjusted(final ModelAdjusted modelAdjusted) {
 		ArchitectureConfigurationUtil.saveWhitelisted(this.allocation.eResource().getResourceSet());
+		this.handleCosts = false;
+
+		return Result.of(costMeasurementStore);
 	}
 
 	/**
@@ -351,7 +394,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Collect resource containers, for which an {@link IntervalPassed} event must
+	 * Collect resource containers, for which an {@link TakeCostMeasurement} event must
 	 * be aborted later on.
 	 *
 	 * @param events events to collect resource containers from.
@@ -362,7 +405,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		// .put(((IntervalPassed) event).getTargetResourceContainer().getId(),
 		// (IntervalPassed) event));
 
-		return events.stream().filter(Predicate.not(IntervalPassed.class::isInstance)).collect(Collectors.toSet());
+		return events.stream().filter(Predicate.not(TakeCostMeasurement.class::isInstance)).collect(Collectors.toSet());
 	}
 
 	/**
