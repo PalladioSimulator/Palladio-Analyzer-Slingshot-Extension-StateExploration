@@ -1,6 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
-import java.util.Optional;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
@@ -32,15 +31,16 @@ public interface Snapshot {
 
 	/**
 	 *
-	 * @return {@link ModelAdjustmentRequested} event, that ended the snapshotted
-	 *         state, or empty if the state did not end with a reconfiguration.
+	 * @return {@link ModelAdjustmentRequested} event, that are scheduled for the
+	 *         point in time the snapshot is taken state, or empty if no
+	 *         reconfigurations happen at the end of the state.
 	 */
-	public Optional<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent();
+	public Set<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent();
 
 	/**
 	 *
-	 * @param event {@link ModelAdjustmentRequested} event, that ended the
-	 *              snapshotted state.
+	 * @param event {@link ModelAdjustmentRequested} event, that happens at the end
+	 *              of the snapshotted state.
 	 */
-	public void setModelAdjustmentRequestedEvent(ModelAdjustmentRequested event);
+	public void addModelAdjustmentRequestedEvent(ModelAdjustmentRequested event);
 }

@@ -44,7 +44,7 @@ import org.palladiosimulator.pcm.usagemodel.Stop;
  *
  * TODO
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 @OnEvent(when = ModelPassedEvent.class, then = {})
@@ -55,8 +55,9 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotRecordingBehavior.class);
 	private static final String FAKE = "fakeID";
 
-	/* flag to prevent duplicate snapshots */
-	private boolean activated;
+	/* flags to prevent duplicate snapshots */
+	private boolean snapshotIsTaken = false;
+	private boolean snapshotIsFinished = false;
 
 	private final LessInvasiveInMemoryRecord recorder;
 	private final Camera camera;
@@ -73,8 +74,6 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.recorder = new LessInvasiveInMemoryRecord();
 		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get());
 		this.scheduling = scheduling;
-
-		this.activated = true;
 	}
 
 	@Subscribe(reified = Start.class)
@@ -146,11 +145,17 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 */
 	@Subscribe
 	public Result<SnapshotFinished> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
+
+		if (this.snapshotIsFinished) {
+			return Result.of();
+		}
+		this.snapshotIsFinished = true;
+
 		final Snapshot snapshot = camera.takeSnapshot();
 
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
 			final ModelAdjustmentRequested triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
-			snapshot.setModelAdjustmentRequestedEvent(triggeringeEvent);
+			snapshot.addModelAdjustmentRequestedEvent(triggeringeEvent);
 		}
 
 		return Result.of(new SnapshotFinished(snapshot));
@@ -166,11 +171,11 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	@Subscribe
 	public Result<SnapshotTaken> onSnapshotInitiatedEvent(final SnapshotInitiated snapshotInitiated) {
 
-		if (!this.activated) {
-			return Result.of();
+		if (this.snapshotIsTaken) {
+			return Result.of(new SnapshotTaken(0, snapshotInitiated.getTriggeringEvent()));
 		}
 
-		this.activated = false;
+		this.snapshotIsTaken = true;
 
 		// Cast to ActiveJob is feasible, because LinkingJobs are always FCFS.
 		this.scheduleProcSharingUpdatesHelper(
