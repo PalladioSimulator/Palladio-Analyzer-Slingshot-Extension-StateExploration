@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
@@ -30,7 +31,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planni
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -84,8 +84,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		this.graph = new DefaultGraph(
-				UriBasedArchitectureConfiguration.createRootArchConfig(this.initModels.getResourceSet()));
+		final Optional<URI> modelLocation = this.getModelLocation();
+		if (modelLocation.isPresent()) {
+			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
+					.createRootArchConfig(this.initModels.getResourceSet(), modelLocation.get()));
+		} else {
+			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
+					.createRootArchConfig(this.initModels.getResourceSet()));
+		}
 		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
@@ -139,16 +145,21 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		config.getEvent().ifPresent(e -> set.add(e));
 		set.addAll(config.getinitializationEvents());
 
-		final EventsToInitOnWrapper eventsToInitOn = new EventsToInitOnWrapper(set);
-
-		AdditionalConfigurationModule.defaultStateProvider.set(config.getStateToExplore());
-		AdditionalConfigurationModule.snapConfigProvider.set(snapConfig);
-		AdditionalConfigurationModule.eventsToInitOnProvider.set(eventsToInitOn);
+		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), set);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();
 
-		// Post processing :
+		this.postProcessExplorationCycle(config);
+	}
+
+	/**
+	 *
+	 * Post {@link StateExploredEventMessage} and update fringe of graph.
+	 *
+	 * @param config configuration of exploration cycle to be post processed.
+	 */
+	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 		final DefaultState current = config.getStateToExplore();
 
 		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
@@ -156,9 +167,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		systemDriver.postEvent(
 				new StateExploredEventMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
 		this.blackbox.updateGraphFringePostSimulation(current);
-
-		// reset Additional Configurations
-		AdditionalConfigurationModule.reset();
 	}
 
 	/**
@@ -225,7 +233,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Get {@link ExplorationConfiguration.MAX_EXPLORATION_CYCLES} from launch
+	 * Get {@link ExplorationConfiguration#MAX_EXPLORATION_CYCLES} from launch
 	 * configuration parameters map.
 	 *
 	 * @return number of max exploration cycles
@@ -238,7 +246,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Get {@link ExplorationConfiguration.MIN_STATE_DURATION} from launch
+	 * Get {@link ExplorationConfiguration#MIN_STATE_DURATION} from launch
 	 * configuration parameters map.
 	 *
 	 * @return minimum duration of an exploration cycles
@@ -253,7 +261,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	/**
 	 *
 	 *
-	 * Get {@link ExplorationConfiguration.SENSIBILITY} from launch configuration
+	 * Get {@link ExplorationConfiguration#SENSIBILITY} from launch configuration
 	 * parameters map.
 	 *
 	 * @return sensibility for stopping regarding SLOs.
@@ -263,6 +271,30 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.get(ExplorationConfiguration.SENSIBILITY);
 
 		return Double.valueOf(minDuration);
+	}
+
+	/**
+	 *
+	 * Get {@link ExplorationConfiguration#MODEL_LOCATION} from launch configuration
+	 * parameters map, if given
+	 *
+	 * @return model location URI, or an empty optional if none was defined.
+	 */
+	private Optional<URI> getModelLocation() {
+		final String modelLocation = (String) launchConfigurationParams
+				.get(ExplorationConfiguration.MODEL_LOCATION);
+
+		if (modelLocation.isBlank()) {
+			return Optional.empty();
+		}
+
+		final URI uri = URI.createURI(modelLocation);
+
+		if (uri.isPlatform() || uri.isFile()) {
+			return Optional.of(uri);
+		} else {
+			return Optional.of(URI.createFileURI(modelLocation));
+		}
 	}
 
 	@Override
@@ -276,7 +308,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	}
 
 	/**
-	 * Can currently only refocus state with out outgoing transitions.
+	 * Can currently only refocus state with outgoing transitions.
 	 *
 	 * @param focusedStates
 	 */

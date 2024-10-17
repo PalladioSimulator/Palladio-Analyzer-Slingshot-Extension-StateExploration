@@ -81,8 +81,7 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
      */
     @Subscribe
     public void onSimulationStarted(final SimulationStarted event) {
-        final PlanStep step = new PlanStep(event.time(), Set.of());
-        this.linkToSystem.postToSystem(new PlanStepAppliedEventMessage(step, clientName));
+        // No initital Plan step, as we do not yet know the explorationId.
     }
 
     /**
@@ -150,7 +149,8 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
                 .getId())
             .collect(Collectors.toSet());
 
-        this.linkToSystem.postToSystem(new PlanStepAppliedEventMessage(new PlanStep(event.time(), ids), clientName));
+        this.linkToSystem.postToSystem(PlanStepAppliedEventMessage.of(new PlanStep(event.time(), ids),
+                linkToSystem.getExplorationID(), clientName));
 
         events.addAll(adjustments);
         events.addAll(createTriggerForNextStep(event.time()));

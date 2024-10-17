@@ -193,6 +193,7 @@ public class StateexplorationApplication implements IApplication {
 		map.put(ExplorationConfiguration.MIN_STATE_DURATION, String.valueOf(simConfig.getMinStateDuration()));
 		map.put(ExplorationConfiguration.SENSIBILITY, String.valueOf(simConfig.getSensitivity()));
 		map.put(ExplorationConfiguration.IDLE_EXPLORATION, String.valueOf(simConfig.isDoIdleExploration()));
+		map.put(ExplorationConfiguration.MODEL_LOCATION, String.valueOf(simConfig.getModeLocation()));
 
 		return map;
 	}

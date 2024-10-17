@@ -1,5 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.managedSystem.injection.data;
 
+import java.util.UUID;
+
 import javax.inject.Singleton;
 
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -21,7 +23,20 @@ public class Link {
 	private SimulationScheduling scheduling;
 	private SystemDriver system;
 
-	public void postToSystem(final SystemEvent event) {
+    private UUID explorationID;
+
+    public UUID getExplorationID() {
+        if (explorationID == null) {
+            throw new IllegalStateException("Must not access explorationId, while it is still null.");
+        }
+        return explorationID;
+    }
+
+    public void setExplorationID(final UUID explorationID) {
+        this.explorationID = explorationID;
+    }
+
+    public void postToSystem(final SystemEvent event) {
 		system.postEvent(event);
 	}
 

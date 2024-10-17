@@ -15,6 +15,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/maxIterations"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/sensitivity"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/doIdleExploration"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/modeLocation"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

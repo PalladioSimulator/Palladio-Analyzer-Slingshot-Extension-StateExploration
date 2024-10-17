@@ -11,7 +11,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ResetExplorerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ArchitectureMessageDispatcher;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.RequestArchitectureMessage;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.RequestArchitectureMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -25,9 +25,11 @@ import com.google.inject.multibindings.MapBinder;
 
 /**
  *
+ * Create bindings for deserializing incoming Messages and install networking
+ * related behaviour extensions.
  *
- *
- *
+ * Also provides the {@code clientName} for dispatching messages with
+ * exploration.
  *
  * @author Raphael Straub, Sarah Stieß
  *
@@ -53,7 +55,8 @@ public class ExplorationNetworkingModule extends AbstractSlingshotExtension {
 		messageBinder.addBinding(ResetExplorerEvent.MESSAGE_MAPPING_IDENTIFIER)
 		.toInstance(ResetExplorerEvent.class);
 
-		messageBinder.addBinding("RequestArchitecture").toInstance(RequestArchitectureMessage.class);
+		messageBinder.addBinding(RequestArchitectureMessage.MESSAGE_MAPPING_IDENTIFIER)
+		.toInstance(RequestArchitectureMessage.class);
 
 		install(SimulationUsageDataCollector.class);
 		install(ArchitectureMessageDispatcher.class);
