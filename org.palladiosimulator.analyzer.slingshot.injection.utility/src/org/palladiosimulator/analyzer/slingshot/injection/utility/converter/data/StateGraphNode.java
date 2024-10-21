@@ -26,6 +26,8 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
      * measure2)" In addition to this, the sum is multiplied with the duration of the state. This
      * balances shorter against longer paths so they are compatible.
      *
+     * only consider values bigger than the start time.
+     *
      * @return
      */
     private static Utility calcUtility(final double startTime, final double endTime,
@@ -42,6 +44,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
             if (ms != null) {
                 final var points = ms.getElements()
                     .stream()
+                    .filter(pair -> pair.timeStamp() > startTime)
                     // mirror the function at the upper threshold and then subtract the threshold
                     // (basically use threshold as new x axis)
                     .map(x -> new Measurement<Number>(slo.upperThreshold()
@@ -60,10 +63,12 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
         for (final var ms : measurements) {
             if (ms.getMonitorName()
                 .startsWith("Cost_")) {
-                final double area = calculateAreaUnderCurve(ms.getElements()
+                final var points = ms.getElements()
                     .stream()
+                    .filter(pair -> pair.timeStamp() > startTime)
                     .sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
-                    .toList());
+                    .toList();
+                final double area = calculateAreaUnderCurve(points);
                 utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
             }
         }

@@ -15,7 +15,7 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveReposito
 public class StateGraphConverter {
     public static StateGraphNode convertState(final MonitorRepository monitorRepository,
             final ExperimentSetting expSetting,
-            final ServiceLevelObjectiveRepository sloRepository, final double endTime) {
+            final ServiceLevelObjectiveRepository sloRepository, final double startTime, final double endTime) {
 		List<SLO> slos = new ArrayList<SLO>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 
@@ -41,7 +41,7 @@ public class StateGraphConverter {
 
         measuremnets = MeasurementConverter.visitExperiementSetting(expSetting);
 
-        return new StateGraphNode("", 0.0, endTime, measuremnets, slos, "parentId", null);
+        return new StateGraphNode("", startTime, endTime, measuremnets, slos, "parentId", null);
 	}
 
 	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {

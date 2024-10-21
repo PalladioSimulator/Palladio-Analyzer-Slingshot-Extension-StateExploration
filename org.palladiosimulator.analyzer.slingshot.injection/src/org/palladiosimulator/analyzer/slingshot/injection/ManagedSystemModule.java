@@ -41,7 +41,7 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
 
     @Override
     protected void configure() {
-        install(SlowdownBehaviour.class);
+        // install(SlowdownBehaviour.class);
 
         install(InjectionSystemBehaviour.class);
         install(InjectionSimulationBehaviour.class);
