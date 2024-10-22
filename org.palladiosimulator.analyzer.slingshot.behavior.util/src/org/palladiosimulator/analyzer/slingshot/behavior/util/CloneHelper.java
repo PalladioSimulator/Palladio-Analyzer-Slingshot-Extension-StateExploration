@@ -838,11 +838,16 @@ public final class CloneHelper {
 	 *         if {@code element} was {@code null}.
 	 */
 	public <T extends EObject> T getMatchingPCMElement(final T element) {
-		assert element == null || (element != null && element.eResource() != null)
-				: String.format("Element %s is not contained in a resource, but must be.", element.toString());
+		//		assert element == null || (element != null && element.eResource() != null)
+		//				: String.format("Element %s is not contained in a resource, but must be.", element.toString());
 
 		if (element == null) {
 			return null;
+		}
+
+		// should not load unwanted resources, because there is no resource...?
+		if (element.eResource() == null) {
+			return element;
 		}
 
 		final String fragment = EcoreUtil.getURI(element).fragment();

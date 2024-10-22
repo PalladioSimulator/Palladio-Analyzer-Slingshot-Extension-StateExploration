@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.AbstractJobEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobAborted;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobProgressed;
@@ -29,6 +30,9 @@ import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
 
 public final class LessInvasiveInMemoryCamera implements Camera {
 	private static final Logger LOGGER = Logger.getLogger(LessInvasiveInMemoryCamera.class);
+
+	/** keep in sync with ordiginal */
+	private static final String FAKE = "fakeID";
 
 	private final LessInvasiveInMemoryRecord record;
 	private final SimulationEngine engine;
@@ -97,6 +101,12 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		final Set<JobInitiated> initJobs = new HashSet<>();
 		initJobs.addAll(this.handlePFCFSJobs(fcfsRecords, progressedFcfs));
 		initJobs.addAll(this.handleProcSharingJobs(procsharingRecords));
+
+		final Set<DESEvent> fakeAbortions = relevantEvents.stream()
+				.filter(e -> (e instanceof final JobAborted ja) && ja.getEntity().getId().equals(FAKE))
+				.collect(Collectors.toSet());
+
+		relevantEvents.removeAll(fakeAbortions);
 
 		relevantEvents.addAll(initJobs);
 
@@ -184,12 +194,12 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	private void log(final Set<DESEvent> evt) {
 		LOGGER.info("DEMANDS");
 		evt.stream().filter(e -> (e instanceof JobInitiated)).map(e -> (JobInitiated) e)
-				.forEach(e -> LOGGER.info(e.getEntity().getDemand()));
+		.forEach(e -> LOGGER.info(e.getEntity().getDemand()));
 		LOGGER.info("TIMES");
 		evt.stream().filter(e -> (e instanceof UsageModelPassedElement<?>)).map(e -> (UsageModelPassedElement<?>) e)
-				.forEach(e -> LOGGER.info(e.time()));
+		.forEach(e -> LOGGER.info(e.time()));
 		LOGGER.info("CWUI");
 		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e)
-				.forEach(e -> LOGGER.info(e.delay() + " " + e.time()));
+		.forEach(e -> LOGGER.info(e.delay() + " " + e.time()));
 	}
 }

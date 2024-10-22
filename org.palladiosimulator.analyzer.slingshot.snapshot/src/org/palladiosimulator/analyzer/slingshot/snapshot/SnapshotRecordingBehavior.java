@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobAborted;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
@@ -112,10 +113,19 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	@PreIntercept
-	public InterceptionResult preInterceptSimulationStarted(final InterceptorInformation information,
+	public InterceptionResult preInterceptJob(final InterceptorInformation information,
 			final JobInitiated event) {
 		if (!event.getEntity().getId().equals(FAKE)) {
 			recorder.createJobRecord(event);
+		}
+		return InterceptionResult.success();
+	}
+
+	@PreIntercept
+	public InterceptionResult preInterceptJobAborted(final InterceptorInformation information,
+			final JobAborted event) {
+		if (event.getEntity().getId().equals(FAKE)) {
+			return InterceptionResult.abort();
 		}
 		return InterceptionResult.success();
 	}
