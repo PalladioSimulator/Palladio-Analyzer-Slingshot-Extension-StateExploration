@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +22,8 @@ import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelChange;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ResourceEnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
@@ -45,7 +48,13 @@ import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.Repository.Repository;
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
+import org.palladiosimulator.monitorrepository.Monitor;
+import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
+import org.palladiosimulator.pcmmeasuringpoint.ResourceContainerMeasuringPoint;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
@@ -87,11 +96,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	private final Allocation allocation;
 
+	private final MonitorRepository monitorrepo;
+	private final MeasuringPointRepository measuringpointsrepo;
+
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsToInitOn,
 			final @Nullable SimuComConfig simuComConfig,
-			final Allocation allocation) {
+			final Allocation allocation, final MonitorRepository monitorrepo) {
 
 		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null;
 
@@ -99,6 +111,9 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 		this.allocation = allocation;
+		this.monitorrepo = monitorrepo;
+		this.measuringpointsrepo = this.monitorrepo.getMonitors().get(0).getMeasuringPoint()
+				.getMeasuringPointRepository();
 
 		if (activated) {
 			assert halfDoneState.getSnapshot() == null : "Snapshot already set, but should not be!";
@@ -355,17 +370,49 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Update persisted model files, because reconfiguration now happens at runtime,
+	 * Update persisted model files, because reconfiguration now happens at
+	 * runtime,https://chat.rss.iste.uni-stuttgart.de/group/Floriments-doctor-hat
 	 * i.e. not yet propagated to file.
 	 *
 	 * @param modelAdjusted
 	 */
 	@Subscribe
 	public Result<TakeCostMeasurement> onModelAdjusted(final ModelAdjusted modelAdjusted) {
+		for (final ModelChange<?> change : modelAdjusted.getChanges()) {
+			if (change instanceof final ResourceEnvironmentChange resEnvChange) {
+				for (final ResourceContainer container : resEnvChange.getDeletedResourceContainers()) {
+					removeDeletedMonitoring(container);
+				}
+			}
+		}
 		ArchitectureConfigurationUtil.saveWhitelisted(this.allocation.eResource().getResourceSet());
 		this.handleCosts = false;
 
 		return Result.of(costMeasurementStore);
+	}
+
+	/**
+	 * TODO
+	 *
+	 * @param deleted
+	 */
+	private void removeDeletedMonitoring(final ResourceContainer deleted) {
+
+		final Set<MeasuringPoint> deletedMps = new HashSet<>();
+
+		for (final MeasuringPoint mp : Set.copyOf(measuringpointsrepo.getMeasuringPoints())) {
+			if (mp instanceof final ResourceContainerMeasuringPoint rcmp
+					&& rcmp.getResourceContainer().getId().equals(deleted.getId())) {
+				deletedMps.add(rcmp);
+				measuringpointsrepo.getMeasuringPoints().remove(rcmp);
+			}
+		}
+
+		for (final Monitor monitor : Set.copyOf(monitorrepo.getMonitors())) {
+			if (deletedMps.contains(monitor.getMeasuringPoint())) {
+				monitorrepo.getMonitors().remove(monitor);
+			}
+		}
 	}
 
 	/**
