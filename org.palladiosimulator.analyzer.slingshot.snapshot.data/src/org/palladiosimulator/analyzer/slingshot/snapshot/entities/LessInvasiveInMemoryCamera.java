@@ -130,7 +130,8 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 
 		for (final JobRecord jobRecord : jobrecords) {
 			// do the Proc Sharing Math
-			final double ratio = jobRecord.getCurrentDemand() / jobRecord.getNormalizedDemand();
+			final double ratio = jobRecord.getNormalizedDemand() == 0 ? 0
+					: jobRecord.getCurrentDemand() / jobRecord.getNormalizedDemand();
 			final double reducedRequested = jobRecord.getRequestedDemand() * ratio;
 			jobRecord.getJob().updateDemand(reducedRequested);
 			rval.add(new JobInitiated(jobRecord.getJob()));
