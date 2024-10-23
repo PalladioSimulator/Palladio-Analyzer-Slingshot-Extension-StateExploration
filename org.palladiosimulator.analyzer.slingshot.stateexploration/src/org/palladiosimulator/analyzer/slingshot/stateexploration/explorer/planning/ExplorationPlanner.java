@@ -12,6 +12,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorSta
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
@@ -198,7 +199,11 @@ public class ExplorationPlanner {
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
 		// NOP Always
-		this.fringe.add(new ToDoChange(Optional.empty(), start));
+		final ToDoChange change = new ToDoChange(Optional.empty(), start);
+		if (matchesPattern(change)) {
+			return; // drop the entire branch.
+		}
+		this.fringe.add(change);
 		// Reactive Reconfiguration - Always.
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
 			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
@@ -295,5 +300,41 @@ public class ExplorationPlanner {
 	private Collection<DESEvent> createStateInitEvents(
 			final Collection<SPDAdjustorStateValues> values) {
 		return values.stream().map(value -> (DESEvent) new SPDAdjustorStateInitialized(value)).toList();
+	}
+
+	/**
+	 * Patter is "leav on rea" (prev) -> NOOP -> "leav on rea" (current) -> NOOP
+	 * (ToDoChange)
+	 *
+	 * @param current
+	 * @return
+	 */
+	private static boolean matchesPattern(final ToDoChange change) {
+
+		final DefaultState current = change.getStart();
+
+		if (current.getEndTime() == 0.0) { // root???
+			return false;
+		}
+
+		final DefaultState prev = (DefaultState) current.getIncomingTransition().getSource();
+
+		return samePolicy(current, prev) && bothNOOP(change, current.getIncomingTransition());
+	}
+
+	private static boolean bothNOOP(final ToDoChange current, final RawTransition prev) {
+		return current.getChange().isEmpty() && prev.getChange().isEmpty();
+	}
+
+	private static boolean samePolicy(final DefaultState current, final DefaultState prev) {
+		if (current.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()
+				|| prev.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
+			return false;
+		}
+		final ScalingPolicy policyCurrent = current.getSnapshot().getModelAdjustmentRequestedEvent().get()
+				.getScalingPolicy();
+		final ScalingPolicy policyPrev = prev.getSnapshot().getModelAdjustmentRequestedEvent().get().getScalingPolicy();
+
+		return policyCurrent.getId().equals(policyPrev.getId());
 	}
 }
