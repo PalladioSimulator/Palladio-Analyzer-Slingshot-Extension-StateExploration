@@ -39,6 +39,8 @@ public class DefaultState implements RawModelState {
 	/* known after configuration of the simulation run */
 	private ExperimentSetting experimentSetting;
 
+	private double utility = 0;
+
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
 
 	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
@@ -140,6 +142,14 @@ public class DefaultState implements RawModelState {
 	@Override
 	public Set<RawTransition> getOutgoingTransitions() {
 		return this.graph.outgoingEdgesOf(this);
+	}
+
+	public double getUtility() {
+		return utility;
+	}
+
+	public void setUtility(final double utility) {
+		this.utility = utility;
 	}
 
 }

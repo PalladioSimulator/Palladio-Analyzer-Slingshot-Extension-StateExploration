@@ -15,6 +15,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -164,8 +165,10 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
 
-		systemDriver.postEvent(
-				new StateExploredEventMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
+		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policy);
+		current.setUtility(node.utility().getTotalUtilty());
+
+		systemDriver.postEvent(new StateExploredEventMessage(node));
 		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 
