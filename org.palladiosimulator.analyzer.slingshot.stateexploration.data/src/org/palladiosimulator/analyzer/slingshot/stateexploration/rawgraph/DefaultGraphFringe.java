@@ -1,11 +1,13 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.function.Predicate;
 
 import javax.measure.quantity.Force;
 
+import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -18,11 +20,80 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * TODO: Make this something with priority, such that the most interesting
  * {@link ToDoChange} gets polled and thus explored first.
  *
+ * Beware: The head of this queue is the *least* element with respect to the
+ * specified ordering. (c.f. JavaDoc of {@link PriorityQueue})
  *
  * @author Sarah Stieß
  *
  */
-public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
+public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
+
+	private final static Logger LOGGER = Logger.getLogger(DefaultGraphFringe.class);
+
+	public DefaultGraphFringe() {
+		super(create());
+	}
+
+	/**
+	 * Creates a {@link Comparator} for comparing two instances of
+	 * {@link ToDoChange}.
+	 *
+	 * Current implementation compares first by path length, then by number of out
+	 * going transition, and the by type of transition. The queue prioritises the
+	 * least element, thus it is:
+	 * <ol>
+	 * <li>Long histories are greater than short histories.</li>
+	 * <li>More outgoing edges are greater that fewer.</li>
+	 * <li>NOP transitions are prioritised over changes.</li>
+	 * </ol>
+	 *
+	 * If 1. is equal, 2. is used. If 2. is equal, 3. is used. If 3. is equal, the
+	 * order is arbitrary.
+	 *
+	 * @return comparator for comparing two instances of {@link ToDoChange}.
+	 */
+	private static Comparator<ToDoChange> create() {
+		return new Comparator<ToDoChange>() {
+
+			@Override
+			public int compare(final ToDoChange change1, final ToDoChange change2) {
+
+				// the longer one is better -> the shorter one is "the least"
+				final Comparator<DefaultState> historyLengthComparator = Comparator.comparingInt(s -> s.lenghtOfHistory());
+
+				// the longer one is better -> the shorter one is "the least"
+				final Comparator<DefaultState> endTimeComparator = Comparator.comparingDouble(s -> s.getEndTime());
+
+				// the more the better -> the fewer one is "least" (end up with a line, because
+				// newest state has always zero out transitions -> "least"
+				final Comparator<DefaultState> cardinalityComparator = Comparator
+						.comparingInt(s -> s.getOutgoingTransitions().size());
+
+				// the one with NOP shall be "the least"
+				final Comparator<ToDoChange> typeOfChangeComparator = (c1, c2) -> {
+					int rval = 0;
+					if (c1.getChange().isEmpty()) {
+						rval--;
+					}
+					if (c2.getChange().isEmpty()) {
+						rval++;
+					}
+					return rval;
+				};
+
+				final int historyLength = historyLengthComparator.compare(change1.getStart(), change2.getStart());
+				final int endTime = endTimeComparator.compare(change1.getStart(), change2.getStart());
+				final int cardinality = cardinalityComparator.compare(change1.getStart(), change2.getStart());
+				final int typeOfChange = typeOfChangeComparator.compare(change1, change2);
+
+				final int total = endTime != 0 ? endTime
+						: historyLength != 0 ? historyLength : cardinality != 0 ? cardinality : typeOfChange;
+
+				return total;
+			}
+		};
+	}
+
 
 	/**
 	 *
@@ -63,6 +134,11 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 		return containsTodoFor(pred);
 	}
 
+	/**
+	 *
+	 * @param predicate
+	 * @return true if any todo matches the given predicate, false otherwise.
+	 */
 	private boolean containsTodoFor(final Predicate<ToDoChange> predicate) {
 		return this.stream()
 				.filter(predicate)
@@ -79,7 +155,6 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 		final Collection<ToDoChange> toBePruned = this.stream().filter(pruningCriteria).toList();
 
 		this.removeAll(toBePruned);
-
 	}
 
 

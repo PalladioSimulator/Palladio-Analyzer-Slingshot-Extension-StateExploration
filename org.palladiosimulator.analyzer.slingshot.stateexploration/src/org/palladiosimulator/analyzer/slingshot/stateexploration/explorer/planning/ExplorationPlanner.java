@@ -313,13 +313,13 @@ public class ExplorationPlanner {
 
 		final DefaultState current = change.getStart();
 
-		if (current.getEndTime() == 0.0) { // root???
+		if (current.getIncomingTransition().isEmpty()) { // root?
 			return false;
 		}
 
-		final DefaultState prev = (DefaultState) current.getIncomingTransition().getSource();
+		final DefaultState prev = (DefaultState) current.getIncomingTransition().get().getSource();
 
-		return samePolicy(current, prev) && bothNOOP(change, current.getIncomingTransition());
+		return samePolicy(current, prev) && bothNOOP(change, current.getIncomingTransition().get());
 	}
 
 	private static boolean bothNOOP(final ToDoChange current, final RawTransition prev) {
