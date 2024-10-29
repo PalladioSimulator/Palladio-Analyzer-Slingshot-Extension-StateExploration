@@ -86,6 +86,14 @@ public class DefaultState implements RawModelState {
 		this.duration = duration;
 	}
 
+	public double getUtility() {
+		return utility;
+	}
+
+	public void setUtility(final double utility) {
+		this.utility = utility;
+	}
+
 	public void addAdjustorStateValues(final Collection<SPDAdjustorStateValues> adjustorStateValues) {
 		this.adjustorStateValues.addAll(adjustorStateValues);
 	}
@@ -152,14 +160,6 @@ public class DefaultState implements RawModelState {
 	@Override
 	public Set<RawTransition> getOutgoingTransitions() {
 		return this.graph.outgoingEdgesOf(this);
-	}
-
-	public double getUtility() {
-		return utility;
-	}
-
-	public void setUtility(final double utility) {
-		this.utility = utility;
 	}
 
 	/**

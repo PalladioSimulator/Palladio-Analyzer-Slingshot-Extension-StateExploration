@@ -155,7 +155,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	/**
 	 *
-	 * Post {@link StateExploredEventMessage} and update fringe of graph.
+	 * Post {@link StateExploredEventMessage}, update fringe and write utility back
+	 * to state.
 	 *
 	 * @param config configuration of exploration cycle to be post processed.
 	 */
@@ -167,7 +168,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policy);
 		current.setUtility(node.utility().getTotalUtilty());
 
-		systemDriver.postEvent(new StateExploredEventMessage(node));
+		this.systemDriver.postEvent(new StateExploredEventMessage(node));
 		this.blackbox.updateGraphFringePostSimulation(current);
 	}
 

@@ -96,6 +96,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	private final Allocation allocation;
 
+	/* for deleting monitors and MP of scaled in resources */
 	private final MonitorRepository monitorrepo;
 	private final MeasuringPointRepository measuringpointsrepo;
 
@@ -105,15 +106,21 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 			final @Nullable SimuComConfig simuComConfig,
 			final Allocation allocation, final MonitorRepository monitorrepo) {
 
-		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null;
+		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null
+				&& !monitorrepo.getMonitors().isEmpty();
 
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 		this.allocation = allocation;
 		this.monitorrepo = monitorrepo;
-		this.measuringpointsrepo = this.monitorrepo.getMonitors().get(0).getMeasuringPoint()
-				.getMeasuringPointRepository();
+
+		if (this.monitorrepo.getMonitors().isEmpty()) {
+			this.measuringpointsrepo = null;
+		} else {
+			this.measuringpointsrepo = this.monitorrepo.getMonitors().get(0).getMeasuringPoint()
+					.getMeasuringPointRepository();
+		}
 
 		if (activated) {
 			assert halfDoneState.getSnapshot() == null : "Snapshot already set, but should not be!";
@@ -392,9 +399,10 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * TODO
+	 * Remove Monitors and Measuringpoints that reference the
+	 * {@link ResourceContainer} that was deleted during a scale in.
 	 *
-	 * @param deleted
+	 * @param deleted {@link ResourceContainer} deleted during scale in.
 	 */
 	private void removeDeletedMonitoring(final ResourceContainer deleted) {
 

@@ -830,22 +830,22 @@ public final class CloneHelper {
 	 * important, because some Reference to PCM elements in the Slingshot entities
 	 * are deliberately {@code null}, e.g. if no next action exits.
 	 *
+	 * If {@code element} is not contained in a resource, the same element is
+	 * returned. This is relevant in case of abortions, as they sometimes happen
+	 * after a resource was scaled.
 	 *
 	 * @param <T>     Type of the element to be matched
 	 * @param element element to be matched, if it is not null, it must be contained
 	 *                in a resource.
 	 * @return matching element from {@code this}' resource set, or {@code null}.,
-	 *         if {@code element} was {@code null}.
+	 *         if {@code element} was {@code null} or {@code element}, if
+	 *         {@code element} is not contained in a resource.
 	 */
 	public <T extends EObject> T getMatchingPCMElement(final T element) {
-		//		assert element == null || (element != null && element.eResource() != null)
-		//				: String.format("Element %s is not contained in a resource, but must be.", element.toString());
-
 		if (element == null) {
 			return null;
 		}
 
-		// should not load unwanted resources, because there is no resource...?
 		if (element.eResource() == null) {
 			return element;
 		}

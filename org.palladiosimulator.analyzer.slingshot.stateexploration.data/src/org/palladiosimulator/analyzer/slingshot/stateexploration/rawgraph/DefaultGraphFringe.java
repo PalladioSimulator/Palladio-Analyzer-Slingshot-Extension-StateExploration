@@ -17,8 +17,6 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * Fringe that manages the {@link ToDoChange}, i.e. all future directions to
  * explore.
  *
- * TODO: Make this something with priority, such that the most interesting
- * {@link ToDoChange} gets polled and thus explored first.
  *
  * Beware: The head of this queue is the *least* element with respect to the
  * specified ordering. (c.f. JavaDoc of {@link PriorityQueue})
@@ -34,14 +32,21 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 		super(createForUtility());
 	}
 
+	/**
+	 * Compare two possible changes by the utility of their start nodes.
+	 *
+	 * As the head of the queues is the *least* element, the better state (i.e.
+	 * higher utility) is considered the lesser.
+	 *
+	 * @return -1 is the first change has the bigger utility, +1 is the second one
+	 *         has the bigger utility, 0 if the utilities are equal.
+	 */
 	private static Comparator<ToDoChange> createForUtility() {
 		return new Comparator<ToDoChange>() {
 
 			@Override
 			public int compare(final ToDoChange o1, final ToDoChange o2) {
-				// TODO Auto-generated method stub
-				final int foo = -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
-				return foo;
+				return -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
 			}
 		};
 	}

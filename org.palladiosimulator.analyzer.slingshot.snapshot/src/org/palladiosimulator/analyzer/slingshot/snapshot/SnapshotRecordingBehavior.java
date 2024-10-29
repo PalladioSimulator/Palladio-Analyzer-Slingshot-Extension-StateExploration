@@ -113,7 +113,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	@PreIntercept
-	public InterceptionResult preInterceptJob(final InterceptorInformation information,
+	public InterceptionResult preInterceptJobInitiated(final InterceptorInformation information,
 			final JobInitiated event) {
 		if (!event.getEntity().getId().equals(FAKE)) {
 			recorder.createJobRecord(event);
@@ -140,7 +140,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	@PostIntercept
-	public InterceptionResult postInterceptSimulationStarted(final InterceptorInformation information,
+	public InterceptionResult postInterceptJobInitiated(final InterceptorInformation information,
 			final JobInitiated event, final Result<?> result) {
 		if (!event.getEntity().getId().equals(FAKE)) {
 			recorder.updateJobRecord(event);
