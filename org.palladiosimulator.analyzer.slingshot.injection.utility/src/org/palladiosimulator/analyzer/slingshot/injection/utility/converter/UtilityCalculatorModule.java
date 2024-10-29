@@ -15,6 +15,7 @@ public class UtilityCalculatorModule extends AbstractSlingshotExtension {
     @Override
     protected void configure() {
         install(UtilityCalculatorBehaviour.class);
+        install(LogAdjustemntsBehaviour.class);
         install(SLOModelConfiguration.class);
         provideModel(ServiceLevelObjectiveRepository.class, SLOModelProvider.class);
     }
