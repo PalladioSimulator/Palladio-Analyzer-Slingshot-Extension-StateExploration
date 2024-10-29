@@ -1,5 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
@@ -14,6 +16,13 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiate
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.semanticspd.Configuration;
+import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
+import org.palladiosimulator.semanticspd.ServiceGroupCfg;
+import org.palladiosimulator.spd.ScalingPolicy;
+import org.palladiosimulator.spd.adjustments.StepAdjustment;
+import org.palladiosimulator.spd.targets.ElasticInfrastructure;
+import org.palladiosimulator.spd.targets.ServiceGroup;
+import org.palladiosimulator.spd.targets.TargetGroup;
 
 /**
  *
@@ -56,10 +65,56 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 			return InterceptionResult.success();
 		}
 
+		// keep or delete?
+		if (isDrop(event.getScalingPolicy())) {
+			return InterceptionResult.success();
+		}
+
 		state.setReasonToLeave(ReasonToLeave.reactiveReconfiguration);
 		scheduling.scheduleEvent(new SnapshotInitiated(0, event));
 
 		LOGGER.debug(String.format("Abort routing %s to %s", event.getName(), information.getEnclosingType().get().getSimpleName()));
 		return InterceptionResult.abort();
+	}
+
+	/**
+	 *
+	 * @param start
+	 * @param event
+	 * @return
+	 */
+	private boolean isDrop(final ScalingPolicy policy) {
+		if (policy.getAdjustmentType() instanceof final StepAdjustment adjustment
+				&& adjustment.getStepValue() < 0) {
+			// Scale in!
+			final TargetGroup tg = policy.getTargetGroup();
+			if (tg instanceof final ElasticInfrastructure ei) {
+				final List<ElasticInfrastructureCfg> elements = config.getTargetCfgs().stream()
+						.filter(ElasticInfrastructureCfg.class::isInstance)
+						.map(ElasticInfrastructureCfg.class::cast)
+						.filter(eic -> eic.getUnit().getId().equals(ei.getUnit().getId())).toList();
+
+				if (elements.size() != 1) {
+					throw new RuntimeException("Help, wrong number of matching service group configs.");
+				}
+
+				return elements.get(0).getElements().size() == 1;
+			}
+
+			if (tg instanceof final ServiceGroup sg) {
+				final List<ServiceGroupCfg> elements = config.getTargetCfgs().stream()
+						.filter(ServiceGroupCfg.class::isInstance)
+						.map(ServiceGroupCfg.class::cast)
+						.filter(sgc -> sgc.getUnit().getId().equals(sg.getUnitAssembly().getId())).toList();
+
+				if (elements.size() != 1) {
+					throw new RuntimeException("Help, wrong number of matching service group configs.");
+				}
+
+				return elements.get(0).getElements().size() == 1;
+			}
+
+		}
+		return false;
 	}
 }
