@@ -31,7 +31,19 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 	private final static Logger LOGGER = Logger.getLogger(DefaultGraphFringe.class);
 
 	public DefaultGraphFringe() {
-		super(create());
+		super(createForUtility());
+	}
+
+	private static Comparator<ToDoChange> createForUtility() {
+		return new Comparator<ToDoChange>() {
+
+			@Override
+			public int compare(final ToDoChange o1, final ToDoChange o2) {
+				// TODO Auto-generated method stub
+				final int foo = -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
+				return foo;
+			}
+		};
 	}
 
 	/**
