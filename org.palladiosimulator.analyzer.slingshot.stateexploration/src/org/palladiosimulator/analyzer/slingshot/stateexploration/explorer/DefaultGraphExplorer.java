@@ -74,6 +74,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final MDSDBlackboard blackboard;
 
+	private final double initialMaxSimTime;
+
 	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
 		super();
@@ -82,6 +84,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.launchConfigurationParams = launchConfigurationParams;
 		this.monitor = monitor;
 		this.blackboard = blackboard;
+		this.initialMaxSimTime = Double.valueOf((String) launchConfigurationParams
+				.get(SimuComConfig.SIMULATION_TIME));
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
@@ -93,6 +97,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
 					.createRootArchConfig(this.initModels.getResourceSet()));
 		}
+
 		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
@@ -169,7 +174,11 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		current.setUtility(node.utility().getTotalUtilty());
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node));
-		this.blackbox.updateGraphFringePostSimulation(current);
+
+		// TODO : this is temporal. remove later on.
+		if (current.getEndTime() < this.initialMaxSimTime) {
+			this.blackbox.updateGraphFringePostSimulation(current);
+		}
 	}
 
 	/**
