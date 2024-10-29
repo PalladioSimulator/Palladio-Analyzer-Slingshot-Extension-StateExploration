@@ -22,7 +22,7 @@ public class CutOffConcerns {
 		LOGGER.debug(String.format("Evaluation future %s.", future.toString()));
 		LOGGER.debug(String.format("Future %s is rosy, will explore.", future.toString()));
 
-		return matchesPattern(future);
+		return !matchesPattern(future);
 	}
 
 	/**
