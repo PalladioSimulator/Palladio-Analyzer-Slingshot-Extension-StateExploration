@@ -16,6 +16,7 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
@@ -127,6 +128,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	private static UriBasedArchitectureConfiguration copyModelsForRoot(final URI location, final ResourceSet set) {
 
 		final String nextIdSegment = UUID.randomUUID().toString();
+		final String explorationId = EventMessage.EXPLORATION_ID.toString();
 		String cleanLocation = location.toString();
 
 		if (location.hasTrailingPathSeparator()) {
@@ -143,7 +145,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		for (final Resource resource : whitelisted) {
 			final String file = resource.getURI().lastSegment();
 
-			final URI newUri = URI.createURI(cleanLocation).appendSegment(nextIdSegment)
+			final URI newUri = URI.createURI(cleanLocation).appendSegment(explorationId).appendSegment(nextIdSegment)
 					.appendSegment(file);
 			resource.setURI(newUri);
 			copyUris.put(resource.getContents().get(0).eClass(), newUri);
@@ -250,7 +252,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		for (final Resource resource : whitelisted) {
 			// cache?
 			final URI oldUri = resource.getURI();
-			final URI newUri = ResourceUtils.insertFragment(oldUri, nextIdSegment, oldUri.segmentCount() - 1);
+			final URI newUri = ResourceUtils.replaceFragment(oldUri, nextIdSegment, oldUri.segmentCount() - 2);
 			resource.setURI(newUri);
 			copyUris.put(resource.getContents().get(0).eClass(), newUri);
 		}
