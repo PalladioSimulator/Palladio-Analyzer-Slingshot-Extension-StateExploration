@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
@@ -106,20 +107,27 @@ public class ExplorationPlanner {
 		final double duration = this.calculateRunDuration(start);
 
 		if (change.isEmpty()) {
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null,
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, Set.of(),
 					this.createStateInitEvents(start.getAdjustorStateValues()), start.getId());
 		}
 
 		if (change.get() instanceof final Reconfiguration reconf) {
 			LOGGER.debug("Create InitConfiguration for Reconfiguration (Pro- or Reactive)");
 
-			final Collection<SPDAdjustorStateValues> initValues = updateInitValues(reconf.getAppliedPolicy(),
-					start.getAdjustorStateValues());
+			final Collection<SPDAdjustorStateValues> initValues = new HashSet<>();
 
-			final ModelAdjustmentRequested initEvent = (new AdjustorEventConcerns(end.getArchitecureConfiguration()))
-					.copy(reconf.getReactiveReconfigurationEvent());
+			for (final ScalingPolicy policy : reconf.getAppliedPolicy()) {
+				initValues.addAll(updateInitValues(policy,
+						start.getAdjustorStateValues()));
+			}
 
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvent,
+			final Set<ModelAdjustmentRequested> initEvents = new HashSet<>();
+			for (final ModelAdjustmentRequested event : reconf.getReactiveReconfigurationEvent()) {
+				initEvents.add(new AdjustorEventConcerns(end.getArchitecureConfiguration())
+						.copy(event));
+			}
+
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvents,
 					this.createStateInitEvents(initValues),
 					start.getId());
 		}

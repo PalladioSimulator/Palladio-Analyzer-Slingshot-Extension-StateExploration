@@ -130,10 +130,20 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isPresent()
 				&& todo.getChange().get() instanceof Reconfiguration
-				&& ((Reconfiguration) todo.getChange().get()).getAppliedPolicy().getId()
-				.equals(matchee.getId());
+				&& this.isOutTransitionFor((Reconfiguration) todo.getChange().get(), matchee);
 
 		return containsTodoFor(pred);
+	}
+
+	/**
+	 *
+	 * @param reconf
+	 * @param matchee
+	 * @return
+	 */
+	private boolean isOutTransitionFor(final Reconfiguration reconf, final ScalingPolicy matchee) {
+		return reconf.getAppliedPolicy().size() == 1 && reconf.getAppliedPolicy().stream().map(p -> p.getId())
+				.filter(id -> id.equals(matchee.getId())).count() == 1;
 	}
 
 	/**

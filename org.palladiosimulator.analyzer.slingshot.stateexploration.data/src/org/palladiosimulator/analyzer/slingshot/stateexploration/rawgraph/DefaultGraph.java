@@ -63,13 +63,30 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 		return newState;
 	}
 
+	/**
+	 *
+	 * @param vertex
+	 * @param matchee
+	 * @return
+	 */
 	public boolean hasOutTransitionFor(final RawModelState vertex, final ScalingPolicy matchee) {
 		return this.outgoingEdgesOf(vertex).stream()
 				.filter(t -> t.getChange().isPresent()
 						&& t.getChange().get() instanceof Reconfiguration
-						&& ((Reconfiguration) t.getChange().get()).getAppliedPolicy().getId().equals(matchee.getId()))
+						&& this.isOutTransitionFor((Reconfiguration) t.getChange().get(), matchee))
 				.findAny()
 				.isPresent();
+	}
+
+	/**
+	 *
+	 * @param reconf
+	 * @param matchee
+	 * @return
+	 */
+	private boolean isOutTransitionFor(final Reconfiguration reconf, final ScalingPolicy matchee) {
+		return reconf.getAppliedPolicy().size() == 1 && reconf.getAppliedPolicy().stream().map(p -> p.getId())
+				.filter(id -> id.equals(matchee.getId())).count() == 1;
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration;
 
 import java.util.Collection;
-import java.util.Optional;
+import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
@@ -24,18 +24,18 @@ public class SimulationInitConfiguration {
 	/** Events that are not part of the simulation, but only for initialising it. */
 	private final Collection<DESEvent> initializationEvents;
 
-	private final Optional<ModelAdjustmentRequested> event;
+	private final Set<ModelAdjustmentRequested> event;
 	private final String parentId;
 
 
 	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore,
-			final double explorationDuration, final ModelAdjustmentRequested event,
+			final double explorationDuration, final Set<ModelAdjustmentRequested> event,
 			final Collection<DESEvent> initializationEvents, final String parentId) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
-		this.event = Optional.ofNullable(event);
+		this.event = event;
 		this.initializationEvents = initializationEvents;
 		this.parentId = parentId;
 	}
@@ -59,7 +59,7 @@ public class SimulationInitConfiguration {
 	 *
 	 * @return the event
 	 */
-	public Optional<ModelAdjustmentRequested> getEvent() {
+	public Set<ModelAdjustmentRequested> getEvent() {
 		return this.event;
 	}
 

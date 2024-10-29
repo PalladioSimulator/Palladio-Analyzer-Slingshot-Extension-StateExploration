@@ -2,10 +2,12 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -147,7 +149,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
 		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
-		config.getEvent().ifPresent(e -> set.add(e));
+		config.getEvent().forEach(e -> set.add(e));
 		set.addAll(config.getinitializationEvents());
 
 		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), set);
@@ -168,7 +170,10 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 		final DefaultState current = config.getStateToExplore();
 
-		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
+		final List<ScalingPolicy> policies = config.getEvent().stream().map(e -> e.getScalingPolicy())
+				.collect(Collectors.toList());
+
+		final ScalingPolicy policy = policies.isEmpty() ? null : policies.get(0); // TODO change StateGraphNode...
 
 		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policy);
 		current.setUtility(node.utility().getTotalUtilty());
