@@ -106,9 +106,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public void exploreNextState() {
 		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
-		final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
-
-		this.exploreBranch(config);
+		final Optional<SimulationInitConfiguration> config = this.blackbox.createConfigForNextSimualtionRun();
+		config.ifPresent(this::exploreBranch);
 	}
 
 	/**

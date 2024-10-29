@@ -12,7 +12,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorSta
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
@@ -65,16 +64,19 @@ public class ExplorationPlanner {
 	/**
 	 *
 	 *
-	 * @return Configuration for the next simulation run
+	 * @return Configuration for the next simulation run, or empty optional, if
+	 *         fringe has no viable change.
 	 */
-	public SimulationInitConfiguration createConfigForNextSimualtionRun() {
+	public Optional<SimulationInitConfiguration> createConfigForNextSimualtionRun() {
 		assert !this.fringe.isEmpty();
 
 		ToDoChange next = this.fringe.poll();
 
 		while (!this.cutOffConcerns.shouldExplore(next)) {
 			LOGGER.debug(String.format("Future %s is bad, won't explore.", next.toString()));
-			// TODO : Exception if the entire fringe is bad.
+			if (this.fringe.isEmpty()) {
+				return Optional.empty();
+			}
 			next = this.fringe.poll();
 		}
 
@@ -86,7 +88,7 @@ public class ExplorationPlanner {
 					start.getDuration());
 		}
 
-		return createConfigBasedOnChange(next.getChange(), start, end);
+		return Optional.of(createConfigBasedOnChange(next.getChange(), start, end));
 
 	}
 
@@ -199,11 +201,7 @@ public class ExplorationPlanner {
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
 		// NOP Always
-		final ToDoChange change = new ToDoChange(Optional.empty(), start);
-		if (matchesPattern(change)) {
-			return; // drop the entire branch.
-		}
-		this.fringe.add(change);
+		this.fringe.add(new ToDoChange(Optional.empty(), start));
 		// Reactive Reconfiguration - Always.
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
 			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
@@ -302,39 +300,4 @@ public class ExplorationPlanner {
 		return values.stream().map(value -> (DESEvent) new SPDAdjustorStateInitialized(value)).toList();
 	}
 
-	/**
-	 * Patter is "leav on rea" (prev) -> NOOP -> "leav on rea" (current) -> NOOP
-	 * (ToDoChange)
-	 *
-	 * @param current
-	 * @return
-	 */
-	private static boolean matchesPattern(final ToDoChange change) {
-
-		final DefaultState current = change.getStart();
-
-		if (current.getIncomingTransition().isEmpty()) { // root?
-			return false;
-		}
-
-		final DefaultState prev = (DefaultState) current.getIncomingTransition().get().getSource();
-
-		return samePolicy(current, prev) && bothNOOP(change, current.getIncomingTransition().get());
-	}
-
-	private static boolean bothNOOP(final ToDoChange current, final RawTransition prev) {
-		return current.getChange().isEmpty() && prev.getChange().isEmpty();
-	}
-
-	private static boolean samePolicy(final DefaultState current, final DefaultState prev) {
-		if (current.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()
-				|| prev.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
-			return false;
-		}
-		final ScalingPolicy policyCurrent = current.getSnapshot().getModelAdjustmentRequestedEvent().get()
-				.getScalingPolicy();
-		final ScalingPolicy policyPrev = prev.getSnapshot().getModelAdjustmentRequestedEvent().get().getScalingPolicy();
-
-		return policyCurrent.getId().equals(policyPrev.getId());
-	}
 }
