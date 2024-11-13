@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.injection.utility.converter;
 
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
+import org.palladiosimulator.analyzer.slingshot.injection.utility.plotter.LogAdjustemntsBehaviour;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 
 /**
@@ -14,7 +15,7 @@ public class UtilityCalculatorModule extends AbstractSlingshotExtension {
 
     @Override
     protected void configure() {
-        install(UtilityCalculatorBehaviour.class);
+        install(UtilityCalculatorAndPlotterBehaviour.class);
         install(LogAdjustemntsBehaviour.class);
         install(SLOModelConfiguration.class);
         provideModel(ServiceLevelObjectiveRepository.class, SLOModelProvider.class);
