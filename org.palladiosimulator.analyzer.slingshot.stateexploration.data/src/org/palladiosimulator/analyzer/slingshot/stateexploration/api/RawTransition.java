@@ -51,7 +51,7 @@ public interface RawTransition {
 		} else if (this.getChange().get() instanceof ReactiveReconfiguration) {
 			return TransitionType.reactiveReconfiguration;
 		} else if (this.getChange().get() instanceof ProactiveReconfiguration) {
-			return TransitionType.reconfiguration;
+			return TransitionType.proactiveReconfiguration;
 		} else if (this.getChange().get() instanceof EnvironmentChange) {
 			return TransitionType.environmentChange;
 		}
