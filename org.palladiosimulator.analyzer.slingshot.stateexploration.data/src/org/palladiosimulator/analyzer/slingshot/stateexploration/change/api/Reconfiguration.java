@@ -26,4 +26,11 @@ public abstract class Reconfiguration implements Change {
 	public Set<ScalingPolicy> getAppliedPolicies() {
 		return events.stream().map(e -> e.getScalingPolicy()).collect(Collectors.toSet());
 	}
+
+	@Override
+	public String toString() {
+		return "Reconfiguration [events=" + events.stream()
+				.map(e -> e.getScalingPolicy().getEntityName() + "[" + e.getScalingPolicy().getId() + "]")
+				.reduce("", (a, b) -> a + ", " + b) + "]";
+	}
 }
