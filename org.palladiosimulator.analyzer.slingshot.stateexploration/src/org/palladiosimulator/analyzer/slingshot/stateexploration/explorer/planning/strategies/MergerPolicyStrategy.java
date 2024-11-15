@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
@@ -34,6 +35,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoCh
  */
 public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
+	private static final Logger LOGGER = Logger.getLogger(MergerPolicyStrategy.class.getName());
+
 	private final DefaultState state;
 
 	/**
@@ -59,39 +62,84 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 				.getModelAdjustmentRequestedEvent().get();
 		final DefaultState predecessor = (DefaultState) state.getIncomingTransition().get().getSource();
 
-		final Set<Change> collectedChanges = collectChanges(predecessor);
+		final Set<Reconfiguration> collectedChanges = collectChanges(predecessor);
 
 		final List<ToDoChange> newTodos = new ArrayList<>();
 
 		for (final Change change : collectedChanges) {
 
-			final Set<ModelAdjustmentRequested> adjustments = ((Reconfiguration) change)
-					.getReactiveReconfigurationEvents();
+			final Set<ModelAdjustmentRequested> adjustments = new HashSet<>(((Reconfiguration) change)
+					.getReactiveReconfigurationEvents());
 			adjustments.add(reconfigurationToBeApplied);
 
-			final Change newChange = new ProactiveReconfiguration(adjustments);
-			final ToDoChange todoChange = new ToDoChange(Optional.of(newChange), predecessor);
 
-			newTodos.add(todoChange);
+			final Reconfiguration newChange = new ProactiveReconfiguration(adjustments);
+
+			if (!this.contains(collectedChanges, newChange)) {
+				final ToDoChange todoChange = new ToDoChange(Optional.of(newChange), predecessor);
+				newTodos.add(todoChange);
+			} else {
+				LOGGER.debug(String.format("no new change based on change %s, because such a change already exists.",
+						change.toString()));
+			}
 		}
-
 
 		return newTodos;
 	}
 
 	/**
-	 * TODO
 	 *
-	 * @param predecessor
-	 * @return
+	 * Check whether a {@link Reconfiguration} with the same policies as
+	 * {@code newChange} is already contained in {@code changes}.
+	 *
+	 * Beware, the check is executed base on the policy ids.
+	 *
+	 * Alternatively one could override the {@link Object#equals(Object)} operation
+	 * of {@link Reconfiguration}, but i deemed it to risky.
+	 *
+	 * @param changes   the container
+	 * @param newChange the element to check the container for.
+	 * @return true iff {@code changes} contains {@code newChange}.
 	 */
-	private Set<Change> collectChanges(final DefaultState predecessor) {
-		final Set<Change> collectedChanges = new HashSet<>();
+	private boolean contains(final Set<Reconfiguration> changes, final Reconfiguration newChange) {
 
-		final Set<Change> exploredChanges = predecessor.getOutgoingTransitions().stream()
+		final String newChangeIds = newChange.getReactiveReconfigurationEvents().stream()
+				.map(e -> e.getScalingPolicy().getId()).sorted().reduce("",
+						(a, b) -> a + b);
+
+		for (final Reconfiguration change : changes) {
+
+			final String otherIds = change.getReactiveReconfigurationEvents().stream()
+					.map(e -> e.getScalingPolicy().getId()).sorted().reduce("",
+							(a, b) -> a + b);
+
+			if (newChangeIds.equals(otherIds)) {
+				return true;
+			}
+		}
+		return false;
+
+	}
+
+	/**
+	 * Collect already explored or planned {@link Reconfiguration}s.
+	 *
+	 * Only collects {@link Reconfiguration}s. NOPs or other types of changes are
+	 * not included.
+	 *
+	 * @param predecessor state for which reconfigurations are collected.
+	 * @return Set of already explored or planned {@link Reconfiguration}s
+	 */
+	private Set<Reconfiguration> collectChanges(final DefaultState predecessor) {
+		final Set<Reconfiguration> collectedChanges = new HashSet<>();
+
+		final Set<Reconfiguration> exploredChanges = predecessor.getOutgoingTransitions().stream()
 				.filter(transition -> transition.getChange().isPresent())
-				.map(transition -> transition.getChange().get()).collect(Collectors.toSet());
-		final Set<Change> plannedChanges = fringe.getPlannedReconfFor(predecessor);
+				.map(transition -> transition.getChange().get())
+				.filter(Reconfiguration.class::isInstance)
+				.map(Reconfiguration.class::cast)
+				.collect(Collectors.toSet());
+		final Set<Reconfiguration> plannedChanges = fringe.getPlannedReconfFor(predecessor);
 
 		collectedChanges.addAll(plannedChanges);
 		collectedChanges.addAll(exploredChanges);
