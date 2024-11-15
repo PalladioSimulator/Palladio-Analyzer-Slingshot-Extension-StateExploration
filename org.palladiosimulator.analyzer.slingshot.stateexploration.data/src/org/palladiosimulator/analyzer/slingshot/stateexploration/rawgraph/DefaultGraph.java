@@ -85,7 +85,7 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * @return
 	 */
 	private boolean isOutTransitionFor(final Reconfiguration reconf, final ScalingPolicy matchee) {
-		return reconf.getAppliedPolicy().size() == 1 && reconf.getAppliedPolicy().stream().map(p -> p.getId())
+		return reconf.getAppliedPolicies().size() == 1 && reconf.getAppliedPolicies().stream().map(p -> p.getId())
 				.filter(id -> id.equals(matchee.getId())).count() == 1;
 	}
 

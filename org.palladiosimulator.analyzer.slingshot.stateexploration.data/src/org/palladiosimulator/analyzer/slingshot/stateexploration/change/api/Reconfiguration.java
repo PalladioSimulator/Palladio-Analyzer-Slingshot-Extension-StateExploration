@@ -10,18 +10,20 @@ import com.google.common.base.Preconditions;
 
 public abstract class Reconfiguration implements Change {
 
-	private final Set<ModelAdjustmentRequested> event;
+	private final Set<ModelAdjustmentRequested> events;
 
-	public Reconfiguration(final ModelAdjustmentRequested event) {
+	public Reconfiguration(final Set<ModelAdjustmentRequested> events) {
 		super();
-		this.event = Set.of(Preconditions.checkNotNull(event));
+		Preconditions.checkArgument(!events.isEmpty());
+		Preconditions.checkNotNull(events);
+		this.events = events;
 	}
 
-	public Set<ModelAdjustmentRequested> getReactiveReconfigurationEvent() {
-		return event;
+	public Set<ModelAdjustmentRequested> getReactiveReconfigurationEvents() {
+		return Set.copyOf(events);
 	}
 
-	public Set<ScalingPolicy> getAppliedPolicy() {
-		return event.stream().map(e -> e.getScalingPolicy()).collect(Collectors.toSet());
+	public Set<ScalingPolicy> getAppliedPolicies() {
+		return events.stream().map(e -> e.getScalingPolicy()).collect(Collectors.toSet());
 	}
 }

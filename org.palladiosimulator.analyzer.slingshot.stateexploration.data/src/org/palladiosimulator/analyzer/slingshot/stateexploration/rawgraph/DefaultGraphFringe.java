@@ -3,12 +3,15 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.measure.quantity.Force;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -17,6 +20,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * Fringe that manages the {@link ToDoChange}, i.e. all future directions to
  * explore.
  *
+ * Beware: what about duplicates ToDo Changes?
  *
  * Beware: The head of this queue is the *least* element with respect to the
  * specified ordering. (c.f. JavaDoc of {@link PriorityQueue})
@@ -135,6 +139,12 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 		return containsTodoFor(pred);
 	}
 
+	public Set<Change> getPlannedReconfFor(final RawModelState state) {
+		return this.stream().filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent())
+				.map(todo -> todo.getChange().get())
+				.collect(Collectors.toSet());
+	}
+
 	/**
 	 *
 	 * @param reconf
@@ -142,7 +152,7 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 	 * @return
 	 */
 	private boolean isOutTransitionFor(final Reconfiguration reconf, final ScalingPolicy matchee) {
-		return reconf.getAppliedPolicy().size() == 1 && reconf.getAppliedPolicy().stream().map(p -> p.getId())
+		return reconf.getAppliedPolicies().size() == 1 && reconf.getAppliedPolicies().stream().map(p -> p.getId())
 				.filter(id -> id.equals(matchee.getId())).count() == 1;
 	}
 

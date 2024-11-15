@@ -25,16 +25,22 @@ import org.palladiosimulator.spd.ScalingPolicy;
  */
 public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 
-	private final DefaultGraph graph;
-	private final DefaultGraphFringe fringe;
+	private final DefaultState state;
 
-	public BacktrackPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe) {
-		this.graph = graph;
-		this.fringe = fringe;
+	/**
+	 * Create new {@link BacktrackPolicyStrategy}.
+	 *
+	 *
+	 * @param graph  graph of the exploration, must not be {@code null}.
+	 * @param fringe fringe of the exploration, must not be {@code null}.
+	 */
+	protected BacktrackPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe, final DefaultState state) {
+		super(graph, fringe);
+		this.state = state;
 	}
 
 	@Override
-	public List<ToDoChange> createProactiveChanges(final DefaultState state) {
+	public List<ToDoChange> createProactiveChanges() {
 
 		if (state.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
 			return List.of();
