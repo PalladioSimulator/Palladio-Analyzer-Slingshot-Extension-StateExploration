@@ -66,7 +66,10 @@ public class SimulationInitConfiguration {
 	@Override
 	public String toString() {
 		return "SimulationInitConfiguration [snapToInitOn=" + snapToInitOn + ", stateToExplore=" + stateToExplore
-				+ ", explorationDuration=" + explorationDuration + ", event=" + event + "]";
+				+ ", explorationDuration=" + explorationDuration + ", events=" + event.stream()
+						.map(e -> e.getScalingPolicy().getEntityName() + "[" + e.getScalingPolicy().getId() + "]")
+						.reduce("", (a, b) -> a + ", " + b)
+				+ "]";
 	}
 
 	public String getParentId() {
