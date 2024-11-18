@@ -24,9 +24,8 @@ public class SimulationInitConfiguration {
 	/** Events that are not part of the simulation, but only for initialising it. */
 	private final Collection<DESEvent> initializationEvents;
 
-	private final Set<ModelAdjustmentRequested> event;
+	private final Set<ModelAdjustmentRequested> events;
 	private final String parentId;
-
 
 	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore,
 			final double explorationDuration, final Set<ModelAdjustmentRequested> event,
@@ -35,7 +34,7 @@ public class SimulationInitConfiguration {
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
-		this.event = event;
+		this.events = event;
 		this.initializationEvents = initializationEvents;
 		this.parentId = parentId;
 	}
@@ -43,9 +42,11 @@ public class SimulationInitConfiguration {
 	public Snapshot getSnapToInitOn() {
 		return this.snapToInitOn;
 	}
+
 	public DefaultState getStateToExplore() {
 		return this.stateToExplore;
 	}
+
 	public double getExplorationDuration() {
 		return this.explorationDuration;
 	}
@@ -60,15 +61,16 @@ public class SimulationInitConfiguration {
 	 * @return the event
 	 */
 	public Set<ModelAdjustmentRequested> getEvent() {
-		return this.event;
+		return this.events;
 	}
 
 	@Override
 	public String toString() {
 		return "SimulationInitConfiguration [snapToInitOn=" + snapToInitOn + ", stateToExplore=" + stateToExplore
-				+ ", explorationDuration=" + explorationDuration + ", events=" + event.stream()
-						.map(e -> e.getScalingPolicy().getEntityName() + "[" + e.getScalingPolicy().getId() + "]")
-						.reduce("", (a, b) -> a + ", " + b)
+				+ ", explorationDuration=" + explorationDuration + ", events=[" + events.stream()
+				.map(e -> e.getScalingPolicy().getEntityName() + "(" + e.getScalingPolicy().getId() + ")")
+				.reduce("", (a, b) -> a + ", " + b)
+				+ "]"
 				+ "]";
 	}
 

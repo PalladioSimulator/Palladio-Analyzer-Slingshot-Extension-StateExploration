@@ -1,19 +1,27 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
 import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityType;
 import org.palladiosimulator.spd.ScalingPolicy;
 
+/**
+ *
+ *
+ *
+ * @author Jonas(?), Raphael Straub, Sophie Stieß
+ *
+ */
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
-		List<SLO> slos, Utility utility, String parentId, ScalingPolicy incomingPolicy) {
+		List<SLO> slos, Utility utility, String parentId, Set<ScalingPolicy> incomingPolicies) {
 
 	public StateGraphNode(final String id, final double startTime, final double endTime,
 			final List<MeasurementSet> measurements, final List<SLO> slos, final String parentId,
-			final ScalingPolicy incomingPolicy) {
+			final Set<ScalingPolicy> incomingPolicies) {
 		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId,
-				incomingPolicy);
+				incomingPolicies);
 	}
 
 	public double duration() {

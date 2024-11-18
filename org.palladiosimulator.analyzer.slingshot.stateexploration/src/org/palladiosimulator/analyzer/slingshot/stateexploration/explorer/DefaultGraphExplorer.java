@@ -2,7 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -164,17 +163,16 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 		final DefaultState current = config.getStateToExplore();
 
-		final List<ScalingPolicy> policies = config.getEvent().stream().map(e -> e.getScalingPolicy())
-				.collect(Collectors.toList());
+		final Set<ScalingPolicy> policies = config.getEvent().stream().map(e -> e.getScalingPolicy())
+				.collect(Collectors.toSet());
 
-		final ScalingPolicy policy = policies.isEmpty() ? null : policies.get(0); // TODO change StateGraphNode...
-
-		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policy);
+		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
 		current.setUtility(node.utility().getTotalUtilty());
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node));
 
-		// TODO : this is temporal. remove later on.
+		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
+		// to include for the prioritazion of the fringe.
 		if (current.getEndTime() < this.initialMaxSimTime) {
 			this.blackbox.updateGraphFringePostSimulation(current);
 		}
