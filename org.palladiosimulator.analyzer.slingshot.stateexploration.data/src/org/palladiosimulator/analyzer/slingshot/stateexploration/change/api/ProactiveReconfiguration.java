@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.change.api;
 
+import java.util.List;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
@@ -37,10 +38,10 @@ import com.google.common.base.Preconditions;
 public class ProactiveReconfiguration extends Reconfiguration {
 
 	public ProactiveReconfiguration(final ModelAdjustmentRequested event) {
-		super(Set.of(Preconditions.checkNotNull(event)));
+		super(List.of(Preconditions.checkNotNull(event)));
 	}
 
-	public ProactiveReconfiguration(final Set<ModelAdjustmentRequested> events) {
+	public ProactiveReconfiguration(final List<ModelAdjustmentRequested> events) {
 		super(events);
 	}
 }

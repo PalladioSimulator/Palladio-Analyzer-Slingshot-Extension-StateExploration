@@ -16,6 +16,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Defaul
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  *
@@ -37,6 +38,8 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 	private static final Logger LOGGER = Logger.getLogger(MergerPolicyStrategy.class.getName());
 
+	private static final int DUPLICATE_THRESHOLD = 2;
+	
 	private final DefaultState state;
 
 	/**
@@ -51,6 +54,9 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 		this.state = state;
 	}
 
+	/**
+	 * TODO 
+	 */
 	@Override
 	public List<ToDoChange> createProactiveChanges() {
 
@@ -67,8 +73,14 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 		final List<ToDoChange> newTodos = new ArrayList<>();
 
 		for (final Change change : collectedChanges) {
+			
+			if (this.tooManyOccurences((Reconfiguration) change, reconfigurationToBeApplied)) {
+				LOGGER.debug(String.format("no new change based on change %s, because policy %s already occurs more than %d times in that change.",
+						change.toString(), reconfigurationToBeApplied.toString(), DUPLICATE_THRESHOLD));
+				continue;
+			}
 
-			final Set<ModelAdjustmentRequested> adjustments = new HashSet<>(((Reconfiguration) change)
+			final List<ModelAdjustmentRequested> adjustments = new ArrayList<>(((Reconfiguration) change)
 					.getReactiveReconfigurationEvents());
 			adjustments.add(reconfigurationToBeApplied);
 
@@ -119,6 +131,18 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 		}
 		return false;
 
+	}
+	
+	/**
+	 * 
+	 * @param change
+	 * @param reconf
+	 * @return true, iff reconf is already in change too often, i.e. shall not be added again. 
+	 */
+	private boolean tooManyOccurences(final Reconfiguration change, final ModelAdjustmentRequested reconf) {
+		String policyId = reconf.getScalingPolicy().getId();
+		long numberOfOccurence = change.getAppliedPolicies().stream().map(ScalingPolicy::getId).filter(id -> id.equals(policyId)).count();	
+		return numberOfOccurence > DUPLICATE_THRESHOLD;
 	}
 
 	/**

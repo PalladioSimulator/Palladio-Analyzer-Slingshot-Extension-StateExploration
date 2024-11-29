@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.change.api;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,17 +11,17 @@ import com.google.common.base.Preconditions;
 
 public abstract class Reconfiguration implements Change {
 
-	private final Set<ModelAdjustmentRequested> events;
+	private final List<ModelAdjustmentRequested> events;
 
-	public Reconfiguration(final Set<ModelAdjustmentRequested> events) {
+	public Reconfiguration(final List<ModelAdjustmentRequested> events) {
 		super();
 		Preconditions.checkArgument(!events.isEmpty());
 		Preconditions.checkNotNull(events);
 		this.events = events;
 	}
 
-	public Set<ModelAdjustmentRequested> getReactiveReconfigurationEvents() {
-		return Set.copyOf(events);
+	public List<ModelAdjustmentRequested> getReactiveReconfigurationEvents() {
+		return List.copyOf(events);
 	}
 
 	public Set<ScalingPolicy> getAppliedPolicies() {

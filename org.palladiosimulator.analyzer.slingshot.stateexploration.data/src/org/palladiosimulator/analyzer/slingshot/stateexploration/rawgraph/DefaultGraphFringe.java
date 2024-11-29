@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -11,6 +12,7 @@ import javax.measure.quantity.Force;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -30,7 +32,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
 public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 
 	private final static Logger LOGGER = Logger.getLogger(DefaultGraphFringe.class);
-
+	
 	public DefaultGraphFringe() {
 		super(createForUtility());
 	}
@@ -49,10 +51,37 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 
 			@Override
 			public int compare(final ToDoChange o1, final ToDoChange o2) {
-				return -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
+				if (compare(o1.getChange(), o2.getChange()) == 0) {
+					return -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
+				} else {
+					return compare(o1.getChange(), o2.getChange());
+				}
+			}
+			
+
+			private int compare(final Optional<Change> c1, final Optional<Change> c2) {
+				final int ordinalityMattersThreshold = 2;
+				
+				int ordinalityDiff = calculateOrinality(c1) - calculateOrinality(c2);
+				if (ordinalityDiff < ordinalityMattersThreshold) {
+					return 0;
+				} else {
+				
+				
+				return ordinalityDiff;
+				}
+			}
+			
+			private int calculateOrinality(final Optional<Change> c) {
+				if (c.isPresent()) {
+					return ((Reconfiguration) c.get()).getReactiveReconfigurationEvents().size();			
+				} else {
+					return 0;
+				}
 			}
 		};
 	}
+	
 
 	/**
 	 * Creates a {@link Comparator} for comparing two instances of
