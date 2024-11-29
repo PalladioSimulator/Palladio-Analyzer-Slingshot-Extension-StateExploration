@@ -15,11 +15,11 @@ import org.palladiosimulator.spd.ScalingPolicy;
  *
  */
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
-		List<SLO> slos, Utility utility, String parentId, Set<ScalingPolicy> incomingPolicies) {
+		List<SLO> slos, Utility utility, String parentId, List<ScalingPolicy> incomingPolicies) {
 
 	public StateGraphNode(final String id, final double startTime, final double endTime,
 			final List<MeasurementSet> measurements, final List<SLO> slos, final String parentId,
-			final Set<ScalingPolicy> incomingPolicies) {
+			final List<ScalingPolicy> incomingPolicies) {
 		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId,
 				incomingPolicies);
 	}

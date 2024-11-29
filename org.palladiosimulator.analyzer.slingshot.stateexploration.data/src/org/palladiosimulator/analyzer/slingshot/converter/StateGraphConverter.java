@@ -24,11 +24,11 @@ public class StateGraphConverter {
 	 *
 	 * @param state
 	 * @param parentId
-	 * @param scalingPolicies
+	 * @param scalingPolicies policies in order of execution. first policy must be applied at first.
 	 * @return
 	 */
 	public static StateGraphNode convertState(final RawModelState state, final String parentId,
-			final Set<ScalingPolicy> scalingPolicies) {
+			final List<ScalingPolicy> scalingPolicies) {
 		List<SLO> slos = new ArrayList<SLO>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 

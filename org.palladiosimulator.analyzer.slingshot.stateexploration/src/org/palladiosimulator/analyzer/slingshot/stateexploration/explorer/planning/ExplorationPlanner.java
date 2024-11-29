@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -106,7 +107,7 @@ public class ExplorationPlanner {
 		final double duration = this.calculateRunDuration(start);
 
 		if (change.isEmpty()) {
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, Set.of(),
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, List.of(),
 					this.createStateInitEvents(start.getAdjustorStateValues()), start.getId());
 		}
 
@@ -120,7 +121,7 @@ public class ExplorationPlanner {
 						start.getAdjustorStateValues()));
 			}
 
-			final Set<ModelAdjustmentRequested> initEvents = new HashSet<>();
+			final List<ModelAdjustmentRequested> initEvents = new ArrayList<>();
 			for (final ModelAdjustmentRequested event : reconf.getReactiveReconfigurationEvents()) {
 				initEvents.add(new AdjustorEventConcerns(end.getArchitecureConfiguration())
 						.copy(event));

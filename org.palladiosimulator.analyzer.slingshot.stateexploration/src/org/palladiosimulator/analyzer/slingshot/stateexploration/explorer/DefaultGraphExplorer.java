@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -141,11 +142,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
-		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
-		config.getEvent().forEach(e -> set.add(e));
-		set.addAll(config.getinitializationEvents());
+		// TODO i must split this now, because i must preserve the order for the adjustment events.
+		final Set<DESEvent> allEvents = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
+		config.getEvents().forEach(e -> allEvents.add(e));
+		allEvents.addAll(config.getinitializationEvents());
 
-		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), set);
+		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), allEvents);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();
@@ -163,8 +165,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 		final DefaultState current = config.getStateToExplore();
 
-		final Set<ScalingPolicy> policies = config.getEvent().stream().map(e -> e.getScalingPolicy())
-				.collect(Collectors.toSet());
+		final List<ScalingPolicy> policies = config.getEvents().stream().map(e -> e.getScalingPolicy())
+				.toList();
 
 		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
 		current.setUtility(node.utility().getTotalUtilty());
