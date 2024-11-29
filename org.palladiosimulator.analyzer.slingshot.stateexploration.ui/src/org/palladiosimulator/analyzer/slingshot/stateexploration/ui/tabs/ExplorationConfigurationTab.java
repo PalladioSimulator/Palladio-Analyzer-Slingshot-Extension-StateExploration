@@ -132,7 +132,7 @@ public class ExplorationConfigurationTab extends AbstractLaunchConfigurationTab 
 		final Text text = new Text(container, SWT.SINGLE | SWT.BORDER);
 		TabHelper.createFolderInputSection(container, modifyListener,
 				textField.isOptional() ? textField.getLabel() + " (Optional)" : textField.getLabel(), text,
-						textField.getdefaultValue(), getShell(), "");
+						textField.getdefaultValue(), getShell(), textField.getdefaultValue());
 
 		return text;
 

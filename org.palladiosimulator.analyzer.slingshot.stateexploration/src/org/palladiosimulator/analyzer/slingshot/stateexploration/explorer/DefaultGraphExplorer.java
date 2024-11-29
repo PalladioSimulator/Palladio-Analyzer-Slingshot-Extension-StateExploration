@@ -91,14 +91,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		final Optional<URI> modelLocation = this.getModelLocation();
-		if (modelLocation.isPresent()) {
-			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
-					.createRootArchConfig(this.initModels.getResourceSet(), modelLocation.get()));
-		} else {
-			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
-					.createRootArchConfig(this.initModels.getResourceSet()));
-		}
+		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
+					.createRootArchConfig(this.initModels.getResourceSet(), this.getModelLocation()));
 
 		this.fringe = new DefaultGraphFringe();
 
@@ -293,24 +287,24 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	/**
 	 *
 	 * Get {@link ExplorationConfiguration#MODEL_LOCATION} from launch configuration
-	 * parameters map, if given
+	 * parameters map, if given.
 	 *
-	 * @return model location URI, or an empty optional if none was defined.
+	 * @return model location URI, as defined in the run config, or the default location if none was defined.
 	 */
-	private Optional<URI> getModelLocation() {
+	private URI getModelLocation() {
 		final String modelLocation = (String) launchConfigurationParams
 				.get(ExplorationConfiguration.MODEL_LOCATION);
 
 		if (modelLocation.isBlank()) {
-			return Optional.empty();
+			return URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir"));
 		}
 
 		final URI uri = URI.createURI(modelLocation);
 
 		if (uri.isPlatform() || uri.isFile()) {
-			return Optional.of(uri);
+			return uri;
 		} else {
-			return Optional.of(URI.createFileURI(modelLocation));
+			return URI.createFileURI(modelLocation);
 		}
 	}
 
@@ -368,4 +362,16 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe.prune(pruningCriteria);
 	}
 
+	private void pruneGraphByTime(final double time) {
+
+		final Set<RawModelState> statesToDelete = this.graph.getStates().stream().filter(s -> s.getEndTime() < time)
+				.collect(Collectors.toSet());
+
+		this.graph.removeAllVertices(statesToDelete); // removes only vertexes, and also all edges.
+
+		// TODO : update root.
+		// TODO : figure out at which state / branch the managed system currently is
+
+		System.out.println(this.getGraph().getTransitions());
+	}
 }

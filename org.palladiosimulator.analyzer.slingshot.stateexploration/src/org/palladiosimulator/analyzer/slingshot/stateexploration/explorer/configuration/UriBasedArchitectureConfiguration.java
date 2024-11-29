@@ -91,18 +91,6 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	/**
 	 * Create a new {@code ArchitectureConfiguration} representing the architecture
 	 * configuration at the very beginning of the exploration, i.e. the architecture
-	 * configuration of the stategraph's root node.
-	 *
-	 * @param set resources set with models
-	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
-	 */
-	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
-		return new UriBasedArchitectureConfiguration(createUriMap(set), UUID.randomUUID().toString());
-	}
-
-	/**
-	 * Create a new {@code ArchitectureConfiguration} representing the architecture
-	 * configuration at the very beginning of the exploration, i.e. the architecture
 	 * configuration of the stategraph's root node, at the given {@code location}.
 	 *
 	 * Subsequently, all successor nodes are found in subfolders of the provided
@@ -113,7 +101,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
 	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set, final URI location) {
-		return copyModelsForRoot(location, set);
+		return copyModelsForRoot(set, location);
 	}
 
 	/**
@@ -125,7 +113,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * @param set      resources set with models
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
-	private static UriBasedArchitectureConfiguration copyModelsForRoot(final URI location, final ResourceSet set) {
+	private static UriBasedArchitectureConfiguration copyModelsForRoot(final ResourceSet set, final URI location) {
 
 		final String nextIdSegment = UUID.randomUUID().toString();
 		final String explorationId = EventMessage.EXPLORATION_ID.toString();

@@ -7,7 +7,7 @@ import java.util.Set;
  * Graph of RawModelStates, as produced during Exploration.
  *
  *
- * @author stiesssh
+ * @author Sophie Stieß
  *
  */
 public interface RawStateGraph {

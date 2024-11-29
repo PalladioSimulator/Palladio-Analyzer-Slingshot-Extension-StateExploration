@@ -190,6 +190,14 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		}
 	}
 
+	/**
+	 * Prune fringe (and graph) by current system time.
+	 *
+	 * Because we need not explore stuff, that's already in the past, or on branches
+	 * we cannot reach anymore.
+	 *
+	 * @param event
+	 */
 	@Subscribe
 	public void onPruneFringeByTime(final PruneFringeByTime event) {
 		this.explorerLock.lock();
