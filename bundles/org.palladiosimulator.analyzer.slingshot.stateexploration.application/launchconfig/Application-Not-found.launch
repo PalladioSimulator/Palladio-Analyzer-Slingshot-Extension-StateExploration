@@ -6,7 +6,7 @@
     <stringAttribute key="bootstrap" value=""/>
     <stringAttribute key="checked" value="[NONE]"/>
     <booleanAttribute key="clearConfig" value="true"/>
-    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/headless-exploration-export-withCost"/>
+    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/Application-Not-found"/>
     <booleanAttribute key="default" value="true"/>
     <booleanAttribute key="default_auto_start" value="true"/>
     <intAttribute key="default_start_level" value="4"/>
@@ -14,22 +14,19 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.stateexploration.ui"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.ui"/>
         <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.edit"/>
-        <setEntry value="org.palladiosimulator.experimentautomation.edit"/>
-        <setEntry value="org.palladiosimulator.experimentautomation.editor"/>
         <setEntry value="org.palladiosimulator.spd.edit"/>
         <setEntry value="org.palladiosimulator.spd.editor"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint.edit"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint.editor"/>
         <setEntry value="org.palladiosimulator.spd.semantic.edit"/>
         <setEntry value="org.palladiosimulator.spd.semantic.editor"/>
-        <setEntry value="org.palladiosimulator.spd.semantic.tests"/>
     </setAttribute>
     <booleanAttribute key="includeOptional" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console -application org.palladiosimulator.analyzer.slingshot.stateexploration.application.StateexplorationApplication /Users/stiesssh/uni/repos/slingshot-example/minimalexample-mentor/minimalmentor.experiments"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console -application application-not-found /Users/stiesssh/uni/repos/slingshot-example/minimalexample-mentor/minimalmentor.experiments"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
     <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.eclipse.swt.graphics.Resource.reportNonDisposed=true -Dosgi.noShutdown=true"/>
     <stringAttribute key="pde.version" value="3.3"/>
