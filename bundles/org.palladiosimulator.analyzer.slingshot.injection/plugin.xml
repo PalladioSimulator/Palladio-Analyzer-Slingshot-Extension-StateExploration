@@ -6,6 +6,9 @@
       <slingshot-extension
             module="org.palladiosimulator.analyzer.slingshot.injection.ManagedSystemModule">
       </slingshot-extension>
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.managedSystem.export.ExportMeasurementsModule">
+      </slingshot-extension>
    </extension>
 
 </plugin>
