@@ -10,4 +10,7 @@ Require-Bundle: org.palladiosimulator.analyzer.slingshot.networking.data;bundle-
  org.palladiosimulator.analyzer.slingshot.core;bundle-version="1.0.0",
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
  org.apache.log4j,
- com.google.gson
+ com.google.gson,
+ org.palladiosimulator.edp2,
+ org.palladiosimulator.monitorrepository,
+ org.palladiosimulator.edp2.util
