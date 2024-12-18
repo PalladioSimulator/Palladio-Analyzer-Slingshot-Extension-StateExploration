@@ -1,10 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
 import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityType;
+import org.palladiosimulator.metricspec.constants.MetricDescriptionConstants;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -62,7 +62,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		}
 
 		for (final var ms : measurements) {
-			if (ms.getMonitorName().startsWith("Cost_")) {
+			if (ms.getMetricDescriptionId().equals(MetricDescriptionConstants.COST_OF_RESOURCE_CONTAINERS.getId())) {
 				final double area = calculateAreaUnderCurve(
 						ms.getElements().stream().sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList());
 				utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
