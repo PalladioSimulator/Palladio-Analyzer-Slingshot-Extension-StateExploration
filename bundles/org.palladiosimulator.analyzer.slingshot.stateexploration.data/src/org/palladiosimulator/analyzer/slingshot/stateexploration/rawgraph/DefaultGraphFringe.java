@@ -143,7 +143,7 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 		};
 	}
 
-	
+
 	/**
 	 *
 	 */

@@ -42,5 +42,5 @@ public abstract class ProactivePolicyStrategy {
 	 * @return
 	 */
 	public abstract List<ToDoChange> createProactiveChanges();
-	
+
 }

@@ -73,7 +73,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		return utility;
 	}
 
-	
+
 	/**
 	 * Calculates the area under a curve represented by a set of measurements.
 	 *
