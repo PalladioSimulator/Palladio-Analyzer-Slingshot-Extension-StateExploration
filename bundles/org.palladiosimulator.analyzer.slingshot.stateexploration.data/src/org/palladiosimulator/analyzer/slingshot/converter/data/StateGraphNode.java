@@ -1,5 +1,4 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -74,6 +73,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		return utility;
 	}
 
+	
 	/**
 	 * Calculates the area under a curve represented by a set of measurements.
 	 *

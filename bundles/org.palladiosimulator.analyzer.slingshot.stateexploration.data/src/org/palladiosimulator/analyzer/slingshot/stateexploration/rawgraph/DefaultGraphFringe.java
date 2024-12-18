@@ -13,7 +13,6 @@ import javax.measure.quantity.Force;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
-
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -144,6 +143,7 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 		};
 	}
 
+	
 	/**
 	 *
 	 */
@@ -162,7 +162,6 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isPresent()
 				&& todo.getChange().get() instanceof Reconfiguration
-
 				&& this.isOutTransitionFor((Reconfiguration) todo.getChange().get(), matchee);
 
 		return containsTodoFor(pred);
@@ -201,7 +200,6 @@ public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
 
 		return containsTodoFor(pred);
 	}
-
 
 	/**
 	 *
