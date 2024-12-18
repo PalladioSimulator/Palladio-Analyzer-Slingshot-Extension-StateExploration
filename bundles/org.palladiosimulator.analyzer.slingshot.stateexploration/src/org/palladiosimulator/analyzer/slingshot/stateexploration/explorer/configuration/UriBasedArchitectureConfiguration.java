@@ -16,6 +16,7 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
@@ -90,18 +91,6 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	/**
 	 * Create a new {@code ArchitectureConfiguration} representing the architecture
 	 * configuration at the very beginning of the exploration, i.e. the architecture
-	 * configuration of the stategraph's root node.
-	 *
-	 * @param set resources set with models
-	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
-	 */
-	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set) {
-		return new UriBasedArchitectureConfiguration(createUriMap(set), UUID.randomUUID().toString());
-	}
-
-	/**
-	 * Create a new {@code ArchitectureConfiguration} representing the architecture
-	 * configuration at the very beginning of the exploration, i.e. the architecture
 	 * configuration of the stategraph's root node, at the given {@code location}.
 	 *
 	 * Subsequently, all successor nodes are found in subfolders of the provided
@@ -112,7 +101,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
 	public static UriBasedArchitectureConfiguration createRootArchConfig(final ResourceSet set, final URI location) {
-		return copyModelsForRoot(location, set);
+		return copyModelsForRoot(set, location);
 	}
 
 	/**
@@ -124,9 +113,10 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 	 * @param set      resources set with models
 	 * @return a new {@code UriAndSetBasedArchitectureConfiguration}.
 	 */
-	private static UriBasedArchitectureConfiguration copyModelsForRoot(final URI location, final ResourceSet set) {
+	private static UriBasedArchitectureConfiguration copyModelsForRoot(final ResourceSet set, final URI location) {
 
 		final String nextIdSegment = UUID.randomUUID().toString();
+		final String explorationId = EventMessage.EXPLORATION_ID.toString();
 		String cleanLocation = location.toString();
 
 		if (location.hasTrailingPathSeparator()) {
@@ -143,7 +133,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		for (final Resource resource : whitelisted) {
 			final String file = resource.getURI().lastSegment();
 
-			final URI newUri = URI.createURI(cleanLocation).appendSegment(nextIdSegment)
+			final URI newUri = URI.createURI(cleanLocation).appendSegment(explorationId).appendSegment(nextIdSegment)
 					.appendSegment(file);
 			resource.setURI(newUri);
 			copyUris.put(resource.getContents().get(0).eClass(), newUri);
@@ -250,7 +240,7 @@ public class UriBasedArchitectureConfiguration implements ArchitectureConfigurat
 		for (final Resource resource : whitelisted) {
 			// cache?
 			final URI oldUri = resource.getURI();
-			final URI newUri = ResourceUtils.insertFragment(oldUri, nextIdSegment, oldUri.segmentCount() - 1);
+			final URI newUri = ResourceUtils.replaceFragment(oldUri, nextIdSegment, oldUri.segmentCount() - 2);
 			resource.setURI(newUri);
 			copyUris.put(resource.getContents().get(0).eClass(), newUri);
 		}

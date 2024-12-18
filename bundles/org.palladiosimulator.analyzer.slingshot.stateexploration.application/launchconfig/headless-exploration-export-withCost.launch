@@ -14,15 +14,12 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.stateexploration.ui"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.ui"/>
         <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.edit"/>
-        <setEntry value="org.palladiosimulator.experimentautomation.edit"/>
-        <setEntry value="org.palladiosimulator.experimentautomation.editor"/>
         <setEntry value="org.palladiosimulator.spd.edit"/>
         <setEntry value="org.palladiosimulator.spd.editor"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint.edit"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint.editor"/>
         <setEntry value="org.palladiosimulator.spd.semantic.edit"/>
         <setEntry value="org.palladiosimulator.spd.semantic.editor"/>
-        <setEntry value="org.palladiosimulator.spd.semantic.tests"/>
     </setAttribute>
     <booleanAttribute key="includeOptional" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>

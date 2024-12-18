@@ -63,13 +63,30 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 		return newState;
 	}
 
+	/**
+	 *
+	 * @param vertex
+	 * @param matchee
+	 * @return
+	 */
 	public boolean hasOutTransitionFor(final RawModelState vertex, final ScalingPolicy matchee) {
 		return this.outgoingEdgesOf(vertex).stream()
 				.filter(t -> t.getChange().isPresent()
 						&& t.getChange().get() instanceof Reconfiguration
-						&& ((Reconfiguration) t.getChange().get()).getAppliedPolicy().getId().equals(matchee.getId()))
+						&& this.isOutTransitionFor((Reconfiguration) t.getChange().get(), matchee))
 				.findAny()
 				.isPresent();
+	}
+
+	/**
+	 *
+	 * @param reconf
+	 * @param matchee
+	 * @return
+	 */
+	private boolean isOutTransitionFor(final Reconfiguration reconf, final ScalingPolicy matchee) {
+		return reconf.getAppliedPolicies().size() == 1 && reconf.getAppliedPolicies().stream().map(p -> p.getId())
+				.filter(id -> id.equals(matchee.getId())).count() == 1;
 	}
 
 	@Override
@@ -85,5 +102,30 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	@Override
 	public Set<RawTransition> getTransitions() {
 		return Set.copyOf(this.edgeSet());
+	}
+
+	/**
+	 * Calculate the distance between the given state and one of its predecessors.
+	 *
+	 * The distance is the number of transitions in between the given states.
+	 *
+	 * @param state       any state.
+	 * @param predecessor a predecessor of the state.
+	 * @return the positive distance between the state, or 0 if they are the same.
+	 */
+	public static int distance(final RawModelState state, final RawModelState predecessor) {
+		RawModelState current = state;
+		int distance = 0;
+
+		while (!current.equals(predecessor)) {
+			if (current.getIncomingTransition().isEmpty()) {
+				throw new IllegalArgumentException(String.format("State %s is not a predecessor of state %s.",
+						predecessor.toString(), state.toString()));
+			}
+			current = current.getIncomingTransition().get().getSource();
+			distance++;
+		}
+
+		return distance;
 	}
 }

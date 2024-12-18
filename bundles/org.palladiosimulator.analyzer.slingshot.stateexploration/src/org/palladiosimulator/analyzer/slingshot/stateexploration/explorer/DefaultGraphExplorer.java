@@ -2,10 +2,12 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -15,6 +17,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.enti
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -73,6 +76,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final MDSDBlackboard blackboard;
 
+	private final double initialMaxSimTime;
+
 	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
 		super();
@@ -81,17 +86,14 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.launchConfigurationParams = launchConfigurationParams;
 		this.monitor = monitor;
 		this.blackboard = blackboard;
+		this.initialMaxSimTime = Double.valueOf((String) launchConfigurationParams
+				.get(SimuComConfig.SIMULATION_TIME));
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		final Optional<URI> modelLocation = this.getModelLocation();
-		if (modelLocation.isPresent()) {
-			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
-					.createRootArchConfig(this.initModels.getResourceSet(), modelLocation.get()));
-		} else {
-			this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
-					.createRootArchConfig(this.initModels.getResourceSet()));
-		}
+		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
+					.createRootArchConfig(this.initModels.getResourceSet(), this.getModelLocation()));
+
 		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
@@ -105,9 +107,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	public void exploreNextState() {
 		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
-		final SimulationInitConfiguration config = this.blackbox.createConfigForNextSimualtionRun();
-
-		this.exploreBranch(config);
+		final Optional<SimulationInitConfiguration> config = this.blackbox.createConfigForNextSimualtionRun();
+		config.ifPresent(this::exploreBranch);
 	}
 
 	/**
@@ -141,11 +142,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
-		final Set<DESEvent> set = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
-		config.getEvent().ifPresent(e -> set.add(e));
-		set.addAll(config.getinitializationEvents());
+		// TODO i must split this now, because i must preserve the order for the adjustment events.
+		final Set<DESEvent> allEvents = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
+		config.getEvents().forEach(e -> allEvents.add(e));
+		allEvents.addAll(config.getinitializationEvents());
 
-		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), set);
+		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), allEvents);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();
@@ -155,18 +157,27 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	/**
 	 *
-	 * Post {@link StateExploredEventMessage} and update fringe of graph.
+	 * Post {@link StateExploredEventMessage}, update fringe and write utility back
+	 * to state.
 	 *
 	 * @param config configuration of exploration cycle to be post processed.
 	 */
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 		final DefaultState current = config.getStateToExplore();
 
-		final ScalingPolicy policy = config.getEvent().isPresent() ? config.getEvent().get().getScalingPolicy() : null;
+		final List<ScalingPolicy> policies = config.getEvents().stream().map(e -> e.getScalingPolicy())
+				.toList();
 
-		systemDriver.postEvent(
-				new StateExploredEventMessage(StateGraphConverter.convertState(current, config.getParentId(), policy)));
-		this.blackbox.updateGraphFringePostSimulation(current);
+		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
+		current.setUtility(node.utility().getTotalUtilty());
+
+		this.systemDriver.postEvent(new StateExploredEventMessage(node));
+
+		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
+		// to include for the prioritazion of the fringe.
+		if (current.getEndTime() < this.initialMaxSimTime) {
+			this.blackbox.updateGraphFringePostSimulation(current);
+		}
 	}
 
 	/**
@@ -276,24 +287,24 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	/**
 	 *
 	 * Get {@link ExplorationConfiguration#MODEL_LOCATION} from launch configuration
-	 * parameters map, if given
+	 * parameters map, if given.
 	 *
-	 * @return model location URI, or an empty optional if none was defined.
+	 * @return model location URI, as defined in the run config, or the default location if none was defined.
 	 */
-	private Optional<URI> getModelLocation() {
+	private URI getModelLocation() {
 		final String modelLocation = (String) launchConfigurationParams
 				.get(ExplorationConfiguration.MODEL_LOCATION);
 
 		if (modelLocation.isBlank()) {
-			return Optional.empty();
+			return URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir"));
 		}
 
 		final URI uri = URI.createURI(modelLocation);
 
 		if (uri.isPlatform() || uri.isFile()) {
-			return Optional.of(uri);
+			return uri;
 		} else {
-			return Optional.of(URI.createFileURI(modelLocation));
+			return URI.createFileURI(modelLocation);
 		}
 	}
 
@@ -351,4 +362,16 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe.prune(pruningCriteria);
 	}
 
+	private void pruneGraphByTime(final double time) {
+
+		final Set<RawModelState> statesToDelete = this.graph.getStates().stream().filter(s -> s.getEndTime() < time)
+				.collect(Collectors.toSet());
+
+		this.graph.removeAllVertices(statesToDelete); // removes only vertexes, and also all edges.
+
+		// TODO : update root.
+		// TODO : figure out at which state / branch the managed system currently is
+
+		System.out.println(this.getGraph().getTransitions());
+	}
 }

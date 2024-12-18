@@ -45,7 +45,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.Inter
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
-import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
 import org.palladiosimulator.pcm.core.CoreFactory;
@@ -116,17 +115,6 @@ public final class CloneHelper {
 	 */
 	public DESEvent clone(final InterArrivalUserInitiated event, final double simulationTime) {
 		return new InterArrivalUserInitiated(event.getEntity(), event.time() - simulationTime);
-	}
-
-	/**
-	 * TODO on a closer look : what is this does not belong here, iirc o_O
-	 *
-	 * @param event
-	 * @param simulationTime
-	 * @return
-	 */
-	public DESEvent clone(final IntervalPassed event, final double simulationTime) {
-		return new IntervalPassed(event.getTargetResourceContainer(), event.time() - simulationTime);
 	}
 
 	/**
@@ -842,19 +830,24 @@ public final class CloneHelper {
 	 * important, because some Reference to PCM elements in the Slingshot entities
 	 * are deliberately {@code null}, e.g. if no next action exits.
 	 *
+	 * If {@code element} is not contained in a resource, the same element is
+	 * returned. This is relevant in case of abortions, as they sometimes happen
+	 * after a resource was scaled.
 	 *
 	 * @param <T>     Type of the element to be matched
 	 * @param element element to be matched, if it is not null, it must be contained
 	 *                in a resource.
 	 * @return matching element from {@code this}' resource set, or {@code null}.,
-	 *         if {@code element} was {@code null}.
+	 *         if {@code element} was {@code null} or {@code element}, if
+	 *         {@code element} is not contained in a resource.
 	 */
 	public <T extends EObject> T getMatchingPCMElement(final T element) {
-		assert element == null || (element != null && element.eResource() != null)
-				: String.format("Element %s is not contained in a resource, but must be.", element.toString());
-
 		if (element == null) {
 			return null;
+		}
+
+		if (element.eResource() == null) {
+			return element;
 		}
 
 		final String fragment = EcoreUtil.getURI(element).fragment();

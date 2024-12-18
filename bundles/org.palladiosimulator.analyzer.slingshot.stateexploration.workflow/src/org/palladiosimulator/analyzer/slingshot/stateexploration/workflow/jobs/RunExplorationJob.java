@@ -1,9 +1,12 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs;
 
+import java.util.UUID;
+
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
@@ -53,12 +56,16 @@ public class RunExplorationJob implements IBlackboardInteractingJob<MDSDBlackboa
 
 		monitor.subTask("Initialize driver");
 
+		EventMessage.EXPLORATION_ID = UUID.randomUUID();
+
+		// these lines get the exploration started!
 		Slingshot.getInstance().getSystemDriver()
 		.postEvent(new WorkflowJobStarted(configuration.getPCMModelFiles(),
 				this.configuration.getlaunchConfigParams(), monitor, this.blackboard));
 
 		final int iterations = Integer.valueOf((String) this.configuration.getlaunchConfigParams()
 				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES));
+
 
 		// [S3] do the valueOf twice, because for some reason the type is either boolean
 		// or String, depending on whether the simulator is started headless, or not.

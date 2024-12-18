@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
@@ -38,6 +39,8 @@ public class DefaultState implements RawModelState {
 
 	/* known after configuration of the simulation run */
 	private ExperimentSetting experimentSetting;
+
+	private double utility = 0;
 
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
 
@@ -81,6 +84,14 @@ public class DefaultState implements RawModelState {
 
 	public void setDuration(final double duration) {
 		this.duration = duration;
+	}
+
+	public double getUtility() {
+		return utility;
+	}
+
+	public void setUtility(final double utility) {
+		this.utility = utility;
 	}
 
 	public void addAdjustorStateValues(final Collection<SPDAdjustorStateValues> adjustorStateValues) {
@@ -130,11 +141,20 @@ public class DefaultState implements RawModelState {
 	}
 
 	@Override
-	public RawTransition getIncomingTransition() {
+	public Optional<RawTransition> getIncomingTransition() {
+		if (this.graph.getRoot().equals(this)) {
+			return Optional.empty();
+		}
+
 		assert this.graph.incomingEdgesOf(this).size() == 1 : String.format("Illegal number of incoming edges for state %s.", this.toString());
 
-		return this.graph.incomingEdgesOf(this).stream().findFirst().orElseThrow(
-				() -> new IllegalStateException(String.format("Missing incoming edge for state %s.", this.toString())));
+		final Optional<RawTransition> transition = this.graph.incomingEdgesOf(this).stream().findFirst();
+
+		if (transition.isEmpty()) {
+			throw new IllegalStateException(String.format("No incoming edges for non-root state %s.", this.toString()));
+		}
+
+		return transition;
 	}
 
 	@Override
@@ -142,4 +162,11 @@ public class DefaultState implements RawModelState {
 		return this.graph.outgoingEdgesOf(this);
 	}
 
+	/**
+	 *
+	 * @return distance between this state and root.
+	 */
+	public int lenghtOfHistory() {
+		return DefaultGraph.distance(this, this.graph.getRoot());
+	}
 }

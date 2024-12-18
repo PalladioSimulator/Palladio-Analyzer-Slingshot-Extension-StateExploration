@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.converter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
@@ -11,8 +12,23 @@ import org.palladiosimulator.monitorrepository.Monitor;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
 import org.palladiosimulator.spd.ScalingPolicy;
 
+/**
+ *
+ * @author
+ *
+ */
 public class StateGraphConverter {
-	public static StateGraphNode convertState(final RawModelState state, final String parentId, final ScalingPolicy scalingPolicy) {
+
+	/**
+	 *
+	 *
+	 * @param state
+	 * @param parentId
+	 * @param scalingPolicies policies in order of execution. first policy must be applied at first.
+	 * @return
+	 */
+	public static StateGraphNode convertState(final RawModelState state, final String parentId,
+			final List<ScalingPolicy> scalingPolicies) {
 		List<SLO> slos = new ArrayList<SLO>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 
@@ -44,7 +60,7 @@ public class StateGraphConverter {
 		}
 
 		return new StateGraphNode(state.getId(), state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId,
-				scalingPolicy);
+				scalingPolicies);
 	}
 
 	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {

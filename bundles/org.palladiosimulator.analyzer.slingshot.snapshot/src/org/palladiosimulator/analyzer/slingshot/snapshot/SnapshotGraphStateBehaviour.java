@@ -1,6 +1,9 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,16 +17,19 @@ import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
+import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelChange;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ResourceEnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
-import org.palladiosimulator.analyzer.slingshot.cost.events.IntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
@@ -42,7 +48,13 @@ import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.Repository.Repository;
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
+import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPointRepository;
+import org.palladiosimulator.monitorrepository.Monitor;
+import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
+import org.palladiosimulator.pcmmeasuringpoint.ResourceContainerMeasuringPoint;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
@@ -58,10 +70,10 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 		SPDAdjustorStateInitialized.class }, cardinality = EventCardinality.MANY)
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
 @OnEvent(when = PreSimulationConfigurationStarted.class, then = SnapshotInitiated.class, cardinality = EventCardinality.SINGLE)
-@OnEvent(when = ModelAdjusted.class, then = {})
-
+@OnEvent(when = ModelAdjusted.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
+@OnEvent(when = TakeCostMeasurement.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
 @OnEvent(when = SPDAdjustorStateInitialized.class, then = {})
-
+@OnEvent(when = SnapshotInitiated.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
 public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension {
 
 	private final Logger LOGGER = Logger.getLogger(SnapshotGraphStateBehaviour.class);
@@ -79,24 +91,36 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/* helper */
 	private final Map<ModelPassedEvent<?>, Double> event2offset;
-	private final Map<String, IntervalPassed> resourceContainer2intervalPassed;
 
 	private final boolean activated;
 
 	private final Allocation allocation;
 
+	/* for deleting monitors and MP of scaled in resources */
+	private final MonitorRepository monitorrepo;
+	private final MeasuringPointRepository measuringpointsrepo;
+
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsToInitOn,
 			final @Nullable SimuComConfig simuComConfig,
-			final Allocation allocation) {
+			final Allocation allocation, final MonitorRepository monitorrepo) {
 
-		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null;
+		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null
+				&& !monitorrepo.getMonitors().isEmpty();
 
 		this.halfDoneState = halfDoneState;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 		this.allocation = allocation;
+		this.monitorrepo = monitorrepo;
+
+		if (this.monitorrepo.getMonitors().isEmpty()) {
+			this.measuringpointsrepo = null;
+		} else {
+			this.measuringpointsrepo = this.monitorrepo.getMonitors().get(0).getMeasuringPoint()
+					.getMeasuringPointRepository();
+		}
 
 		if (activated) {
 			assert halfDoneState.getSnapshot() == null : "Snapshot already set, but should not be!";
@@ -106,7 +130,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		}
 
 		this.event2offset = new HashMap<>();
-		this.resourceContainer2intervalPassed = new HashMap<>();
 		this.policyIdToValues = new HashMap<>();
 	}
 
@@ -187,6 +210,40 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 				return InterceptionResult.success(); // won't be delivered.
 			}
 		}
+	}
+
+	Collection<TakeCostMeasurement> costMeasurementStore = new ArrayList<>();
+	boolean handleCosts = true;
+
+	/**
+	 *
+	 * Intercept {@link TakeCostMeasurement} events.
+	 *
+	 * For two reasons: Firstly, get to know all resources with cost measures to
+	 * trigger a measurement in case of a snapshot. Secondly, abort the events, if
+	 * the state starts with an adaptation. In this case, cost must only be measured
+	 * after the adaptation, c.f.
+	 * {@link SnapshotGraphStateBehaviour#onModelAdjusted(ModelAdjusted)}
+	 *
+	 *
+	 * @param information
+	 * @param event
+	 * @return success, if this state starts without adaptation, abort other wise.
+	 */
+	@PreIntercept
+	public InterceptionResult preInterceptTakeCostMeasurement(final InterceptorInformation information,
+			final TakeCostMeasurement event) {
+
+		if (handleCosts && event.time() == 0) {
+			costMeasurementStore.add(event);
+
+			if (this.eventsToInitOn.stream().filter(ModelAdjustmentRequested.class::isInstance).findAny()
+					.isPresent()) {
+				return InterceptionResult.abort();
+			}
+		}
+		return InterceptionResult.success();
+
 	}
 
 	/**
@@ -279,7 +336,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/**
 	 *
-	 * Catch {@link IntervalPassed} events (usage evolution) from the snapshot and
+	 * Catch {@link TakeCostMeasurement} events (usage evolution) from the snapshot and
 	 * offset them into the "future". Otherwise, we will get the wrong values from
 	 * the Load Intensity model.
 	 *
@@ -289,9 +346,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 */
 	@PreIntercept
 	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
-			final org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed event) {
+			final IntervalPassed event) {
 		event.setTime(event.time() + halfDoneState.getStartTime());
 		return InterceptionResult.success();
+	}
+
+	@Subscribe
+	public Result<TakeCostMeasurement> onSnapshotInitiated(final SnapshotInitiated event) {
+		return Result.of(costMeasurementStore);
 	}
 
 	/**
@@ -315,14 +377,50 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Update persisted model files, because reconfiguration now happens at runtime,
+	 * Update persisted model files, because reconfiguration now happens at
+	 * runtime,https://chat.rss.iste.uni-stuttgart.de/group/Floriments-doctor-hat
 	 * i.e. not yet propagated to file.
 	 *
 	 * @param modelAdjusted
 	 */
 	@Subscribe
-	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
+	public Result<TakeCostMeasurement> onModelAdjusted(final ModelAdjusted modelAdjusted) {
+		for (final ModelChange<?> change : modelAdjusted.getChanges()) {
+			if (change instanceof final ResourceEnvironmentChange resEnvChange) {
+				for (final ResourceContainer container : resEnvChange.getDeletedResourceContainers()) {
+					removeDeletedMonitoring(container);
+				}
+			}
+		}
 		ArchitectureConfigurationUtil.saveWhitelisted(this.allocation.eResource().getResourceSet());
+		this.handleCosts = false;
+
+		return Result.of(costMeasurementStore);
+	}
+
+	/**
+	 * Remove Monitors and Measuringpoints that reference the
+	 * {@link ResourceContainer} that was deleted during a scale in.
+	 *
+	 * @param deleted {@link ResourceContainer} deleted during scale in.
+	 */
+	private void removeDeletedMonitoring(final ResourceContainer deleted) {
+
+		final Set<MeasuringPoint> deletedMps = new HashSet<>();
+
+		for (final MeasuringPoint mp : Set.copyOf(measuringpointsrepo.getMeasuringPoints())) {
+			if (mp instanceof final ResourceContainerMeasuringPoint rcmp
+					&& rcmp.getResourceContainer().getId().equals(deleted.getId())) {
+				deletedMps.add(rcmp);
+				measuringpointsrepo.getMeasuringPoints().remove(rcmp);
+			}
+		}
+
+		for (final Monitor monitor : Set.copyOf(monitorrepo.getMonitors())) {
+			if (deletedMps.contains(monitor.getMeasuringPoint())) {
+				monitorrepo.getMonitors().remove(monitor);
+			}
+		}
 	}
 
 	/**
@@ -351,7 +449,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Collect resource containers, for which an {@link IntervalPassed} event must
+	 * Collect resource containers, for which an {@link TakeCostMeasurement} event must
 	 * be aborted later on.
 	 *
 	 * @param events events to collect resource containers from.
@@ -362,7 +460,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		// .put(((IntervalPassed) event).getTargetResourceContainer().getId(),
 		// (IntervalPassed) event));
 
-		return events.stream().filter(Predicate.not(IntervalPassed.class::isInstance)).collect(Collectors.toSet());
+		return events.stream().filter(Predicate.not(TakeCostMeasurement.class::isInstance)).collect(Collectors.toSet());
 	}
 
 	/**

@@ -7,7 +7,6 @@ public class Utility {
 	private double totalUtility;
 	private List<UtilityData> data;
 
-	
 	public Utility() {
 		super();
 		this.totalUtility = 0;
@@ -18,7 +17,7 @@ public class Utility {
 		return totalUtility;
 	}
 
-	public void setTotalUtilty(double totalUtilty) {
+	public void setTotalUtilty(final double totalUtilty) {
 		this.totalUtility = totalUtilty;
 	}
 
@@ -26,21 +25,30 @@ public class Utility {
 		return data;
 	}
 
-	public void setData(List<UtilityData> data) {
+	public void setData(final List<UtilityData> data) {
 		this.data = data;
 	}
-	
-	public void addDataInstance(String id, double d, UtilityType type) {
+
+	public void addDataInstance(final String id, final double d, final UtilityType type) {
 		data.add(new UtilityData(id, d, type));
 	}
-	
+
 	public void calculateTotalUtility() {
-		this.totalUtility = data.stream().mapToDouble(x -> x.utility()).sum();
+		final var slo_util = data.stream().filter(x -> UtilityType.SLO.equals(x.type())).mapToDouble(x -> x.utility())
+				.sum();
+		final var costs = data.stream().filter(x -> UtilityType.COST.equals(x.type())).mapToDouble(x -> x.utility())
+				.sum();
+		this.totalUtility = slo_util / -costs;
+		if (Double.isNaN(this.totalUtility)) {
+			this.totalUtility = 0;
+		} else if (Double.isInfinite(this.totalUtility)) {
+			this.totalUtility = Double.MAX_VALUE * Math.signum(this.totalUtility);
+		}
 	}
-	
-	
-	record UtilityData(String id, double utility, UtilityType type) {}
-	
+
+	record UtilityData(String id, double utility, UtilityType type) {
+	}
+
 	enum UtilityType {
 		SLO, COST;
 	}

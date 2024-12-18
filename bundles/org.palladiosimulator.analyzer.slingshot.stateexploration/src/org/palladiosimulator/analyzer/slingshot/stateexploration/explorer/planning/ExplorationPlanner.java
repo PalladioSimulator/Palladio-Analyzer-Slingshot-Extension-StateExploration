@@ -1,9 +1,11 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
@@ -16,8 +18,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.BacktrackPolicyStrategy;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -46,7 +47,7 @@ public class ExplorationPlanner {
 	private final DefaultGraphFringe fringe;
 	private final CutOffConcerns cutOffConcerns;
 
-	private final ProactivePolicyStrategy proactivePolicyStrategy;
+	private final ProactivePolicyStrategyBuilder proactiveStrategyBuilder;
 
 	private final double minDuration;
 
@@ -56,7 +57,7 @@ public class ExplorationPlanner {
 		this.minDuration = minDuration;
 		this.cutOffConcerns = new CutOffConcerns();
 
-		this.proactivePolicyStrategy = new BacktrackPolicyStrategy(this.rawgraph, this.fringe);
+		this.proactiveStrategyBuilder = new ProactivePolicyStrategyBuilder(this.rawgraph, this.fringe);
 
 		this.updateGraphFringePostSimulation(graph.getRoot());
 	}
@@ -64,16 +65,19 @@ public class ExplorationPlanner {
 	/**
 	 *
 	 *
-	 * @return Configuration for the next simulation run
+	 * @return Configuration for the next simulation run, or empty optional, if
+	 *         fringe has no viable change.
 	 */
-	public SimulationInitConfiguration createConfigForNextSimualtionRun() {
+	public Optional<SimulationInitConfiguration> createConfigForNextSimualtionRun() {
 		assert !this.fringe.isEmpty();
 
 		ToDoChange next = this.fringe.poll();
 
 		while (!this.cutOffConcerns.shouldExplore(next)) {
 			LOGGER.debug(String.format("Future %s is bad, won't explore.", next.toString()));
-			// TODO : Exception if the entire fringe is bad.
+			if (this.fringe.isEmpty()) {
+				return Optional.empty();
+			}
 			next = this.fringe.poll();
 		}
 
@@ -85,7 +89,7 @@ public class ExplorationPlanner {
 					start.getDuration());
 		}
 
-		return createConfigBasedOnChange(next.getChange(), start, end);
+		return Optional.of(createConfigBasedOnChange(next.getChange(), start, end));
 
 	}
 
@@ -103,20 +107,27 @@ public class ExplorationPlanner {
 		final double duration = this.calculateRunDuration(start);
 
 		if (change.isEmpty()) {
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, null,
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, List.of(),
 					this.createStateInitEvents(start.getAdjustorStateValues()), start.getId());
 		}
 
 		if (change.get() instanceof final Reconfiguration reconf) {
 			LOGGER.debug("Create InitConfiguration for Reconfiguration (Pro- or Reactive)");
 
-			final Collection<SPDAdjustorStateValues> initValues = updateInitValues(reconf.getAppliedPolicy(),
-					start.getAdjustorStateValues());
+			final Collection<SPDAdjustorStateValues> initValues = new HashSet<>();
 
-			final ModelAdjustmentRequested initEvent = (new AdjustorEventConcerns(end.getArchitecureConfiguration()))
-					.copy(reconf.getReactiveReconfigurationEvent());
+			for (final ScalingPolicy policy : reconf.getAppliedPolicies()) {
+				initValues.addAll(updateInitValues(policy,
+						start.getAdjustorStateValues()));
+			}
 
-			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvent,
+			final List<ModelAdjustmentRequested> initEvents = new ArrayList<>();
+			for (final ModelAdjustmentRequested event : reconf.getReactiveReconfigurationEvents()) {
+				initEvents.add(new AdjustorEventConcerns(end.getArchitecureConfiguration())
+						.copy(event));
+			}
+
+			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvents,
 					this.createStateInitEvents(initValues),
 					start.getId());
 		}
@@ -207,10 +218,17 @@ public class ExplorationPlanner {
 			this.fringe.add(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
 
-		// proactive reconf.
-		final List<ToDoChange> proactiveChanges = this.proactivePolicyStrategy.createProactiveChanges(start);
+		// proactive reconf. -- this will create duplicates though.
+		final List<ToDoChange> backtrackedChanges = this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start)
+				.createProactiveChanges();
+		final List<ToDoChange> mergedChanges = this.proactiveStrategyBuilder.createBacktrackMergerPolicyStrategy(start)
+				.createProactiveChanges();
 
-		for (final ToDoChange toDoChange : proactiveChanges) {
+		// first create all, then add all, or else we add more than we want, i guess.
+		for (final ToDoChange toDoChange : backtrackedChanges) {
+			this.fringe.add(toDoChange);
+		}
+		for (final ToDoChange toDoChange : mergedChanges) {
 			this.fringe.add(toDoChange);
 		}
 	}
@@ -296,4 +314,5 @@ public class ExplorationPlanner {
 			final Collection<SPDAdjustorStateValues> values) {
 		return values.stream().map(value -> (DESEvent) new SPDAdjustorStateInitialized(value)).toList();
 	}
+
 }

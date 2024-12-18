@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
@@ -8,13 +9,22 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
  *
  * State of the RawGraph, as recorded during Exploration.
  *
- * @author stiesssh
+ * @author Sarah Stieß
  *
  */
 public interface RawModelState {
 
-	public RawTransition getIncomingTransition();
+	/**
+	 *
+	 * @return the incoming transition of the state or an empty optional if the
+	 *         state is {@code root}.
+	 */
+	public Optional<RawTransition> getIncomingTransition();
 
+	/**
+	 *
+	 * @return all outgoing transitions of the state.
+	 */
 	public Set<RawTransition> getOutgoingTransitions();
 
 	/**

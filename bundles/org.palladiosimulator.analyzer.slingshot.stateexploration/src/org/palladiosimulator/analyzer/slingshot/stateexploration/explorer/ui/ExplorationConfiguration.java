@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui;
 
+import org.eclipse.emf.common.util.URI;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
@@ -31,7 +32,7 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 	public static final int DEFAULT_MIN_STATE_DURATION = 20;
 	public static final boolean DEFAULT_IDLE_EXPLORATION = false;
 	public static final int DEFAULT_SENSIBILITY = 0;
-	public static final String DEFAULT_MODEL_LOCATION = "";
+	public static final String DEFAULT_MODEL_LOCATION = URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir")).toString();
 
 	@Subscribe
 	public void onExplorationAdditionalConfigTabBuilderStarted(
@@ -62,7 +63,6 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 		event.newFieldDefinition()
 		.label(MODEL_LOCATION)
 		.defaultValue(String.valueOf(DEFAULT_MODEL_LOCATION))
-		.setIsOptional()
 		.setIsFolderSelection()
 		.build();
 	}
