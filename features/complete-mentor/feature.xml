@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.palladiosimulator.analyzer.slingshot.mentor.feature"
+      label="Complete-Mentor"
+      version="1.0.0.qualifier">
+
+   <description url="http://www.example.com/description">
+      [Enter Feature Description here.]
+   </description>
+
+   <copyright url="http://www.example.com/copyright">
+      [Enter Copyright Description here.]
+   </copyright>
+
+   <license url="http://www.example.com/license">
+      [Enter License Description here.]
+   </license>
+
+   <requires>
+      <import plugin="de.uka.ipd.sdq.probfunction.math"/>
+      <import plugin="de.uka.ipd.sdq.simucomframework.variables"/>
+      <import plugin="org.apache.log4j" version="1.2.15" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.pcm"/>
+      <import plugin="de.uka.ipd.sdq.simucomframework"/>
+      <import plugin="org.palladiosimulator.monitorrepository"/>
+      <import plugin="org.palladiosimulator.edp2.util"/>
+      <import plugin="de.uka.ipd.sdq.workflow.mdsd.blackboard" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.workflow" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.pcm.edp2.measuringpoint"/>
+      <import plugin="org.eclipse.m2m.qvt.oml" version="3.10.4" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.pcm" version="4.3.0" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.simucomframework.variables" version="4.3.0" match="greaterOrEqual"/>
+      <import plugin="org.scaledl.usageevolution"/>
+      <import plugin="org.palladiosimulator.monitorrepository" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.edp2.util" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.pcm" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.simucomframework.variables" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.servicelevelobjective"/>
+      <import plugin="org.palladiosimulator.commons" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.runtime" version="3.24.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.resources" version="3.16.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.annotation" version="2.2.600" match="greaterOrEqual"/>
+      <import plugin="com.google.guava" version="30.1.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.emf.ecore"/>
+      <import plugin="com.google.inject" version="5.0.1" match="greaterOrEqual"/>
+      <import plugin="ca.umontreal.iro.simul.ssj" version="3.3.1" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.osgi"/>
+      <import plugin="javax.inject" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.mdsdprofiles.api"/>
+      <import plugin="org.reactivestreams" version="1.0.2" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.apt.core" version="3.7.50" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jdt.core" version="3.28.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.probeframework" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.recorderframework" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.measurementframework"/>
+      <import plugin="org.palladiosimulator.metricspec"/>
+      <import plugin="org.slf4j.api" version="1.7.30" match="greaterOrEqual"/>
+      <import plugin="com.google.gson" version="2.8.8" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.simucomframework" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.edp2"/>
+      <import plugin="org.palladiosimulator.servicelevelobjective" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.jgrapht.core"/>
+      <import plugin="org.eclipse.equinox.app"/>
+      <import plugin="de.uka.ipd.sdq.workflow"/>
+      <import plugin="org.palladiosimulator.recorderframework.edp2"/>
+      <import plugin="org.palladiosimulator.experimentautomation"/>
+      <import plugin="org.palladiosimulator.experimentautomation.application"/>
+      <import plugin="org.jgrapht.core" version="1.5.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.debug.ui"/>
+      <import plugin="org.eclipse.swt"/>
+      <import plugin="de.uka.ipd.sdq.workflow.launchconfig"/>
+      <import plugin="de.uka.ipd.sdq.codegen.simucontroller"/>
+      <import plugin="org.eclipse.debug.ui" version="3.15.200" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.codegen.simucontroller" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.commons.logging" version="1.2.0" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.workflow.mdsd" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.debug.core"/>
+      <import plugin="de.uka.ipd.sdq.workflow" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.emf.cdo"/>
+      <import plugin="de.uka.ipd.sdq.identifier"/>
+      <import plugin="de.uka.ipd.sdq.probfunction"/>
+      <import plugin="de.uka.ipd.sdq.stoex"/>
+      <import plugin="de.uka.ipd.sdq.units"/>
+      <import plugin="org.eclipse.emf.edit"/>
+      <import plugin="org.eclipse.emf.ecore.edit"/>
+      <import plugin="de.uka.ipd.sdq.identifier.edit"/>
+      <import plugin="org.palladiosimulator.pcm.edit"/>
+      <import plugin="de.uka.ipd.sdq.probfunction.edit"/>
+      <import plugin="de.uka.ipd.sdq.stoex.edit"/>
+      <import plugin="de.uka.ipd.sdq.units.edit"/>
+      <import plugin="org.eclipse.emf.ecore.xmi"/>
+      <import plugin="org.eclipse.emf.edit.ui"/>
+      <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.palladiosimulator.spd" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.edp2.edit"/>
+      <import plugin="org.palladiosimulator.metricspec.edit"/>
+      <import plugin="tools.descartes.dlim.generator"/>
+      <import plugin="tools.descartes.dlim.generator.edit"/>
+      <import plugin="org.palladiosimulator.experimentautomation.edit"/>
+      <import plugin="org.palladiosimulator.monitorrepository.edit"/>
+      <import plugin="org.palladiosimulator.servicelevelobjective.edit"/>
+      <import plugin="org.scaledl.usageevolution.edit"/>
+      <import plugin="org.eclipse.m2m.qvt.oml.runtime"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.core" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.ui.events" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.workflow.events" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.monitor.data" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.monitor" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.common" version="1.0.0" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.generalsimulationconfiguration"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.monitor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.spd"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.spd.adjustment"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.spd.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.monitor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.usageevolution"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.monitor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.util"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.common"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.common.utils"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.cost"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.eventdriver"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.eventdriver.annotationprocessor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.monitor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.monitor.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.monitor.processingtype.aggregator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.monitor.processingtype.feedthrough"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.monitor.utils"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.networking"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.networking.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.snapshot"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.snapshot.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.stateexploration"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.stateexploration.application"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.stateexploration.data"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.stateexploration.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.stateexploration.workflow"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.ui.events"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.workflow"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.workflow.events"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.edit"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.editor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.measuringpoint"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.measuringpoint.edit"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.measuringpoint.editor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.semantic"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.semantic.edit"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.semantic.editor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.edit"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.spd.semantic.transformations"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.palladiosimulator.experimentautomation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

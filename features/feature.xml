@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.palladiosimulator.analyzer.slingshot.stateexploration.feature"
+      label="StateExploration"
+      version="1.0.0.qualifier">
+
+   <description url="http://www.example.com/description">
+      [Enter Feature Description here.]
+   </description>
+
+   <copyright url="http://www.example.com/copyright">
+      [Enter Copyright Description here.]
+   </copyright>
+
+   <license url="http://www.example.com/license">
+      [Enter License Description here.]
+   </license>
+
+   <requires>
+      <import plugin="org.apache.log4j"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.data"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data"/>
+      <import plugin="org.palladiosimulator.pcm" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.simucomframework.variables" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.common"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.common.utils"/>
+      <import plugin="org.palladiosimulator.monitorrepository"/>
+      <import plugin="org.palladiosimulator.analyzer.workflow"/>
+      <import plugin="de.uka.ipd.sdq.workflow.mdsd.blackboard"/>
+      <import plugin="org.palladiosimulator.spd"/>
+      <import plugin="org.palladiosimulator.servicelevelobjective"/>
+      <import plugin="org.palladiosimulator.spd.semantic"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.cost"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.spd.data"/>
+   </requires>
+
+   <plugin
+         id="org.palladiosimulator.analyzer.slingshot.behavior.util"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>
