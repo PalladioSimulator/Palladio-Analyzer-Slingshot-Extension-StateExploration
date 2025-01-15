@@ -76,7 +76,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final MDSDBlackboard blackboard;
 
-	private final double initialMaxSimTime;
+	private final double horizonLength;
 
 	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
@@ -86,20 +86,19 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.launchConfigurationParams = launchConfigurationParams;
 		this.monitor = monitor;
 		this.blackboard = blackboard;
-		this.initialMaxSimTime = Double.valueOf((String) launchConfigurationParams
-				.get(SimuComConfig.SIMULATION_TIME));
+		this.horizonLength = LaunchconfigAccess.getHorizon(launchConfigurationParams);
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
 		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
-					.createRootArchConfig(this.initModels.getResourceSet(), this.getModelLocation()));
+					.createRootArchConfig(this.initModels.getResourceSet(), LaunchconfigAccess.getModelLocation(launchConfigurationParams)));
 
 		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
 				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
 
-		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, this.getMinDuration());
+		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, LaunchconfigAccess.getMinDuration(launchConfigurationParams));
 
 	}
 
@@ -175,7 +174,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
 		// to include for the prioritazion of the fringe.
-		if (current.getEndTime() < this.initialMaxSimTime) {
+		if (current.getEndTime() < this.horizonLength) {
 			this.blackbox.updateGraphFringePostSimulation(current);
 		}
 	}
@@ -224,7 +223,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final boolean notRootSuccesor = this.graph.getRoot().getOutgoingTransitions().stream()
 				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
 
-		return new SnapshotConfiguration(interval, notRootSuccesor, this.getSensibility(), this.getMinDuration());
+		return new SnapshotConfiguration(interval, notRootSuccesor,
+				LaunchconfigAccess.getSensibility(launchConfigurationParams),
+				LaunchconfigAccess.getMinDuration(launchConfigurationParams));
 	}
 
 	/**
@@ -243,70 +244,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	}
 
-	/**
-	 * Get {@link ExplorationConfiguration#MAX_EXPLORATION_CYCLES} from launch
-	 * configuration parameters map.
-	 *
-	 * @return number of max exploration cycles
-	 */
-	private int getMaxIterations() {
-		final String maxIteration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES);
-
-		return Integer.valueOf(maxIteration);
-	}
-
-	/**
-	 * Get {@link ExplorationConfiguration#MIN_STATE_DURATION} from launch
-	 * configuration parameters map.
-	 *
-	 * @return minimum duration of an exploration cycles
-	 */
-	private double getMinDuration() {
-		final String minDuration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MIN_STATE_DURATION);
-
-		return Double.valueOf(minDuration);
-	}
-
-	/**
-	 *
-	 *
-	 * Get {@link ExplorationConfiguration#SENSIBILITY} from launch configuration
-	 * parameters map.
-	 *
-	 * @return sensibility for stopping regarding SLOs.
-	 */
-	private double getSensibility() {
-		final String minDuration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.SENSIBILITY);
-
-		return Double.valueOf(minDuration);
-	}
-
-	/**
-	 *
-	 * Get {@link ExplorationConfiguration#MODEL_LOCATION} from launch configuration
-	 * parameters map, if given.
-	 *
-	 * @return model location URI, as defined in the run config, or the default location if none was defined.
-	 */
-	private URI getModelLocation() {
-		final String modelLocation = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MODEL_LOCATION);
-
-		if (modelLocation.isBlank()) {
-			return URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir"));
-		}
-
-		final URI uri = URI.createURI(modelLocation);
-
-		if (uri.isPlatform() || uri.isFile()) {
-			return uri;
-		} else {
-			return URI.createFileURI(modelLocation);
-		}
-	}
+	
 
 	@Override
 	public boolean hasUnexploredChanges() {

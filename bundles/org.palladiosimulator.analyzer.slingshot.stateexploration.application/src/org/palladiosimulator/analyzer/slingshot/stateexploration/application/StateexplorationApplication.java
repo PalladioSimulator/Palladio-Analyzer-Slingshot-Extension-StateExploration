@@ -78,7 +78,7 @@ public class StateexplorationApplication implements IApplication {
 			throw new IllegalArgumentException("The mandatory argument is missing.");
 		}
 
-		return new Path(args[0]);
+		return new Path(args[args.length-1]);
 	}
 
 	/**
