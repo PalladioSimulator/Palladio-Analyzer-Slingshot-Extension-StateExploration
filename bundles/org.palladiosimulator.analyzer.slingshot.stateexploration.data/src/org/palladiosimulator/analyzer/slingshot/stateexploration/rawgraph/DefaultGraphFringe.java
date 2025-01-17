@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
@@ -29,120 +30,13 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * @author Sarah Stieß
  *
  */
-public final class DefaultGraphFringe extends PriorityQueue<ToDoChange> {
+public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 
 	private final static Logger LOGGER = Logger.getLogger(DefaultGraphFringe.class);
 	
 	public DefaultGraphFringe() {
-		super(createForUtility());
+		super();
 	}
-
-	/**
-	 * Compare two possible changes by the utility of their start nodes.
-	 *
-	 * As the head of the queues is the *least* element, the better state (i.e.
-	 * higher utility) is considered the lesser.
-	 *
-	 * @return -1 is the first change has the bigger utility, +1 is the second one
-	 *         has the bigger utility, 0 if the utilities are equal.
-	 */
-	private static Comparator<ToDoChange> createForUtility() {
-		return new Comparator<ToDoChange>() {
-
-			@Override
-			public int compare(final ToDoChange o1, final ToDoChange o2) {
-				if (compare(o1.getChange(), o2.getChange()) == 0) {
-					return -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
-				} else {
-					return compare(o1.getChange(), o2.getChange());
-				}
-			}
-			
-
-			private int compare(final Optional<Change> c1, final Optional<Change> c2) {
-				final int ordinalityMattersThreshold = 2;
-				
-				int ordinalityDiff = calculateOrinality(c1) - calculateOrinality(c2);
-				if (ordinalityDiff < ordinalityMattersThreshold) {
-					return 0;
-				} else {
-				
-				
-				return ordinalityDiff;
-				}
-			}
-			
-			private int calculateOrinality(final Optional<Change> c) {
-				if (c.isPresent()) {
-					return ((Reconfiguration) c.get()).getReactiveReconfigurationEvents().size();			
-				} else {
-					return 0;
-				}
-			}
-		};
-	}
-	
-
-	/**
-	 * Creates a {@link Comparator} for comparing two instances of
-	 * {@link ToDoChange}.
-	 *
-	 * Current implementation compares first by path length, then by number of out
-	 * going transition, and the by type of transition. The queue prioritises the
-	 * least element, thus it is:
-	 * <ol>
-	 * <li>Long histories are greater than short histories.</li>
-	 * <li>More outgoing edges are greater that fewer.</li>
-	 * <li>NOP transitions are prioritised over changes.</li>
-	 * </ol>
-	 *
-	 * If 1. is equal, 2. is used. If 2. is equal, 3. is used. If 3. is equal, the
-	 * order is arbitrary.
-	 *
-	 * @return comparator for comparing two instances of {@link ToDoChange}.
-	 */
-	private static Comparator<ToDoChange> create() {
-		return new Comparator<ToDoChange>() {
-
-			@Override
-			public int compare(final ToDoChange change1, final ToDoChange change2) {
-
-				// the longer one is better -> the shorter one is "the least"
-				final Comparator<DefaultState> historyLengthComparator = Comparator.comparingInt(s -> s.lenghtOfHistory());
-
-				// the longer one is better -> the shorter one is "the least"
-				final Comparator<DefaultState> endTimeComparator = Comparator.comparingDouble(s -> s.getEndTime());
-
-				// the more the better -> the fewer one is "least" (end up with a line, because
-				// newest state has always zero out transitions -> "least"
-				final Comparator<DefaultState> cardinalityComparator = Comparator
-						.comparingInt(s -> s.getOutgoingTransitions().size());
-
-				// the one with NOP shall be "the least"
-				final Comparator<ToDoChange> typeOfChangeComparator = (c1, c2) -> {
-					int rval = 0;
-					if (c1.getChange().isEmpty()) {
-						rval--;
-					}
-					if (c2.getChange().isEmpty()) {
-						rval++;
-					}
-					return rval;
-				};
-
-				final int historyLength = historyLengthComparator.compare(change1.getStart(), change2.getStart());
-				final int endTime = endTimeComparator.compare(change1.getStart(), change2.getStart());
-				final int cardinality = cardinalityComparator.compare(change1.getStart(), change2.getStart());
-				final int typeOfChange = typeOfChangeComparator.compare(change1, change2);
-
-				final int total = endTime != 0 ? endTime
-						: historyLength != 0 ? historyLength : cardinality != 0 ? cardinality : typeOfChange;
-
-				return total;
-			}
-		};
-	}
-
 
 	/**
 	 *
