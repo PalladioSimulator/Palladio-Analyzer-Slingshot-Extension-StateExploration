@@ -27,7 +27,9 @@ import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
 import org.palladiosimulator.spd.constraints.policy.CooldownConstraint;
 import org.palladiosimulator.spd.triggers.BaseTrigger;
+import org.palladiosimulator.spd.triggers.ScalingTrigger;
 import org.palladiosimulator.spd.triggers.expectations.ExpectedTime;
+import org.palladiosimulator.spd.triggers.expectations.ExpectedValue;
 import org.palladiosimulator.spd.triggers.stimuli.SimulationTime;
 
 /**
@@ -85,6 +87,11 @@ public class ExplorationPlanner {
 		final DefaultState end = this.createNewGraphNode(next);
 
 		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
+			
+			if (next.getChange().isPresent() && next.getChange().get() instanceof final Reconfiguration reconf) {
+				this.deactiveateSimulationtimeTriggeredPolicy(reconf.getAppliedPolicies());
+			}
+			
 			this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD().get(),
 					start.getDuration());
 		}
@@ -211,13 +218,17 @@ public class ExplorationPlanner {
 		// NOP Always
 		this.fringe.add(new ToDoChange(Optional.empty(), start));
 		// Reactive Reconfiguration - Always.
-		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
-			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
 
+		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
+			return;
+		}
+		// TODO : this is the "each once" implementation, but im not sure whether it's
+		// the best.
+		for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
 			// reactive reconf to the next state.
 			this.fringe.add(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
-
+		
 		// proactive reconf. -- this will create duplicates though.
 		final List<ToDoChange> backtrackedChanges = this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start)
 				.createProactiveChanges();
@@ -274,16 +285,16 @@ public class ExplorationPlanner {
 	 *
 	 * The {@link ExpectedTime} value is reduced by the duration of the previous
 	 * state.
+	 * 
+	 * Finally saves changes in model back to resource on the file system. 
 	 *
 	 * @param spd    current scaling rules.
 	 * @param offset duration of the previous state
 	 */
 	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
 		spd.getScalingPolicies().stream()
-		.filter(policy -> policy.isActive() && policy.getScalingTrigger() instanceof BaseTrigger)
+		.filter(policy -> policy.isActive() && this.isSimulationTimeTrigger(policy.getScalingTrigger()))
 		.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
-		.filter(trigger -> trigger.getStimulus() instanceof SimulationTime
-				&& trigger.getExpectedValue() instanceof ExpectedTime)
 		.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
 
 		ResourceUtils.saveResource(spd.eResource());
@@ -300,7 +311,7 @@ public class ExplorationPlanner {
 
 		final ScalingPolicy policy = (ScalingPolicy) time.eContainer().eContainer();
 
-		if (triggerTime <= previousStateDuration) {
+		if (triggerTime < previousStateDuration) {			
 			policy.setActive(false);
 			LOGGER.debug(String.format("Deactivate Policy %s as Triggertime is in the past.", policy.getEntityName()));
 		} else {
@@ -309,7 +320,45 @@ public class ExplorationPlanner {
 					previousStateDuration, time.getValue()));
 		}
 	}
+	
+	/**
+	 * Deactivate all policies with a simulation time based trigger.
+	 * 
+	 * Finally saves changes in model back to resource on the file system.
+	 * 
+	 * @param policies
+	 */
+	private void deactiveateSimulationtimeTriggeredPolicy(final Set<ScalingPolicy> policies) {
+		for (final ScalingPolicy policy : policies) {
+			if (this.isSimulationTimeTrigger(policy.getScalingTrigger())) {
+				policy.setActive(false);
+			}
+		}
+		
+		if (!policies.isEmpty()) {
+			ResourceUtils.saveResource(policies.stream().findAny().get().eResource());
+		}
+		
+	}
+	
+	/**
+	 * Check whether the given trigger is based on {@link SimulationTime} and {@link ExpectedTime}.
+	 * 
+	 * TODO take compound triggers into consideration.
+	 * 
+	 * @param trigger trigger to be checked.
+	 * @return true iff the trigger is based on {@link SimulationTime} and {@link ExpectedTime}
+	 */
+	private boolean isSimulationTimeTrigger(ScalingTrigger trigger) {
+		return trigger instanceof BaseTrigger base && base.getStimulus() instanceof SimulationTime && base.getExpectedValue() instanceof ExpectedTime;
+	}
 
+	/**
+	 * Create events for initialising the state inside the SPD Interpreter.
+	 * 
+	 * @param values values from previous simulation run.
+	 * @return Events to initialise the interpreter to the states from the previous run.
+	 */
 	private Collection<DESEvent> createStateInitEvents(
 			final Collection<SPDAdjustorStateValues> values) {
 		return values.stream().map(value -> (DESEvent) new SPDAdjustorStateInitialized(value)).toList();

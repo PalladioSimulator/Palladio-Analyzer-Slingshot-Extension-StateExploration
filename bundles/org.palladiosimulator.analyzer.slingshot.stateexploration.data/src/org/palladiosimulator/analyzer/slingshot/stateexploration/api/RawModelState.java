@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -79,7 +80,7 @@ public interface RawModelState {
 	 *
 	 * @return
 	 */
-	public ReasonToLeave getReasonToLeave();
+	public Collection<ReasonToLeave> getReasonsToLeave();
 
 	// getSLOFullfillment() ?
 }

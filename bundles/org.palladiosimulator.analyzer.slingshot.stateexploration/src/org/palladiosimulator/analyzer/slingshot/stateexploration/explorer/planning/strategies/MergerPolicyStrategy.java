@@ -64,8 +64,8 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 			return List.of();
 		}
 
-		final ModelAdjustmentRequested reconfigurationToBeApplied = state.getSnapshot()
-				.getModelAdjustmentRequestedEvent().get();
+		final List<ModelAdjustmentRequested> reconfigurationToBeApplied = state.getSnapshot()
+				.getModelAdjustmentRequestedEvent();
 		final DefaultState predecessor = (DefaultState) state.getIncomingTransition().get().getSource();
 
 		final Set<Reconfiguration> collectedChanges = collectChanges(predecessor);
@@ -74,15 +74,18 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 		for (final Change change : collectedChanges) {
 			
-			if (this.tooManyOccurences((Reconfiguration) change, reconfigurationToBeApplied)) {
-				LOGGER.debug(String.format("no new change based on change %s, because policy %s already occurs more than %d times in that change.",
-						change.toString(), reconfigurationToBeApplied.toString(), DUPLICATE_THRESHOLD));
-				continue;
+			for (ModelAdjustmentRequested adjustment : reconfigurationToBeApplied) {
+				if (this.tooManyOccurences((Reconfiguration) change, adjustment)) {
+					LOGGER.debug(String.format(
+							"no new change based on change %s, because policy %s already occurs more than %d times in that change.",
+							change.toString(), adjustment.getScalingPolicy().getEntityName(), DUPLICATE_THRESHOLD));
+					continue;
+				}
 			}
 
 			final List<ModelAdjustmentRequested> adjustments = new ArrayList<>(((Reconfiguration) change)
 					.getReactiveReconfigurationEvents());
-			adjustments.add(reconfigurationToBeApplied);
+			adjustments.addAll(reconfigurationToBeApplied);
 
 
 			final Reconfiguration newChange = new ProactiveReconfiguration(adjustments);

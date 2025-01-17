@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,7 +21,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * graph until it finds a state, where the reconfiguration was not yet applied
  * and created the {@link ToDoChange} to apply it.
  *
- * @author stiesssh
+ * @author Sophie Stieß
  *
  */
 public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
@@ -46,8 +47,33 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 			return List.of();
 		}
 
-		final ModelAdjustmentRequested event = state.getSnapshot().getModelAdjustmentRequestedEvent().get();
+		final List<ModelAdjustmentRequested> events = state.getSnapshot().getModelAdjustmentRequestedEvent();
 
+		final List<ToDoChange> rval = new ArrayList<>();
+
+		for (final ModelAdjustmentRequested event : events) {
+			rval.addAll(createProactiveChange(state, event));
+		}
+
+		return rval;
+	}
+
+	/**
+	 *
+	 * Create a proactive reconfiguration from the given event at a predecessor of
+	 * {@code state}.
+	 *
+	 * Selects the predecessor closest to {@code state} where the reconfiguration of
+	 * the given event was not yet applied. If no such predecessor exists, the
+	 * returned collection is empty.
+	 *
+	 * @param state create a proactive reconfiguration before this state
+	 * @param event the reconfiguration
+	 * @return A set with the proactive change, of an empty set if no fitting
+	 *         predecessor exists.
+	 */
+	private List<ToDoChange> createProactiveChange(final DefaultState state,
+			final ModelAdjustmentRequested event) {
 		DefaultState predecessor = state;
 
 		if (!this.graph.getRoot().equals(state)) {

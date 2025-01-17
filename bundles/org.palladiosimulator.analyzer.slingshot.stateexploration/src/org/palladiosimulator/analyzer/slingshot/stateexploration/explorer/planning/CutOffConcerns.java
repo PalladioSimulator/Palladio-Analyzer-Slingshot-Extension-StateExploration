@@ -1,5 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -42,7 +44,7 @@ public class CutOffConcerns {
 
 		final DefaultState prev = (DefaultState) current.getIncomingTransition().get().getSource();
 
-		return samePolicy(current, prev) && bothNOOP(change, current.getIncomingTransition().get());
+		return sameChange(current, prev) && bothNOOP(change, current.getIncomingTransition().get());
 	}
 
 	/**
@@ -61,15 +63,22 @@ public class CutOffConcerns {
 	 * @param prev
 	 * @return
 	 */
-	private static boolean samePolicy(final DefaultState current, final DefaultState prev) {
+	private static boolean sameChange(final DefaultState current, final DefaultState prev) {
 		if (current.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()
 				|| prev.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
 			return false;
 		}
-		final ScalingPolicy policyCurrent = current.getSnapshot().getModelAdjustmentRequestedEvent().get()
-				.getScalingPolicy();
-		final ScalingPolicy policyPrev = prev.getSnapshot().getModelAdjustmentRequestedEvent().get().getScalingPolicy();
-
-		return policyCurrent.getId().equals(policyPrev.getId());
+		final List<ScalingPolicy> policyCurrent = current.getSnapshot().getModelAdjustmentRequestedEvent().stream().map(e -> e.getScalingPolicy()).toList();
+		final List<ScalingPolicy> policyPrev = prev.getSnapshot().getModelAdjustmentRequestedEvent().stream().map(e -> e.getScalingPolicy()).toList();
+		
+		if (policyCurrent.size() != policyPrev.size()) {
+			return false;
+		}
+		for (int i = 0; i < policyCurrent.size(); i++) {
+			if (!policyCurrent.get(i).getId().equals(policyPrev.get(i).getId())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

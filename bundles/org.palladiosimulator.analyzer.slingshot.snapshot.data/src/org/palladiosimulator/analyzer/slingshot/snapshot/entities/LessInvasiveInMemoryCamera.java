@@ -1,7 +1,9 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,6 +15,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.even
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobProgressed;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InterArrivalUserInitiated;
@@ -24,6 +27,8 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
+import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
+import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
 import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
@@ -62,30 +67,66 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	@Override
 	public Snapshot takeSnapshot() {
 		final Snapshot snapshot = new InMemorySnapshot(snapEvents());
+		this.getScheduledReconfigurations().forEach(snapshot::addModelAdjustmentRequestedEvent);
 		return snapshot;
 	}
 
+	/**
+	 *
+	 * Adjust delay of {@link UsageModelPassedElement} event.
+	 *
+	 * Must create a copy of the event, because the delay is immutable.
+	 *
+	 * @param event event to be offsetted
+	 * @return offsetted event
+	 */
 	private DESEvent clone(final UsageModelPassedElement<?> event) {
 		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
+	/**
+	 *
+	 * Adjust delay of {@link SEFFModelPassedElement} event.
+	 *
+	 * Must create a copy of the event, because the delay is immutable.
+	 *
+	 * @param event event to be offsetted
+	 * @return offsetted event
+	 */
 	private DESEvent clone(final SEFFModelPassedElement<?> event) {
 		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
+	/**
+	 *
+	 * Adjust delay of {@link ClosedWorkloadUserInitiated} event.
+	 *
+	 * Must create a copy of the event, because the delay is immutable.
+	 *
+	 * @param event event to be offsetted
+	 * @return offsetted event
+	 */
 	private DESEvent clone(final ClosedWorkloadUserInitiated event) {
 		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
+	/**
+	 *
+	 * Adjust delay of {@link InterArrivalUserInitiated} event.
+	 *
+	 * Must create a copy of the event, because the delay is immutable.
+	 *
+	 * @param event event to be offsetted
+	 * @return offsetted event
+	 */
 	private DESEvent clone(final InterArrivalUserInitiated event) {
 		return helper.clone(event, engine.getSimulationInformation().currentSimulationTime());
 	}
 
 	/**
-	 * TODO
+	 * Collect and clone all state relevant events from the past and the future.
 	 *
-	 * @param pointInTime
-	 * @return
+	 * @return Set of events for recreating the state.
 	 */
 	private Set<DESEvent> snapEvents() {
 		// i think this is not smart.
@@ -120,6 +161,41 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		return clonedEvents;
 	}
 
+	/**
+	 *
+	 * Get {@link ModelAdjustmentRequested} events, that happened at the point in
+	 * time the snapshot was taken, but did not trigger it.
+	 *
+	 * As the there is no guarantee on the order of events, that happen at the same
+	 * point in time, the {@link ModelAdjustmentRequested} events are either
+	 * directly scheduled, or already wrapped into {@link SnapshotInitiated} or
+	 * {@link SnapshotTaken} events.
+	 *
+	 * @return upcoming {@link ModelAdjustmentRequested} events.
+	 */
+	private List<ModelAdjustmentRequested> getScheduledReconfigurations() {
+		final List<ModelAdjustmentRequested> events = new ArrayList<>();
+
+		engine.getScheduledEvents().stream()
+		.filter(ModelAdjustmentRequested.class::isInstance)
+		.map(ModelAdjustmentRequested.class::cast)
+		.forEach(events::add);
+
+		engine.getScheduledEvents().stream()
+		.filter(SnapshotInitiated.class::isInstance)
+		.map(SnapshotInitiated.class::cast)
+		.filter(e -> e.getTriggeringEvent().isPresent())
+		.forEach(e -> events.add(e.getTriggeringEvent().get()));
+
+		engine.getScheduledEvents().stream()
+		.filter(SnapshotTaken.class::isInstance)
+		.map(SnapshotTaken.class::cast)
+		.filter(e -> e.getTriggeringEvent().isPresent())
+		.forEach(e -> events.add(e.getTriggeringEvent().get()));
+
+		return events;
+	}
+	
 	/**
 	 *
 	 * @param jobrecords

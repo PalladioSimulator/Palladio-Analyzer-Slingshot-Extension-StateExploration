@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
@@ -11,7 +11,7 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
  *
  * Snaphshot of a Simulation run.
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 public interface Snapshot {
@@ -32,15 +32,16 @@ public interface Snapshot {
 
 	/**
 	 *
-	 * @return {@link ModelAdjustmentRequested} event, that ended the snapshotted
-	 *         state, or empty if the state did not end with a reconfiguration.
+	 * @return {@link ModelAdjustmentRequested} events, that happened at the end of
+	 *         the state. state, or empty if the state did not end with a
+	 *         reconfiguration.
 	 */
-	public Optional<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent();
+	public List<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent();
 
 	/**
 	 *
 	 * @param event {@link ModelAdjustmentRequested} event, that ended the
 	 *              snapshotted state.
 	 */
-	public void setModelAdjustmentRequestedEvent(ModelAdjustmentRequested event);
+	public void addModelAdjustmentRequestedEvent(ModelAdjustmentRequested event);
 }

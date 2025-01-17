@@ -14,6 +14,7 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.PruneFringeByTime;
@@ -150,10 +151,10 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		someStates.remove(this.explorer.getGraph().getRoot());
 
 		Slingshot.getInstance().getSystemDriver()
-		.postEvent(new FocusOnStatesEvent(someStates.stream().map(s -> s.getId()).toList()));
+				.postEvent(new FocusOnStatesEvent(someStates.stream().map(s -> s.getId()).toList()));
 
 		Slingshot.getInstance().getSystemDriver()
-		.postEvent(new ReFocusOnStatesEvent(Set.of(this.explorer.getGraph().getRoot().getId())));
+				.postEvent(new ReFocusOnStatesEvent(Set.of(this.explorer.getGraph().getRoot().getId())));
 	}
 
 	/**
@@ -164,11 +165,15 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		LOGGER.warn("Exploration : " + this.explorer.getGraph());
 		LOGGER.warn("********** States : ");
 		this.explorer.getGraph().getStates()
-		.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s ", s.getId(),
-				s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonToLeave())));
+				.forEach(s -> LOGGER.warn(String.format("%s : %.2f -> %.2f, duration : %.2f,  reason: %s", s.getId(),
+						s.getStartTime(), s.getEndTime(), s.getDuration(), s.getReasonsToLeave())));
 		LOGGER.warn("********** Transitions : ");
-		this.explorer.getGraph().getTransitions().stream().forEach(
-				t -> LOGGER.warn(String.format("%s : %.2f type : %s", t.getName(), t.getPointInTime(), t.getType())));
+		this.explorer.getGraph().getTransitions().stream()
+				.forEach(t -> LOGGER.warn(
+						String.format("%s : %.2f type : %s, policies: %s", t.getName(), t.getPointInTime(), t.getType(),
+								t.getChange().isEmpty() ? "[ ]"
+										: ((Reconfiguration) t.getChange().get()).getAppliedPolicies().stream()
+												.map(p -> p.getEntityName()).reduce("", (s, p) -> s + " " + p))));
 	}
 
 	@Subscribe
@@ -237,8 +242,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 					.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID));
 
 			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
-					this.initEvent.getMonitor(),
-					blackboard);
+					this.initEvent.getMonitor(), blackboard);
 		} finally {
 			this.explorerLock.unlock();
 		}
@@ -255,7 +259,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 
 		job.addJob(new PreparePCMBlackboardPartitionJob());
 		this.initEvent.getPcmModelFiles()
-		.forEach(modelFile -> LoadModelIntoBlackboardJob.parseUriAndAddModelLoadJob(modelFile, job));
+				.forEach(modelFile -> LoadModelIntoBlackboardJob.parseUriAndAddModelLoadJob(modelFile, job));
 
 		final MDSDBlackboard newBlackboard = new MDSDBlackboard();
 		job.setBlackboard(newBlackboard);
