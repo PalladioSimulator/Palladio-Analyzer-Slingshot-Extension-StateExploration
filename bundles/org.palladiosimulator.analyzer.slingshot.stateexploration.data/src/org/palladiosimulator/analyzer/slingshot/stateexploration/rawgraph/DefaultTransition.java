@@ -32,4 +32,13 @@ public class DefaultTransition implements RawTransition, Transition {
 	public Optional<Change> getChange() {
 		return this.change;
 	}
+	
+	@Override
+	public String toString() {
+		if (change.isEmpty()) {
+			return "NOP for " + getSource().getId();
+		} else {
+			return String.format("%s for %s", change.get().toString(), getSource().getId());
+		}
+	}
 }
