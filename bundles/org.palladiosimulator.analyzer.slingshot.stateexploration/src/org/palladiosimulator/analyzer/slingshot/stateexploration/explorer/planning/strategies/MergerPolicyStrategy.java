@@ -15,7 +15,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reco
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -58,7 +58,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * TODO 
 	 */
 	@Override
-	public List<ToDoChange> createProactiveChanges() {
+	public List<PlannedTransition> createProactiveChanges() {
 
 		if (state.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty() || state.getIncomingTransition().isEmpty() ) {
 			return List.of();
@@ -70,7 +70,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 		final Set<Reconfiguration> collectedChanges = collectChanges(predecessor);
 
-		final List<ToDoChange> newTodos = new ArrayList<>();
+		final List<PlannedTransition> newTodos = new ArrayList<>();
 
 		for (final Change change : collectedChanges) {
 			
@@ -91,7 +91,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 			final Reconfiguration newChange = new ProactiveReconfiguration(adjustments);
 
 			if (!this.contains(collectedChanges, newChange)) {
-				final ToDoChange todoChange = new ToDoChange(Optional.of(newChange), predecessor);
+				final PlannedTransition todoChange = new PlannedTransition(Optional.of(newChange), predecessor);
 				newTodos.add(todoChange);
 			} else {
 				LOGGER.debug(String.format("no new change based on change %s, because such a change already exists.",

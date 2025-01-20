@@ -18,7 +18,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  *
- * Fringe that manages the {@link ToDoChange}, i.e. all future directions to
+ * Fringe that manages the {@link PlannedTransition}, i.e. all future directions to
  * explore.
  *
  * Beware: what about duplicates ToDo Changes?
@@ -29,7 +29,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * @author Sarah Stieß
  *
  */
-public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
+public final class PriorityGraphFringe extends PriorityQueue<PlannedTransition> {
 
 	private final static Logger LOGGER = Logger.getLogger(PriorityGraphFringe.class);
 	
@@ -46,11 +46,11 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 	 * @return -1 is the first change has the bigger utility, +1 is the second one
 	 *         has the bigger utility, 0 if the utilities are equal.
 	 */
-	private static Comparator<ToDoChange> createForUtility() {
-		return new Comparator<ToDoChange>() {
+	private static Comparator<PlannedTransition> createForUtility() {
+		return new Comparator<PlannedTransition>() {
 
 			@Override
-			public int compare(final ToDoChange o1, final ToDoChange o2) {
+			public int compare(final PlannedTransition o1, final PlannedTransition o2) {
 				if (compare(o1.getChange(), o2.getChange()) == 0) {
 					return -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
 				} else {
@@ -85,7 +85,7 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 
 	/**
 	 * Creates a {@link Comparator} for comparing two instances of
-	 * {@link ToDoChange}.
+	 * {@link PlannedTransition}.
 	 *
 	 * Current implementation compares first by path length, then by number of out
 	 * going transition, and the by type of transition. The queue prioritises the
@@ -99,13 +99,13 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 	 * If 1. is equal, 2. is used. If 2. is equal, 3. is used. If 3. is equal, the
 	 * order is arbitrary.
 	 *
-	 * @return comparator for comparing two instances of {@link ToDoChange}.
+	 * @return comparator for comparing two instances of {@link PlannedTransition}.
 	 */
-	private static Comparator<ToDoChange> create() {
-		return new Comparator<ToDoChange>() {
+	private static Comparator<PlannedTransition> create() {
+		return new Comparator<PlannedTransition>() {
 
 			@Override
-			public int compare(final ToDoChange change1, final ToDoChange change2) {
+			public int compare(final PlannedTransition change1, final PlannedTransition change2) {
 
 				// the longer one is better -> the shorter one is "the least"
 				final Comparator<DefaultState> historyLengthComparator = Comparator.comparingInt(s -> s.lenghtOfHistory());
@@ -119,7 +119,7 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 						.comparingInt(s -> s.getOutgoingTransitions().size());
 
 				// the one with NOP shall be "the least"
-				final Comparator<ToDoChange> typeOfChangeComparator = (c1, c2) -> {
+				final Comparator<PlannedTransition> typeOfChangeComparator = (c1, c2) -> {
 					int rval = 0;
 					if (c1.getChange().isEmpty()) {
 						rval--;
@@ -150,16 +150,16 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 	private static final long serialVersionUID = -698254304773541924L;
 
 	/**
-	 * Check, whether the fringe already contains a {@link ToDoChange} that applies
+	 * Check, whether the fringe already contains a {@link PlannedTransition} that applies
 	 * {@code matchee} to {@code state}.
 	 *
 	 * @param state
 	 * @param matchee
-	 * @return true if a {@link ToDoChange} that applies {@code matchee} to
+	 * @return true if a {@link PlannedTransition} that applies {@code matchee} to
 	 *         {@code state} is in the fringe, false otherwise.
 	 */
 	public boolean containsTodoFor(final RawModelState state, final ScalingPolicy matchee) {
-		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
+		final Predicate<PlannedTransition> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isPresent()
 				&& todo.getChange().get() instanceof Reconfiguration
 				&& this.isOutTransitionFor((Reconfiguration) todo.getChange().get(), matchee);
@@ -187,15 +187,15 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 	}
 
 	/**
-	 * Check, whether the fringe already contains a {@link ToDoChange} that applies
+	 * Check, whether the fringe already contains a {@link PlannedTransition} that applies
 	 * no reconfiguration to the given state.
 	 *
 	 * @param state
-	 * @return true if a {@link ToDoChange} that without reconfiguration is the
+	 * @return true if a {@link PlannedTransition} that without reconfiguration is the
 	 *         fringe, false otherwise.
 	 */
 	public boolean containsNopTodoFor(final RawModelState state) {
-		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
+		final Predicate<PlannedTransition> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isEmpty();
 
 		return containsTodoFor(pred);
@@ -206,7 +206,7 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 	 * @param predicate
 	 * @return true if any todo matches the given predicate, false otherwise.
 	 */
-	private boolean containsTodoFor(final Predicate<ToDoChange> predicate) {
+	private boolean containsTodoFor(final Predicate<PlannedTransition> predicate) {
 		return this.stream()
 				.filter(predicate)
 				.findAny()
@@ -214,12 +214,12 @@ public final class PriorityGraphFringe extends PriorityQueue<ToDoChange> {
 	}
 
 	/**
-	 * Remove all {@link ToDoChange}s matching the given criteria from this fringe.
+	 * Remove all {@link PlannedTransition}s matching the given criteria from this fringe.
 	 *
 	 * @param pruningCriteria non-null criteria {@link Force} changes to be removed.
 	 */
-	public void prune(final Predicate<ToDoChange> pruningCriteria) {
-		final Collection<ToDoChange> toBePruned = this.stream().filter(pruningCriteria).toList();
+	public void prune(final Predicate<PlannedTransition> pruningCriteria) {
+		final Collection<PlannedTransition> toBePruned = this.stream().filter(pruningCriteria).toList();
 
 		this.removeAll(toBePruned);
 	}

@@ -6,7 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 
-public class DefaultTransition implements RawTransition {
+public class DefaultTransition implements RawTransition, Transition {
 	private final Optional<Change> change;
 
 	private final DefaultGraph graph;

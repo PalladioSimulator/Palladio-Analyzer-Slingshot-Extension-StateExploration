@@ -37,7 +37,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.Addit
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -276,26 +276,26 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			if (gotNopped || gonnaGetNopped) {
 				continue;
 			} else {
-				this.fringe.add(new ToDoChange(Optional.empty(), (DefaultState) rawModelState));
+				this.fringe.add(new PlannedTransition(Optional.empty(), (DefaultState) rawModelState));
 			}
 
 		}
 
-		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+		final Predicate<PlannedTransition> pruningCriteria = change -> !focusedStates.contains(change.getStart());
 
 		this.fringe.prune(pruningCriteria);
 	}
 
 	@Override
 	public void focus(final Collection<RawModelState> focusedStates) {
-		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+		final Predicate<PlannedTransition> pruningCriteria = change -> !focusedStates.contains(change.getStart());
 
 		this.fringe.prune(pruningCriteria);
 	}
 
 	@Override
 	public void pruneByTime(final double time) {
-		final Predicate<ToDoChange> pruningCriteria = change -> change.getStart().getStartTime() < time;
+		final Predicate<PlannedTransition> pruningCriteria = change -> change.getStart().getStartTime() < time;
 
 		this.fringe.prune(pruningCriteria);
 	}

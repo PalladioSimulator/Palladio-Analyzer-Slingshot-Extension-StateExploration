@@ -22,14 +22,14 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planni
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transition;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
 import org.palladiosimulator.spd.constraints.policy.CooldownConstraint;
 import org.palladiosimulator.spd.triggers.BaseTrigger;
 import org.palladiosimulator.spd.triggers.ScalingTrigger;
 import org.palladiosimulator.spd.triggers.expectations.ExpectedTime;
-import org.palladiosimulator.spd.triggers.expectations.ExpectedValue;
 import org.palladiosimulator.spd.triggers.stimuli.SimulationTime;
 
 /**
@@ -73,7 +73,7 @@ public class ExplorationPlanner {
 	public Optional<SimulationInitConfiguration> createConfigForNextSimualtionRun() {
 		assert !this.fringe.isEmpty();
 
-		ToDoChange next = this.fringe.poll();
+		PlannedTransition next = this.fringe.poll();
 
 		while (!this.cutOffConcerns.shouldExplore(next)) {
 			LOGGER.debug(String.format("Future %s is bad, won't explore.", next.toString()));
@@ -216,9 +216,9 @@ public class ExplorationPlanner {
 	 */
 	public void updateGraphFringePostSimulation(final DefaultState start) {
 		// NOP Always
-		this.fringe.add(new ToDoChange(Optional.empty(), start));
+		this.fringe.add(new PlannedTransition(Optional.empty(), start));
+		
 		// Reactive Reconfiguration - Always.
-
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
 			return;
 		}
@@ -226,20 +226,30 @@ public class ExplorationPlanner {
 		// the best.
 		for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
 			// reactive reconf to the next state.
-			this.fringe.add(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
+			this.fringe.add(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
 		
-		// proactive reconf. -- this will create duplicates though.
-		final List<ToDoChange> backtrackedChanges = this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start)
-				.createProactiveChanges();
-		final List<ToDoChange> mergedChanges = this.proactiveStrategyBuilder.createBacktrackMergerPolicyStrategy(start)
-				.createProactiveChanges();
+		// proactive reconfs
+		final List<PlannedTransition> newTransitions = new ArrayList<>();
+		
+		newTransitions.addAll(this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start)
+				.createProactiveChanges());
+		newTransitions.addAll(this.proactiveStrategyBuilder.createBacktrackMergerPolicyStrategy(start)
+				.createProactiveChanges());
 
-		// first create all, then add all, or else we add more than we want, i guess.
-		for (final ToDoChange toDoChange : backtrackedChanges) {
-			this.fringe.add(toDoChange);
-		}
-		for (final ToDoChange toDoChange : mergedChanges) {
+		// only add net yet executed or queued changes. 
+		for (final PlannedTransition toDoChange : newTransitions) {
+			
+			Set<Transition> transitions = new HashSet<>();
+			transitions.addAll(this.rawgraph.getTransitions());
+			transitions.addAll(this.fringe.getAllPlannedTransition());
+			
+			for (Transition transition : transitions) {
+				if (transition.isSame(toDoChange)) {
+					continue;
+				}
+			}
+			
 			this.fringe.add(toDoChange);
 		}
 	}
@@ -254,7 +264,7 @@ public class ExplorationPlanner {
 	 *
 	 * @return a new node, connected to its predecessor in graph.
 	 */
-	private DefaultState createNewGraphNode(final ToDoChange next) {
+	private DefaultState createNewGraphNode(final PlannedTransition next) {
 		final DefaultState predecessor = next.getStart();
 
 		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
@@ -328,7 +338,7 @@ public class ExplorationPlanner {
 	 * 
 	 * @param policies
 	 */
-	private void deactiveateSimulationtimeTriggeredPolicy(final Set<ScalingPolicy> policies) {
+	private void deactiveateSimulationtimeTriggeredPolicy(final Collection<ScalingPolicy> policies) {
 		for (final ScalingPolicy policy : policies) {
 			if (this.isSimulationTimeTrigger(policy.getScalingTrigger())) {
 				policy.setActive(false);

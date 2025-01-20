@@ -20,12 +20,22 @@ public abstract class Reconfiguration implements Change {
 		this.events = events;
 	}
 
+	/**
+	 * Order in data structure is the order of application. 
+	 *  
+	 * @return List of all request for adjustment in order of appearance.
+	 */
 	public List<ModelAdjustmentRequested> getReactiveReconfigurationEvents() {
 		return List.copyOf(events);
 	}
 
-	public Set<ScalingPolicy> getAppliedPolicies() {
-		return events.stream().map(e -> e.getScalingPolicy()).collect(Collectors.toSet());
+	/**
+	 * Order in data structure is the order of application. 
+	 * 
+	 * @return List of scaling policy in order of appearance.
+	 */
+	public List<ScalingPolicy> getAppliedPolicies() {
+		return events.stream().map(e -> e.getScalingPolicy()).toList();
 	}
 
 	@Override

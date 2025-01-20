@@ -2,8 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -13,13 +11,12 @@ import javax.measure.quantity.Force;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  *
- * Fringe that manages the {@link ToDoChange}, i.e. all future directions to
+ * Fringe that manages the {@link PlannedTransition}, i.e. all future directions to
  * explore.
  *
  * Beware: what about duplicates ToDo Changes?
@@ -30,7 +27,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  * @author Sarah Stieß
  *
  */
-public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
+public final class DefaultGraphFringe extends ArrayDeque<PlannedTransition> {
 
 	private final static Logger LOGGER = Logger.getLogger(DefaultGraphFringe.class);
 	
@@ -44,16 +41,16 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 	private static final long serialVersionUID = -698254304773541924L;
 
 	/**
-	 * Check, whether the fringe already contains a {@link ToDoChange} that applies
+	 * Check, whether the fringe already contains a {@link PlannedTransition} that applies
 	 * {@code matchee} to {@code state}.
 	 *
 	 * @param state
 	 * @param matchee
-	 * @return true if a {@link ToDoChange} that applies {@code matchee} to
+	 * @return true if a {@link PlannedTransition} that applies {@code matchee} to
 	 *         {@code state} is in the fringe, false otherwise.
 	 */
 	public boolean containsTodoFor(final RawModelState state, final ScalingPolicy matchee) {
-		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
+		final Predicate<PlannedTransition> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isPresent()
 				&& todo.getChange().get() instanceof Reconfiguration
 				&& this.isOutTransitionFor((Reconfiguration) todo.getChange().get(), matchee);
@@ -61,12 +58,25 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 		return containsTodoFor(pred);
 	}
 
+	/**
+	 * 
+	 * @param state
+	 * @return
+	 */
 	public Set<Reconfiguration> getPlannedReconfFor(final RawModelState state) {
 		return this.stream().filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent())
 				.map(todo -> todo.getChange().get())
 				.filter(Reconfiguration.class::isInstance)
 				.map(Reconfiguration.class::cast)
 				.collect(Collectors.toSet());
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public Set<Transition> getAllPlannedTransition() {
+		return this.stream().collect(Collectors.toSet());
 	}
 
 	/**
@@ -81,15 +91,15 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 	}
 
 	/**
-	 * Check, whether the fringe already contains a {@link ToDoChange} that applies
+	 * Check, whether the fringe already contains a {@link PlannedTransition} that applies
 	 * no reconfiguration to the given state.
 	 *
 	 * @param state
-	 * @return true if a {@link ToDoChange} that without reconfiguration is the
+	 * @return true if a {@link PlannedTransition} that without reconfiguration is the
 	 *         fringe, false otherwise.
 	 */
 	public boolean containsNopTodoFor(final RawModelState state) {
-		final Predicate<ToDoChange> pred = todo -> todo.getStart().equals(state)
+		final Predicate<PlannedTransition> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isEmpty();
 
 		return containsTodoFor(pred);
@@ -100,7 +110,7 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 	 * @param predicate
 	 * @return true if any todo matches the given predicate, false otherwise.
 	 */
-	private boolean containsTodoFor(final Predicate<ToDoChange> predicate) {
+	private boolean containsTodoFor(final Predicate<PlannedTransition> predicate) {
 		return this.stream()
 				.filter(predicate)
 				.findAny()
@@ -108,12 +118,12 @@ public final class DefaultGraphFringe extends ArrayDeque<ToDoChange> {
 	}
 
 	/**
-	 * Remove all {@link ToDoChange}s matching the given criteria from this fringe.
+	 * Remove all {@link PlannedTransition}s matching the given criteria from this fringe.
 	 *
 	 * @param pruningCriteria non-null criteria {@link Force} changes to be removed.
 	 */
-	public void prune(final Predicate<ToDoChange> pruningCriteria) {
-		final Collection<ToDoChange> toBePruned = this.stream().filter(pruningCriteria).toList();
+	public void prune(final Predicate<PlannedTransition> pruningCriteria) {
+		final Collection<PlannedTransition> toBePruned = this.stream().filter(pruningCriteria).toList();
 
 		this.removeAll(toBePruned);
 	}

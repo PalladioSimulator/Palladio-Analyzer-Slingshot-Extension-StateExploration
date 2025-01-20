@@ -6,6 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transition;
 
 /**
  * Transition between two RawModelStates.
@@ -15,7 +16,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reac
  * @author stiesssh
  *
  */
-public interface RawTransition {
+public interface RawTransition extends Transition {
 
 	public RawModelState getSource();
 	public RawModelState getTarget();

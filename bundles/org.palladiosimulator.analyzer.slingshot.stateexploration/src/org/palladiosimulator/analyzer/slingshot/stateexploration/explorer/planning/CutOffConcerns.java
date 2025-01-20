@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -20,7 +20,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
 public class CutOffConcerns {
 	private static final Logger LOGGER = Logger.getLogger(CutOffConcerns.class.getName());
 
-	public boolean shouldExplore(final ToDoChange future) {
+	public boolean shouldExplore(final PlannedTransition future) {
 		LOGGER.debug(String.format("Evaluation future %s.", future.toString()));
 		LOGGER.debug(String.format("Future %s is rosy, will explore.", future.toString()));
 
@@ -34,7 +34,7 @@ public class CutOffConcerns {
 	 * @param current
 	 * @return
 	 */
-	private boolean matchesPattern(final ToDoChange change) {
+	private boolean matchesPattern(final PlannedTransition change) {
 
 		final DefaultState current = change.getStart();
 
@@ -53,7 +53,7 @@ public class CutOffConcerns {
 	 * @param prev
 	 * @return
 	 */
-	private static boolean bothNOOP(final ToDoChange current, final RawTransition prev) {
+	private static boolean bothNOOP(final PlannedTransition current, final RawTransition prev) {
 		return current.getChange().isEmpty() && prev.getChange().isEmpty();
 	}
 

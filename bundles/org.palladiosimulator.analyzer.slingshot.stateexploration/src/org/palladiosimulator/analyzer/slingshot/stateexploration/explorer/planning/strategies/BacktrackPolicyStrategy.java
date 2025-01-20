@@ -9,7 +9,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Proa
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -19,7 +19,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  *
  * Takes the reactively applied reconfiguration, backtracks through the state
  * graph until it finds a state, where the reconfiguration was not yet applied
- * and created the {@link ToDoChange} to apply it.
+ * and created the {@link PlannedTransition} to apply it.
  *
  * @author Sophie Stieß
  *
@@ -41,7 +41,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	}
 
 	@Override
-	public List<ToDoChange> createProactiveChanges() {
+	public List<PlannedTransition> createProactiveChanges() {
 
 		if (state.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
 			return List.of();
@@ -49,7 +49,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 
 		final List<ModelAdjustmentRequested> events = state.getSnapshot().getModelAdjustmentRequestedEvent();
 
-		final List<ToDoChange> rval = new ArrayList<>();
+		final List<PlannedTransition> rval = new ArrayList<>();
 
 		for (final ModelAdjustmentRequested event : events) {
 			rval.addAll(createProactiveChange(state, event));
@@ -72,7 +72,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @return A set with the proactive change, of an empty set if no fitting
 	 *         predecessor exists.
 	 */
-	private List<ToDoChange> createProactiveChange(final DefaultState state,
+	private List<PlannedTransition> createProactiveChange(final DefaultState state,
 			final ModelAdjustmentRequested event) {
 		DefaultState predecessor = state;
 
@@ -87,7 +87,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 			predecessor = getPredecessor(predecessor);
 		}
 
-		return List.of(new ToDoChange(Optional.of(new ProactiveReconfiguration(event)), predecessor));
+		return List.of(new PlannedTransition(Optional.of(new ProactiveReconfiguration(event)), predecessor));
 	}
 
 	/**
