@@ -88,16 +88,66 @@ public class ExplorationPlanner {
 
 		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
 			
-			if (next.getChange().isPresent() && next.getChange().get() instanceof final Reconfiguration reconf) {
-				this.deactiveateSimulationtimeTriggeredPolicy(reconf.getAppliedPolicies());
-			}
+			final SPD spd = end.getArchitecureConfiguration().getSPD().get();
 			
-			this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD().get(),
-					start.getDuration());
+			this.updateSimulationTimeTriggeredPolicy(spd, start.getDuration());
+			
+			if (next.getChange().isPresent() && next.getChange().get() instanceof ReactiveReconfiguration rea) {
+				this.deactivateReactivePolicies(spd, rea);
+			}
+			ResourceUtils.saveResource(spd.eResource());
 		}
 
 		return Optional.of(createConfigBasedOnChange(next.getChange(), start, end));
+	}
 
+	/**
+	 * Add new exploration directions to the graph fringe.
+	 *
+	 * To be called after the given state was simulated.
+	 *
+	 * This is where the proactive / reactive / nop changes for future iterations
+	 * are set. If we want to add more proactive changes later on, this operation is
+	 * where we should insert them.
+	 *
+	 * @param start state that we just finished exploring.
+	 */
+	public void updateGraphFringePostSimulation(final DefaultState start) {
+		// NOP Always
+		this.fringe.add(new PlannedTransition(Optional.empty(), start));
+		
+		// Reactive Reconfiguration - Always.
+		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
+			return;
+		}
+		// TODO : this is the "each once" implementation, but i'm not sure whether it's
+		// the best.
+		for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
+			// reactive reconf to the next state.
+			this.fringe.add(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
+		}
+		
+		// proactive reconfs
+		final List<PlannedTransition> newTransitions = new ArrayList<>();
+		
+		newTransitions.addAll(this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start)
+				.createProactiveChanges());
+		newTransitions.addAll(this.proactiveStrategyBuilder.createBacktrackMergerPolicyStrategy(start)
+				.createProactiveChanges());
+
+		// only add net yet executed or queued changes. 
+		for (final PlannedTransition toDoChange : newTransitions) {
+			
+			Set<Transition> transitions = new HashSet<>();
+			transitions.addAll(this.rawgraph.getTransitions());
+			transitions.addAll(this.fringe.getAllPlannedTransition());			
+
+			Boolean dup = transitions.stream().map(toDoChange::isSame).reduce(false, (b1,b2) -> b1 || b2);
+			
+			if (!dup) {
+			  this.fringe.add(toDoChange);
+			}
+		}
 	}
 
 	/**
@@ -140,6 +190,19 @@ public class ExplorationPlanner {
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");
+	}
+	
+	/**
+	 * Deactivate all reactively applied policies at the given SPD model, that have a simulation time based trigger. 
+	 * 
+	 * Usually, it does not help to deactivate the policies directly via the reconfiguration, because the reconfiguration points to the wrong copy of the policies. 
+	 * 
+	 * @param spd model to deactivate policies at.
+	 * @param rea policies to deactivate
+	 */
+	private void deactivateReactivePolicies(final SPD spd, ReactiveReconfiguration rea) {
+		List<String> ids = rea.getAppliedPolicies().stream().map(p -> p.getId()).toList();
+		spd.getScalingPolicies().stream().filter(p -> isSimulationTimeTrigger(p.getScalingTrigger())).filter(p -> ids.contains(p.getId())).forEach(p -> p.setActive(false));
 	}
 
 	/**
@@ -204,57 +267,6 @@ public class ExplorationPlanner {
 	}
 
 	/**
-	 * Add new exploration directions to the graph fringe.
-	 *
-	 * To be called after the given state was simulated.
-	 *
-	 * This is where the proactive / reactive / nop changes for future iterations
-	 * are set. If we want to add more proactive changes later on, this operation is
-	 * where we should insert them.
-	 *
-	 * @param start state that we just finished exploring.
-	 */
-	public void updateGraphFringePostSimulation(final DefaultState start) {
-		// NOP Always
-		this.fringe.add(new PlannedTransition(Optional.empty(), start));
-		
-		// Reactive Reconfiguration - Always.
-		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
-			return;
-		}
-		// TODO : this is the "each once" implementation, but im not sure whether it's
-		// the best.
-		for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
-			// reactive reconf to the next state.
-			this.fringe.add(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
-		}
-		
-		// proactive reconfs
-		final List<PlannedTransition> newTransitions = new ArrayList<>();
-		
-		newTransitions.addAll(this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start)
-				.createProactiveChanges());
-		newTransitions.addAll(this.proactiveStrategyBuilder.createBacktrackMergerPolicyStrategy(start)
-				.createProactiveChanges());
-
-		// only add net yet executed or queued changes. 
-		for (final PlannedTransition toDoChange : newTransitions) {
-			
-			Set<Transition> transitions = new HashSet<>();
-			transitions.addAll(this.rawgraph.getTransitions());
-			transitions.addAll(this.fringe.getAllPlannedTransition());
-			
-			for (Transition transition : transitions) {
-				if (transition.isSame(toDoChange)) {
-					continue;
-				}
-			}
-			
-			this.fringe.add(toDoChange);
-		}
-	}
-
-	/**
 	 * Create a new graph note with a new arch configuration.
 	 *
 	 * creating a fully connected Graph node encompasses : - copying architecture
@@ -294,25 +306,21 @@ public class ExplorationPlanner {
 	 * in the past with regard to global time.
 	 *
 	 * The {@link ExpectedTime} value is reduced by the duration of the previous
-	 * state.
-	 * 
-	 * Finally saves changes in model back to resource on the file system. 
+	 * state. 
 	 *
 	 * @param spd    current scaling rules.
 	 * @param offset duration of the previous state
 	 */
-	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
+	private void updateSimulationTimeTriggeredPolicy(final SPD spd, final double offset) {
 		spd.getScalingPolicies().stream()
-		.filter(policy -> policy.isActive() && this.isSimulationTimeTrigger(policy.getScalingTrigger()))
-		.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
-		.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
-
-		ResourceUtils.saveResource(spd.eResource());
+				.filter(policy -> policy.isActive() && this.isSimulationTimeTrigger(policy.getScalingTrigger()))
+				.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
+				.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
 	}
 
 	/**
-	 * update value helper.
-	 *
+	 * Update expected time value and deactivate, if the policy is in the past necessary. 
+	 * 
 	 * @param time                  model element to be updated
 	 * @param previousStateDuration duration to subtract from {@code time}.
 	 */
@@ -329,26 +337,6 @@ public class ExplorationPlanner {
 			LOGGER.debug(String.format("Reduce Triggertime of Policy %s by %f to %f.", policy.getEntityName(),
 					previousStateDuration, time.getValue()));
 		}
-	}
-	
-	/**
-	 * Deactivate all policies with a simulation time based trigger.
-	 * 
-	 * Finally saves changes in model back to resource on the file system.
-	 * 
-	 * @param policies
-	 */
-	private void deactiveateSimulationtimeTriggeredPolicy(final Collection<ScalingPolicy> policies) {
-		for (final ScalingPolicy policy : policies) {
-			if (this.isSimulationTimeTrigger(policy.getScalingTrigger())) {
-				policy.setActive(false);
-			}
-		}
-		
-		if (!policies.isEmpty()) {
-			ResourceUtils.saveResource(policies.stream().findAny().get().eResource());
-		}
-		
 	}
 	
 	/**

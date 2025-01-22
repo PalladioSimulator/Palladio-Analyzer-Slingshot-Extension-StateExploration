@@ -9,14 +9,12 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
-import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  *
@@ -39,67 +37,96 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	private static final Logger LOGGER = Logger.getLogger(MergerPolicyStrategy.class.getName());
 
 	private static final int DUPLICATE_THRESHOLD = 2;
-	
+
 	private final DefaultState state;
 
 	/**
 	 * Create new {@link MergerPolicyStrategy}.
 	 *
-	 *
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected MergerPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe, final DefaultState state) {
+	protected MergerPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe,
+			final DefaultState state) {
 		super(graph, fringe);
 		this.state = state;
 	}
 
 	/**
-	 * TODO 
+	 * TODO
 	 */
 	@Override
 	public List<PlannedTransition> createProactiveChanges() {
 
-		if (state.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty() || state.getIncomingTransition().isEmpty() ) {
+		if (state.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()
+				|| state.getIncomingTransition().isEmpty()) {
 			return List.of();
 		}
 
-		final List<ModelAdjustmentRequested> reconfigurationToBeApplied = state.getSnapshot()
+		final List<ModelAdjustmentRequested> reactiveAdjustments = state.getSnapshot()
 				.getModelAdjustmentRequestedEvent();
 		final DefaultState predecessor = (DefaultState) state.getIncomingTransition().get().getSource();
 
-		final Set<Reconfiguration> collectedChanges = collectChanges(predecessor);
+		final Set<Reconfiguration> collectedReconfs = collectReconfigurationsAt(predecessor);
 
 		final List<PlannedTransition> newTodos = new ArrayList<>();
 
-		for (final Change change : collectedChanges) {
-			
-			for (ModelAdjustmentRequested adjustment : reconfigurationToBeApplied) {
-				if (this.tooManyOccurences((Reconfiguration) change, adjustment)) {
-					LOGGER.debug(String.format(
-							"no new change based on change %s, because policy %s already occurs more than %d times in that change.",
-							change.toString(), adjustment.getScalingPolicy().getEntityName(), DUPLICATE_THRESHOLD));
-					continue;
+		for (final Reconfiguration reconf : collectedReconfs) {
+
+			for (Reconfiguration newReconf : createPermutations(reconf.getReactiveReconfigurationEvents(),
+					reactiveAdjustments)) {
+				if (!this.contains(collectedReconfs, newReconf)) {
+					final PlannedTransition todoChange = new PlannedTransition(Optional.of(newReconf), predecessor);
+					newTodos.add(todoChange);
+				} else {
+					LOGGER.debug(
+							String.format("no new change based on change %s, because such a change already exists.",
+									reconf.toString()));
 				}
-			}
-
-			final List<ModelAdjustmentRequested> adjustments = new ArrayList<>(((Reconfiguration) change)
-					.getReactiveReconfigurationEvents());
-			adjustments.addAll(reconfigurationToBeApplied);
-
-
-			final Reconfiguration newChange = new ProactiveReconfiguration(adjustments);
-
-			if (!this.contains(collectedChanges, newChange)) {
-				final PlannedTransition todoChange = new PlannedTransition(Optional.of(newChange), predecessor);
-				newTodos.add(todoChange);
-			} else {
-				LOGGER.debug(String.format("no new change based on change %s, because such a change already exists.",
-						change.toString()));
 			}
 		}
 
 		return newTodos;
+	}
+
+	/**
+	 * Create new {@link ProactiveReconfiguration}s base on the new and old ones.
+	 * 
+	 * Both {@code new} and {@code old} may be lists. Each element of {@code new} is
+	 * individually added at each position in {@code old}. Elements form {@code new}
+	 * are handled individually, because a list size greater than 1 is very
+	 * unlikely, yet very complicated and thus not worth the (implementation)
+	 * effort.
+	 * 
+	 * Ensures that the order of each list is retained.
+	 * 
+	 * Example: old=[a1,a2], new=[b1,b2]
+	 * 
+	 * Permutations: [b1,a1,a2],[a1,b1,a2],[a1,a2,b1],[b2,a1,a2],[a1,b2,a2],[a1,a2,b2]
+	 *
+	 * @param oldAdj adjustments already applied to or planned for the predecessor
+	 *               state.
+	 * @param newAdj reactive adjustments that occurred at a newer state.
+	 * @return
+	 */
+	private Set<ProactiveReconfiguration> createPermutations(List<ModelAdjustmentRequested> oldAdj,
+			List<ModelAdjustmentRequested> newAdj) {
+		Set<ProactiveReconfiguration> proactiveReconfs = new HashSet<>();
+
+		for (ModelAdjustmentRequested adj : newAdj) {
+			if (countAdjustment(oldAdj, adj) < DUPLICATE_THRESHOLD) {
+				for (int i = 0; i <= oldAdj.size(); i++) {
+					List<ModelAdjustmentRequested> tmp = new ArrayList<>(oldAdj);
+					tmp.add(i, adj);
+					proactiveReconfs.add(new ProactiveReconfiguration(tmp));
+				}
+			} else {
+				LOGGER.debug(String.format(
+						"no new change based on policy %s because it already occurs more than %d times in the base change.",
+						adj.getScalingPolicy().getEntityName(), DUPLICATE_THRESHOLD));
+			}
+		}
+		return proactiveReconfs;
 	}
 
 	/**
@@ -119,14 +146,12 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	private boolean contains(final Set<Reconfiguration> changes, final Reconfiguration newChange) {
 
 		final String newChangeIds = newChange.getReactiveReconfigurationEvents().stream()
-				.map(e -> e.getScalingPolicy().getId()).sorted().reduce("",
-						(a, b) -> a + b);
+				.map(e -> e.getScalingPolicy().getId()).sorted().reduce("", (a, b) -> a + b);
 
 		for (final Reconfiguration change : changes) {
 
 			final String otherIds = change.getReactiveReconfigurationEvents().stream()
-					.map(e -> e.getScalingPolicy().getId()).sorted().reduce("",
-							(a, b) -> a + b);
+					.map(e -> e.getScalingPolicy().getId()).sorted().reduce("", (a, b) -> a + b);
 
 			if (newChangeIds.equals(otherIds)) {
 				return true;
@@ -135,17 +160,19 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 		return false;
 
 	}
-	
+
 	/**
 	 * 
 	 * @param change
 	 * @param reconf
-	 * @return true, iff reconf is already in change too often, i.e. shall not be added again. 
+	 * @return true, iff reconf is already in change too often, i.e. shall not be
+	 *         added again.
 	 */
-	private boolean tooManyOccurences(final Reconfiguration change, final ModelAdjustmentRequested reconf) {
+	private long countAdjustment(final List<ModelAdjustmentRequested> change, final ModelAdjustmentRequested reconf) {
 		String policyId = reconf.getScalingPolicy().getId();
-		long numberOfOccurence = change.getAppliedPolicies().stream().map(ScalingPolicy::getId).filter(id -> id.equals(policyId)).count();	
-		return numberOfOccurence > DUPLICATE_THRESHOLD;
+		long numberOfOccurence = change.stream().map(e -> e.getScalingPolicy().getId())
+				.filter(id -> id.equals(policyId)).count();
+		return numberOfOccurence;
 	}
 
 	/**
@@ -157,15 +184,13 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param predecessor state for which reconfigurations are collected.
 	 * @return Set of already explored or planned {@link Reconfiguration}s
 	 */
-	private Set<Reconfiguration> collectChanges(final DefaultState predecessor) {
+	private Set<Reconfiguration> collectReconfigurationsAt(final DefaultState predecessor) {
 		final Set<Reconfiguration> collectedChanges = new HashSet<>();
 
 		final Set<Reconfiguration> exploredChanges = predecessor.getOutgoingTransitions().stream()
 				.filter(transition -> transition.getChange().isPresent())
-				.map(transition -> transition.getChange().get())
-				.filter(Reconfiguration.class::isInstance)
-				.map(Reconfiguration.class::cast)
-				.collect(Collectors.toSet());
+				.map(transition -> transition.getChange().get()).filter(Reconfiguration.class::isInstance)
+				.map(Reconfiguration.class::cast).collect(Collectors.toSet());
 		final Set<Reconfiguration> plannedChanges = fringe.getPlannedReconfFor(predecessor);
 
 		collectedChanges.addAll(plannedChanges);
