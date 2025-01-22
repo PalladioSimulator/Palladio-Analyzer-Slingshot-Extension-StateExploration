@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
@@ -30,8 +29,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGra
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.TransitionType;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.ExplorationPlanner;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Postprocessor;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Preprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
@@ -65,7 +64,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final Map<String, Object> launchConfigurationParams;
 
-	private final ExplorationPlanner blackbox;
+	private final Preprocessor preprocessor;
+	private final Postprocessor postprocessor;
 
 	private final DefaultGraph graph;
 	private final DefaultGraphFringe fringe;
@@ -98,15 +98,15 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		systemDriver.postEvent(
 				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
 
-		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, LaunchconfigAccess.getMinDuration(launchConfigurationParams));
-
+		this.preprocessor = new Preprocessor(this.graph, this.fringe, LaunchconfigAccess.getMinDuration(launchConfigurationParams));
+		this.postprocessor = new Postprocessor(this.graph, this.fringe);
 	}
 
 	@Override
 	public void exploreNextState() {
 		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
-		final Optional<SimulationInitConfiguration> config = this.blackbox.createConfigForNextSimualtionRun();
+		final Optional<SimulationInitConfiguration> config = this.preprocessor.createConfigForNextSimualtionRun();
 		config.ifPresent(this::exploreBranch);
 	}
 
@@ -175,7 +175,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
 		// to include for the prioritazion of the fringe.
 		if (current.getEndTime() < this.horizonLength) {
-			this.blackbox.updateGraphFringePostSimulation(current);
+			this.postprocessor.updateGraphFringe(current);
 		}
 	}
 
