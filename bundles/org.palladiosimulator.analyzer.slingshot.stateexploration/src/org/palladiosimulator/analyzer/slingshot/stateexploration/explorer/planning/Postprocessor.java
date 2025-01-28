@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
@@ -69,6 +70,11 @@ public class Postprocessor {
 	 * @param start state that we just finished exploring.
 	 */
 	public void updateGraphFringe(final DefaultState start) {
+		
+		if (start.getReasonsToLeave().contains(ReasonToLeave.aborted)) {
+			return;
+		}
+		
 		// NOP Always
 		this.fringe.add(new PlannedTransition(Optional.empty(), start));
 

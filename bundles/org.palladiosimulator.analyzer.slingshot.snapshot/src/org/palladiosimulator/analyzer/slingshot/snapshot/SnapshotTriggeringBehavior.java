@@ -9,6 +9,11 @@ import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.AllocationChange;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelChange;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.MonitorChange;
+import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ResourceEnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
@@ -84,6 +89,55 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 		LOGGER.debug(String.format("Abort routing %s to %s", event.getName(), information.getEnclosingType().get().getSimpleName()));
 		return InterceptionResult.abort();
 	}
+	
+	/**
+	 * 
+	 * @param information
+	 * @param event
+	 * @return
+	 */
+	@PreIntercept
+	public InterceptionResult preInterceptModelAdjusted(final InterceptorInformation information,
+			final ModelAdjusted event) {
+		
+		
+		if (event.getChanges().isEmpty()) { // Abort 
+			state.addReasonToLeave(ReasonToLeave.aborted);
+			scheduling.scheduleEvent(new SnapshotInitiated(0));
+			
+
+			return InterceptionResult.abort();
+		} else {
+			boolean somethingChanged = false;
+			for (ModelChange<?> change : event.getChanges()) {
+				if (change instanceof MonitorChange c ) {
+					// ignore. monitors never change on their own.
+				}
+				if (change instanceof AllocationChange c) {
+					if (!c.getNewAllocationContexts().isEmpty())	{
+						somethingChanged = true;
+					}
+				}				
+				if (change instanceof ResourceEnvironmentChange c) {
+					if (! c.getDeletedResourceContainers().isEmpty() || !c.getNewResourceContainers().isEmpty()) {
+						somethingChanged = true;
+					}
+				}
+			}
+			
+			if (somethingChanged) {
+				return InterceptionResult.success();
+			} else {
+				state.addReasonToLeave(ReasonToLeave.aborted);
+				scheduling.scheduleEvent(new SnapshotInitiated(0));
+				
+
+				return InterceptionResult.abort();
+			}
+		}		
+	}
+	
+	
 
 	/**
 	 *
