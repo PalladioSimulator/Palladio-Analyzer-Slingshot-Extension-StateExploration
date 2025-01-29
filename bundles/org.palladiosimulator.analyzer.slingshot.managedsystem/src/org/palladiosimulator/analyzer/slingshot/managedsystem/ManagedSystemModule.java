@@ -42,10 +42,12 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
     @Override
     protected void configure() {
         // install(SlowdownBehaviour.class);
+        install(DelayUntilPlanCreatedBehaviour.class);
 
         install(InjectionSystemBehaviour.class);
         install(InjectionSimulationBehaviour.class);
         install(SendMessagesBehaviour.class);
+
 
         final var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {
         }, new TypeLiteral<Class<? extends Message<?>>>() {
