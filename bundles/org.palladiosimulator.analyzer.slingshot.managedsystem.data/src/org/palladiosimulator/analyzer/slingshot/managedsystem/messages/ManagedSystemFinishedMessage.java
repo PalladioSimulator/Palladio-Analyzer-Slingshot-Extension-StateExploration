@@ -13,7 +13,7 @@ public class ManagedSystemFinishedMessage extends EventMessage<String> {
     public static final String MESSAGE_MAPPING_IDENTIFIER = ManagedSystemFinishedMessage.class.getSimpleName();
 
     public ManagedSystemFinishedMessage(final String creator) {
-        super(MESSAGE_MAPPING_IDENTIFIER, "Managed System simulation finisched", creator);
+        super(MESSAGE_MAPPING_IDENTIFIER, "Managed System simulation finished", creator);
 	}
 
 }
