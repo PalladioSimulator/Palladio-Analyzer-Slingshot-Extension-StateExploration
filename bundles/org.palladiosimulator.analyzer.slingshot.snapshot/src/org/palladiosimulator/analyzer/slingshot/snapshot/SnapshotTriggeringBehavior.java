@@ -100,6 +100,9 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 	public InterceptionResult preInterceptModelAdjusted(final InterceptorInformation information,
 			final ModelAdjusted event) {
 		
+		if (event.time() > 0) {
+			return InterceptionResult.success();
+		}
 		
 		if (event.getChanges().isEmpty()) { // Abort 
 			state.addReasonToLeave(ReasonToLeave.aborted);
