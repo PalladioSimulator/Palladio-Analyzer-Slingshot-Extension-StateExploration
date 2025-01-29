@@ -58,7 +58,10 @@ public class ManagedSystemApplication implements IApplication {
 		final Experiment experiment = getStateExplorationExperiment(experimentsLocation).orElseThrow(() -> new IllegalArgumentException(
                 "No Experiment with tool configuration of type SlingshotConfiguration. Cannot start simulation."));
 
+        // EventMessage.; // Managed system, bei exploration nicht nötig. (mappgin ms.client -> )
+
 		launchStateExploration(experiment);
+
 
 		return IApplication.EXIT_OK;
 	}

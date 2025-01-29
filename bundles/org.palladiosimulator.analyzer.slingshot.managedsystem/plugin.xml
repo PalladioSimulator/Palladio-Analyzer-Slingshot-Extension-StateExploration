@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.palladiosimulator.analyzer.slingshot">
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.managedsystem.ManagedSystemModule">
+      </slingshot-extension>
+      <slingshot-extension
+            module="org.palladiosimulator.analyzer.slingshot.managedsystem.export.ExportMeasurementsModule">
+      </slingshot-extension>
+   </extension>
+
+</plugin>
