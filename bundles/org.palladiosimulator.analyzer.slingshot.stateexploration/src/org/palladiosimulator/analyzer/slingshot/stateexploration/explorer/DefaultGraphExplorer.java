@@ -76,7 +76,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final MDSDBlackboard blackboard;
 
-	private final double horizonLength;
+	private final int horizonLength;
 
 	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {

@@ -12,5 +12,7 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="doIdleExploration" lowerBound="1"
         eType="ecore:EDataType ../../org.eclipse.emf.ecore/model/Ecore.ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="modeLocation" eType="ecore:EDataType ../../org.eclipse.emf.ecore/model/Ecore.ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="horizon" lowerBound="1"
+        eType="ecore:EDataType ../../org.eclipse.emf.ecore/model/Ecore.ecore#//EInt"/>
   </eClassifiers>
 </ecore:EPackage>

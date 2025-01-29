@@ -72,7 +72,7 @@ public class LaunchconfigAccess {
 		final String modelLocation = (String) launchConfigurationParams
 				.get(ExplorationConfiguration.MODEL_LOCATION);
 
-		if (modelLocation.isBlank()) {
+		if (modelLocation.isBlank() || modelLocation.equals("null")) {
 			return URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir"));
 		}
 

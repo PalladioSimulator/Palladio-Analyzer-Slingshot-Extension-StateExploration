@@ -61,7 +61,7 @@ public class StateexplorationApplication implements IApplication {
 				"No Experiment with tool configuration of type StateExploration(Simulation)Configuration. Cannot start exploration."));
 
 		launchStateExploration(experiment);
-
+		
 		return IApplication.EXIT_OK;
 	}
 
@@ -194,6 +194,7 @@ public class StateexplorationApplication implements IApplication {
 		map.put(ExplorationConfiguration.SENSIBILITY, String.valueOf(simConfig.getSensitivity()));
 		map.put(ExplorationConfiguration.IDLE_EXPLORATION, String.valueOf(simConfig.isDoIdleExploration()));
 		map.put(ExplorationConfiguration.MODEL_LOCATION, String.valueOf(simConfig.getModeLocation()));
+		map.put(ExplorationConfiguration.HORIZON, String.valueOf(simConfig.getHorizon()));
 
 		return map;
 	}

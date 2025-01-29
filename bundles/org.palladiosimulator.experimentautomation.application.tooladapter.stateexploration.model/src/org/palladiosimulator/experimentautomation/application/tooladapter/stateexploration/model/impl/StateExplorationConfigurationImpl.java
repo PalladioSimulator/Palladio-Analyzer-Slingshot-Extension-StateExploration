@@ -26,6 +26,7 @@ import org.palladiosimulator.experimentautomation.application.tooladapter.statee
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getSensitivity <em>Sensitivity</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#isDoIdleExploration <em>Do Idle Exploration</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getModeLocation <em>Mode Location</em>}</li>
+ *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getHorizon <em>Horizon</em>}</li>
  * </ul>
  *
  * @generated
@@ -130,6 +131,26 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 	 * @ordered
 	 */
 	protected String modeLocation = MODE_LOCATION_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getHorizon() <em>Horizon</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getHorizon()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final int HORIZON_EDEFAULT = 0;
+
+	/**
+	 * The cached value of the '{@link #getHorizon() <em>Horizon</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getHorizon()
+	 * @generated
+	 * @ordered
+	 */
+	protected int horizon = HORIZON_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -271,6 +292,29 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 	 * @generated
 	 */
 	@Override
+	public int getHorizon() {
+		return horizon;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setHorizon(int newHorizon) {
+		int oldHorizon = horizon;
+		horizon = newHorizon;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON, oldHorizon, horizon));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MIN_STATE_DURATION:
@@ -283,6 +327,8 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return isDoIdleExploration();
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION:
 				return getModeLocation();
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
+				return getHorizon();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -309,6 +355,9 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return;
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION:
 				setModeLocation((String)newValue);
+				return;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
+				setHorizon((Integer)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -337,6 +386,9 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION:
 				setModeLocation(MODE_LOCATION_EDEFAULT);
 				return;
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
+				setHorizon(HORIZON_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -359,6 +411,8 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return doIdleExploration != DO_IDLE_EXPLORATION_EDEFAULT;
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION:
 				return MODE_LOCATION_EDEFAULT == null ? modeLocation != null : !MODE_LOCATION_EDEFAULT.equals(modeLocation);
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
+				return horizon != HORIZON_EDEFAULT;
 		}
 		return super.eIsSet(featureID);
 	}
@@ -383,6 +437,8 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 		result.append(doIdleExploration);
 		result.append(", modeLocation: ");
 		result.append(modeLocation);
+		result.append(", horizon: ");
+		result.append(horizon);
 		result.append(')');
 		return result.toString();
 	}
