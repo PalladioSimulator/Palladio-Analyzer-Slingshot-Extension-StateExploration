@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.managedsystem.application;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IPath;
@@ -14,6 +15,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.workflow.SimulationWorkflowConfiguration;
 import org.palladiosimulator.analyzer.slingshot.workflow.jobs.SimulationRootJob;
 import org.palladiosimulator.experimentautomation.application.ExperimentApplication;
@@ -36,10 +38,15 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  * Application for running a headless Managed System. Requires an {@link Experiment} model instance,
  * that defines the models et cetera.
  *
- * The path to the {@link Experiment} model instance must be provided as commandline argument.
+ * The path to the {@link Experiment} model instance must be provided as first commandline argument.
+ * If needed, the UUID for the clientId can be provided as second commandline argument (as String).
  *
  * For OSGi runs inside Eclipse, supply the path a additional argument in the field "Program
  * arguments".
+ *
+ * As Example:
+ *
+ * -application <Application name> /path/to/model.experiments aaaabbbb-cccc-dddd-eeee-ffff11112222
  *
  * Based on {@link ExperimentApplication}.
  *
@@ -53,12 +60,13 @@ public class ManagedSystemApplication implements IApplication {
 
 	@Override
 	public Object start(final IApplicationContext context) throws Exception {
-		final Path experimentsLocation = parseCommandlineArguments(context);
 
+        final Path experimentsLocation = parseCommandlineArguments(context);
 		final Experiment experiment = getStateExplorationExperiment(experimentsLocation).orElseThrow(() -> new IllegalArgumentException(
                 "No Experiment with tool configuration of type SlingshotConfiguration. Cannot start simulation."));
 
-        // EventMessage.; // Managed system, bei exploration nicht nötig. (mappgin ms.client -> )
+        final Optional<String> clientId = parseClientId(context);
+        clientId.ifPresent(id -> EventMessage.CLIENT_ID = UUID.fromString(id));
 
 		launchStateExploration(experiment);
 
@@ -67,11 +75,12 @@ public class ManagedSystemApplication implements IApplication {
 	}
 
 	/**
-	 * Get command line arguments and parse them.
-	 *
-	 * @param context to parse the arguments from. Must have at least one argument.
-	 * @return first command line argument as Path.
-	 */
+     * Get parse first command line argument and parse it to a path.
+     *
+     * @param context
+     *            to parse the arguments from. Must have at least one argument.
+     * @return first command line argument as Path.
+     */
 	private Path parseCommandlineArguments(final IApplicationContext context) {
 		final String[] args = (String[]) context.getArguments().get("application.args");
 
@@ -81,6 +90,24 @@ public class ManagedSystemApplication implements IApplication {
 
 		return new Path(args[0]);
 	}
+
+    /**
+     * Get parse first command line argument and parse it to a path.
+     *
+     * @param context
+     *            to parse the arguments from. Must have at least one argument.
+     * @return first command line argument as Path.
+     */
+    private Optional<String> parseClientId(final IApplicationContext context) {
+        final String[] args = (String[]) context.getArguments()
+            .get("application.args");
+
+        if (args.length < 2) {
+            return Optional.empty();
+        }
+
+        return Optional.of(args[1]);
+    }
 
 	/**
      * Get an experiment with a {@link SlingshotConfiguration}.
