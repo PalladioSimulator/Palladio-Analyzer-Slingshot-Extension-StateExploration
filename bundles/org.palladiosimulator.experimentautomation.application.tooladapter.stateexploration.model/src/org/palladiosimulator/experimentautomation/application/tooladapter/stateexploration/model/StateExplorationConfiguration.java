@@ -20,6 +20,7 @@ import org.palladiosimulator.experimentautomation.abstractsimulation.AbstractSim
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getSensitivity <em>Sensitivity</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#isDoIdleExploration <em>Do Idle Exploration</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getModeLocation <em>Mode Location</em>}</li>
+ *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getHorizon <em>Horizon</em>}</li>
  * </ul>
  *
  * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration()
@@ -136,5 +137,27 @@ public interface StateExplorationConfiguration extends EObject, AbstractSimulati
 	 * @generated
 	 */
 	void setModeLocation(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Horizon</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Horizon</em>' attribute.
+	 * @see #setHorizon(int)
+	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration_Horizon()
+	 * @model required="true"
+	 * @generated
+	 */
+	int getHorizon();
+
+	/**
+	 * Sets the value of the '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getHorizon <em>Horizon</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Horizon</em>' attribute.
+	 * @see #getHorizon()
+	 * @generated
+	 */
+	void setHorizon(int value);
 
 } // StateExplorationConfiguration

@@ -2,7 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 
 import java.util.Collection;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 
 /**
  *
@@ -34,7 +34,7 @@ public interface GraphExplorer {
 	/**
 	 *
 	 * Focus exploration on the given model states by removing all
-	 * {@link ToDoChange}s that are unrelated to the given states from the fringe.
+	 * {@link PlannedTransition}s that are unrelated to the given states from the fringe.
 	 *
 	 * @param focusStates states to focus on.
 	 */
@@ -42,10 +42,10 @@ public interface GraphExplorer {
 
 	/**
 	 *
-	 * Add the given model states back into focus by (re-)adding {@link ToDoChange}s
+	 * Add the given model states back into focus by (re-)adding {@link PlannedTransition}s
 	 * for the given states to the fringe.
 	 *
-	 * Only adds {@link ToDoChange}s for unexplored futures, i.e. for already fully
+	 * Only adds {@link PlannedTransition}s for unexplored futures, i.e. for already fully
 	 * explored state, no new changes are added.
 	 *
 	 * @param focusStates states to refocus on.

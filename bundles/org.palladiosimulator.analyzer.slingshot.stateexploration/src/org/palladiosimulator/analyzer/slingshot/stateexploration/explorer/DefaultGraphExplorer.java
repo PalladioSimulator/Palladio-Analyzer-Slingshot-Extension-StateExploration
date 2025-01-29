@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
@@ -30,14 +29,14 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGra
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.TransitionType;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.ExplorationPlanner;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Postprocessor;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Preprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -65,7 +64,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final Map<String, Object> launchConfigurationParams;
 
-	private final ExplorationPlanner blackbox;
+	private final Preprocessor preprocessor;
+	private final Postprocessor postprocessor;
 
 	private final DefaultGraph graph;
 	private final DefaultGraphFringe fringe;
@@ -76,7 +76,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final MDSDBlackboard blackboard;
 
-	private final double initialMaxSimTime;
+	private final int horizonLength;
 
 	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
@@ -86,28 +86,27 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.launchConfigurationParams = launchConfigurationParams;
 		this.monitor = monitor;
 		this.blackboard = blackboard;
-		this.initialMaxSimTime = Double.valueOf((String) launchConfigurationParams
-				.get(SimuComConfig.SIMULATION_TIME));
+		this.horizonLength = LaunchconfigAccess.getHorizon(launchConfigurationParams);
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
 		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
-					.createRootArchConfig(this.initModels.getResourceSet(), this.getModelLocation()));
+					.createRootArchConfig(this.initModels.getResourceSet(), LaunchconfigAccess.getModelLocation(launchConfigurationParams)));
 
 		this.fringe = new DefaultGraphFringe();
 
 		systemDriver.postEvent(
 				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
 
-		this.blackbox = new ExplorationPlanner(this.graph, this.fringe, this.getMinDuration());
-
+		this.preprocessor = new Preprocessor(this.graph, this.fringe, LaunchconfigAccess.getMinDuration(launchConfigurationParams));
+		this.postprocessor = new Postprocessor(this.graph, this.fringe);
 	}
 
 	@Override
 	public void exploreNextState() {
 		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
-		final Optional<SimulationInitConfiguration> config = this.blackbox.createConfigForNextSimualtionRun();
+		final Optional<SimulationInitConfiguration> config = this.preprocessor.createConfigForNextSimualtionRun();
 		config.ifPresent(this::exploreBranch);
 	}
 
@@ -175,8 +174,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
 		// to include for the prioritazion of the fringe.
-		if (current.getEndTime() < this.initialMaxSimTime) {
-			this.blackbox.updateGraphFringePostSimulation(current);
+		if (current.getEndTime() < this.horizonLength) {
+			this.postprocessor.updateGraphFringe(current);
 		}
 	}
 
@@ -224,7 +223,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final boolean notRootSuccesor = this.graph.getRoot().getOutgoingTransitions().stream()
 				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
 
-		return new SnapshotConfiguration(interval, notRootSuccesor, this.getSensibility(), this.getMinDuration());
+		return new SnapshotConfiguration(interval, notRootSuccesor,
+				LaunchconfigAccess.getSensibility(launchConfigurationParams),
+				LaunchconfigAccess.getMinDuration(launchConfigurationParams));
 	}
 
 	/**
@@ -243,70 +244,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	}
 
-	/**
-	 * Get {@link ExplorationConfiguration#MAX_EXPLORATION_CYCLES} from launch
-	 * configuration parameters map.
-	 *
-	 * @return number of max exploration cycles
-	 */
-	private int getMaxIterations() {
-		final String maxIteration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES);
-
-		return Integer.valueOf(maxIteration);
-	}
-
-	/**
-	 * Get {@link ExplorationConfiguration#MIN_STATE_DURATION} from launch
-	 * configuration parameters map.
-	 *
-	 * @return minimum duration of an exploration cycles
-	 */
-	private double getMinDuration() {
-		final String minDuration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MIN_STATE_DURATION);
-
-		return Double.valueOf(minDuration);
-	}
-
-	/**
-	 *
-	 *
-	 * Get {@link ExplorationConfiguration#SENSIBILITY} from launch configuration
-	 * parameters map.
-	 *
-	 * @return sensibility for stopping regarding SLOs.
-	 */
-	private double getSensibility() {
-		final String minDuration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.SENSIBILITY);
-
-		return Double.valueOf(minDuration);
-	}
-
-	/**
-	 *
-	 * Get {@link ExplorationConfiguration#MODEL_LOCATION} from launch configuration
-	 * parameters map, if given.
-	 *
-	 * @return model location URI, as defined in the run config, or the default location if none was defined.
-	 */
-	private URI getModelLocation() {
-		final String modelLocation = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MODEL_LOCATION);
-
-		if (modelLocation.isBlank()) {
-			return URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir"));
-		}
-
-		final URI uri = URI.createURI(modelLocation);
-
-		if (uri.isPlatform() || uri.isFile()) {
-			return uri;
-		} else {
-			return URI.createFileURI(modelLocation);
-		}
-	}
+	
 
 	@Override
 	public boolean hasUnexploredChanges() {
@@ -338,26 +276,26 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			if (gotNopped || gonnaGetNopped) {
 				continue;
 			} else {
-				this.fringe.add(new ToDoChange(Optional.empty(), (DefaultState) rawModelState));
+				this.fringe.add(new PlannedTransition(Optional.empty(), (DefaultState) rawModelState));
 			}
 
 		}
 
-		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+		final Predicate<PlannedTransition> pruningCriteria = change -> !focusedStates.contains(change.getStart());
 
 		this.fringe.prune(pruningCriteria);
 	}
 
 	@Override
 	public void focus(final Collection<RawModelState> focusedStates) {
-		final Predicate<ToDoChange> pruningCriteria = change -> !focusedStates.contains(change.getStart());
+		final Predicate<PlannedTransition> pruningCriteria = change -> !focusedStates.contains(change.getStart());
 
 		this.fringe.prune(pruningCriteria);
 	}
 
 	@Override
 	public void pruneByTime(final double time) {
-		final Predicate<ToDoChange> pruningCriteria = change -> change.getStart().getStartTime() < time;
+		final Predicate<PlannedTransition> pruningCriteria = change -> change.getStart().getStartTime() < time;
 
 		this.fringe.prune(pruningCriteria);
 	}

@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
@@ -18,60 +17,62 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
 import org.palladiosimulator.spd.constraints.policy.CooldownConstraint;
 import org.palladiosimulator.spd.triggers.BaseTrigger;
+import org.palladiosimulator.spd.triggers.ScalingTrigger;
 import org.palladiosimulator.spd.triggers.expectations.ExpectedTime;
 import org.palladiosimulator.spd.triggers.stimuli.SimulationTime;
 
 /**
  *
- * The ExplorationPlanner decides on the direction of the exploration.
+ * The preprocessor creates the {@link SimulationInitConfiguration} for the next
+ * simulation run.
+ * 
+ * The order of simulation of the planned transitions is as defined by the
+ * fringe. The preprocessor does not change the order. However, it can drop a
+ * planned transition, e.g. because it is now in the past compared to the time
+ * in the managed system.
  *
- * Handles fringe.
- *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
-public class ExplorationPlanner {
+public class Preprocessor {
 
-	private static final Logger LOGGER = Logger.getLogger(ExplorationPlanner.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(Preprocessor.class.getName());
 
 	private final DefaultGraph rawgraph;
 	private final DefaultGraphFringe fringe;
 	private final CutOffConcerns cutOffConcerns;
 
-	private final ProactivePolicyStrategyBuilder proactiveStrategyBuilder;
-
 	private final double minDuration;
 
-	public ExplorationPlanner(final DefaultGraph graph, final DefaultGraphFringe fringe, final double minDuration) {
+	public Preprocessor(final DefaultGraph graph, final DefaultGraphFringe fringe, final double minDuration) {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 		this.minDuration = minDuration;
 		this.cutOffConcerns = new CutOffConcerns();
-
-		this.proactiveStrategyBuilder = new ProactivePolicyStrategyBuilder(this.rawgraph, this.fringe);
-
-		this.updateGraphFringePostSimulation(graph.getRoot());
 	}
 
 	/**
 	 *
+	 * Ensures, that the state graph node, that will be simulated with the resulting configuration is already connected to the state graph. 
+	 * Ensures, that the at max one planned change is removed from the fringe.
+	 * 
+	 * Ensures, that the SPD model of the new state graph node is updated (e.g. reduced triggertimes for simulation time base triggers, and that the changes are saved to file as well. 
+	 * 
+	 * Ensures, that the {@link ModelAdjustmentRequested events} get copied and point to the corrcet (?) SPD file.
 	 *
 	 * @return Configuration for the next simulation run, or empty optional, if
 	 *         fringe has no viable change.
 	 */
 	public Optional<SimulationInitConfiguration> createConfigForNextSimualtionRun() {
-		assert !this.fringe.isEmpty();
-
-		ToDoChange next = this.fringe.poll();
+		PlannedTransition next = this.fringe.poll();
 
 		while (!this.cutOffConcerns.shouldExplore(next)) {
 			LOGGER.debug(String.format("Future %s is bad, won't explore.", next.toString()));
@@ -85,12 +86,18 @@ public class ExplorationPlanner {
 		final DefaultState end = this.createNewGraphNode(next);
 
 		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
-			this.reduceSimulationTimeTriggerExpectedTime(end.getArchitecureConfiguration().getSPD().get(),
-					start.getDuration());
+
+			final SPD spd = end.getArchitecureConfiguration().getSPD().get();
+
+			this.updateSimulationTimeTriggeredPolicy(spd, start.getDuration());
+
+			if (next.getChange().isPresent() && next.getChange().get() instanceof ReactiveReconfiguration rea) {
+				this.deactivateReactivePolicies(spd, rea);
+			}
+			ResourceUtils.saveResource(spd.eResource());
 		}
 
 		return Optional.of(createConfigBasedOnChange(next.getChange(), start, end));
-
 	}
 
 	/**
@@ -117,22 +124,36 @@ public class ExplorationPlanner {
 			final Collection<SPDAdjustorStateValues> initValues = new HashSet<>();
 
 			for (final ScalingPolicy policy : reconf.getAppliedPolicies()) {
-				initValues.addAll(updateInitValues(policy,
-						start.getAdjustorStateValues()));
+				initValues.addAll(updateInitValues(policy, start.getAdjustorStateValues()));
 			}
 
 			final List<ModelAdjustmentRequested> initEvents = new ArrayList<>();
 			for (final ModelAdjustmentRequested event : reconf.getReactiveReconfigurationEvents()) {
-				initEvents.add(new AdjustorEventConcerns(end.getArchitecureConfiguration())
-						.copy(event));
+				initEvents.add(new AdjustorEventConcerns(end.getArchitecureConfiguration()).copy(event));
 			}
 
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvents,
-					this.createStateInitEvents(initValues),
-					start.getId());
+					this.createStateInitEvents(initValues), start.getId());
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");
+	}
+
+	/**
+	 * Deactivate all reactively applied policies at the given SPD model, that have
+	 * a simulation time based trigger.
+	 * 
+	 * Usually, it does not help to deactivate the policies directly via the
+	 * reconfiguration, because the reconfiguration points to the wrong copy of the
+	 * policies.
+	 * 
+	 * @param spd model to deactivate policies at.
+	 * @param rea policies to deactivate
+	 */
+	private void deactivateReactivePolicies(final SPD spd, ReactiveReconfiguration rea) {
+		List<String> ids = rea.getAppliedPolicies().stream().map(p -> p.getId()).toList();
+		spd.getScalingPolicies().stream().filter(p -> isSimulationTimeTrigger(p.getScalingTrigger()))
+				.filter(p -> ids.contains(p.getId())).forEach(p -> p.setActive(false));
 	}
 
 	/**
@@ -197,43 +218,6 @@ public class ExplorationPlanner {
 	}
 
 	/**
-	 * Add new exploration directions to the graph fringe.
-	 *
-	 * To be called after the given state was simulated.
-	 *
-	 * This is where the proactive / reactive / nop changes for future iterations
-	 * are set. If we want to add more proactive changes later on, this operation is
-	 * where we should insert them.
-	 *
-	 * @param start state that we just finished exploring.
-	 */
-	public void updateGraphFringePostSimulation(final DefaultState start) {
-		// NOP Always
-		this.fringe.add(new ToDoChange(Optional.empty(), start));
-		// Reactive Reconfiguration - Always.
-		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isPresent()) {
-			final ModelAdjustmentRequested event = start.getSnapshot().getModelAdjustmentRequestedEvent().get();
-
-			// reactive reconf to the next state.
-			this.fringe.add(new ToDoChange(Optional.of(new ReactiveReconfiguration(event)), start));
-		}
-
-		// proactive reconf. -- this will create duplicates though.
-		final List<ToDoChange> backtrackedChanges = this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start)
-				.createProactiveChanges();
-		final List<ToDoChange> mergedChanges = this.proactiveStrategyBuilder.createBacktrackMergerPolicyStrategy(start)
-				.createProactiveChanges();
-
-		// first create all, then add all, or else we add more than we want, i guess.
-		for (final ToDoChange toDoChange : backtrackedChanges) {
-			this.fringe.add(toDoChange);
-		}
-		for (final ToDoChange toDoChange : mergedChanges) {
-			this.fringe.add(toDoChange);
-		}
-	}
-
-	/**
 	 * Create a new graph note with a new arch configuration.
 	 *
 	 * creating a fully connected Graph node encompasses : - copying architecture
@@ -243,7 +227,7 @@ public class ExplorationPlanner {
 	 *
 	 * @return a new node, connected to its predecessor in graph.
 	 */
-	private DefaultState createNewGraphNode(final ToDoChange next) {
+	private DefaultState createNewGraphNode(final PlannedTransition next) {
 		final DefaultState predecessor = next.getStart();
 
 		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
@@ -278,20 +262,17 @@ public class ExplorationPlanner {
 	 * @param spd    current scaling rules.
 	 * @param offset duration of the previous state
 	 */
-	private void reduceSimulationTimeTriggerExpectedTime(final SPD spd, final double offset) {
+	private void updateSimulationTimeTriggeredPolicy(final SPD spd, final double offset) {
 		spd.getScalingPolicies().stream()
-		.filter(policy -> policy.isActive() && policy.getScalingTrigger() instanceof BaseTrigger)
-		.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
-		.filter(trigger -> trigger.getStimulus() instanceof SimulationTime
-				&& trigger.getExpectedValue() instanceof ExpectedTime)
-		.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
-
-		ResourceUtils.saveResource(spd.eResource());
+				.filter(policy -> policy.isActive() && this.isSimulationTimeTrigger(policy.getScalingTrigger()))
+				.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
+				.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
 	}
 
 	/**
-	 * update value helper.
-	 *
+	 * Update expected time value and deactivate, if the policy is in the past
+	 * necessary.
+	 * 
 	 * @param time                  model element to be updated
 	 * @param previousStateDuration duration to subtract from {@code time}.
 	 */
@@ -300,7 +281,7 @@ public class ExplorationPlanner {
 
 		final ScalingPolicy policy = (ScalingPolicy) time.eContainer().eContainer();
 
-		if (triggerTime <= previousStateDuration) {
+		if (triggerTime < previousStateDuration) {
 			policy.setActive(false);
 			LOGGER.debug(String.format("Deactivate Policy %s as Triggertime is in the past.", policy.getEntityName()));
 		} else {
@@ -310,8 +291,29 @@ public class ExplorationPlanner {
 		}
 	}
 
-	private Collection<DESEvent> createStateInitEvents(
-			final Collection<SPDAdjustorStateValues> values) {
+	/**
+	 * Check whether the given trigger is based on {@link SimulationTime} and
+	 * {@link ExpectedTime}.
+	 * 
+	 * TODO take compound triggers into consideration.
+	 * 
+	 * @param trigger trigger to be checked.
+	 * @return true iff the trigger is based on {@link SimulationTime} and
+	 *         {@link ExpectedTime}
+	 */
+	private boolean isSimulationTimeTrigger(ScalingTrigger trigger) {
+		return trigger instanceof BaseTrigger base && base.getStimulus() instanceof SimulationTime
+				&& base.getExpectedValue() instanceof ExpectedTime;
+	}
+
+	/**
+	 * Create events for initialising the state inside the SPD Interpreter.
+	 * 
+	 * @param values values from previous simulation run.
+	 * @return Events to initialise the interpreter to the states from the previous
+	 *         run.
+	 */
+	private Collection<DESEvent> createStateInitEvents(final Collection<SPDAdjustorStateValues> values) {
 		return values.stream().map(value -> (DESEvent) new SPDAdjustorStateInitialized(value)).toList();
 	}
 

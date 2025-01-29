@@ -9,7 +9,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.Architectur
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
- * To be used during exploration planning.
+ * To be used during exploration preprocessing.
  *
  * Responsible for things concerned with / related to
  * {@link ModelAdjustmentRequested} events.
