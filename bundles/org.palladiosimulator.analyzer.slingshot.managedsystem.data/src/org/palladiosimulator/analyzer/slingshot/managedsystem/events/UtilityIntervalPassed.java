@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.triggerevent;
+package org.palladiosimulator.analyzer.slingshot.managedsystem.events;
 
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulationEvent;
 

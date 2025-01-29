@@ -1,23 +1,30 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.utility.converter;
+package org.palladiosimulator.analyzer.slingshot.managedsystem;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
+import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.StateGraphNode;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.triggerevent.UtilityIntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.events.UtilityIntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.ManagedSystemFinishedMessage;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
+import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
@@ -39,10 +46,10 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 @OnEvent(when = SimulationFinished.class, then = {})
 @OnEvent(when = SimulationStarted.class, then = {})
 @OnEvent(when = UtilityIntervalPassed.class, then = UtilityIntervalPassed.class)
-public class SendStateExploredBehaviour implements SimulationBehaviorExtension {
+public class SendMessagesBehaviour implements SimulationBehaviorExtension {
 
+    private final static Logger LOGGER = Logger.getLogger(SendMessagesBehaviour.class);
 
-    private final static Logger LOGGER = Logger.getLogger(SendStateExploredBehaviour.class);
     private final SimuComConfig simuComConfig;
 
     /** Inputs for creating {@link StateGraphNode}s */
@@ -53,38 +60,47 @@ public class SendStateExploredBehaviour implements SimulationBehaviorExtension {
     /** for slicing utility */
     private double prevUtilityTimestamp = 0.0;
 
-    /** magic number that fixe the size of slices */
+    /** magic number that fixes the size of slices */
     private final double utilityInterval = 10.0;
 
-    /** sliced nodes */
-    private final List<StateGraphNode> nodes = new ArrayList<>();
+    private final SystemDriver systemDriver;
+
+    private final String clientName;
 
     @Inject
-    public SendStateExploredBehaviour(final @Nullable SimuComConfig simuComConfig,
+    public SendMessagesBehaviour(@Named(NetworkingConstants.CLIENT_NAME) final String clientName,
+            final @Nullable SimuComConfig simuComConfig,
             final @Nullable MonitorRepository monitorRepo, final @Nullable ServiceLevelObjectiveRepository sloRepo) {
+
+        this.clientName = clientName;
+
         this.simuComConfig = simuComConfig;
         this.monitorRepo = monitorRepo;
         this.sloRepo = sloRepo;
+
+        this.systemDriver = Slingshot.getInstance().getSystemDriver();
     }
 
     /**
-     * When simulation is finished, save all measurements, as well as utility and aggregated utility
-     * to .csv file.
+     *
+     * Publish the first {@link UtilityIntervalPassed} event at the beginning of the simulation.
+     *
+     * @param event
+     * @return
+     */
+    @Subscribe
+    public Result<UtilityIntervalPassed> onSimulationStarted(final SimulationStarted event) {
+        return Result.of(new UtilityIntervalPassed(utilityInterval));
+    }
+
+    /**
+     * When simulation is finished publish one last StateExploredMessage.
      */
     @Subscribe
     public void onSimulationFinished(final SimulationFinished event) {
-        assert this.expSetting != null : "ExperimentSettings are not yet set.";
+        this.publishUtility(event);
 
-        final StateGraphNode node = StateGraphConverter.convertState(this.monitorRepo, this.expSetting, this.sloRepo,
-                prevUtilityTimestamp, event.time());
-        nodes.add(node);
-
-
-        final StateGraphNode totalNode = StateGraphConverter.convertState(this.monitorRepo, this.expSetting,
-                this.sloRepo, 0, event.time());
-
-        // this.systemDriver.postEvent(new StateExploredEventMessage(node));
-
+        this.systemDriver.postEvent(new ManagedSystemFinishedMessage(clientName));
     }
 
     /**
@@ -94,21 +110,26 @@ public class SendStateExploredBehaviour implements SimulationBehaviorExtension {
      */
     @Subscribe
     public Result<UtilityIntervalPassed> onUtilityIntervalPassed(final UtilityIntervalPassed event) {
+
+        this.publishUtility(event);
+
+        prevUtilityTimestamp = event.time();
+        return Result.of(event);
+    }
+
+    /**
+     * Calculate utility of the given {@code event} by converting it to a {@link StateGraphNode} and
+     * publish the utility with a {@link StateExploredEventMessage} via network.
+     *
+     * @param event
+     */
+    private void publishUtility(final DESEvent event) {
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
         final StateGraphNode node = StateGraphConverter.convertState(this.monitorRepo, this.expSetting, this.sloRepo,
                 prevUtilityTimestamp, event.time());
 
-        nodes.add(node);
-
-        prevUtilityTimestamp = event.time();
-
-        return Result.of(event);
-    }
-
-    @Subscribe
-    public Result<UtilityIntervalPassed> onSimulationStarted(final SimulationStarted event) {
-        return Result.of(new UtilityIntervalPassed(utilityInterval));
+        this.systemDriver.postEvent(new StateExploredEventMessage(node, clientName));
     }
 
     /**

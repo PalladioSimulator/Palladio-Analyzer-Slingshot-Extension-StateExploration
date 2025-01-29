@@ -15,9 +15,10 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehavio
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.MeasurementSet;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.StateGraphNode;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.triggerevent.UtilityIntervalPassed;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.MeasurementSet;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.events.UtilityIntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.utility.plotter.CSVCreator;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.utility.plotter.CSVCreator.DataPoint;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;

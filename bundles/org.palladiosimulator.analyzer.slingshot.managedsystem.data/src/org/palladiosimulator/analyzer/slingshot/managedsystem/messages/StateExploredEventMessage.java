@@ -14,7 +14,7 @@ public class StateExploredEventMessage extends EventMessage<StateGraphNode> {
 
 	public static final String MESSAGE_MAPPING_IDENTIFIER = "StateExplored";
 
-	public StateExploredEventMessage(final StateGraphNode payload) {
-		super(MESSAGE_MAPPING_IDENTIFIER, payload);
+    public StateExploredEventMessage(final StateGraphNode payload, final String creator) {
+        super(MESSAGE_MAPPING_IDENTIFIER, payload, creator);
 	}
 }

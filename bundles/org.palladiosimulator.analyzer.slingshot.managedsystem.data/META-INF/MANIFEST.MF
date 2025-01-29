@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Managed System Data
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.managedsystem.data
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.managedsystem.data
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: org.palladiosimulator.spd,
+ org.palladiosimulator.analyzer.slingshot.networking.data;visibility:=reexport,
+ org.palladiosimulator.monitorrepository,
+ org.palladiosimulator.servicelevelobjective,
+ org.palladiosimulator.edp2.util,
+ org.palladiosimulator.analyzer.slingshot.core
+Export-Package: org.palladiosimulator.analyzer.slingshot.managedsystem.converter,
+ org.palladiosimulator.analyzer.slingshot.managedsystem.data,
+ org.palladiosimulator.analyzer.slingshot.managedsystem.events,
+ org.palladiosimulator.analyzer.slingshot.managedsystem.messages

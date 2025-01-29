@@ -45,7 +45,7 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
 
         install(InjectionSystemBehaviour.class);
         install(InjectionSimulationBehaviour.class);
-        install(SimulationFinishedBehaviour.class);
+        install(SendMessagesBehaviour.class);
 
         final var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {
         }, new TypeLiteral<Class<? extends Message<?>>>() {

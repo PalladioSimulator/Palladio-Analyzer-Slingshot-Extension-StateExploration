@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.utility.converter;
+package org.palladiosimulator.analyzer.slingshot.managedsystem.converter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import javax.measure.quantity.Duration;
 
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.MeasurementSet;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.MeasurementSet;
 import org.palladiosimulator.edp2.dao.MeasurementsDao;
 import org.palladiosimulator.edp2.dao.exception.DataNotAccessibleException;
 import org.palladiosimulator.edp2.models.ExperimentData.DataSeries;

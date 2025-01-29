@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data;
+package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
 import java.util.ArrayList;
 import java.util.Collection;

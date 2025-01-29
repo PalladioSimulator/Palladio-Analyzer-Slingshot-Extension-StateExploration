@@ -1,11 +1,11 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.utility.converter;
+package org.palladiosimulator.analyzer.slingshot.managedsystem.converter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.MeasurementSet;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.SLO;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.MeasurementSet;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.SLO;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.monitorrepository.Monitor;
 import org.palladiosimulator.monitorrepository.MonitorRepository;

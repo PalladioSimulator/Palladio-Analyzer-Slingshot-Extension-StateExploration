@@ -1,10 +1,10 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data;
+package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
 import java.util.Comparator;
 import java.util.List;
 
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.MeasurementSet.Measurement;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data.Utility.UtilityType;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.MeasurementSet.Measurement;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.data.Utility.UtilityType;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,

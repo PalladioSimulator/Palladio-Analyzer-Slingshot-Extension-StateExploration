@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.untility.converter.data;
+package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
 import java.util.LinkedList;
 import java.util.List;
