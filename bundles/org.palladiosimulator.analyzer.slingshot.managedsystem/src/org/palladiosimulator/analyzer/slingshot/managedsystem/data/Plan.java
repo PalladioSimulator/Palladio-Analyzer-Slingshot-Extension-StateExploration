@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -26,11 +27,11 @@ import com.google.common.base.Preconditions;
 public class Plan {
 
     private final String id;
-    private final TreeMap<Double, Set<ScalingPolicy>> planSteps;
+    private final TreeMap<Double, List<ScalingPolicy>> planSteps;
 
-    private final TreeMap<Double, Set<ScalingPolicy>> executedSteps;
+    private final TreeMap<Double, List<ScalingPolicy>> executedSteps;
 
-    public Plan(final Map<Double, Set<ScalingPolicy>> planSteps) {
+    public Plan(final Map<Double, List<ScalingPolicy>> planSteps) {
         this.id = UUID.randomUUID()
             .toString();
 
@@ -65,16 +66,16 @@ public class Plan {
 
         other.forwardPlanTo(this.getTimeOfNextStep());
 
-        final Iterator<Entry<Double, Set<ScalingPolicy>>> itOther = new TreeMap<>(other.getPlanSteps()).entrySet()
+        final Iterator<Entry<Double, List<ScalingPolicy>>> itOther = new TreeMap<>(other.getPlanSteps()).entrySet()
             .iterator();
 
-        final Iterator<Entry<Double, Set<ScalingPolicy>>> itPlanned = this.planSteps.entrySet()
+        final Iterator<Entry<Double, List<ScalingPolicy>>> itPlanned = this.planSteps.entrySet()
             .iterator();
 
         while (itPlanned.hasNext() && itOther.hasNext()) {
 
-            final Entry<Double, Set<ScalingPolicy>> planned = itPlanned.next();
-            final Entry<Double, Set<ScalingPolicy>> otherStep = itOther.next();
+            final Entry<Double, List<ScalingPolicy>> planned = itPlanned.next();
+            final Entry<Double, List<ScalingPolicy>> otherStep = itOther.next();
 
             if (!planned.getKey()
                 .equals(otherStep.getKey())) {
@@ -113,10 +114,10 @@ public class Plan {
      */
     @Deprecated
     private boolean hasCommonHistory(final Plan other) {
-        final Iterator<Entry<Double, Set<ScalingPolicy>>> itExecuted = this.executedSteps.entrySet()
+        final Iterator<Entry<Double, List<ScalingPolicy>>> itExecuted = this.executedSteps.entrySet()
             .iterator();
 
-        final Iterator<Entry<Double, Set<ScalingPolicy>>> itOther = new TreeMap<>(other.getPlanSteps()).entrySet()
+        final Iterator<Entry<Double, List<ScalingPolicy>>> itOther = new TreeMap<>(other.getPlanSteps()).entrySet()
             .iterator();
 
         while (itExecuted.hasNext() && itExecuted.next()
@@ -129,8 +130,8 @@ public class Plan {
                 return true;
             }
 
-            final Entry<Double, Set<ScalingPolicy>> executedStep = itExecuted.next();
-            final Entry<Double, Set<ScalingPolicy>> otherStep = itOther.next();
+            final Entry<Double, List<ScalingPolicy>> executedStep = itExecuted.next();
+            final Entry<Double, List<ScalingPolicy>> otherStep = itOther.next();
 
             if (!executedStep.getKey()
                 .equals(otherStep.getKey())) {
@@ -178,7 +179,7 @@ public class Plan {
      *
      * @return A copy of the planned steps.
      */
-    public Map<Double, Set<ScalingPolicy>> getPlanSteps() {
+    public Map<Double, List<ScalingPolicy>> getPlanSteps() {
         return Map.copyOf(planSteps);
     }
 
@@ -220,7 +221,7 @@ public class Plan {
      */
     public Set<ModelAdjustmentRequested> executeNextStep() {
 
-        final Entry<Double, Set<ScalingPolicy>> executedStep = this.planSteps.pollFirstEntry();
+        final Entry<Double, List<ScalingPolicy>> executedStep = this.planSteps.pollFirstEntry();
         this.executedSteps.put(executedStep.getKey(), executedStep.getValue());
 
         final Set<ModelAdjustmentRequested> events = new HashSet<>();

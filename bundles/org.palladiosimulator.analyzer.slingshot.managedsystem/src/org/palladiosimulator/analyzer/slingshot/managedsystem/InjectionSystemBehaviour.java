@@ -1,10 +1,9 @@
 package org.palladiosimulator.analyzer.slingshot.managedsystem;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -18,6 +17,7 @@ import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StatesBlackbo
 import org.palladiosimulator.analyzer.slingshot.managedsystem.events.PlanUpdated;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.data.PlanStepDto;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -52,16 +52,25 @@ public class InjectionSystemBehaviour implements SystemBehaviorExtension {
 
         linkToSimulation.setExplorationID(event.getExplorationId());
 
-        final Map<Double, Set<ScalingPolicy>> map = new HashMap<>();
+        final Map<Double, List<ScalingPolicy>> map = new HashMap<>();
 
-        for (final String stateId : event.getPayload()) {
-            final Optional<ScalingPolicy> policy = states.getPolicy(stateId);
-            if (policy.isPresent()) {
-                if (!map.containsKey(states.getTime(stateId))) {
-                    map.put(states.getTime(stateId), new HashSet<>());
-                }
+        // TODO WTF did i do to my auto formatting?
+        for (final PlanStepDto dto : event.getPayload()
+            .plan()) {
+
+            final String stateId = dto.stateId()
+                .toString();
+
+            final List<ScalingPolicy> policies = states.getPolicies(stateId);
+
+            if (!policies.isEmpty() && !map.containsKey(states.getTime(stateId))) {
+                map.put(states.getTime(stateId), new ArrayList<>());
+            }
+
+            for (final ScalingPolicy policy : policies) {
                 map.get(states.getTime(stateId))
-                    .add(policy.get());
+                    .add(policy);
+
             }
         }
 

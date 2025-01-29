@@ -14,4 +14,5 @@ Require-Bundle: org.palladiosimulator.spd,
 Export-Package: org.palladiosimulator.analyzer.slingshot.managedsystem.converter,
  org.palladiosimulator.analyzer.slingshot.managedsystem.data,
  org.palladiosimulator.analyzer.slingshot.managedsystem.events,
- org.palladiosimulator.analyzer.slingshot.managedsystem.messages
+ org.palladiosimulator.analyzer.slingshot.managedsystem.messages,
+ org.palladiosimulator.analyzer.slingshot.managedsystem.messages.data

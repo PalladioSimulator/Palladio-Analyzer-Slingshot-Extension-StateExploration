@@ -8,13 +8,13 @@ import org.palladiosimulator.analyzer.slingshot.managedsystem.data.Utility.Utili
 import org.palladiosimulator.spd.ScalingPolicy;
 
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
-        List<SLO> slos, Utility utility, String parentId, ScalingPolicy incomingPolicy) {
+        List<SLO> slos, Utility utility, String parentId, List<ScalingPolicy> incomingPolicies) {
 
     public StateGraphNode(final String id, final double startTime, final double endTime,
             final List<MeasurementSet> measurements, final List<SLO> slos, final String parentId,
-            final ScalingPolicy incomingPolicy) {
+            final List<ScalingPolicy> incomingPolicies) {
         this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId,
-                incomingPolicy);
+                incomingPolicies);
     }
 
     public double duration() {

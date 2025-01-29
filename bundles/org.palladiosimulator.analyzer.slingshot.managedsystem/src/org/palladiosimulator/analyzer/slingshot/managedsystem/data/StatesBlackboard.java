@@ -1,8 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.inject.Singleton;
 
@@ -37,17 +37,18 @@ public final class StatesBlackboard {
     }
 
     public void addState(final StateGraphNode state) {
-        if (state.incomingPolicy() != null) {
+        if (!state.incomingPolicies()
+            .isEmpty()) {
             states.put(state.id(), state);
         }
     }
 
-    public Optional<ScalingPolicy> getPolicy(final String stateId) {
+    public List<ScalingPolicy> getPolicies(final String stateId) {
         if (states.containsKey(stateId)) {
-            return Optional.of(states.get(stateId)
-                .incomingPolicy());
+            return states.get(stateId)
+                .incomingPolicies();
         }
-        return Optional.empty();
+        return List.of();
     }
 
     public double getTime(final String stateId) {
