@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+
+<!--
+-->
+
+<plugin>
+
+   <extension point="org.eclipse.ui.newWizards">
+      <!-- @generated stateexplorationtooladapter -->
+      <category
+            id="org.eclipse.emf.ecore.Wizard.category.ID"
+            name="%_UI_Wizard_category"/>
+      <wizard
+            id="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.presentation.StateExplorationToolAdapterModelWizardID"
+            name="%_UI_StateExplorationToolAdapterModelWizard_label"
+            class="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.presentation.StateExplorationToolAdapterModelWizard"
+            category="org.eclipse.emf.ecore.Wizard.category.ID"
+            icon="icons/full/obj16/StateExplorationToolAdapterModelFile.gif">
+         <description>%_UI_StateExplorationToolAdapterModelWizard_description</description>
+         <selection class="org.eclipse.core.resources.IResource"/>
+      </wizard>
+   </extension>
+
+   <extension point="org.eclipse.ui.editors">
+      <!-- @generated stateexplorationtooladapter -->
+      <editor
+            id="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.presentation.StateExplorationToolAdapterEditorID"
+            name="%_UI_StateExplorationToolAdapterEditor_label"
+            icon="icons/full/obj16/StateExplorationToolAdapterModelFile.gif"
+            extensions="stateexplorationtooladapter"
+            class="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.presentation.StateExplorationToolAdapterEditor"
+            contributorClass="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.presentation.StateExplorationToolAdapterActionBarContributor">
+      </editor>
+   </extension>
+
+</plugin>

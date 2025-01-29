@@ -38,10 +38,12 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
+import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
@@ -170,7 +172,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
 
 		this.initOffsets(this.eventsToInitOn);
-		final Set<DESEvent> eventsToInitOnNoIntervallPassed = this.initIntervallPased(this.eventsToInitOn);
+		final Set<DESEvent> eventsToInitOnNoIntervallPassed = this.removeTakeCostMeasurement(this.eventsToInitOn);
 
 		return Result.of(eventsToInitOnNoIntervallPassed);
 	}
@@ -267,33 +269,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Catch {@link IntervalPassed} (cost) from the snapshot abort them, because for
-	 * costs, we use the events of the current simulation run.
-	 *
-	 * TODO: why am i even including them in the snapshot to begin with?
-	 *
-	 * @param information interception information
-	 * @param event       intercepted event
-	 * @return always success
-	 */
-	//	@PreIntercept
-	//	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
-	//			final IntervalPassed event) {
-	//		if (resourceContainer2intervalPassed.isEmpty()) {
-	//			return InterceptionResult.success();
-	//		}
-	//
-	//		final String target = event.getTargetResourceContainer().getId();
-	//
-	//		if (resourceContainer2intervalPassed.containsKey(target)) {
-	//			resourceContainer2intervalPassed.remove(target);
-	//			return InterceptionResult.abort();
-	//		}
-	//
-	//		return InterceptionResult.success();
-	//	}
-
-	/**
 	 * Add the measurements to the raw state.
 	 *
 	 * Subscribes to {@link CalculatorRegistered} because the experiment settings
@@ -367,7 +342,9 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	public Result<SimulationFinished> onSnapshotFinished(final SnapshotFinished event) {
 		halfDoneState.setSnapshot(event.getEntity());
 		halfDoneState.setDuration(event.time());
-
+		
+		this.refineReasonsToLeave(event.getEntity());
+		
 		halfDoneState.addAdjustorStateValues(
 				this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time())).toList());
 
@@ -433,6 +410,27 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	public void onAdjustorStateUpdated(final SPDAdjustorStateInitialized event) {
 		this.policyIdToValues.put(event.getStateValues().scalingPolicyId(), event.getStateValues());
 	}
+	
+	/**
+	 *
+	 * Refines the reasons to leave by adding missing reasons based on the snapshot.
+	 *
+	 * If a snapshot gets triggered due to {@link ReasonToLeave#closenessToSLO},
+	 * while at the same point in time a adjustment was triggered, the adjustment is
+	 * also a reason to leave, but not yet represented in the reasons to leave set.
+	 *
+	 * Also, if no external trigger happened, {@link ReasonToLeave#interval} must be
+	 * added.
+	 *
+	 * @param snapshot snapshot of current state
+	 */
+	private void refineReasonsToLeave(final Snapshot snapshot) {
+		if (!snapshot.getModelAdjustmentRequestedEvent().isEmpty()) {
+			halfDoneState.addReasonToLeave(ReasonToLeave.reactiveReconfiguration);
+		} else if (halfDoneState.getReasonsToLeave().isEmpty()) {
+			halfDoneState.addReasonToLeave(ReasonToLeave.interval);
+		}
+	}
 
 	/**
 	 *
@@ -449,17 +447,13 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Collect resource containers, for which an {@link TakeCostMeasurement} event must
-	 * be aborted later on.
+	 * Remove all {@link TakeCostMeasurement} from the given set.
 	 *
-	 * @param events events to collect resource containers from.
+	 * @param events set of events to be cleansed.
+	 * 
+	 * @return set of events without {@link TakeCostMeasurement}
 	 */
-	private Set<DESEvent> initIntervallPased(final Set<DESEvent> events) {
-		// events.stream().filter(event -> event instanceof IntervalPassed)
-		// .forEach(event -> resourceContainer2intervalPassed
-		// .put(((IntervalPassed) event).getTargetResourceContainer().getId(),
-		// (IntervalPassed) event));
-
+	private Set<DESEvent> removeTakeCostMeasurement(final Set<DESEvent> events) {
 		return events.stream().filter(Predicate.not(TakeCostMeasurement.class::isInstance)).collect(Collectors.toSet());
 	}
 

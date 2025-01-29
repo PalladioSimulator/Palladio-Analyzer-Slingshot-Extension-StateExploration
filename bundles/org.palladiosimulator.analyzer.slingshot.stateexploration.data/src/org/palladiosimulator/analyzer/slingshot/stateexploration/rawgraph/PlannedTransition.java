@@ -2,13 +2,14 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.Optional;
 
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 
-public class ToDoChange {
+public class PlannedTransition implements Transition {
 	private final DefaultState start;
 	private final Optional<Change> change;
 
-	public ToDoChange(final Optional<Change> change, final DefaultState start) {
+	public PlannedTransition(final Optional<Change> change, final DefaultState start) {
 		super();
 		this.start = start;
 		this.change = change;
@@ -17,6 +18,13 @@ public class ToDoChange {
 	public DefaultState getStart() {
 		return start;
 	}
+	
+	@Override
+	public RawModelState getSource(){
+		return this.getStart();
+	}
+
+	@Override
 	public Optional<Change> getChange() {
 		return change;
 	}
@@ -29,4 +37,7 @@ public class ToDoChange {
 			return String.format("%s for %s", change.get().toString(), start.getId());
 		}
 	}
+	
+
+
 }

@@ -6,7 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 
-public class DefaultTransition implements RawTransition {
+public class DefaultTransition implements RawTransition, Transition {
 	private final Optional<Change> change;
 
 	private final DefaultGraph graph;
@@ -31,5 +31,14 @@ public class DefaultTransition implements RawTransition {
 	@Override
 	public Optional<Change> getChange() {
 		return this.change;
+	}
+	
+	@Override
+	public String toString() {
+		if (change.isEmpty()) {
+			return "NOP for " + getSource().getId();
+		} else {
+			return String.format("%s for %s", change.get().toString(), getSource().getId());
+		}
 	}
 }

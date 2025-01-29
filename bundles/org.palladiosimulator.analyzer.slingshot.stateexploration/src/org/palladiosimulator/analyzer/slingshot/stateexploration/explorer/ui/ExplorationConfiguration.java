@@ -25,15 +25,23 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 	public static final String MIN_STATE_DURATION = "Min State Duration";
 	public static final String IDLE_EXPLORATION = "Idle Exploration";
 	public static final String SENSIBILITY = "Sensitivity [0, 1 (most sensitive)]";
+	public static final String HORIZON = "Horizon (distance to current state in sec)";
 	public static final String MODEL_LOCATION = "Location for Arch. Configruations";
+
 
 
 	public static final int DEFAULT_MAX_EXPLORATION_CYCLES = 20;
 	public static final int DEFAULT_MIN_STATE_DURATION = 20;
 	public static final boolean DEFAULT_IDLE_EXPLORATION = false;
 	public static final int DEFAULT_SENSIBILITY = 0;
+	public static final int DEFAULT_HORIZON = 300; // 5 minutes
 	public static final String DEFAULT_MODEL_LOCATION = URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir")).toString();
 
+	/**
+	 * For checkboxes.
+	 * 
+	 * @param event
+	 */
 	@Subscribe
 	public void onExplorationAdditionalConfigTabBuilderStarted(
 			final ExplorationAdditionalConfigTabBuilderStarted event) {
@@ -43,6 +51,11 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 		.build();
 	}
 
+	/**
+	 * For normal input field.
+	 * 
+	 * @param event
+	 */
 	@Subscribe
 	public void onExplorationConfigTabBuilderStarted(final ExplorationConfigTabBuilderStarted event) {
 		event.newFieldDefinition()
@@ -58,6 +71,11 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 		event.newFieldDefinition()
 		.label(SENSIBILITY)
 		.defaultValue(String.valueOf(DEFAULT_SENSIBILITY))
+		.build();
+		
+		event.newFieldDefinition()
+		.label(HORIZON)
+		.defaultValue(String.valueOf(DEFAULT_HORIZON))
 		.build();
 
 		event.newFieldDefinition()

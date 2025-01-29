@@ -1,5 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,7 +22,7 @@ public final class InMemorySnapshot implements Snapshot {
 
 	private final Set<DESEvent> events;
 
-	private Optional<ModelAdjustmentRequested> modelAdjustmentRequestedEvent;
+	private final List<ModelAdjustmentRequested> modelAdjustmentRequestedEvents;
 
 	public InMemorySnapshot() {
 		this(Set.of());
@@ -29,7 +31,7 @@ public final class InMemorySnapshot implements Snapshot {
 
 	public InMemorySnapshot(final Set<DESEvent> events) {
 		this.events = events;
-		this.modelAdjustmentRequestedEvent = Optional.empty();
+		this.modelAdjustmentRequestedEvents = new ArrayList<>();
 	}
 
 
@@ -40,12 +42,12 @@ public final class InMemorySnapshot implements Snapshot {
 	}
 
 	@Override
-	public Optional<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent() {
-		return this.modelAdjustmentRequestedEvent;
+	public List<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent() {
+		return this.modelAdjustmentRequestedEvents;
 	}
 
 	@Override
-	public void setModelAdjustmentRequestedEvent(final ModelAdjustmentRequested event) {
-		this.modelAdjustmentRequestedEvent = Optional.of(event);
+	public void addModelAdjustmentRequestedEvent(final ModelAdjustmentRequested event) {
+		this.modelAdjustmentRequestedEvents.add(event);
 	}
 }

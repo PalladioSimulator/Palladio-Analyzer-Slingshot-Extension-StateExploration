@@ -34,7 +34,7 @@ public class DefaultState implements RawModelState {
 	/* known at the end */
 	private double duration;
 	private Snapshot snapshot;
-	private ReasonToLeave reasonToLeave;
+	private final Set<ReasonToLeave> reasonsToLeave;
 	private boolean decreaseInterval = false;
 
 	/* known after configuration of the simulation run */
@@ -49,7 +49,7 @@ public class DefaultState implements RawModelState {
 		this.graph = graph;
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
-		this.reasonToLeave = ReasonToLeave.interval;
+		this.reasonsToLeave = new HashSet<>();
 
 		this.adjustorStateValues = new HashSet<>();
 	}
@@ -78,8 +78,8 @@ public class DefaultState implements RawModelState {
 		this.decreaseInterval = decreaseInterval;
 	}
 
-	public void setReasonToLeave(final ReasonToLeave reasonToLeave) {
-		this.reasonToLeave = reasonToLeave;
+	public void addReasonToLeave(final ReasonToLeave reasonToLeave) {
+		this.reasonsToLeave.add(reasonToLeave);
 	}
 
 	public void setDuration(final double duration) {
@@ -116,8 +116,8 @@ public class DefaultState implements RawModelState {
 
 
 	@Override
-	public ReasonToLeave getReasonToLeave() {
-		return reasonToLeave;
+	public Collection<ReasonToLeave> getReasonsToLeave() {
+		return reasonsToLeave;
 	}
 
 	@Override
@@ -137,7 +137,7 @@ public class DefaultState implements RawModelState {
 
 	@Override
 	public String toString() {
-		return "DefaultState [archConfig=" + archConfig.getSegment() + ", reasonToLeave=" + reasonToLeave + "]";
+		return "DefaultState [archConfig=" + archConfig.getSegment() + ", reasonToLeave=" + reasonsToLeave + "]";
 	}
 
 	@Override

@@ -5,7 +5,7 @@ import java.util.List;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ToDoChange;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 
 import com.google.common.base.Preconditions;
 
@@ -35,12 +35,12 @@ public abstract class ProactivePolicyStrategy {
 	 *
 	 * Create proactive reconfigurations based on the given {@link DefaultState}.
 	 *
-	 * Ensures, that all of the {@link ToDoChange}s in the resulting list are yet
+	 * Ensures, that all of the {@link PlannedTransition}s in the resulting list are yet
 	 * unexplored. I.e. neither is any of them is in the state graphs fringe, nor
 	 * has any of them already been explored.
 	 *
 	 * @return
 	 */
-	public abstract List<ToDoChange> createProactiveChanges();
+	public abstract List<PlannedTransition> createProactiveChanges();
 
 }
