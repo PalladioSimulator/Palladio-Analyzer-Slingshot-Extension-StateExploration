@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ManagedSystem Application
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.managedsystem.application;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.managedsystem.application
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: org.eclipse.equinox.app,
+ org.eclipse.core.runtime,
+ de.uka.ipd.sdq.workflow,
+ de.uka.ipd.sdq.simucomframework,
+ org.palladiosimulator.analyzer.slingshot.workflow,
+ org.palladiosimulator.analyzer.slingshot.core,
+ org.palladiosimulator.analyzer.slingshot.workflow.events,
+ org.palladiosimulator.edp2,
+ org.palladiosimulator.recorderframework.edp2,
+ org.palladiosimulator.experimentautomation,
+ org.palladiosimulator.experimentautomation.application.tooladapter.slingshot.model,
+ org.palladiosimulator.experimentautomation.application
+Bundle-Activator: org.palladiosimulator.analyzer.slingshot.managedsystem.application.Activator
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .
