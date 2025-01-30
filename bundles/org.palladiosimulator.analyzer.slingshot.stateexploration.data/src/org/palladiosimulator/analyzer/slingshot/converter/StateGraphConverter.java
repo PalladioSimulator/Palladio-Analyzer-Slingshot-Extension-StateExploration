@@ -3,6 +3,8 @@ package org.palladiosimulator.analyzer.slingshot.converter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.measure.Measure;
+
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
@@ -28,7 +30,7 @@ public class StateGraphConverter {
 	 */
 	public static StateGraphNode convertState(final RawModelState state, final String parentId,
 			final List<ScalingPolicy> scalingPolicies) {
-		List<SLO> slos = new ArrayList<SLO>();
+		List<ServiceLevelObjective> slos = new ArrayList<>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 
 		/**
@@ -42,17 +44,19 @@ public class StateGraphConverter {
 				// System.out.println(monitor.getEntityName());
 			}
 		}
+		
 
 		// Add SLOs
 		if (state.getArchitecureConfiguration() != null && state.getArchitecureConfiguration().getSLOs().isPresent()) {
-			slos = new ArrayList<SLO>();
-
 			for (final ServiceLevelObjective slo : state.getArchitecureConfiguration().getSLOs().get()
 					.getServicelevelobjectives()) {
-				slos.add(visitServiceLevelObjective(slo));
+				slos.add(slo);
 			}
 		}
-
+		
+		List<Measure> measures = new ArrayList<>();
+		var slos2 = state.getArchitecureConfiguration().getSLOs().map(x -> x.getServicelevelobjectives());
+		
 		// Add Measurements
 		if (state.getMeasurements() != null) {
 			measuremnets = MeasurementConverter.visitExperiementSetting(state.getMeasurements());
@@ -60,11 +64,5 @@ public class StateGraphConverter {
 
 		return new StateGraphNode(state.getId(), state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId,
 				scalingPolicies);
-	}
-
-	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {
-		return new SLO(slo.getId(), slo.getName(), slo.getMeasurementSpecification().getId(),
-				(Number) slo.getLowerThreshold().getThresholdLimit().getValue(),
-				(Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 }
