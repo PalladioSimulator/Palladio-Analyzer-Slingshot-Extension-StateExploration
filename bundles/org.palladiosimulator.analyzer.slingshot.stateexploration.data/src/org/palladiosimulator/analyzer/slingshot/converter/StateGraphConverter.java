@@ -54,9 +54,6 @@ public class StateGraphConverter {
 			}
 		}
 		
-		List<Measure> measures = new ArrayList<>();
-		var slos2 = state.getArchitecureConfiguration().getSLOs().map(x -> x.getServicelevelobjectives());
-		
 		// Add Measurements
 		if (state.getMeasurements() != null) {
 			measuremnets = MeasurementConverter.visitExperiementSetting(state.getMeasurements());

@@ -24,14 +24,22 @@ import org.palladiosimulator.spd.ScalingPolicy;
  *
  */
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
-		List<ServiceLevelObjective> slos, Utility utility, String parentId, List<ScalingPolicy> incomingPolicies) {
+		List<SLO> slos, Utility utility, String parentId, List<ScalingPolicy> incomingPolicies) {
 
 	public StateGraphNode(final String id, final double startTime, final double endTime,
 			final List<MeasurementSet> measurements, final List<ServiceLevelObjective> slos, final String parentId,
 			final List<ScalingPolicy> incomingPolicies) {
-		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId,
+		this(id, startTime, endTime, measurements, slos.stream().map(x -> visitServiceLevelObjective(x)).toList(), calcUtility(startTime, endTime, measurements, slos), parentId,
 				incomingPolicies);
 	}
+	
+	
+	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {
+		return new SLO(slo.getId(), slo.getName(), slo.getMeasurementSpecification().getId(),
+				(Number) slo.getLowerThreshold().getThresholdLimit().getValue(),
+				(Number) slo.getUpperThreshold().getThresholdLimit().getValue());
+	}
+	
 
 	private static Utility calcUtility(double startTime, double endTime, List<MeasurementSet> measurements,
 			List<ServiceLevelObjective> slos) {
@@ -45,7 +53,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
                     .orElse(null);
                 if (ms != null) {
                 	// Is this correct?
-                    var value = ms.getMeasure().stream()
+                    var value = ms.obtainMeasure().stream()
                     		.mapToDouble(x -> getGrade(x, slo.getLowerThreshold(), slo.getUpperThreshold()))
                     		.sum();
                     		

@@ -1,5 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +34,8 @@ public class MeasurementSet {
 	private String metricName;
 	private String metricDescription;
 	private String metricDescriptionId;
+	
+
 	private List<Measure> measure;
 
 	public MeasurementSet() {
@@ -147,7 +152,8 @@ public class MeasurementSet {
 		this.measure = m;
 	}
 	
-	public List<Measure> getMeasure() {
+
+	public List<Measure> obtainMeasure() {
 		return measure;
 	}
 }
