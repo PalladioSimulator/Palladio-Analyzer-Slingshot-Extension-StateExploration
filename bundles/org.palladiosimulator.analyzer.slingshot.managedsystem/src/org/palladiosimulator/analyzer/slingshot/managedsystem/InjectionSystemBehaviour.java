@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
@@ -28,6 +29,9 @@ import org.palladiosimulator.spd.ScalingPolicy;
 @OnEvent(when = StateExploredEventMessage.class, then = {})
 public class InjectionSystemBehaviour implements SystemBehaviorExtension {
 
+    private final static Logger LOGGER = Logger.getLogger(InjectionSystemBehaviour.class);
+
+    final static int SLEEP_DELAY = 5000;
 
 	private final Link linkToSimulation;
     private final StatesBlackboard states;
@@ -75,6 +79,15 @@ public class InjectionSystemBehaviour implements SystemBehaviorExtension {
         }
 
         final PlanUpdated request = new PlanUpdated(new Plan(map));
+
+        while (!linkToSimulation.isLinkToSimulationSet()) {
+            try {
+                LOGGER.info("Wait because Link to Simulation is not yet set.");
+                Thread.sleep((long) Math.floor(SLEEP_DELAY));
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         linkToSimulation.postToSimulation(request);
     }

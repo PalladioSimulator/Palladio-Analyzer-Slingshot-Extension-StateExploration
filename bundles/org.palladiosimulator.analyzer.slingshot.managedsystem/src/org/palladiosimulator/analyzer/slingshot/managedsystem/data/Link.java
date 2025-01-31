@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import javax.inject.Singleton;
 
+import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.SystemEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -14,14 +15,21 @@ import org.palladiosimulator.analyzer.slingshot.managedsystem.events.PlanUpdated
  *
  * A connection to the System
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 @Singleton
 public class Link {
 
+    private final static Logger LOGGER = Logger.getLogger(Link.class);
+
+
+    enum Status {DISABLED, UNINITIALISED;}
+    private Status status = Status.UNINITIALISED;
+
 	private SimulationScheduling scheduling;
 	private SystemDriver system;
+
 
     private UUID explorationID;
 
@@ -32,18 +40,39 @@ public class Link {
         return explorationID;
     }
 
+    public void setExplorationID(final UUID explorationID) {
+        this.explorationID = explorationID;
+    }
+
     private boolean planArrived = false;
 
     public boolean hasPlanArrived() {
         return planArrived;
     }
 
-    public void setExplorationID(final UUID explorationID) {
-        this.explorationID = explorationID;
+    public boolean isLinkToSystemSet() {
+        return this.system != null;
     }
 
+    public boolean isLinkToSimulationSet() {
+        return this.scheduling != null;
+    }
+
+    public void disable() {
+        this.status = Status.DISABLED;
+    }
+
+
+    /**
+     *
+     * @param event
+     */
     public void postToSystem(final SystemEvent event) {
-		system.postEvent(event);
+        if (system == null) {
+            throw new IllegalStateException(
+                    String.format("Cannot schedule event %s because SystemDriver is null.", event.getId()));
+        }
+		this.system.postEvent(event);
 	}
 
     /**
@@ -62,9 +91,15 @@ public class Link {
             throw new IllegalStateException(
                     String.format("Cannot schedule event %s because SimulationScheduling is null.", event.getId()));
         }
+        if (this.status == Status.DISABLED) {
+            throw new IllegalStateException(
+                    String.format("Wont schedule event %s because this Link is disabled. Maybe the simulation is already Finished.", event.getId()));
+        }
+	    if (this.planArrived) {
+	        LOGGER.debug(String.format("Plan already arrived, ignoring PlanUpdated %s", event.getId()));
+	    }
 
 		scheduling.scheduleEvent(event);
-
 		planArrived = true;
 	}
 
@@ -74,16 +109,24 @@ public class Link {
      *            simulation driver be used.
      */
 	public void setScheduling(final SimulationScheduling scheduling) {
-		this.scheduling = scheduling;
+	    if (this.scheduling == null) {
+	        this.scheduling = scheduling;
+	    } else {
+	        throw new IllegalStateException("SimulationScheduling is already set.");
+	    }
 	}
 
     /**
      *
      * @param system
-     *            system dirver to be used.
+     *            system driver to be used.
      */
 	public void setSystem(final SystemDriver system) {
-		this.system = system;
+        if (this.system == null) {
+            this.system = system;
+        } else {
+            throw new IllegalStateException("SystemDriver is already set.");
+        }
 	}
 
 
