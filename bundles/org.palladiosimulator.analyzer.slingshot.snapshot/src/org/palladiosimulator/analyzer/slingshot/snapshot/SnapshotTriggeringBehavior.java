@@ -117,7 +117,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 					// ignore. monitors never change on their own.
 				}
 				if (change instanceof AllocationChange c) {
-					if (!c.getNewAllocationContexts().isEmpty())	{
+					if (!c.getNewAllocationContexts().isEmpty() || !c.getDeletedAllocationContexts().isEmpty())	{
 						somethingChanged = true;
 					}
 				}				
