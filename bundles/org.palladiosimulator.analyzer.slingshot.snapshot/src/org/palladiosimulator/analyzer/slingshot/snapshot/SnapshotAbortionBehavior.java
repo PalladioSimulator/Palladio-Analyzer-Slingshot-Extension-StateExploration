@@ -1,16 +1,14 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
-import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.AllocationChange;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
@@ -20,8 +18,11 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiate
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.pcm.allocation.Allocation;
-import org.palladiosimulator.pcm.allocation.AllocationContext;
+import org.palladiosimulator.semanticspd.CompetingConsumersGroupCfg;
+import org.palladiosimulator.semanticspd.Configuration;
+import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
+import org.palladiosimulator.semanticspd.ServiceGroupCfg;
+import org.palladiosimulator.semanticspd.TargetGroupCfg;
 
 /**
  *
@@ -43,24 +44,49 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 
 	private final boolean activated;
 
-	private final Set<AllocationContext> oldContext;
+	private final Map<TargetGroupCfg, Integer> tg2size;
+	
+	private final Configuration config;
 	
 
 	@Inject
 	public SnapshotAbortionBehavior(final @Nullable DefaultState state,
-			final @Nullable EventsToInitOnWrapper eventsWapper, final SimulationScheduling scheduling, final Allocation allocation) {
+			final @Nullable EventsToInitOnWrapper eventsWapper, final SimulationScheduling scheduling, final Configuration config) {
 		this.state = state;
 		this.scheduling = scheduling;
 		this.adjustmentEvents =  eventsWapper == null ? null : eventsWapper.getAdjustmentEvents();
-
-		this.oldContext = allocation.getAllocationContexts_Allocation().stream().collect(Collectors.toSet());
 		
+		this.config = config;
+		
+		this.tg2size = new HashMap<>();
+		
+		for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+			tg2size.put(tgcfg, this.getSizeOf(tgcfg));
+		}
+
 		this.activated = state != null && eventsWapper != null;
 	}
 
 	@Override
 	public boolean isActive() {
 		return this.activated;
+	}
+	
+	/**
+	 * 
+	 * @param tgcfg
+	 * @return
+	 */
+	private int getSizeOf(final TargetGroupCfg tgcfg) {
+		if (tgcfg instanceof ElasticInfrastructureCfg ecfg) {
+			return ecfg.getElements().size();
+		} else if (tgcfg instanceof ServiceGroupCfg scfg) {
+			return scfg.getElements().size();
+		} else if (tgcfg instanceof CompetingConsumersGroupCfg ccfg) {
+			return ccfg.getElements().size();
+		} else {
+			throw new IllegalArgumentException("TargetGroup of unknown type, cannot determine size of elements.");
+		}
 	}
 	
 	/**
@@ -77,39 +103,14 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		}
 		
 		if (adjusmentCounter == adjustmentEvents.size()) {
-			Set<AllocationContext> newContext = getContexts(modelAdjusted);
-			
-			Set<AllocationContext> added = new HashSet<>(newContext);
-			added.removeAll(oldContext);
-					
-			Set<AllocationContext> deleted = new HashSet<>(oldContext);
-			deleted.removeAll(newContext);
-			
-			if (added.isEmpty() && deleted.isEmpty()) {
-				state.addReasonToLeave(ReasonToLeave.aborted);
-				scheduling.scheduleEvent(new SnapshotInitiated(0));
+			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+				
+				if (tg2size.get(tgcfg) != this.getSizeOf(tgcfg)) {
+					return;
+				}
 			}
+			state.addReasonToLeave(ReasonToLeave.aborted);
+			scheduling.scheduleEvent(new SnapshotInitiated(0));
 		}
-	}
-	
-	/**
-	 * Extract a set of {@link AllocationContext} from a given {@link ModelAdjusted} event.
-	 * 
-	 * Requires exactly one {@link AllocationChange} among the changes. 
-	 * 
-	 * @param modelAdjusted
-	 * @return set of {@link AllocationContext}
-	 */
-	private Set<AllocationContext> getContexts(final ModelAdjusted modelAdjusted) {
-		assert modelAdjusted.isWasSuccessful();
-		
-		List<AllocationChange> change = modelAdjusted.getChanges().stream().filter(AllocationChange.class::isInstance).map(AllocationChange.class::cast).toList();
-		
-		if (change.size() == 1) {
-			return change.get(0).getObject().getAllocationContexts_Allocation().stream().collect(Collectors.toSet());
-		} else {
-			throw new IllegalArgumentException(String.format("Expected exactly 1 AllocationChange, but found %d", change.size()));
-		}
-		
 	}
 }

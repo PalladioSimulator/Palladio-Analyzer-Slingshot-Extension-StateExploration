@@ -49,8 +49,7 @@ public final class FIFOTransitionQueue extends AbstractQueue<PlannedTransition> 
 
 	@Override
 	public int size() {
-		this.queuedDate.size();
-		return 0;
+		return this.queuedDate.size();
 	}
 
 
