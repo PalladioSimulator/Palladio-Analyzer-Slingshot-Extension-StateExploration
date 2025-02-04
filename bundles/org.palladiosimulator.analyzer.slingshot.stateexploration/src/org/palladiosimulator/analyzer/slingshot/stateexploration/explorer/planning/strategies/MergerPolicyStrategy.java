@@ -12,8 +12,8 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 
 /**
@@ -49,7 +49,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected MergerPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe,
+	protected MergerPolicyStrategy(final DefaultGraph graph, final FringeFringe fringe,
 			final DefaultState state) {
 		super(graph, fringe);
 		this.state = state;

@@ -7,8 +7,8 @@ import java.util.Optional;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -35,7 +35,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected BacktrackPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe, final DefaultState state) {
+	protected BacktrackPolicyStrategy(final DefaultGraph graph, final FringeFringe fringe, final DefaultState state) {
 		super(graph, fringe);
 		this.state = state;
 	}

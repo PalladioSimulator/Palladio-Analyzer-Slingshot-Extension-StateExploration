@@ -13,8 +13,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reac
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transition;
 
@@ -40,7 +40,7 @@ public class Postprocessor {
 	private static final Logger LOGGER = Logger.getLogger(Postprocessor.class.getName());
 
 	private final DefaultGraph rawgraph;
-	private final DefaultGraphFringe fringe;
+	private final FringeFringe fringe;
 
 	private final ProactivePolicyStrategyBuilder proactiveStrategyBuilder;
 
@@ -49,7 +49,7 @@ public class Postprocessor {
 	 * @param graph
 	 * @param fringe
 	 */
-	public Postprocessor(final DefaultGraph graph, final DefaultGraphFringe fringe) {
+	public Postprocessor(final DefaultGraph graph, final FringeFringe fringe) {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 
@@ -76,7 +76,7 @@ public class Postprocessor {
 		}
 		
 		// NOP Always
-		this.fringe.add(new PlannedTransition(Optional.empty(), start));
+		this.fringe.offer(new PlannedTransition(Optional.empty(), start));
 
 		// Reactive Reconfiguration - Always.
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
@@ -86,7 +86,7 @@ public class Postprocessor {
 		// the best.
 		for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
 			// reactive reconf to the next state.
-			this.fringe.add(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
+			this.fringe.offer(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
 
 		// proactive reconfs
@@ -107,7 +107,7 @@ public class Postprocessor {
 			Boolean dup = transitions.stream().map(toDoChange::isSame).reduce(false, (b1, b2) -> b1 || b2);
 
 			if (!dup) {
-				this.fringe.add(toDoChange);
+				this.fringe.offer(toDoChange);
 			}
 		}
 	}

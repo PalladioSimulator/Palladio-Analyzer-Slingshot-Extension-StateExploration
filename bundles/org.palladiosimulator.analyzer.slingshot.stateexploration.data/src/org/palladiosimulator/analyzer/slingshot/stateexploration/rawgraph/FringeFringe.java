@@ -1,8 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.ArrayDeque;
+import java.util.AbstractQueue;
 import java.util.Collection;
-import java.util.PriorityQueue;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -21,24 +21,21 @@ import org.palladiosimulator.spd.ScalingPolicy;
  *
  * Beware: what about duplicates ToDo Changes?
  *
- * Beware: The head of this queue is the *least* element with respect to the
- * specified ordering. (c.f. JavaDoc of {@link PriorityQueue})
  *
  * @author Sarah Stieß
  *
  */
-public final class DefaultGraphFringe extends ArrayDeque<PlannedTransition> {
+public final class FringeFringe {
 
-	private final static Logger LOGGER = Logger.getLogger(DefaultGraphFringe.class);
+	private final AbstractQueue<PlannedTransition> queuedDate;
 	
-	public DefaultGraphFringe() {
+	private final static Logger LOGGER = Logger.getLogger(FringeFringe.class);
+	
+	public FringeFringe(final AbstractQueue<PlannedTransition> queue) {
 		super();
+		this.queuedDate = queue;
 	}
 
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = -698254304773541924L;
 
 	/**
 	 * Check, whether the fringe already contains a {@link PlannedTransition} that applies
@@ -64,7 +61,7 @@ public final class DefaultGraphFringe extends ArrayDeque<PlannedTransition> {
 	 * @return
 	 */
 	public Set<Reconfiguration> getPlannedReconfFor(final RawModelState state) {
-		return this.stream().filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent())
+		return queuedDate.stream().filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent())
 				.map(todo -> todo.getChange().get())
 				.filter(Reconfiguration.class::isInstance)
 				.map(Reconfiguration.class::cast)
@@ -76,7 +73,7 @@ public final class DefaultGraphFringe extends ArrayDeque<PlannedTransition> {
 	 * @return
 	 */
 	public Set<Transition> getAllPlannedTransition() {
-		return this.stream().collect(Collectors.toSet());
+		return queuedDate.stream().collect(Collectors.toSet());
 	}
 
 	/**
@@ -111,7 +108,7 @@ public final class DefaultGraphFringe extends ArrayDeque<PlannedTransition> {
 	 * @return true if any todo matches the given predicate, false otherwise.
 	 */
 	private boolean containsTodoFor(final Predicate<PlannedTransition> predicate) {
-		return this.stream()
+		return queuedDate.stream()
 				.filter(predicate)
 				.findAny()
 				.isPresent();
@@ -123,10 +120,33 @@ public final class DefaultGraphFringe extends ArrayDeque<PlannedTransition> {
 	 * @param pruningCriteria non-null criteria {@link Force} changes to be removed.
 	 */
 	public void prune(final Predicate<PlannedTransition> pruningCriteria) {
-		final Collection<PlannedTransition> toBePruned = this.stream().filter(pruningCriteria).toList();
+		final Collection<PlannedTransition> toBePruned = queuedDate.stream().filter(pruningCriteria).toList();
 
-		this.removeAll(toBePruned);
+		queuedDate.removeAll(toBePruned);
 	}
 
+	public boolean offer(PlannedTransition e) {
+		return this.queuedDate.offer(e);
+	}
+
+	public PlannedTransition poll() {
+		return this.queuedDate.poll();
+	}
+
+	public PlannedTransition peek() {
+		return this.queuedDate.peek();
+	}
+
+	public Iterator<PlannedTransition> iterator() {
+		return this.queuedDate.iterator();
+	}
+
+	public int size() {
+		return this.queuedDate.size();
+	}
+
+	public boolean isEmpty() {
+		return this.queuedDate.isEmpty();
+	}
 
 }

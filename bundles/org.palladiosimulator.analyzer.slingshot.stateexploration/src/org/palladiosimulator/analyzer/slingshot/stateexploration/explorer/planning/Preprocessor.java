@@ -19,8 +19,8 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reac
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -48,12 +48,12 @@ public class Preprocessor {
 	private static final Logger LOGGER = Logger.getLogger(Preprocessor.class.getName());
 
 	private final DefaultGraph rawgraph;
-	private final DefaultGraphFringe fringe;
+	private final FringeFringe fringe;
 	private final CutOffConcerns cutOffConcerns;
 
 	private final double minDuration;
 
-	public Preprocessor(final DefaultGraph graph, final DefaultGraphFringe fringe, final double minDuration) {
+	public Preprocessor(final DefaultGraph graph, final FringeFringe fringe, final double minDuration) {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 		this.minDuration = minDuration;

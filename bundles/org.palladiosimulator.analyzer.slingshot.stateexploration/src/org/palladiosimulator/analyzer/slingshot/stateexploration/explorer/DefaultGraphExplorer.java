@@ -34,9 +34,10 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planni
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PriorityTransitionQueue;
 import org.palladiosimulator.analyzer.slingshot.workflow.WorkflowConfigurationModule;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
@@ -68,7 +69,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final Postprocessor postprocessor;
 
 	private final DefaultGraph graph;
-	private final DefaultGraphFringe fringe;
+	private final FringeFringe fringe;
 
 	private final IProgressMonitor monitor;
 
@@ -93,7 +94,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
 					.createRootArchConfig(this.initModels.getResourceSet(), LaunchconfigAccess.getModelLocation(launchConfigurationParams)));
 
-		this.fringe = new DefaultGraphFringe();
+		this.fringe = new FringeFringe(new PriorityTransitionQueue()); // new FIFOTransitionQueue()
 
 		systemDriver.postEvent(
 				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
@@ -166,8 +167,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
-		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
-		current.setUtility(node.utility().getTotalUtilty());
+		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);		
+		current.setUtility(node.utility().getTotalUtilty() );
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node));
 
@@ -275,7 +276,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 			if (gotNopped || gonnaGetNopped) {
 				continue;
 			} else {
-				this.fringe.add(new PlannedTransition(Optional.empty(), (DefaultState) rawModelState));
+				this.fringe.offer(new PlannedTransition(Optional.empty(), (DefaultState) rawModelState));
 			}
 
 		}

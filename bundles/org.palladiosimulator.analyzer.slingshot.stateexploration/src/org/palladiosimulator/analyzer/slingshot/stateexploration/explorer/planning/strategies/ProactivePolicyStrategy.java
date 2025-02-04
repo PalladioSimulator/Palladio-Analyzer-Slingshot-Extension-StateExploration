@@ -3,8 +3,8 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 import java.util.List;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 
 import com.google.common.base.Preconditions;
@@ -17,7 +17,7 @@ import com.google.common.base.Preconditions;
 public abstract class ProactivePolicyStrategy {
 
 	protected final DefaultGraph graph;
-	protected final DefaultGraphFringe fringe;
+	protected final FringeFringe fringe;
 
 	/**
 	 * Create new {@link ProactivePolicyStrategy}.
@@ -26,7 +26,7 @@ public abstract class ProactivePolicyStrategy {
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected ProactivePolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe) {
+	protected ProactivePolicyStrategy(final DefaultGraph graph, final FringeFringe fringe) {
 		this.graph = Preconditions.checkNotNull(graph);
 		this.fringe = Preconditions.checkNotNull(fringe);
 	}
