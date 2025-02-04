@@ -101,10 +101,12 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	/* for deleting monitors and MP of scaled in resources */
 	private final MonitorRepository monitorrepo;
 	private final MeasuringPointRepository measuringpointsrepo;
+	
+	private final EventsToInitOnWrapper wrapper;
 
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
-			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsToInitOn,
+			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsWrapper,
 			final @Nullable SimuComConfig simuComConfig,
 			final Allocation allocation, final MonitorRepository monitorrepo) {
 
@@ -116,6 +118,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.simuComConfig = simuComConfig;
 		this.allocation = allocation;
 		this.monitorrepo = monitorrepo;
+		
+		this.wrapper = eventsWrapper;
 
 		if (this.monitorrepo.getMonitors().isEmpty()) {
 			this.measuringpointsrepo = null;
@@ -126,7 +130,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 		if (activated) {
 			assert halfDoneState.getSnapshot() == null : "Snapshot already set, but should not be!";
-			this.eventsToInitOn = eventsToInitOn.getEventsToInitOn();
+			this.eventsToInitOn = eventsWrapper.getOtherEvents();
 		} else {
 			this.eventsToInitOn = Set.of();
 		}
@@ -160,6 +164,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 *
 	 * Return (and thereby submit for scheduling) the snapshotted events from
 	 * earlier simulation run.
+	 * 
+	 * TODO changes this, because the result mixes up the event order. 
 	 *
 	 * @param simulationStarted
 	 * @return
@@ -167,23 +173,29 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	@Subscribe
 	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
 		assert snapshotConfig.isStartFromSnapshot()
-		|| this.eventsToInitOn.stream().allMatch(
-				e -> e instanceof ModelAdjustmentRequested || e instanceof SPDAdjustorStateInitialized)
+		|| (this.eventsToInitOn.isEmpty() && !wrapper.getAdjustmentEvents().isEmpty())
 		: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
 
 		this.initOffsets(this.eventsToInitOn);
 		final Set<DESEvent> eventsToInitOnNoIntervallPassed = this.removeTakeCostMeasurement(this.eventsToInitOn);
+		
+		List<DESEvent> allEvents = new ArrayList<>();
+		allEvents.addAll(wrapper.getStateInitEvents());
+		allEvents.addAll(wrapper.getAdjustmentEvents());
+		allEvents.addAll(eventsToInitOnNoIntervallPassed);
+		
 
-		return Result.of(eventsToInitOnNoIntervallPassed);
+		return Result.of(allEvents);
 	}
 
 	/**
-	 * Route the {@link SimulationStarted} event to either start from snapshotted
-	 * events, or with an clean simulator. This is mutually exclusive, it's never
-	 * both.
+	 * Route a {@link SimulationStarted} event.
+	 * 
+	 * If there are any initialisation events, the event is always routed to this class. 
+	 * 
+	 * If the simulation starts from a snapshot, the event is aborted to all other simulator classes.
+	 * Otherwise, event delivered to the other classes and the simulation starts normally. 
 	 *
-	 * TODO in case we get mutual exclusiveness for Subscribers as a Slingshot
-	 * feature this operation will probably be obsolete.
 	 *
 	 * @param information interception information
 	 * @param event       intercepted event
@@ -197,19 +209,19 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 			return InterceptionResult.abort(); // won't be delivered.
 		}
 
+		// TODO : actually, i think we need not abort forwarding the simulation started to this class.  
 		if (information.getEnclosingType().get().equals(this.getClass())) {
-			// delievering to this class
-			if (!this.eventsToInitOn.isEmpty()) {
+			// delievering to this class, if there is any event for initialisation.
+			if (!this.eventsToInitOn.isEmpty() || !this.wrapper.getAdjustmentEvents().isEmpty() || !this.wrapper.getStateInitEvents().isEmpty()) {
 				return InterceptionResult.success();
 			} else {
-				return InterceptionResult.abort(); // won't be delivered.
+				return InterceptionResult.abort(); 
 			}
 		} else {
-			// delivering e.g. to another class.
-			if (snapshotConfig.isStartFromSnapshot()) {
+			if (snapshotConfig.isStartFromSnapshot()) { 
 				return InterceptionResult.abort();
 			} else {
-				return InterceptionResult.success(); // won't be delivered.
+				return InterceptionResult.success(); 
 			}
 		}
 	}

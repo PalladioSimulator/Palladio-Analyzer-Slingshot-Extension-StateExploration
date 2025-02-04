@@ -1,11 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 
@@ -22,15 +21,16 @@ public class SimulationInitConfiguration {
 	private final DefaultState stateToExplore;
 	private final double explorationDuration;
 
-	/** Events that are not part of the simulation, but only for initialising it. */
-	private final Collection<DESEvent> initializationEvents;
+	/** Events that are not part of the simulation, but only for initialising the SPD Interpreter. */
+	private final Set<SPDAdjustorStateInitialized> initializationEvents;
 
+	/** Adjustments. Beware, order must be preserved.*/
 	private final List<ModelAdjustmentRequested> events;
 	private final String parentId;
 
 	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore,
 			final double explorationDuration, final List<ModelAdjustmentRequested> events,
-			final Collection<DESEvent> initializationEvents, final String parentId) {
+			final Set<SPDAdjustorStateInitialized> initializationEvents, final String parentId) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
@@ -52,7 +52,7 @@ public class SimulationInitConfiguration {
 		return this.explorationDuration;
 	}
 
-	public Collection<DESEvent> getinitializationEvents() {
+	public Set<SPDAdjustorStateInitialized> getStateInitializationEvents() {
 		return this.initializationEvents;
 	}
 
@@ -61,7 +61,7 @@ public class SimulationInitConfiguration {
 	 *
 	 * @return the event
 	 */
-	public List<ModelAdjustmentRequested> getEvents() {
+	public List<ModelAdjustmentRequested> getAdjustmentEvents() {
 		return this.events;
 	}
 

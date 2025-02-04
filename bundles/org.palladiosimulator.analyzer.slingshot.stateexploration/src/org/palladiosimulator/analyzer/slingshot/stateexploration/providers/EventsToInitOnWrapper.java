@@ -1,7 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 
+import java.util.List;
 import java.util.Set;
 
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 
 /**
@@ -10,20 +13,46 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
  *
  * We use this wrapper, because creating an provider, that directly provides a
  * Set of something did not work. Probably some Problem with the Types, but i am
- * no expert [Stieß]
+ * no expert. [S3]
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 public class EventsToInitOnWrapper {
 
-	private final Set<DESEvent> eventsToInitOn;
+	/**
+	 * Adjustments to be applied at the beginning of the simulation run. Beware, the order is relevant. 
+	 */
+	private final List<ModelAdjustmentRequested> adjustmentEvents;
+	
+	private final Set<SPDAdjustorStateInitialized> stateInitEvents;
+	private final Set<DESEvent> otherEvents;
 
-	public EventsToInitOnWrapper(final Set<DESEvent> eventsToInitOn) {
-		this.eventsToInitOn = eventsToInitOn;
+	/**
+	 * Create a wrapper around the event to initialise a simulation run. 
+	 * 
+	 * @param adjustmentEvents Adjustments to be applied at the beginning of the simulation run.
+	 * @param stateInitEvents Values to initialise the states of the SPD interpreter.
+	 * @param otherEvents User and request events for the simulation run.
+	 */
+	public EventsToInitOnWrapper(final List<ModelAdjustmentRequested> adjustmentEvents, final Set<SPDAdjustorStateInitialized> stateInitEvents, Set<DESEvent> otherEvents) {
+		
+		this.adjustmentEvents = adjustmentEvents;
+		this.otherEvents = otherEvents;
+		this.stateInitEvents = stateInitEvents;
 	}
 
-	public Set<DESEvent> getEventsToInitOn() {
-		return eventsToInitOn;
+	public List<ModelAdjustmentRequested> getAdjustmentEvents() {
+		return adjustmentEvents;
 	}
+
+	public Set<SPDAdjustorStateInitialized> getStateInitEvents() {
+		return stateInitEvents;
+	}
+
+	public Set<DESEvent> getOtherEvents() {
+		return otherEvents;
+	}
+
+
 }

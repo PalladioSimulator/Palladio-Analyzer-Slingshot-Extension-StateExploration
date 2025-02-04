@@ -5,6 +5,7 @@ import java.util.Set;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 
 /**
@@ -36,14 +37,13 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	 * Always update these provider together.
 	 *
 	 * @param config
-	 * @param state
-	 * @param events
+	 * @param initConfig
+	 * @param otherEvents
 	 */
-	public static void updateProviders(final SnapshotConfiguration config, final DefaultState state,
-			final Set<DESEvent> events) {
+	public static void updateProviders(final SnapshotConfiguration config, final SimulationInitConfiguration initConfig, Set<DESEvent> otherEvents) {
 		snapConfigProvider.set(config);
-		defaultStateProvider.set(state);
-		eventsToInitOnProvider.set(new EventsToInitOnWrapper(events));
+		defaultStateProvider.set(initConfig.getStateToExplore());
+		eventsToInitOnProvider.set(new EventsToInitOnWrapper(initConfig.getAdjustmentEvents(), initConfig.getStateInitializationEvents(), otherEvents));
 
 	}
 

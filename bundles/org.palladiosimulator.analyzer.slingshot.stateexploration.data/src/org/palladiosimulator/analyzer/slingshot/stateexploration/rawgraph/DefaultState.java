@@ -98,7 +98,7 @@ public class DefaultState implements RawModelState {
 		this.adjustorStateValues.addAll(adjustorStateValues);
 	}
 
-	public Collection<SPDAdjustorStateValues> getAdjustorStateValues() {
+	public Set<SPDAdjustorStateValues> getAdjustorStateValues() {
 		return Set.copyOf(this.adjustorStateValues);
 	}
 

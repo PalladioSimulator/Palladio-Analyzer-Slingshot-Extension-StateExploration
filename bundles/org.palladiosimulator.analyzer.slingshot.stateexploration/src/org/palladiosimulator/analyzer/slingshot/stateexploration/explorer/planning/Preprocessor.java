@@ -5,12 +5,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
-import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
@@ -313,8 +314,8 @@ public class Preprocessor {
 	 * @return Events to initialise the interpreter to the states from the previous
 	 *         run.
 	 */
-	private Collection<DESEvent> createStateInitEvents(final Collection<SPDAdjustorStateValues> values) {
-		return values.stream().map(value -> (DESEvent) new SPDAdjustorStateInitialized(value)).toList();
+	private Set<SPDAdjustorStateInitialized> createStateInitEvents(final Collection<SPDAdjustorStateValues> values) {
+		return values.stream().map(value -> new SPDAdjustorStateInitialized(value)).collect(Collectors.toSet());
 	}
 
 }
