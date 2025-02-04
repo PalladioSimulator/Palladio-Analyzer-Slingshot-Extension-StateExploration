@@ -36,7 +36,10 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 	private static final Logger LOGGER = Logger.getLogger(MergerPolicyStrategy.class.getName());
 
-	private static final int DUPLICATE_THRESHOLD = 2;
+	/** 
+	 * max occurrence of policy per transition. 1 means, each policy at max once.  
+	 */
+	private static final int MAX_OCCURRENCE_PER_POLICY = 1;
 
 	private final DefaultState state;
 
@@ -114,7 +117,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 		Set<ProactiveReconfiguration> proactiveReconfs = new HashSet<>();
 
 		for (ModelAdjustmentRequested adj : newAdj) {
-			if (countAdjustment(oldAdj, adj) < DUPLICATE_THRESHOLD) {
+			if (countAdjustment(oldAdj, adj) < MAX_OCCURRENCE_PER_POLICY) {
 				for (int i = 0; i <= oldAdj.size(); i++) {
 					List<ModelAdjustmentRequested> tmp = new ArrayList<>(oldAdj);
 					tmp.add(i, adj);
@@ -123,7 +126,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 			} else {
 				LOGGER.debug(String.format(
 						"no new change based on policy %s because it already occurs more than %d times in the base change.",
-						adj.getScalingPolicy().getEntityName(), DUPLICATE_THRESHOLD));
+						adj.getScalingPolicy().getEntityName(), MAX_OCCURRENCE_PER_POLICY));
 			}
 		}
 		return proactiveReconfs;

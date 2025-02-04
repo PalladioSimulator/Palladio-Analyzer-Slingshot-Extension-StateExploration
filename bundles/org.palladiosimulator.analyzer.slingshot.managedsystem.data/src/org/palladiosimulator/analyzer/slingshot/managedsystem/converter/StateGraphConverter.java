@@ -41,7 +41,7 @@ public class StateGraphConverter {
 
         measuremnets = MeasurementConverter.visitExperiementSetting(expSetting);
 
-        return new StateGraphNode("", startTime, endTime, measuremnets, slos, "parentId", null);
+        return new StateGraphNode("", startTime, endTime, measuremnets, slos, "parentId", List.of());
 	}
 
 	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {

@@ -141,12 +141,11 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
-		// TODO i must split this now, because i must preserve the order for the adjustment events.
+		
+		// create copy here, such that i need not pass the initModels to the update providers.
 		final Set<DESEvent> allEvents = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
-		config.getEvents().forEach(e -> allEvents.add(e));
-		allEvents.addAll(config.getinitializationEvents());
 
-		AdditionalConfigurationModule.updateProviders(snapConfig, config.getStateToExplore(), allEvents);
+		AdditionalConfigurationModule.updateProviders(snapConfig, config, allEvents);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();
@@ -164,7 +163,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 		final DefaultState current = config.getStateToExplore();
 
-		final List<ScalingPolicy> policies = config.getEvents().stream().map(e -> e.getScalingPolicy())
+		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
 		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
