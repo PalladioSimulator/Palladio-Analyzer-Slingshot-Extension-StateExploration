@@ -12,6 +12,7 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPar
 import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
+import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
@@ -93,6 +94,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 				this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
 						this.initEvent.getMonitor(), this.initEvent.getBlackboard());
 				this.explorationState = ExplorationState.RUNNING;
+				LOGGER.warn("Start Exploration " + EventMessage.EXPLORATION_ID);
 			} finally {
 				this.explorerLock.unlock();
 			}

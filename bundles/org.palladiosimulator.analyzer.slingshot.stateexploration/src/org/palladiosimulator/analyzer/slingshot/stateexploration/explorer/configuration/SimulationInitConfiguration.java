@@ -67,11 +67,16 @@ public class SimulationInitConfiguration {
 
 	@Override
 	public String toString() {
-		return "SimulationInitConfiguration [snapToInitOn=" + snapToInitOn + ", stateToExplore=" + stateToExplore
-				+ ", explorationDuration=" + explorationDuration + ", events=[" + events.stream()
+		
+		String type = stateToExplore.getIncomingTransition().isEmpty() ? " - " : stateToExplore.getIncomingTransition().get().getType().toString();
+		
+		return "SimulationInitConfiguration [stateToExplore=" + stateToExplore
+				+ ", explorationDuration=" + explorationDuration + ", policies=[" + events.stream()
 				.map(e -> e.getScalingPolicy().getEntityName() + "(" + e.getScalingPolicy().getId() + ")")
 				.reduce("", (a, b) -> a + ", " + b)
-				+ "]"
+				+ "] - "
+				+ type 
+				+ " application "
 				+ "]";
 	}
 

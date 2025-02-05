@@ -3,10 +3,13 @@ package org.palladiosimulator.analyzer.slingshot.snapshot;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
+import org.eclipse.emf.ecore.EObject;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
@@ -23,6 +26,11 @@ import org.palladiosimulator.semanticspd.Configuration;
 import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
 import org.palladiosimulator.semanticspd.ServiceGroupCfg;
 import org.palladiosimulator.semanticspd.TargetGroupCfg;
+import org.palladiosimulator.spd.SPD;
+import org.palladiosimulator.spd.targets.CompetingConsumersGroup;
+import org.palladiosimulator.spd.targets.ElasticInfrastructure;
+import org.palladiosimulator.spd.targets.ServiceGroup;
+import org.palladiosimulator.spd.targets.TargetGroup;
 
 /**
  *
@@ -36,48 +44,98 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotAbortionBehavior.class);
 
 	private final List<ModelAdjustmentRequested> adjustmentEvents;
-	
+
 	private int adjusmentCounter = 0;
-	
+
 	private final DefaultState state;
 	private final SimulationScheduling scheduling;
 
 	private final boolean activated;
 
 	private final Map<TargetGroupCfg, Integer> tg2size;
-	
+
 	private final Configuration config;
-	
 
 	@Inject
 	public SnapshotAbortionBehavior(final @Nullable DefaultState state,
-			final @Nullable EventsToInitOnWrapper eventsWapper, final SimulationScheduling scheduling, final Configuration config) {
+			final @Nullable EventsToInitOnWrapper eventsWapper, final SimulationScheduling scheduling,
+			@Nullable final Configuration config, @Nullable final SPD spd) {
 		this.state = state;
 		this.scheduling = scheduling;
-		this.adjustmentEvents =  eventsWapper == null ? null : eventsWapper.getAdjustmentEvents();
-		
+		this.adjustmentEvents = eventsWapper == null ? null : eventsWapper.getAdjustmentEvents();
+
 		this.config = config;
-		
+
 		this.tg2size = new HashMap<>();
-		
-		for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
-			tg2size.put(tgcfg, this.getSizeOf(tgcfg));
+
+		if (spd != null && config != null) {
+
+			/*
+			 * [S3] Consider only target group configs with a matching target group. This is necessary,
+			 * because apparently some scale ins reduce the number of assemblies, but not
+			 * the number of resource containers. Unclear whether this is a bug or a feature in the SPD transformations.
+			 */
+			Set<EObject> targetGroups = spd.getTargetGroups().stream().map(tg -> getUnitOf(tg))
+					.collect(Collectors.toSet());
+
+			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+				if (targetGroups.contains(getUnitOf(tgcfg))) {
+					tg2size.put(tgcfg, getSizeOf(tgcfg));
+				}
+			}
 		}
 
-		this.activated = state != null && eventsWapper != null;
+		this.activated = state != null && eventsWapper != null && !this.tg2size.isEmpty();
 	}
 
 	@Override
 	public boolean isActive() {
 		return this.activated;
 	}
-	
+
 	/**
+	 * Assumption: all intended reconfiguration happen before further reactive
+	 * reconfiguration happen.
+	 * 
+	 * @param modelAdjusted
+	 */
+	@Subscribe
+	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
+		adjusmentCounter++;
+
+		if (modelAdjusted.time() > 0.0 && adjusmentCounter <= adjustmentEvents.size()) {
+			throw new IllegalStateException("Missing model adjusted events from init");
+		}
+
+		if (!modelAdjusted.isWasSuccessful()) {
+			; // TODO is this the correct behaviour?
+		}
+
+		if (adjusmentCounter == adjustmentEvents.size()) {
+			LOGGER.warn("Beginn Abortion check for " + state.getId());
+
+			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+				if (tg2size.containsKey(tgcfg)) {
+					LOGGER.warn(tgcfg.getClass().getSimpleName() + ": old " + tg2size.get(tgcfg) + " new "
+							+ getSizeOf(tgcfg));
+					if (tg2size.get(tgcfg) != getSizeOf(tgcfg)) {
+						return;
+					}
+				}
+			}
+			state.addReasonToLeave(ReasonToLeave.aborted);
+			scheduling.scheduleEvent(new SnapshotInitiated(0));
+			LOGGER.warn("Abort " + state.getId());
+		}
+	}
+
+	/**
+	 * Access helper
 	 * 
 	 * @param tgcfg
 	 * @return
 	 */
-	private int getSizeOf(final TargetGroupCfg tgcfg) {
+	private static int getSizeOf(final TargetGroupCfg tgcfg) {
 		if (tgcfg instanceof ElasticInfrastructureCfg ecfg) {
 			return ecfg.getElements().size();
 		} else if (tgcfg instanceof ServiceGroupCfg scfg) {
@@ -85,32 +143,45 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		} else if (tgcfg instanceof CompetingConsumersGroupCfg ccfg) {
 			return ccfg.getElements().size();
 		} else {
-			throw new IllegalArgumentException("TargetGroup of unknown type, cannot determine size of elements.");
+			throw new IllegalArgumentException(
+					"TargetGroupConfiguration of unknown type, cannot determine size of elements.");
 		}
 	}
-	
+
 	/**
-	 * Assumption: all intended reconfiguration happen before further reactive reconfiguration happen. 
+	 * Access helper
 	 * 
-	 * @param modelAdjusted
+	 * @param tgcfg
+	 * @return
 	 */
-	@Subscribe
-	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
-		adjusmentCounter++;
-		
-		if (!modelAdjusted.isWasSuccessful()) {
-			return; // TODO is this the correct behaviour? 
+	private static EObject getUnitOf(final TargetGroupCfg tgcfg) {
+		if (tgcfg instanceof ElasticInfrastructureCfg ecfg) {
+			return ecfg.getUnit();
+		} else if (tgcfg instanceof ServiceGroupCfg scfg) {
+			return scfg.getUnit();
+		} else if (tgcfg instanceof CompetingConsumersGroupCfg ccfg) {
+			return ccfg.getUnit();
+		} else {
+			throw new IllegalArgumentException(
+					"TargetGroupConfiguration of unknown type, cannot determine size of elements.");
 		}
-		
-		if (adjusmentCounter == adjustmentEvents.size()) {
-			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
-				
-				if (tg2size.get(tgcfg) != this.getSizeOf(tgcfg)) {
-					return;
-				}
-			}
-			state.addReasonToLeave(ReasonToLeave.aborted);
-			scheduling.scheduleEvent(new SnapshotInitiated(0));
+	}
+
+	/**
+	 * Access helper
+	 * 
+	 * @param tg
+	 * @return
+	 */
+	private static EObject getUnitOf(final TargetGroup tg) {
+		if (tg instanceof ElasticInfrastructure etg) {
+			return etg.getUnit();
+		} else if (tg instanceof ServiceGroup stg) {
+			return stg.getUnitAssembly();
+		} else if (tg instanceof CompetingConsumersGroup ctg) {
+			return ctg.getUnitAssembly();
+		} else {
+			throw new IllegalArgumentException("TargetGroup of unknown type, cannot determine size of elements.");
 		}
 	}
 }

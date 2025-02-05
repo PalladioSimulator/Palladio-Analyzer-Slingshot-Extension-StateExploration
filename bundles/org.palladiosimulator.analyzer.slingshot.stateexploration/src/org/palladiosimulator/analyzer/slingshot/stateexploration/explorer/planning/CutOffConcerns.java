@@ -30,6 +30,10 @@ public class CutOffConcerns {
 	/**
 	 * Patter is "leav on rea" (prev) -> NOOP -> "leav on rea" (current) -> NOOP
 	 * (ToDoChange)
+	 * 
+	 * Beware, this kinda interacts with the other cutoffs. As example: if we do not
+	 * drop the scale ins on min config + abort effectless simulations, we stop the
+	 * simulation after about 6 states.
 	 *
 	 * @param current
 	 * @return
@@ -68,9 +72,11 @@ public class CutOffConcerns {
 				|| prev.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
 			return false;
 		}
-		final List<ScalingPolicy> policyCurrent = current.getSnapshot().getModelAdjustmentRequestedEvent().stream().map(e -> e.getScalingPolicy()).toList();
-		final List<ScalingPolicy> policyPrev = prev.getSnapshot().getModelAdjustmentRequestedEvent().stream().map(e -> e.getScalingPolicy()).toList();
-		
+		final List<ScalingPolicy> policyCurrent = current.getSnapshot().getModelAdjustmentRequestedEvent().stream()
+				.map(e -> e.getScalingPolicy()).toList();
+		final List<ScalingPolicy> policyPrev = prev.getSnapshot().getModelAdjustmentRequestedEvent().stream()
+				.map(e -> e.getScalingPolicy()).toList();
+
 		if (policyCurrent.size() != policyPrev.size()) {
 			return false;
 		}

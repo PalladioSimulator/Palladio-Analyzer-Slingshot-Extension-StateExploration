@@ -2,7 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.converter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
@@ -40,7 +39,7 @@ public class StateGraphConverter {
 		if (state.getArchitecureConfiguration().getMonitorRepository().isPresent()) {
 			for (final Monitor monitor : state.getArchitecureConfiguration().getMonitorRepository().get()
 					.getMonitors()) {
-				System.out.println(monitor.getEntityName());
+				// System.out.println(monitor.getEntityName());
 			}
 		}
 
