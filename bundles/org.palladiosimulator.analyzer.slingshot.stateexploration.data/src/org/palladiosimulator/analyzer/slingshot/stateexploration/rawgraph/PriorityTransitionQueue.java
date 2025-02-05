@@ -28,9 +28,21 @@ public final class PriorityTransitionQueue extends PriorityQueue<PlannedTransiti
 	private final static Logger LOGGER = Logger.getLogger(PriorityTransitionQueue.class);
 	
 	public PriorityTransitionQueue() {
-		super(createForUtility());
+		super(createForUtilityOnly());
 	}
 
+	
+	private static Comparator<PlannedTransition> createForUtilityOnly() {
+		return new Comparator<PlannedTransition>() {
+			@Override
+			public int compare(final PlannedTransition o1, final PlannedTransition o2) {
+				return -Double.compare(o1.getStart().getUtility(), o2.getStart().getUtility());
+				
+			}
+			
+		};
+	}
+	
 	/**
 	 * Compare two possible changes by the utility of their start nodes.
 	 *
@@ -60,9 +72,7 @@ public final class PriorityTransitionQueue extends PriorityQueue<PlannedTransiti
 				if (ordinalityDiff < ordinalityMattersThreshold) {
 					return 0;
 				} else {
-				
-				
-				return ordinalityDiff;
+					return ordinalityDiff;
 				}
 			}
 			
@@ -135,5 +145,10 @@ public final class PriorityTransitionQueue extends PriorityQueue<PlannedTransiti
 				return total;
 			}
 		};
+	}
+	
+	@Override
+	public String toString() {
+		return this.stream().map(p -> p.getStart().getUtility() + " ").reduce("", (s, t) -> s + t);
 	}
 }

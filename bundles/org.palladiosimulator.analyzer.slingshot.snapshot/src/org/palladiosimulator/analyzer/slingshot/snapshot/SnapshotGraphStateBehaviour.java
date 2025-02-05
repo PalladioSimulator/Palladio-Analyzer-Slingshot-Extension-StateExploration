@@ -183,7 +183,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		allEvents.addAll(wrapper.getStateInitEvents());
 		allEvents.addAll(wrapper.getAdjustmentEvents());
 		allEvents.addAll(eventsToInitOnNoIntervallPassed);
-		
+
+		LOGGER.warn("Initialise on " + wrapper.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy().getEntityName()).toList());
 
 		return Result.of(allEvents);
 	}

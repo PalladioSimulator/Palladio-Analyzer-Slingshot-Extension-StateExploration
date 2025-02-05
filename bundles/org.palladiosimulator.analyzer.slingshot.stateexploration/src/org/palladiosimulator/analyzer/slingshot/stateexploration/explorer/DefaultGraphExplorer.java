@@ -137,7 +137,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.getAllocationContext().getResourceContainer_AllocationContext().getId())
 		.forEach(id -> LOGGER.info(id));
 
-		LOGGER.warn("start on config" + config.toString());
+		//LOGGER.warn("start on config" + config.toString());
 
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
@@ -152,6 +152,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		driver.start();
 
 		this.postProcessExplorationCycle(config);
+		
+		LOGGER.warn("done with " + config.toString());
 	}
 
 	/**
@@ -168,7 +170,11 @@ public class DefaultGraphExplorer implements GraphExplorer {
 				.toList();
 
 		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);		
-		current.setUtility(node.utility().getTotalUtilty() );
+		
+		double prev = current.getIncomingTransition().isEmpty() ? 0 : ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
+		double value = node.utility().getTotalUtilty() == 0 ? prev : node.utility().getTotalUtilty(); 
+		
+		current.setUtility(value);
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node));
 

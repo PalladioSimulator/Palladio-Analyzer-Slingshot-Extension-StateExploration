@@ -73,7 +73,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 		// keep or delete?
 		if (isDrop(event.getScalingPolicy())) {
-			return InterceptionResult.success();
+			return InterceptionResult.abort();
 		}
 
 		state.addReasonToLeave(ReasonToLeave.reactiveReconfiguration);
@@ -101,7 +101,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 						.filter(eic -> eic.getUnit().getId().equals(ei.getUnit().getId())).toList();
 
 				if (elements.size() != 1) {
-					throw new RuntimeException("Help, wrong number of matching service group configs.");
+					throw new RuntimeException("Help, wrong number of matching elastic infrastructure group configs.");
 				}
 
 				return elements.get(0).getElements().size() == 1;
