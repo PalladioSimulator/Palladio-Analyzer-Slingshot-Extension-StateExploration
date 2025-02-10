@@ -57,6 +57,7 @@ import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
 import org.palladiosimulator.pcmmeasuringpoint.ResourceContainerMeasuringPoint;
+import org.palladiosimulator.spd.ScalingPolicy;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
@@ -360,6 +361,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		
 		halfDoneState.addAdjustorStateValues(
 				this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time())).toList());
+		
+		// also offset targetgroup state values. 
 
 		// Do not add the state anywhere, just finalise it. Assumption is, it already is
 		// in the graph.
@@ -487,8 +490,11 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		final int numberScales = stateValues.numberScales();
 		final double coolDownEnd = stateValues.coolDownEnd() > 0.0 ? stateValues.coolDownEnd() - referenceTime : 0.0;
 		final int numberOfScalesInCooldown = stateValues.numberOfScalesInCooldown();
-
-		return new SPDAdjustorStateValues(stateValues.scalingPolicyId(), latestAdjustmentAtSimulationTime, numberScales,
-				coolDownEnd, numberOfScalesInCooldown);
+		
+		final List<ScalingPolicy> enactedPolicies = new ArrayList<>(stateValues.enactedPolicies()); // unchanged
+		final List<Double> enactmentTimeOfPolicies = stateValues.enactmentTimeOfPolicies().stream().map(time -> time-referenceTime).toList();
+		
+		return new SPDAdjustorStateValues(stateValues.scalingPolicy(), latestAdjustmentAtSimulationTime, numberScales,
+				coolDownEnd, numberOfScalesInCooldown, enactedPolicies, enactmentTimeOfPolicies);
 	}
 }

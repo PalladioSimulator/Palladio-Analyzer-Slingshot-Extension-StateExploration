@@ -180,38 +180,57 @@ public class Preprocessor {
 	private Collection<SPDAdjustorStateValues> updateInitValues(final ScalingPolicy policy,
 			final Collection<SPDAdjustorStateValues> initValues) {
 
-		final Collection<SPDAdjustorStateValues> rvals = new HashSet<>(initValues);
+		Collection<SPDAdjustorStateValues> rvals = new HashSet<>(initValues);
 
 		final Optional<CooldownConstraint> cooldownConstraint = policy.getPolicyConstraints().stream()
 				.filter(CooldownConstraint.class::isInstance).map(CooldownConstraint.class::cast).findAny();
 
-		if (cooldownConstraint.isEmpty()) {
-			return rvals;
-		}
-
 		int numberscales = 0;
 		double cooldownEnd = 0;
 		int numberscalesinCD = 0;
+		
+		List<ScalingPolicy> enactedPolicies = new ArrayList<>();
+		List<Double> enactmentTimeOfPolicies = new ArrayList<>();
 
-		final Optional<SPDAdjustorStateValues> matchingValues = initValues.stream()
+		final Optional<SPDAdjustorStateValues> policyMatch = initValues.stream()
 				.filter(v -> v.scalingPolicyId().equals(policy.getId())).findAny();
+		
 
-		if (matchingValues.isPresent()) {
-			numberscales = matchingValues.get().numberScales();
-			cooldownEnd = matchingValues.get().coolDownEnd();
-			numberscalesinCD = matchingValues.get().numberOfScalesInCooldown();
-			rvals.remove(matchingValues.get());
+		final Optional<SPDAdjustorStateValues> targetgroupMatch = initValues.stream()
+				.filter(v -> v.scalingPolicy().getTargetGroup().getId().equals(policy.getTargetGroup().getId())).findAny();
+
+		if (policyMatch.isPresent()) {
+			numberscales = policyMatch.get().numberScales();
+			cooldownEnd = policyMatch.get().coolDownEnd();
+			numberscalesinCD = policyMatch.get().numberOfScalesInCooldown();
+
+			rvals.remove(policyMatch.get());
 		}
 
-		if (numberscalesinCD < cooldownConstraint.get().getMaxScalingOperations()) {
-			numberscalesinCD++;
-		} else {
-			numberscalesinCD = 0;
-			cooldownEnd = cooldownConstraint.get().getCooldownTime();
+		if (targetgroupMatch.isPresent()) {
+			enactedPolicies = new ArrayList<>(targetgroupMatch.get().enactedPolicies());
+			enactmentTimeOfPolicies = new ArrayList<>(targetgroupMatch.get().enactmentTimeOfPolicies());
+			
+			// for all init records that target the same target group, remove the target group updates.
+			rvals = new ArrayList<>(rvals.stream().map(val -> new SPDAdjustorStateValues(val.scalingPolicy(), val.latestAdjustmentAtSimulationTime(), val.numberScales(),
+					val.coolDownEnd(), val.numberOfScalesInCooldown(), List.of(), List.of())).toList());
 		}
 
-		final SPDAdjustorStateValues newvalues = new SPDAdjustorStateValues(policy.getId(), 0.0, numberscales + 1,
-				cooldownEnd, numberscalesinCD);
+		if (cooldownConstraint.isPresent()) {
+			if (numberscalesinCD < cooldownConstraint.get().getMaxScalingOperations()) {
+				numberscalesinCD++;
+			} else {
+				numberscalesinCD = 0;
+				cooldownEnd = cooldownConstraint.get().getCooldownTime();
+			}
+		}
+		
+		enactmentTimeOfPolicies.add(0.0);
+		enactedPolicies.add(policy);
+
+		// only the new/updated init record (i.e. the one for the most recent policy) holds the init values for the targetgroup. 
+		final SPDAdjustorStateValues newvalues = new SPDAdjustorStateValues(policy, 0.0, numberscales + 1,
+				cooldownEnd, numberscalesinCD, enactedPolicies, enactmentTimeOfPolicies); 
 
 		rvals.add(newvalues);
 
