@@ -10,6 +10,7 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanStepAppliedEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.SimplifiedPlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
@@ -44,9 +45,13 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
         // install(SlowdownBehaviour.class);
         install(DelayUntilPlanCreatedBehaviour.class);
 
-        install(InjectionSystemBehaviour.class);
-        install(InjectionSimulationBehaviour.class);
-        install(SendMessagesBehaviour.class);
+//        install(InjectionSystemBehaviour.class);
+//        install(InjectionSimulationBehaviour.class);
+//        install(SendMessagesBehaviour.class);
+        install(RLInjectionSystemBehaviour.class);
+        install(RLInjectionSimulationBehaviour.class);
+        install(RLSendMessagesBehaviour.class);
+
 
         final var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {
         }, new TypeLiteral<Class<? extends Message<?>>>() {
@@ -56,6 +61,9 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
             .toInstance(PlanCreatedEventMessage.class);
         messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
             .toInstance(StateExploredEventMessage.class);
+
+        messageBinder.addBinding(SimplifiedPlanCreatedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
+            .toInstance(SimplifiedPlanCreatedEventMessage.class);
 
         messageBinder.addBinding(PlanStepAppliedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
             .toInstance(PlanStepAppliedEventMessage.class);
