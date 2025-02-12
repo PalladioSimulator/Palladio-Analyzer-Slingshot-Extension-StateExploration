@@ -1,10 +1,13 @@
 package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.inject.Singleton;
 
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.common.events.SystemEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -48,6 +51,23 @@ public class Link {
 
     public boolean hasPlanArrived() {
         return planArrived;
+    }
+
+    final List<ModelAdjustmentRequested> events = new ArrayList<>();
+
+    public void setEvents(final List<ModelAdjustmentRequested> adjustments) {
+        if (!this.events.isEmpty()) {
+            throw new IllegalStateException("Cannot new adjustment requested events, while old ones were not yet cconsumed");
+        }
+        this.events.addAll(adjustments);
+        planArrived = true;
+    }
+
+    public List<ModelAdjustmentRequested> getEvents() {
+        planArrived = false;
+        final List<ModelAdjustmentRequested> copy = new ArrayList<>(events);
+        events.clear();
+        return copy;
     }
 
     public boolean isLinkToSystemSet() {
