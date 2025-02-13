@@ -1,6 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
+
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import javax.measure.Measure;
 
@@ -11,7 +13,6 @@ import org.palladiosimulator.servicelevelobjective.LinearFuzzyThreshold;
 import org.palladiosimulator.servicelevelobjective.NegativeQuadraticFuzzyThreshold;
 import org.palladiosimulator.servicelevelobjective.QuadraticFuzzyThreshold;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
-import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 import org.palladiosimulator.servicelevelobjective.SoftThreshold;
 import org.palladiosimulator.servicelevelobjective.Threshold;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -29,64 +30,54 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 	public StateGraphNode(final String id, final double startTime, final double endTime,
 			final List<MeasurementSet> measurements, final List<ServiceLevelObjective> slos, final String parentId,
 			final List<ScalingPolicy> incomingPolicies) {
-		this(id, startTime, endTime, measurements, slos.stream().map(x -> visitServiceLevelObjective(x)).toList(), calcUtility(startTime, endTime, measurements, slos), parentId,
-				incomingPolicies);
+		this(id, startTime, endTime, measurements, slos.stream().map(x -> visitServiceLevelObjective(x)).toList(),
+				calcUtility(startTime, endTime, measurements, slos), parentId, incomingPolicies);
 	}
-	
-	
+
 	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {
 		return new SLO(slo.getId(), slo.getName(), slo.getMeasurementSpecification().getId(),
 				(Number) slo.getLowerThreshold().getThresholdLimit().getValue(),
 				(Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
-	
 
 	private static Utility calcUtility(double startTime, double endTime, List<MeasurementSet> measurements,
 			List<ServiceLevelObjective> slos) {
 		final var utility = new Utility();
-		
-        for (final ServiceLevelObjective slo : slos) {
-            final MeasurementSet ms = measurements.stream()
-                    .filter(x -> x.getSpecificationId()
-                        .equals(slo.getMeasurementSpecification().getId()))
-                    .findFirst()
-                    .orElse(null);
-                if (ms != null) {
-                	// Is this correct?
-                    var value = ms.obtainMeasure().stream()
-                    		.mapToDouble(x -> getGrade(x, slo.getLowerThreshold(), slo.getUpperThreshold()))
-                    		.sum();
-                    		
-                    utility.addDataInstance(slo.getId(), value, UtilityType.SLO);
-                }
-        }
 
-        for (final var ms : measurements) {
-            if (ms.getMonitorName()
-                .startsWith("Cost_")) {
-                final var points = ms.getElements()
-                    .stream()
-                    .filter(pair -> pair.timeStamp() > startTime)
-                    .sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
-                    .toList();
-                final double area = calculateAreaUnderCurve(points);
-                utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
-            }
-        }
+		for (final ServiceLevelObjective slo : slos) {
+			final MeasurementSet ms = measurements.stream()
+					.filter(x -> x.getSpecificationId().equals(slo.getMeasurementSpecification().getId())).findFirst()
+					.orElse(null);
+			if (ms != null) {
+				var value = calculateAreaUnderCurveMeasure(ms, startTime, slo);
 
-        utility.calculateTotalUtility();
-        return utility;
+				utility.addDataInstance(slo.getId(), value, UtilityType.SLO);
+			}
+		}
+
+		for (final var ms : measurements) {
+			if (ms.getMetricDescriptionId().equals(MetricDescriptionConstants.COST_OF_RESOURCE_CONTAINERS.getId())) {
+				final var points = ms.getElements().stream().filter(pair -> pair.timeStamp() > startTime)
+						.sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList();
+				final double area = calculateAreaUnderCurve(points);
+				utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
+			}
+		}
+
+		utility.calculateTotalUtility();
+		return utility;
 	}
 
 	public double duration() {
 		return endTime - startTime;
 	}
 
-
 	/**
-	 * Computes the grade of fulfillment of a measurement regarding the lower and upper threshold
+	 * Computes the grade of fulfillment of a measurement regarding the lower and
+	 * upper threshold
 	 * 
-	 * Taken from: https://github.com/PalladioSimulator/Palladio-Addons-ServiceLevelObjectives/blob/master/bundles/org.palladiosimulator.servicelevelobjective.edp2/src/org/palladiosimulator/servicelevelobjective/edp2/mappers/SLOViolationEDP2DatasourceMapper.java
+	 * Taken from:
+	 * https://github.com/PalladioSimulator/Palladio-Addons-ServiceLevelObjectives/blob/master/bundles/org.palladiosimulator.servicelevelobjective.edp2/src/org/palladiosimulator/servicelevelobjective/edp2/mappers/SLOViolationEDP2DatasourceMapper.java
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static double getGrade(Measure measurement, Threshold lower, Threshold upper) {
@@ -121,8 +112,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 
 		return 0.0;
 	}
-	
-	
+
 	/**
 	 * Handles grading of measurements in lower fuzzy range
 	 */
@@ -143,8 +133,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		}
 		return 0;
 	}
-	
-	
+
 	/**
 	 * Handles grading of measurements in upper fuzzy range
 	 */
@@ -164,66 +153,109 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		}
 		return 0;
 	}
-	
-	
-    /**
-     * Calculates the area under a curve represented by a set of measurements.
-     *
-     * @param ms
-     *            the set of measurements representing the curve
-     * @return the approximate area under the curve
-     */
-    private static double calculateAreaUnderCurve(final List<Measurement<Number>> measurements) {
-        double area = 0.0;
 
-        // Iterate through the measurements pairwise to calculate the area under each segment
-        for (int i = 0; i < measurements.size() - 1; i++) {
-            // Current and next measurement points
-            final var current = measurements.get(i);
-            final var next = measurements.get(i + 1);
+	/**
+	 * Calculates the area under a curve represented by a set of measurements.
+	 *
+	 * @param ms the set of measurements representing the curve
+	 * @return the approximate area under the curve
+	 */
+	private static double calculateAreaUnderCurve(final List<Measurement<Number>> measurements) {
+		double area = 0.0;
 
-            // The values (heights) at the current and next time stamps
-            final double currentValue = current.measure()
-                .doubleValue();
-            final double nextValue = next.measure()
-                .doubleValue();
+		// Iterate through the measurements pairwise to calculate the area under each
+		// segment
+		for (int i = 0; i < measurements.size() - 1; i++) {
+			// Current and next measurement points
+			final var current = measurements.get(i);
+			final var next = measurements.get(i + 1);
 
-            // The time stamps (positions along the x-axis) for the current and next measurements
-            final double start = current.timeStamp(); // x₁
-            final double end = next.timeStamp(); // x₂
+			// The values (heights) at the current and next time stamps
+			final double currentValue = current.measure().doubleValue();
+			final double nextValue = next.measure().doubleValue();
 
-            // Calculate the area under the segment between the two points
-            area += calculateArea(start, end, currentValue, nextValue);
-        }
+			// The time stamps (positions along the x-axis) for the current and next
+			// measurements
+			final double start = current.timeStamp(); // x₁
+			final double end = next.timeStamp(); // x₂
 
-        return area;
-    }
+			// Calculate the area under the segment between the two points
+			area += calculateArea(start, end, currentValue, nextValue);
+		}
 
-    /**
-     * Calculates the area of a trapezoid defined by two points on a curve.
-     *
-     * @param start
-     *            the starting time stamp (x₁)
-     * @param end
-     *            the ending time stamp (x₂)
-     * @param currentValue
-     *            the value at the starting time stamp (f(x₁))
-     * @param nextValue
-     *            the value at the ending time stamp (f(x₂))
-     * @return the area under the curve segment between start and end
-     */
-    private static double calculateArea(final double start, final double end, final double currentValue,
-            final double nextValue) {
-        // Calculate the width of the interval (the distance along the x-axis)
-        final double timeDifference = end - start; // Δx = x₂ - x₁
+		return area;
+	}
 
-        // Calculate the average of the two values (heights at x₁ and x₂)
-        final double averageValue = (currentValue + nextValue) / 2.0; // (f(x₁) + f(x₂)) / 2
+	/**
+	 * 
+	 * Maps measurements to a curve of SLO grades and calculate the area under a
+	 * grades curve.
+	 * 
+	 * E.g. for measurements with time-value tuples [(0,2.5), (1,2.6), (2,4)] and an
+	 * SLO with upper threshold t_soft = 3 and t_hard = 3.5, the graded curve is
+	 * [(0,1), (1,1), (2,0)] and the area underneath is 1 + 0.5 = 1.5.
+	 * 
+	 *
+	 * 
+	 * @param measurements measurements to be graded
+	 * @param startTime
+	 * @param slo          SLOs to grade against
+	 * @return area under graded curve.
+	 */
+	private static double calculateAreaUnderCurveMeasure(final MeasurementSet measurements, final double startTime,
+			final ServiceLevelObjective slo) {
+		double area = 0.0;
 
-        // The area of the trapezoid is the product of the average height and the width
-        final double area = averageValue * timeDifference; // Area = ((f(x₁) + f(x₂)) / 2) * Δx
+		final var points = IntStream.range(0, measurements.getElements().size()).mapToObj(x -> {
+			return new Measurement<Number>(
+					getGrade(measurements.obtainMeasure().get(x), slo.getLowerThreshold(), slo.getUpperThreshold()),
+					measurements.getElements().get(x).timeStamp());
+		}).filter(pair -> pair.timeStamp() > startTime).sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
+				.toList();
 
-        return area;
-    }
+		// Iterate through the measurements pairwise to calculate the area under each
+		// segment
+		for (int i = 0; i < points.size() - 1; i++) {
+			// Current and next measurement points
+			final var current = points.get(i);
+			final var next = points.get(i + 1);
+
+			// The values (heights) at the current and next time stamps
+			final double currentValue = current.measure().doubleValue();
+			final double nextValue = next.measure().doubleValue();
+
+			// The time stamps (positions along the x-axis) for the current and next
+			// measurements
+			final double start = current.timeStamp(); // x₁
+			final double end = next.timeStamp(); // x₂
+
+			// Calculate the area under the segment between the two points
+			area += calculateArea(start, end, currentValue, nextValue);
+		}
+
+		return area;
+	}
+
+	/**
+	 * Calculates the area of a trapezoid defined by two points on a curve.
+	 *
+	 * @param start        the starting time stamp (x₁)
+	 * @param end          the ending time stamp (x₂)
+	 * @param currentValue the value at the starting time stamp (f(x₁))
+	 * @param nextValue    the value at the ending time stamp (f(x₂))
+	 * @return the area under the curve segment between start and end
+	 */
+	private static double calculateArea(final double start, final double end, final double currentValue,
+			final double nextValue) {
+		// Calculate the width of the interval (the distance along the x-axis)
+		final double timeDifference = end - start; // Δx = x₂ - x₁
+
+		// Calculate the average of the two values (heights at x₁ and x₂)
+		final double averageValue = (currentValue + nextValue) / 2.0; // (f(x₁) + f(x₂)) / 2
+
+		// The area of the trapezoid is the product of the average height and the width
+		final double area = averageValue * timeDifference; // Area = ((f(x₁) + f(x₂)) / 2) * Δx
+
+		return area;
+	}
 }
-

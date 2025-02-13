@@ -79,7 +79,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 @OnEvent(when = SnapshotInitiated.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
 public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension {
 
-	private final Logger LOGGER = Logger.getLogger(SnapshotGraphStateBehaviour.class);
+	private static final Logger LOGGER = Logger.getLogger(SnapshotGraphStateBehaviour.class);
 
 	/* Configurations */
 	private final SnapshotConfiguration snapshotConfig;
@@ -185,7 +185,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		allEvents.addAll(wrapper.getAdjustmentEvents());
 		allEvents.addAll(eventsToInitOnNoIntervallPassed);
 
-		LOGGER.warn("Initialise on " + wrapper.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy().getEntityName()).toList());
+		LOGGER.info("Initialise on " + wrapper.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy().getEntityName()).toList());
 
 		return Result.of(allEvents);
 	}
