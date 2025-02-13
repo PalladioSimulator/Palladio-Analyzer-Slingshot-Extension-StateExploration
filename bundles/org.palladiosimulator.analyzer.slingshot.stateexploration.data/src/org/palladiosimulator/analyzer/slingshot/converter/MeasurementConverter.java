@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
@@ -57,7 +58,9 @@ public class MeasurementConverter {
 
 		return MeasurementConverter.visitRawMeasurments(mr.getRawMeasurements());
 	}
-
+	
+	
+	
 	/**
 	 * This extracts the information of all data series from the raw measurement. It
 	 * is asserted that the first data series contains the point in time and second
@@ -127,12 +130,14 @@ public class MeasurementConverter {
 				.filter(filter)
 				.findAny().orElse(null);
 		final var values = MeasurementConverter.visitDataSeries(dataSeries);
+		final var measure = MeasurementConverter.visitDataSeriesMeasure(dataSeries);
 
 		if (timestamps.size() != values.size())
 			throw new IllegalStateException("Number of point in time values and measurments value do not match!");
 
 		final MeasurementSet ms = new MeasurementSet();
 		final var md = specification.getMetricDescription();
+		ms.setMeasure(measure);
 		if(specification != null) {
 			ms.setSpecificationId(specification.getId());
 			ms.setSpecificationName(specification.getName());
@@ -162,8 +167,8 @@ public class MeasurementConverter {
 	 */
 	private static List<Number> visitDataSeries(final DataSeries ds) {
 		final var dao = (MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
-
-		final var measures = dao.getMeasurements();
+		
+		final List<Measure<Number, Duration>> measures = dao.getMeasurements();
 
 		final var numbers = measures.stream().map(measure -> measure.getValue()).toList();
 
@@ -174,6 +179,21 @@ public class MeasurementConverter {
 		}
 
 		return numbers;
+	}
+	
+	
+	private static List<Measure> visitDataSeriesMeasure(final DataSeries ds) {
+		final var dao = (MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
+		
+		final List<Measure> measures = dao.getMeasurements().stream().map(x -> (Measure)x).toList();
+
+		try {
+			dao.close();
+		} catch (final DataNotAccessibleException e) {
+			e.printStackTrace();
+		}
+
+		return measures;
 	}
 
 }

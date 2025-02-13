@@ -112,11 +112,11 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		}
 
 		if (adjusmentCounter == adjustmentEvents.size()) {
-			LOGGER.warn("Beginn Abortion check for " + state.getId());
+			LOGGER.debug("Beginn Abortion check for " + state.getId());
 
 			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
 				if (tg2size.containsKey(tgcfg)) {
-					LOGGER.warn(tgcfg.getClass().getSimpleName() + ": old " + tg2size.get(tgcfg) + " new "
+					LOGGER.debug(tgcfg.getClass().getSimpleName() + ": old " + tg2size.get(tgcfg) + " new "
 							+ getSizeOf(tgcfg));
 					if (tg2size.get(tgcfg) != getSizeOf(tgcfg)) {
 						return;
@@ -125,7 +125,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 			}
 			state.addReasonToLeave(ReasonToLeave.aborted);
 			scheduling.scheduleEvent(new SnapshotInitiated(0));
-			LOGGER.warn("Abort " + state.getId());
+			LOGGER.debug("Abort " + state.getId());
 		}
 	}
 

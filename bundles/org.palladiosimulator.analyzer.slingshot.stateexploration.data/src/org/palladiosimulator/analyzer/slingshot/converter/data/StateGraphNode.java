@@ -1,10 +1,20 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
+
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
+
+import javax.measure.Measure;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
 import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityType;
 import org.palladiosimulator.metricspec.constants.MetricDescriptionConstants;
+import org.palladiosimulator.servicelevelobjective.LinearFuzzyThreshold;
+import org.palladiosimulator.servicelevelobjective.NegativeQuadraticFuzzyThreshold;
+import org.palladiosimulator.servicelevelobjective.QuadraticFuzzyThreshold;
+import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+import org.palladiosimulator.servicelevelobjective.SoftThreshold;
+import org.palladiosimulator.servicelevelobjective.Threshold;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -18,53 +28,38 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		List<SLO> slos, Utility utility, String parentId, List<ScalingPolicy> incomingPolicies) {
 
 	public StateGraphNode(final String id, final double startTime, final double endTime,
-			final List<MeasurementSet> measurements, final List<SLO> slos, final String parentId,
+			final List<MeasurementSet> measurements, final List<ServiceLevelObjective> slos, final String parentId,
 			final List<ScalingPolicy> incomingPolicies) {
-		this(id, startTime, endTime, measurements, slos, calcUtility(startTime, endTime, measurements, slos), parentId,
-				incomingPolicies);
+		this(id, startTime, endTime, measurements, slos.stream().map(x -> visitServiceLevelObjective(x)).toList(),
+				calcUtility(startTime, endTime, measurements, slos), parentId, incomingPolicies);
 	}
 
-	public double duration() {
-		return endTime - startTime;
+	public static SLO visitServiceLevelObjective(final ServiceLevelObjective slo) {
+		return new SLO(slo.getId(), slo.getName(), slo.getMeasurementSpecification().getId(),
+				(Number) slo.getLowerThreshold().getThresholdLimit().getValue(),
+				(Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
-
-	/**
-	 * This calculates the utility of the state. In the form of "(slo1 - measure1) +
-	 * (slo2 - measure2)" In addition to this, the sum is multiplied with the
-	 * duration of the state. This balances shorter against longer paths so they are
-	 * compatible.
-	 *
-	 * @return
-	 */
-	private static Utility calcUtility(final double startTime, final double endTime,
-			final List<MeasurementSet> measurements, final List<SLO> slos) {
-
+	private static Utility calcUtility(double startTime, double endTime, List<MeasurementSet> measurements,
+			List<ServiceLevelObjective> slos) {
 		final var utility = new Utility();
 
-		for (final SLO slo : slos) {
+		for (final ServiceLevelObjective slo : slos) {
 			final MeasurementSet ms = measurements.stream()
-					.filter(x -> x.getSpecificationId().equals(slo.specificationId()))
-					.findFirst()
+					.filter(x -> x.getSpecificationId().equals(slo.getMeasurementSpecification().getId())).findFirst()
 					.orElse(null);
 			if (ms != null) {
-				final var points = ms.getElements().stream()
-						// mirror the function at the upper threshold and then subtract the threshold
-						// (basically use threshold as new x axis)
-						.map(x -> new Measurement<Number>(
-								slo.upperThreshold().doubleValue() - x.measure().doubleValue(), x.timeStamp()))
-						.sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
-						.toList();
+				var value = calculateAreaUnderCurveMeasure(ms, startTime, slo);
 
-				final double area = calculateAreaUnderCurve(points);
-				utility.addDataInstance(slo.id(), area, UtilityType.SLO);
+				utility.addDataInstance(slo.getId(), value, UtilityType.SLO);
 			}
 		}
 
 		for (final var ms : measurements) {
 			if (ms.getMetricDescriptionId().equals(MetricDescriptionConstants.COST_OF_RESOURCE_CONTAINERS.getId())) {
-				final double area = calculateAreaUnderCurve(
-						ms.getElements().stream().sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList());
+				final var points = ms.getElements().stream().filter(pair -> pair.timeStamp() > startTime)
+						.sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList();
+				final double area = calculateAreaUnderCurve(points);
 				utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
 			}
 		}
@@ -73,6 +68,91 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		return utility;
 	}
 
+	public double duration() {
+		return endTime - startTime;
+	}
+
+	/**
+	 * Computes the grade of fulfillment of a measurement regarding the lower and
+	 * upper threshold
+	 * 
+	 * Taken from:
+	 * https://github.com/PalladioSimulator/Palladio-Addons-ServiceLevelObjectives/blob/master/bundles/org.palladiosimulator.servicelevelobjective.edp2/src/org/palladiosimulator/servicelevelobjective/edp2/mappers/SLOViolationEDP2DatasourceMapper.java
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static double getGrade(Measure measurement, Threshold lower, Threshold upper) {
+
+		if (lower != null) {
+			final Measure lowerThresholdHardLimit = lower.getThresholdLimit();
+			if (measurement.compareTo(lowerThresholdHardLimit) < 0) {
+				return 0.0;
+			}
+			if ((lower instanceof SoftThreshold)) {
+				final Measure lowerThresholdSoftLimit = ((SoftThreshold) lower).getSoftLimit();
+				if (measurement.compareTo(lowerThresholdSoftLimit) < 0) {
+					return gradeSoftLowerThreshold(measurement, (SoftThreshold) lower);
+				}
+			}
+		}
+		if (upper != null) {
+			final Measure upperThresholdHardLimit = upper.getThresholdLimit();
+			if ((upper instanceof SoftThreshold)) {
+				final Measure upperThresholdSoftLimit = ((SoftThreshold) upper).getSoftLimit();
+				if (measurement.compareTo(upperThresholdSoftLimit) <= 0) {
+					return 1.0;
+				} else if (measurement.compareTo(upperThresholdHardLimit) <= 0) {
+					return gradeSoftUpperThreshold(measurement, (SoftThreshold) upper);
+				}
+			} else if (measurement.compareTo(upperThresholdHardLimit) <= 0) {
+				return 1.0;
+			}
+		} else {
+			return 1.0;
+		}
+
+		return 0.0;
+	}
+
+	/**
+	 * Handles grading of measurements in lower fuzzy range
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static double gradeSoftLowerThreshold(Measure toGrade, SoftThreshold lowerThreshold) {
+		double x = (double) toGrade.getValue();
+		double soft = lowerThreshold.getSoftLimit().doubleValue(toGrade.getUnit());
+		double hard = lowerThreshold.getThresholdLimit().doubleValue(toGrade.getUnit());
+
+		if (lowerThreshold instanceof LinearFuzzyThreshold) {
+			return 1 / (soft - hard) * (x - hard);
+		}
+		if (lowerThreshold instanceof QuadraticFuzzyThreshold) {
+			return 1 / Math.pow((soft - hard), 2) * Math.pow((x - hard), 2);
+		}
+		if (lowerThreshold instanceof NegativeQuadraticFuzzyThreshold) {
+			return 1 - (1 / Math.pow((soft - hard), 2) * Math.pow((x - soft), 2));
+		}
+		return 0;
+	}
+
+	/**
+	 * Handles grading of measurements in upper fuzzy range
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static double gradeSoftUpperThreshold(Measure toGrade, SoftThreshold upperThreshold) {
+		double x = (double) toGrade.getValue();
+		double soft = upperThreshold.getSoftLimit().doubleValue(toGrade.getUnit());
+		double hard = upperThreshold.getThresholdLimit().doubleValue(toGrade.getUnit());
+		if (upperThreshold instanceof LinearFuzzyThreshold) {
+			return -1 / (hard - soft) * (x - hard);
+		}
+		if (upperThreshold instanceof QuadraticFuzzyThreshold) {
+			return 1 / Math.pow((hard - soft), 2) * Math.pow((x - hard), 2);
+		}
+		if (upperThreshold instanceof NegativeQuadraticFuzzyThreshold) {
+			return 1 - (1 / Math.pow((hard - soft), 2) * Math.pow((x - soft), 2));
+		}
+		return 0;
+	}
 
 	/**
 	 * Calculates the area under a curve represented by a set of measurements.
@@ -89,6 +169,56 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 			// Current and next measurement points
 			final var current = measurements.get(i);
 			final var next = measurements.get(i + 1);
+
+			// The values (heights) at the current and next time stamps
+			final double currentValue = current.measure().doubleValue();
+			final double nextValue = next.measure().doubleValue();
+
+			// The time stamps (positions along the x-axis) for the current and next
+			// measurements
+			final double start = current.timeStamp(); // x₁
+			final double end = next.timeStamp(); // x₂
+
+			// Calculate the area under the segment between the two points
+			area += calculateArea(start, end, currentValue, nextValue);
+		}
+
+		return area;
+	}
+
+	/**
+	 * 
+	 * Maps measurements to a curve of SLO grades and calculate the area under a
+	 * grades curve.
+	 * 
+	 * E.g. for measurements with time-value tuples [(0,2.5), (1,2.6), (2,4)] and an
+	 * SLO with upper threshold t_soft = 3 and t_hard = 3.5, the graded curve is
+	 * [(0,1), (1,1), (2,0)] and the area underneath is 1 + 0.5 = 1.5.
+	 * 
+	 *
+	 * 
+	 * @param measurements measurements to be graded
+	 * @param startTime
+	 * @param slo          SLOs to grade against
+	 * @return area under graded curve.
+	 */
+	private static double calculateAreaUnderCurveMeasure(final MeasurementSet measurements, final double startTime,
+			final ServiceLevelObjective slo) {
+		double area = 0.0;
+
+		final var points = IntStream.range(0, measurements.getElements().size()).mapToObj(x -> {
+			return new Measurement<Number>(
+					getGrade(measurements.obtainMeasure().get(x), slo.getLowerThreshold(), slo.getUpperThreshold()),
+					measurements.getElements().get(x).timeStamp());
+		}).filter(pair -> pair.timeStamp() > startTime).sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
+				.toList();
+
+		// Iterate through the measurements pairwise to calculate the area under each
+		// segment
+		for (int i = 0; i < points.size() - 1; i++) {
+			// Current and next measurement points
+			final var current = points.get(i);
+			final var next = points.get(i + 1);
 
 			// The values (heights) at the current and next time stamps
 			final double currentValue = current.measure().doubleValue();
@@ -129,4 +259,3 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		return area;
 	}
 }
-

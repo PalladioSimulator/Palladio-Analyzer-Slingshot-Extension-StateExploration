@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
@@ -129,16 +127,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
 
-
-		LOGGER.debug("Start with Request to these Resources: ");
-		config.getSnapToInitOn().getEvents(this.initModels).stream()
-		.filter(e -> e instanceof JobInitiated).map(e -> (JobInitiated) e)
-		.filter(e -> e.getEntity() instanceof ActiveJob).map(e -> ((ActiveJob) e.getEntity())
-				.getAllocationContext().getResourceContainer_AllocationContext().getId())
-		.forEach(id -> LOGGER.info(id));
-
-		//LOGGER.warn("start on config" + config.toString());
-
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
@@ -153,7 +141,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		this.postProcessExplorationCycle(config);
 		
-		LOGGER.warn("done with " + config.toString());
+		LOGGER.info("done with " + config.toString());
 	}
 
 	/**
