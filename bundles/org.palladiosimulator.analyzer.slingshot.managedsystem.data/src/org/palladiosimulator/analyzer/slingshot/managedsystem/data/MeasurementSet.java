@@ -3,6 +3,9 @@ package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import javax.measure.Measure;
+
 /**
  * Simplified version of ArrayList<Measurment<Double>> with the additional method for median and average.
  *
@@ -27,6 +30,10 @@ public class MeasurementSet {
 	private String specificationName;
 	private String metricName;
 	private String metricDescription;
+	private String metricDescriptionId;
+
+
+	private List<Measure> measure;
 
 	public MeasurementSet() {
 		super();
@@ -89,6 +96,13 @@ public class MeasurementSet {
 		this.monitorName = monitorName;
 	}
 
+	public String getMetricDescriptionId() {
+		return metricDescriptionId;
+	}
+
+	public void setMetricDescriptionId(final String metricDescriptionId) {
+		this.metricDescriptionId = metricDescriptionId;
+	}
 
 	public double getMedian() {
 		if (elements.size() < 1) {
@@ -129,5 +143,14 @@ public class MeasurementSet {
 
 	public void setSpecificationName(final String specificationName) {
 		this.specificationName = specificationName;
+	}
+
+	public void setMeasure(final List<Measure> m) {
+		this.measure = m;
+	}
+
+
+	public List<Measure> obtainMeasure() {
+		return measure;
 	}
 }
