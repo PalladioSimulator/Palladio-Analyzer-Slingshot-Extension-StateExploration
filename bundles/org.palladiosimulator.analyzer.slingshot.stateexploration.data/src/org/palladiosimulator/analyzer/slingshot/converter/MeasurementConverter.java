@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
+import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.edp2.dao.MeasurementsDao;
@@ -35,6 +36,9 @@ import com.google.common.base.Objects;
  *
  */
 public class MeasurementConverter {
+	
+	private static final Logger LOGGER = Logger.getLogger(MeasurementConverter.class);
+	
 	public final static String POINT_IN_TIME = "Point in Time";
 	public final static String RESPONSE_TIME = "Response Time";
 

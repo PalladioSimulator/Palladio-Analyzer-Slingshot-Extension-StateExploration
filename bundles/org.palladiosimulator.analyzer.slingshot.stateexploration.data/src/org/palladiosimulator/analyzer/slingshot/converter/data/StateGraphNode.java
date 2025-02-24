@@ -6,6 +6,7 @@ import java.util.stream.IntStream;
 
 import javax.measure.Measure;
 
+import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
 import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityType;
 import org.palladiosimulator.metricspec.constants.MetricDescriptionConstants;
@@ -26,6 +27,8 @@ import org.palladiosimulator.spd.ScalingPolicy;
  */
 public record StateGraphNode(String id, double startTime, double endTime, List<MeasurementSet> measurements,
 		List<SLO> slos, Utility utility, String parentId, List<ScalingPolicy> incomingPolicies) {
+
+	private static final Logger LOGGER = Logger.getLogger(StateGraphNode.class);
 
 	public StateGraphNode(final String id, final double startTime, final double endTime,
 			final List<MeasurementSet> measurements, final List<ServiceLevelObjective> slos, final String parentId,
