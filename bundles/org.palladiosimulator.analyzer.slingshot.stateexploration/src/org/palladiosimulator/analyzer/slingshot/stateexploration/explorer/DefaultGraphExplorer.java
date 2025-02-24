@@ -19,6 +19,7 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
+import org.palladiosimulator.analyzer.slingshot.cost.provider.CostInfo;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
@@ -76,6 +77,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final MDSDBlackboard blackboard;
 
 	private final int horizonLength;
+	
+	private final CostInfo costInfo;
 
 	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
@@ -86,6 +89,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.monitor = monitor;
 		this.blackboard = blackboard;
 		this.horizonLength = LaunchconfigAccess.getHorizon(launchConfigurationParams);
+		this.costInfo = new CostInfo(LaunchconfigAccess.getCostAmount(launchConfigurationParams), LaunchconfigAccess.getCostInterval(launchConfigurationParams));
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
@@ -134,7 +138,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// create copy here, such that i need not pass the initModels to the update providers.
 		final Set<DESEvent> allEvents = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
 
-		AdditionalConfigurationModule.updateProviders(snapConfig, config, allEvents);
+		AdditionalConfigurationModule.updateProviders(snapConfig, config, allEvents, this.costInfo);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();
