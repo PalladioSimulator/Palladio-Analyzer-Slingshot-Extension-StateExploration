@@ -55,6 +55,8 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 			addDoIdleExplorationPropertyDescriptor(object);
 			addModeLocationPropertyDescriptor(object);
 			addHorizonPropertyDescriptor(object);
+			addCostIntervalPropertyDescriptor(object);
+			addCostAmountPropertyDescriptor(object);
 		}
 		return itemPropertyDescriptors;
 	}
@@ -192,6 +194,50 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 	}
 
 	/**
+	 * This adds a property descriptor for the Cost Interval feature.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void addCostIntervalPropertyDescriptor(Object object) {
+		itemPropertyDescriptors.add
+			(createItemPropertyDescriptor
+				(((ComposeableAdapterFactory)adapterFactory).getRootAdapterFactory(),
+				 getResourceLocator(),
+				 getString("_UI_StateExplorationConfiguration_costInterval_feature"),
+				 getString("_UI_PropertyDescriptor_description", "_UI_StateExplorationConfiguration_costInterval_feature", "_UI_StateExplorationConfiguration_type"),
+				 StateExplorationToolAdapterPackage.Literals.STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL,
+				 true,
+				 false,
+				 false,
+				 ItemPropertyDescriptor.REAL_VALUE_IMAGE,
+				 null,
+				 null));
+	}
+
+	/**
+	 * This adds a property descriptor for the Cost Amount feature.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void addCostAmountPropertyDescriptor(Object object) {
+		itemPropertyDescriptors.add
+			(createItemPropertyDescriptor
+				(((ComposeableAdapterFactory)adapterFactory).getRootAdapterFactory(),
+				 getResourceLocator(),
+				 getString("_UI_StateExplorationConfiguration_costAmount_feature"),
+				 getString("_UI_PropertyDescriptor_description", "_UI_StateExplorationConfiguration_costAmount_feature", "_UI_StateExplorationConfiguration_type"),
+				 StateExplorationToolAdapterPackage.Literals.STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT,
+				 true,
+				 false,
+				 false,
+				 ItemPropertyDescriptor.REAL_VALUE_IMAGE,
+				 null,
+				 null));
+	}
+
+	/**
 	 * This returns StateExplorationConfiguration.gif.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -235,6 +281,8 @@ public class StateExplorationConfigurationItemProvider extends AbstractSimulatio
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__DO_IDLE_EXPLORATION:
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MODE_LOCATION:
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL:
+			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT:
 				fireNotifyChanged(new ViewerNotification(notification, notification.getNotifier(), false, true));
 				return;
 		}

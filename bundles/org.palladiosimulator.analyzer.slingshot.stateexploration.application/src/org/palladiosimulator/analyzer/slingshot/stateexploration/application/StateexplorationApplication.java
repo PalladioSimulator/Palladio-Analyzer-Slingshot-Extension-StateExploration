@@ -195,6 +195,9 @@ public class StateexplorationApplication implements IApplication {
 		map.put(ExplorationConfiguration.IDLE_EXPLORATION, String.valueOf(simConfig.isDoIdleExploration()));
 		map.put(ExplorationConfiguration.MODEL_LOCATION, String.valueOf(simConfig.getModeLocation()));
 		map.put(ExplorationConfiguration.HORIZON, String.valueOf(simConfig.getHorizon()));
+		
+		map.put(ExplorationConfiguration.COST_AMOUNT, String.valueOf(simConfig.getCostAmount()));
+		map.put(ExplorationConfiguration.COST_INTERVAL, String.valueOf(simConfig.getCostInterval()));
 
 		return map;
 	}

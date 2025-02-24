@@ -17,6 +17,8 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/doIdleExploration"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/modeLocation"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/horizon"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/costInterval"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute stateexplorationtooladapter.ecore#//StateExplorationConfiguration/costAmount"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>
