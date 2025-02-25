@@ -57,7 +57,7 @@ public class Link {
 
     public void setEvents(final List<ModelAdjustmentRequested> adjustments) {
         if (!this.events.isEmpty()) {
-            throw new IllegalStateException("Cannot new adjustment requested events, while old ones were not yet cconsumed");
+            throw new IllegalStateException("Cannot set new adjustment requested events, while old ones were not yet consumed");
         }
         this.events.addAll(adjustments);
         planArrived = true;

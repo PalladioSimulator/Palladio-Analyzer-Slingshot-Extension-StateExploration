@@ -8,7 +8,6 @@ import javax.inject.Named;
 
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanStepAppliedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.SimplifiedPlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
@@ -57,8 +56,8 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
         }, new TypeLiteral<Class<? extends Message<?>>>() {
         });
 
-        messageBinder.addBinding(PlanCreatedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
-            .toInstance(PlanCreatedEventMessage.class);
+//        messageBinder.addBinding(PlanCreatedEventMessage.MESSAGE_MAPPING_IDENTIFIER)
+//            .toInstance(PlanCreatedEventMessage.class);
         messageBinder.addBinding(StateExploredEventMessage.MESSAGE_MAPPING_IDENTIFIER)
             .toInstance(StateExploredEventMessage.class);
 

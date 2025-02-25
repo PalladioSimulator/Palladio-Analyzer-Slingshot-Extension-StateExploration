@@ -13,6 +13,7 @@ import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
+import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
@@ -24,6 +25,7 @@ import org.palladiosimulator.analyzer.slingshot.managedsystem.data.Link;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.events.UtilityIntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.ManagedSystemFinishedMessage;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.ManagedSystemStartedMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
@@ -48,6 +50,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 @OnEvent(when = CalculatorRegistered.class, then = {})
 @OnEvent(when = SimulationFinished.class, then = {})
 @OnEvent(when = SimulationStarted.class, then = {})
+@OnEvent(when = PreSimulationConfigurationStarted.class, then = {})
 @OnEvent(when = UtilityIntervalPassed.class, then = UtilityIntervalPassed.class)
 public class RLSendMessagesBehaviour implements SimulationBehaviorExtension {
 
@@ -90,6 +93,17 @@ public class RLSendMessagesBehaviour implements SimulationBehaviorExtension {
 
         this.linkToSystem = link;
     }
+
+    /**
+    *
+    * Publish the first {@link ManagedSystemStartedMessage} event before the beginning of the simulation.
+    *
+    * @param event
+    */
+   @Subscribe
+   public void onPreSimulationConfigurationStarted(final PreSimulationConfigurationStarted event) {
+       this.systemDriver.postEvent(new ManagedSystemStartedMessage(clientName));
+   }
 
     /**
      *
