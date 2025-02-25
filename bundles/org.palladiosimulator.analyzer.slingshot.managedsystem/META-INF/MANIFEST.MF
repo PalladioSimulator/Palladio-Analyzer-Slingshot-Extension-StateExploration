@@ -17,4 +17,5 @@ Require-Bundle: org.palladiosimulator.analyzer.slingshot.networking.data;bundle-
  org.palladiosimulator.analyzer.slingshot.managedsystem.data,
  org.palladiosimulator.analyzer.slingshot.monitor.data,
  org.palladiosimulator.servicelevelobjective,
- de.uka.ipd.sdq.simucomframework
+ de.uka.ipd.sdq.simucomframework,
+ org.palladiosimulator.analyzer.slingshot.cost
