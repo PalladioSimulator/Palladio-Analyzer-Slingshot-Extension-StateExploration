@@ -52,7 +52,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 					.filter(x -> x.getSpecificationId().equals(slo.getMeasurementSpecification().getId())).findFirst()
 					.orElse(null);
 			if (ms != null) {
-				var value = calculateAreaUnderCurveMeasure(ms, startTime, slo);
+				var value = calculateAreaUnderCurveMeasure(ms, slo);
 
 				utility.addDataInstance(slo.getId(), value, UtilityType.SLO);
 			}
@@ -60,8 +60,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 
 		for (final var ms : measurements) {
 			if (ms.getMetricDescriptionId().equals(MetricDescriptionConstants.COST_OF_RESOURCE_CONTAINERS.getId())) {
-				final var points = ms.getElements().stream().filter(pair -> pair.timeStamp() > startTime)
-						.sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList();
+				final var points = ms.getElements().stream().sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList();
 				final double area = calculateAreaUnderCurve(points);
 				utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
 			}
@@ -205,17 +204,16 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 	 * @param slo          SLOs to grade against
 	 * @return area under graded curve.
 	 */
-	private static double calculateAreaUnderCurveMeasure(final MeasurementSet measurements, final double startTime,
-			final ServiceLevelObjective slo) {
+	private static double calculateAreaUnderCurveMeasure(final MeasurementSet measurements, final ServiceLevelObjective slo) {
 		double area = 0.0;
 
-		final var points = IntStream.range(0, measurements.getElements().size()).mapToObj(x -> {
+		final List<Measurement<Number>> points = IntStream.range(0, measurements.getElements().size()).mapToObj(x -> {
 			return new Measurement<Number>(
 					getGrade(measurements.obtainMeasure().get(x), slo.getLowerThreshold(), slo.getUpperThreshold()),
 					measurements.getElements().get(x).timeStamp());
-		}).filter(pair -> pair.timeStamp() > startTime).sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
+		}).sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
 				.toList();
-
+		
 		// Iterate through the measurements pairwise to calculate the area under each
 		// segment
 		for (int i = 0; i < points.size() - 1; i++) {
