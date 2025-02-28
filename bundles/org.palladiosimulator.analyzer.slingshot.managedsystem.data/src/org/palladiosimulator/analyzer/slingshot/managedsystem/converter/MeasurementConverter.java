@@ -150,7 +150,7 @@ public class MeasurementConverter {
 		ms.setMeasure(measure);
 		if(specification != null) {
 			ms.setSpecificationId(specification.getId());
-			ms.setSpecificationName("FOOO"); // ms.setSpecificationName(specification.getName());
+			ms.setSpecificationName(specification.getName());
 			ms.setMonitorId(monitor.getId());
 			ms.setMonitorName(monitor.getEntityName());
 			ms.setName(measureName);
