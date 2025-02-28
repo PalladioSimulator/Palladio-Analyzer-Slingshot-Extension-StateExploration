@@ -21,8 +21,8 @@ import org.palladiosimulator.spd.ScalingPolicy;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
@@ -101,9 +101,13 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
                         .format("Cannot deserialise json \"%s\" because SPD model is null.", json.toString()));
                 }
 
-                if (json instanceof final JsonObject object) {
-                    final String id = object.getAsJsonPrimitive("id")
-                        .getAsString();
+
+//                if (json instanceof final JsonObject object) {
+//                    final String id = object.getAsJsonPrimitive("id")
+//                        .getAsString();
+
+                if (json instanceof final JsonPrimitive primitive) {
+                    final String id = primitive.getAsString();
 
                     final List<ScalingPolicy> policies = spd.getScalingPolicies();
                     final Optional<ScalingPolicy> matchingPolicy = policies.stream()
@@ -120,7 +124,7 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
                 }
 
                 throw new JsonParseException(
-                        String.format("Json element for policy is not an JsonObject, but \"%s\".", json.toString()));
+                        String.format("Json element for policy is not an JsonPrimitive, but \"%s\".", json.toString()));
             }
         };
     }

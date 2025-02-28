@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.managedsystem;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,7 +25,6 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Intercep
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.data.Link;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.data.Plan;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StatesBlackboard;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.events.ExecutionIntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.events.PlanUpdated;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanStepAppliedEventMessage;
@@ -48,18 +48,15 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
     private final static Logger LOGGER = Logger.getLogger(InjectionSimulationBehaviour.class);
 
     private final Link linkToSystem;
-    private final StatesBlackboard states;
     private final String clientName;
 
     private Plan plan;
 
     @Inject
-    public InjectionSimulationBehaviour(final Link link, final SimulationScheduling scheduling,
-            final StatesBlackboard states, @Named(NetworkingConstants.CLIENT_NAME) final String clientName) {
+    public InjectionSimulationBehaviour(final Link link, final SimulationScheduling scheduling, @Named(NetworkingConstants.CLIENT_NAME) final String clientName) {
         this.linkToSystem = link;
         this.linkToSystem.setScheduling(scheduling);
 
-        this.states = states;
         this.clientName = clientName;
 
         this.plan = new Plan(Map.of());
@@ -141,8 +138,8 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
         }
 
 
-        final Set<DESEvent> events = new HashSet<>();
-        final Set<ModelAdjustmentRequested> adjustments = this.plan.executeNextStep();
+        final List<DESEvent> events = new ArrayList<>();
+        final List<ModelAdjustmentRequested> adjustments = this.plan.executeNextStep();
 
         final Set<String> ids = adjustments.stream()
             .map(r -> r.getScalingPolicy()
@@ -154,8 +151,6 @@ public class InjectionSimulationBehaviour implements SimulationBehaviorExtension
 
         events.addAll(adjustments);
         events.addAll(createTriggerForNextStep(event.time()));
-
-        this.states.cleanUp(event.time());
 
         return Result.of(events);
     }
