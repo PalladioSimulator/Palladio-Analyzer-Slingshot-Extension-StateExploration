@@ -128,14 +128,19 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * {@link ProfileAPI#applyProfile(Resource, String)} and
 	 * {@link StereotypeAPI#applyStereotype(org.eclipse.emf.ecore.EObject, String)}.
 	 * 
-	 * Note: Re-applying Profiles to the original model (which works in the UI)
-	 * fails here, because re-application throws an error.
+	 * <br>
+	 * <b>Note</b>: Re-applying Profiles to the original model (which works in the
+	 * UI) fails here, because re-application throws an error.
 	 * 
-	 * Note: The resource and model created in this operation exist solely for
-	 * getting the cost profile and stereotypes loaded. They have no other purpose
-	 * and (probably) get garbage collect after this operation.
+	 * <br>
+	 * <b>Note</b>: The resource and model created in this operation exist solely
+	 * for getting the cost profile and stereotypes loaded. They have no other
+	 * purpose and (probably) get garbage collect after this operation.
 	 * 
-	 * 
+	 * <br>
+	 * <b>Note</b>: For the state exploration, we must do this <b>before</b> we
+	 * create the root node. When creating the root node, we save a copy of
+	 * the models to file, and all unresolved references go missing on save.
 	 */
 	private void applyStereotypeFake() {
 		ResourceEnvironment fake = ResourceenvironmentFactory.eINSTANCE.createResourceEnvironment();
