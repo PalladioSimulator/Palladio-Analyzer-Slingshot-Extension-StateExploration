@@ -27,8 +27,6 @@ import org.palladiosimulator.experimentautomation.application.tooladapter.statee
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#isDoIdleExploration <em>Do Idle Exploration</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getModeLocation <em>Mode Location</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getHorizon <em>Horizon</em>}</li>
- *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getCostInterval <em>Cost Interval</em>}</li>
- *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.impl.StateExplorationConfigurationImpl#getCostAmount <em>Cost Amount</em>}</li>
  * </ul>
  *
  * @generated
@@ -153,46 +151,6 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 	 * @ordered
 	 */
 	protected int horizon = HORIZON_EDEFAULT;
-
-	/**
-	 * The default value of the '{@link #getCostInterval() <em>Cost Interval</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getCostInterval()
-	 * @generated
-	 * @ordered
-	 */
-	protected static final double COST_INTERVAL_EDEFAULT = 0.0;
-
-	/**
-	 * The cached value of the '{@link #getCostInterval() <em>Cost Interval</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getCostInterval()
-	 * @generated
-	 * @ordered
-	 */
-	protected double costInterval = COST_INTERVAL_EDEFAULT;
-
-	/**
-	 * The default value of the '{@link #getCostAmount() <em>Cost Amount</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getCostAmount()
-	 * @generated
-	 * @ordered
-	 */
-	protected static final double COST_AMOUNT_EDEFAULT = 0.0;
-
-	/**
-	 * The cached value of the '{@link #getCostAmount() <em>Cost Amount</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getCostAmount()
-	 * @generated
-	 * @ordered
-	 */
-	protected double costAmount = COST_AMOUNT_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -357,52 +315,6 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 	 * @generated
 	 */
 	@Override
-	public double getCostInterval() {
-		return costInterval;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void setCostInterval(double newCostInterval) {
-		double oldCostInterval = costInterval;
-		costInterval = newCostInterval;
-		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL, oldCostInterval, costInterval));
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public double getCostAmount() {
-		return costAmount;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void setCostAmount(double newCostAmount) {
-		double oldCostAmount = costAmount;
-		costAmount = newCostAmount;
-		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT, oldCostAmount, costAmount));
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__MIN_STATE_DURATION:
@@ -417,10 +329,6 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return getModeLocation();
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
 				return getHorizon();
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL:
-				return getCostInterval();
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT:
-				return getCostAmount();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -450,12 +358,6 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return;
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
 				setHorizon((Integer)newValue);
-				return;
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL:
-				setCostInterval((Double)newValue);
-				return;
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT:
-				setCostAmount((Double)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -487,12 +389,6 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
 				setHorizon(HORIZON_EDEFAULT);
 				return;
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL:
-				setCostInterval(COST_INTERVAL_EDEFAULT);
-				return;
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT:
-				setCostAmount(COST_AMOUNT_EDEFAULT);
-				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -517,10 +413,6 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 				return MODE_LOCATION_EDEFAULT == null ? modeLocation != null : !MODE_LOCATION_EDEFAULT.equals(modeLocation);
 			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__HORIZON:
 				return horizon != HORIZON_EDEFAULT;
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL:
-				return costInterval != COST_INTERVAL_EDEFAULT;
-			case StateExplorationToolAdapterPackage.STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT:
-				return costAmount != COST_AMOUNT_EDEFAULT;
 		}
 		return super.eIsSet(featureID);
 	}
@@ -547,10 +439,6 @@ public class StateExplorationConfigurationImpl extends AbstractSimulationConfigu
 		result.append(modeLocation);
 		result.append(", horizon: ");
 		result.append(horizon);
-		result.append(", costInterval: ");
-		result.append(costInterval);
-		result.append(", costAmount: ");
-		result.append(costAmount);
 		result.append(')');
 		return result.toString();
 	}

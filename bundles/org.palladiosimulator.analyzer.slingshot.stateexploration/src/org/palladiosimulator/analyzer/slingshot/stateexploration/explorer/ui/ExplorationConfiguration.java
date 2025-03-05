@@ -27,10 +27,6 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 	public static final String SENSIBILITY = "Sensitivity [0, 1 (most sensitive)]";
 	public static final String HORIZON = "Horizon (distance to current state in sec)";
 	public static final String MODEL_LOCATION = "Location for Arch. Configruations";
-	
-	// cost hack, because stereotypes are not working on export.
-	public static final String COST_INTERVAL = "Cost Interval";
-	public static final String COST_AMOUNT = "Cost per Container and Interval";
 
 	public static final int DEFAULT_MAX_EXPLORATION_CYCLES = 20;
 	public static final int DEFAULT_MIN_STATE_DURATION = 20;
@@ -38,10 +34,6 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 	public static final int DEFAULT_SENSIBILITY = 0;
 	public static final int DEFAULT_HORIZON = 300; // 5 minutes
 	public static final String DEFAULT_MODEL_LOCATION = URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir")).toString();
-	
-	// cost hack, because stereotypes are not working on export.
-	public static final double DEFAULT_COST_INTERVAL = 1.0;
-	public static final double DEFAULT_COST_AMOUNT = 1.0;
 
 	/**
 	 * For checkboxes.
@@ -88,18 +80,6 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 		.label(MODEL_LOCATION)
 		.defaultValue(String.valueOf(DEFAULT_MODEL_LOCATION))
 		.setIsFolderSelection()
-		.build();
-		
-		// cost hack, because stereotypes are not working on export.
-		event.newFieldDefinition()
-		.label(COST_INTERVAL)
-		.defaultValue(String.valueOf(DEFAULT_COST_INTERVAL))
-		.build();
-		
-		// cost hack, because stereotypes are not working on export.
-		event.newFieldDefinition()
-		.label(COST_AMOUNT)
-		.defaultValue(String.valueOf(DEFAULT_COST_AMOUNT))
 		.build();
 	}
 

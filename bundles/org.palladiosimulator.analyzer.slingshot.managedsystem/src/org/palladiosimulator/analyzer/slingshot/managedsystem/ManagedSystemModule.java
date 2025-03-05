@@ -8,8 +8,6 @@ import javax.inject.Named;
 
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
-import org.palladiosimulator.analyzer.slingshot.cost.provider.CostInfo;
-import org.palladiosimulator.analyzer.slingshot.cost.provider.HackyCostProvider;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanStepAppliedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
@@ -49,10 +47,6 @@ public class ManagedSystemModule extends AbstractSlingshotExtension {
         install(InjectionSystemBehaviour.class);
         install(InjectionSimulationBehaviour.class);
         install(SendMessagesBehaviour.class);
-
-        final HackyCostProvider prov = new HackyCostProvider();
-        prov.set(new CostInfo(0.1, 1.0));
-        bind(CostInfo.class).toProvider(prov);
 
         final var messageBinder = MapBinder.newMapBinder(binder(), new TypeLiteral<String>() {
         }, new TypeLiteral<Class<? extends Message<?>>>() {

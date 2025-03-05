@@ -175,31 +175,13 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 	int STATE_EXPLORATION_CONFIGURATION__HORIZON = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 5;
 
 	/**
-	 * The feature id for the '<em><b>Cost Interval</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 6;
-
-	/**
-	 * The feature id for the '<em><b>Cost Amount</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 7;
-
-	/**
 	 * The number of structural features of the '<em>State Exploration Configuration</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int STATE_EXPLORATION_CONFIGURATION_FEATURE_COUNT = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 8;
+	int STATE_EXPLORATION_CONFIGURATION_FEATURE_COUNT = AbstractsimulationPackage.ABSTRACT_SIMULATION_CONFIGURATION_FEATURE_COUNT + 6;
 
 
 	/**
@@ -277,28 +259,6 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 	 * @generated
 	 */
 	EAttribute getStateExplorationConfiguration_Horizon();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostInterval <em>Cost Interval</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Cost Interval</em>'.
-	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostInterval()
-	 * @see #getStateExplorationConfiguration()
-	 * @generated
-	 */
-	EAttribute getStateExplorationConfiguration_CostInterval();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostAmount <em>Cost Amount</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Cost Amount</em>'.
-	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostAmount()
-	 * @see #getStateExplorationConfiguration()
-	 * @generated
-	 */
-	EAttribute getStateExplorationConfiguration_CostAmount();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -379,22 +339,6 @@ public interface StateExplorationToolAdapterPackage extends EPackage {
 		 * @generated
 		 */
 		EAttribute STATE_EXPLORATION_CONFIGURATION__HORIZON = eINSTANCE.getStateExplorationConfiguration_Horizon();
-
-		/**
-		 * The meta object literal for the '<em><b>Cost Interval</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute STATE_EXPLORATION_CONFIGURATION__COST_INTERVAL = eINSTANCE.getStateExplorationConfiguration_CostInterval();
-
-		/**
-		 * The meta object literal for the '<em><b>Cost Amount</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute STATE_EXPLORATION_CONFIGURATION__COST_AMOUNT = eINSTANCE.getStateExplorationConfiguration_CostAmount();
 
 	}
 

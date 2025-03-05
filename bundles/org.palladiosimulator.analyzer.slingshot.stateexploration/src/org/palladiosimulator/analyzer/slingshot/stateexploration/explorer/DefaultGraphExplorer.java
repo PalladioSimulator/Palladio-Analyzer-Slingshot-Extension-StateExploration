@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
@@ -19,7 +21,6 @@ import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
-import org.palladiosimulator.analyzer.slingshot.cost.provider.CostInfo;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
@@ -42,6 +43,11 @@ import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
+import org.palladiosimulator.mdsdprofiles.api.ProfileAPI;
+import org.palladiosimulator.mdsdprofiles.api.StereotypeAPI;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceEnvironment;
+import org.palladiosimulator.pcm.resourceenvironment.ResourceenvironmentFactory;
+import org.palladiosimulator.pcm.util.PcmResourceImpl;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
@@ -77,8 +83,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	private final MDSDBlackboard blackboard;
 
 	private final int horizonLength;
-	
-	private final CostInfo costInfo;
 
 	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
@@ -89,20 +93,56 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.monitor = monitor;
 		this.blackboard = blackboard;
 		this.horizonLength = LaunchconfigAccess.getHorizon(launchConfigurationParams);
-		this.costInfo = new CostInfo(LaunchconfigAccess.getCostAmount(launchConfigurationParams), LaunchconfigAccess.getCostInterval(launchConfigurationParams));
+
+		applyStereotypeFake();
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration
-					.createRootArchConfig(this.initModels.getResourceSet(), LaunchconfigAccess.getModelLocation(launchConfigurationParams)));
+		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration.createRootArchConfig(
+				this.initModels.getResourceSet(), LaunchconfigAccess.getModelLocation(launchConfigurationParams)));
 
 		this.fringe = new FringeFringe(new PriorityTransitionQueue()); // new FIFOTransitionQueue()
 
 		systemDriver.postEvent(
 				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
 
-		this.preprocessor = new Preprocessor(this.graph, this.fringe, LaunchconfigAccess.getMinDuration(launchConfigurationParams));
+		this.preprocessor = new Preprocessor(this.graph, this.fringe,
+				LaunchconfigAccess.getMinDuration(launchConfigurationParams));
 		this.postprocessor = new Postprocessor(this.graph, this.fringe);
+	}
+
+	/**
+	 * Applying a Profile and and the Stereotypes is necessary, because otherwise
+	 * {@link EcoreUtil#resolveAll(org.eclipse.emf.ecore.resource.ResourceSet)}
+	 * fails to resolve stereotype applications for cost.
+	 * 
+	 * This behaviour can also be observed in the PalladioBench UI. When opening a
+	 * resource environment model with stereotypes and profile, we get an exception
+	 * (PackageNotFound). If we create a new resource environment model, apply
+	 * profiles and stereotypes to the new model, and only open the actual resource
+	 * environment model afterwards, it opens just fine.
+	 * 
+	 * Thus, basically, this operation simulates what i have to do in the
+	 * PalladioBench UI. I assume, that they fucked up the loading of profile
+	 * models, but somehow the get loaded upon calling
+	 * {@link ProfileAPI#applyProfile(Resource, String)} and
+	 * {@link StereotypeAPI#applyStereotype(org.eclipse.emf.ecore.EObject, String)}.
+	 * 
+	 * Note: Re-applying Profiles to the original model (which works in the UI)
+	 * fails here, because re-application throws an error.
+	 * 
+	 * Note: The resource and model created in this operation exist solely for
+	 * getting the cost profile and stereotypes loaded. They have no other purpose
+	 * and (probably) get garbage collect after this operation.
+	 * 
+	 * 
+	 */
+	private void applyStereotypeFake() {
+		ResourceEnvironment fake = ResourceenvironmentFactory.eINSTANCE.createResourceEnvironment();
+		Resource fakeRes = new PcmResourceImpl(URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir")));
+		fakeRes.getContents().add(fake);
+		ProfileAPI.applyProfile(fakeRes, "Cost");
+		StereotypeAPI.applyStereotype(fake, "CostReport");
 	}
 
 	@Override
@@ -134,17 +174,17 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		WorkflowConfigurationModule.simuComConfigProvider.set(simuComConfig);
 		WorkflowConfigurationModule.blackboardProvider.set(blackboard);
 
-		
-		// create copy here, such that i need not pass the initModels to the update providers.
+		// create copy here, such that i need not pass the initModels to the update
+		// providers.
 		final Set<DESEvent> allEvents = new HashSet<>(config.getSnapToInitOn().getEvents(this.initModels));
 
-		AdditionalConfigurationModule.updateProviders(snapConfig, config, allEvents, this.costInfo);
+		AdditionalConfigurationModule.updateProviders(snapConfig, config, allEvents);
 
 		driver.init(simuComConfig, monitor);
 		driver.start();
 
 		this.postProcessExplorationCycle(config);
-		
+
 		LOGGER.info("done with " + config.toString());
 	}
 
@@ -161,11 +201,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
-		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);		
-		
-		double prev = current.getIncomingTransition().isEmpty() ? 0 : ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
-		double value = node.utility().getTotalUtilty() == 0 ? prev : node.utility().getTotalUtilty(); 
-		
+		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
+
+		double prev = current.getIncomingTransition().isEmpty() ? 0
+				: ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
+		double value = node.utility().getTotalUtilty() == 0 ? prev : node.utility().getTotalUtilty();
+
 		current.setUtility(value);
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node));
@@ -241,8 +282,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
 	}
-
-	
 
 	@Override
 	public boolean hasUnexploredChanges() {

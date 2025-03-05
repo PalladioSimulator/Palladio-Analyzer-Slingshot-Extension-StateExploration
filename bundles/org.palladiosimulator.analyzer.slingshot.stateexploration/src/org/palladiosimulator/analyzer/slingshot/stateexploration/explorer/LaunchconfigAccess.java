@@ -60,34 +60,6 @@ public class LaunchconfigAccess {
 
 		return Double.valueOf(minDuration);
 	}
-	
-	/**
-	 *
-	 * Get {@link ExplorationConfiguration#COST_INTERVAL} from launch configuration
-	 * parameters map.
-	 *
-	 * @return interval for measuring costs.
-	 */
-	public static double getCostInterval(final Map<String, Object> launchConfigurationParams) {
-		final String costInterval = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.COST_INTERVAL);
-
-		return Double.valueOf(costInterval);
-	}
-	
-	/**
-	 *
-	 * Get {@link ExplorationConfiguration#COST_AMOUNT} from launch configuration
-	 * parameters map.
-	 *
-	 * @return amount of costs per interval per container.
-	 */
-	public static double getCostAmount(final Map<String, Object> launchConfigurationParams) {
-		final String costAmount = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.COST_AMOUNT);
-
-		return Double.valueOf(costAmount);
-	}
 
 	/**
 	 *

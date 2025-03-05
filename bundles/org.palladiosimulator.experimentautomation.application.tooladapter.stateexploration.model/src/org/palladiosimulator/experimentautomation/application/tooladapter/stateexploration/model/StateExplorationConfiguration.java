@@ -21,8 +21,6 @@ import org.palladiosimulator.experimentautomation.abstractsimulation.AbstractSim
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#isDoIdleExploration <em>Do Idle Exploration</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getModeLocation <em>Mode Location</em>}</li>
  *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getHorizon <em>Horizon</em>}</li>
- *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostInterval <em>Cost Interval</em>}</li>
- *   <li>{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostAmount <em>Cost Amount</em>}</li>
  * </ul>
  *
  * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration()
@@ -161,49 +159,5 @@ public interface StateExplorationConfiguration extends EObject, AbstractSimulati
 	 * @generated
 	 */
 	void setHorizon(int value);
-
-	/**
-	 * Returns the value of the '<em><b>Cost Interval</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>Cost Interval</em>' attribute.
-	 * @see #setCostInterval(double)
-	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration_CostInterval()
-	 * @model required="true"
-	 * @generated
-	 */
-	double getCostInterval();
-
-	/**
-	 * Sets the value of the '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostInterval <em>Cost Interval</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Cost Interval</em>' attribute.
-	 * @see #getCostInterval()
-	 * @generated
-	 */
-	void setCostInterval(double value);
-
-	/**
-	 * Returns the value of the '<em><b>Cost Amount</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>Cost Amount</em>' attribute.
-	 * @see #setCostAmount(double)
-	 * @see org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationToolAdapterPackage#getStateExplorationConfiguration_CostAmount()
-	 * @model required="true"
-	 * @generated
-	 */
-	double getCostAmount();
-
-	/**
-	 * Sets the value of the '{@link org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration#getCostAmount <em>Cost Amount</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Cost Amount</em>' attribute.
-	 * @see #getCostAmount()
-	 * @generated
-	 */
-	void setCostAmount(double value);
 
 } // StateExplorationConfiguration
