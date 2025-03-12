@@ -22,7 +22,7 @@ public class CutOffConcerns {
 	private static final Logger LOGGER = Logger.getLogger(CutOffConcerns.class.getName());
 	
 	private final DefaultGraph graph;
-	
+
 	private static final double BACKTRACK_FACTOR = 4;
 	private final double backtrackDistance; 
 
@@ -34,14 +34,17 @@ public class CutOffConcerns {
 
 	public boolean shouldExplore(final PlannedTransition future) {
 		LOGGER.debug(String.format("Evaluation future %s.", future.toString()));
-		LOGGER.debug(String.format("Future %s is rosy, will explore.", future.toString()));
-
+		
+		if ((graph.getFurthestState().getStartTime() - future.getStart().getStartTime()) > backtrackDistance) {
+			return false;
+		}
+		
 		return !matchesPattern(future);
 	}
 
 	/**
-	 * Patter is "leav on rea" (prev) -> NOOP -> "leav on rea" (current) -> NOOP
-	 * (ToDoChange)
+	 * Patter is "leav on rea" (prev) -> NOOP -> "leav on rea" (current) ([-> NOOP
+	 * (ToDoChange])
 	 * 
 	 * Beware, this kinda interacts with the other cutoffs. As example: if we do not
 	 * drop the scale ins on min config + abort effectless simulations, we stop the
@@ -71,6 +74,10 @@ public class CutOffConcerns {
 	 */
 	private static boolean bothNOOP(final PlannedTransition current, final RawTransition prev) {
 		return current.getChange().isEmpty() && prev.getChange().isEmpty();
+	}
+	
+	private static boolean prevNOOP(final RawTransition prev) {
+		return prev.getChange().isEmpty();
 	}
 
 	/**

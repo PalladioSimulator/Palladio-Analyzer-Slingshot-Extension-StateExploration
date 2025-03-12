@@ -143,8 +143,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * the models to file, and all unresolved references go missing on save.
 	 */
 	private void applyStereotypeFake() {
-		ResourceEnvironment fake = ResourceenvironmentFactory.eINSTANCE.createResourceEnvironment();
-		Resource fakeRes = new PcmResourceImpl(URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir")));
+		final ResourceEnvironment fake = ResourceenvironmentFactory.eINSTANCE.createResourceEnvironment();
+		final Resource fakeRes = new PcmResourceImpl(URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir")));
 		fakeRes.getContents().add(fake);
 		ProfileAPI.applyProfile(fakeRes, "Cost");
 		StereotypeAPI.applyStereotype(fake, "CostReport");
@@ -208,9 +208,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
 
-		double prev = current.getIncomingTransition().isEmpty() ? 0
+		final double prev = current.getIncomingTransition().isEmpty() ? 0
 				: ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
-		double value = node.utility().getTotalUtilty() == 0 ? prev : node.utility().getTotalUtilty();
+		final double value = node.utility().getTotalUtilty() == 0 ? prev : node.utility().getTotalUtilty();
 
 		current.setUtility(value);
 
@@ -218,6 +218,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
 		// to include for the prioritazion of the fringe.
+		this.graph.updateFurthestState(current);
+		
 		if (current.getEndTime() < this.horizonLength) {
 			this.postprocessor.updateGraphFringe(current);
 		}

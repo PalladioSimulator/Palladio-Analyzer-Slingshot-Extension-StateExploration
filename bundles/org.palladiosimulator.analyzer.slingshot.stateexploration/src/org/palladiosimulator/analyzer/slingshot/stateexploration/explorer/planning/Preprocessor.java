@@ -92,7 +92,7 @@ public class Preprocessor {
 
 			this.updateSimulationTimeTriggeredPolicy(spd, start.getDuration());
 
-			if (next.getChange().isPresent() && next.getChange().get() instanceof ReactiveReconfiguration rea) {
+			if (next.getChange().isPresent() && next.getChange().get() instanceof final ReactiveReconfiguration rea) {
 				this.deactivateReactivePolicies(spd, rea);
 			}
 			ResourceUtils.saveResource(spd.eResource());
@@ -151,8 +151,8 @@ public class Preprocessor {
 	 * @param spd model to deactivate policies at.
 	 * @param rea policies to deactivate
 	 */
-	private void deactivateReactivePolicies(final SPD spd, ReactiveReconfiguration rea) {
-		List<String> ids = rea.getAppliedPolicies().stream().map(p -> p.getId()).toList();
+	private void deactivateReactivePolicies(final SPD spd, final ReactiveReconfiguration rea) {
+		final List<String> ids = rea.getAppliedPolicies().stream().map(p -> p.getId()).toList();
 		spd.getScalingPolicies().stream().filter(p -> isSimulationTimeTrigger(p.getScalingTrigger()))
 				.filter(p -> ids.contains(p.getId())).forEach(p -> p.setActive(false));
 	}
@@ -321,8 +321,8 @@ public class Preprocessor {
 	 * @return true iff the trigger is based on {@link SimulationTime} and
 	 *         {@link ExpectedTime}
 	 */
-	private boolean isSimulationTimeTrigger(ScalingTrigger trigger) {
-		return trigger instanceof BaseTrigger base && base.getStimulus() instanceof SimulationTime
+	private boolean isSimulationTimeTrigger(final ScalingTrigger trigger) {
+		return trigger instanceof final BaseTrigger base && base.getStimulus() instanceof SimulationTime
 				&& base.getExpectedValue() instanceof ExpectedTime;
 	}
 
