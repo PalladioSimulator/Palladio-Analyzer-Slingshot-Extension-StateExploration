@@ -47,27 +47,32 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 			List<ServiceLevelObjective> slos) {
 		final var utility = new Utility();
 
-		for (final ServiceLevelObjective slo : slos) {
-			final MeasurementSet ms = measurements.stream()
-					.filter(x -> x.getSpecificationId().equals(slo.getMeasurementSpecification().getId())).findFirst()
-					.orElse(null);
-			if (ms != null) {
-				var value = calculateAreaUnderCurveMeasure(ms, slo);
+        for (final ServiceLevelObjective slo : slos) {
+            final MeasurementSet ms = measurements.stream()
+				.filter(x -> x.getSpecificationId()
+				.equals(slo.getMeasurementSpecification().getId()))
+				.findFirst()
+                    .orElse(null);
 
-				utility.addDataInstance(slo.getId(), value, UtilityType.SLO);
-			}
-		}
+                if (ms != null) {
+                    // Is this correct?
+                        final var points = IntStream.range(0, ms.getElements().size())
+                       		 .mapToObj(x -> {
+                        	return new Measurement<Number>(getGrade(ms.obtainMeasure().get(x), slo.getLowerThreshold(), slo.getUpperThreshold()), ms.getElements().get(x).timeStamp());
+                        }).toList();
+                        utility.addDataInstance(slo.getId(), points, Utility.UtilityType.SLO);
+                    }
+        }
 
-		for (final var ms : measurements) {
-			if (ms.getMetricDescriptionId().equals(MetricDescriptionConstants.COST_OF_RESOURCE_CONTAINERS.getId())) {
-				final var points = ms.getElements().stream().sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList();
-				final double area = calculateAreaUnderCurve(points);
-				utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
-			}
-		}
 
-		utility.calculateTotalUtility();
-		return utility;
+	    for (final var ms : measurements) {
+	            if (ms.getMonitorName().startsWith("Cost_")) {
+	                    utility.addDataInstance(ms.getMonitorName(), ms.getElements(), Utility.UtilityType.COST);
+	                }
+	        }
+	
+	    utility.calculateTotalUtility();
+	    return utility;
 	}
 
 	public double duration() {
