@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
@@ -39,6 +41,8 @@ public class Postprocessor {
 
 	private static final Logger LOGGER = Logger.getLogger(Postprocessor.class.getName());
 
+	private final int keepAtLeast;
+	
 	private final DefaultGraph rawgraph;
 	private final FringeFringe fringe;
 
@@ -56,6 +60,8 @@ public class Postprocessor {
 		this.proactiveStrategyBuilder = new ProactivePolicyStrategyBuilder(this.rawgraph, this.fringe);
 
 		this.updateGraphFringe(graph.getRoot());
+		
+		this.keepAtLeast = graph.getRoot().getArchitecureConfiguration().getSPD().isEmpty() ? 1 : graph.getRoot().getArchitecureConfiguration().getSPD().get().getScalingPolicies().size();
 	}
 
 	/**
@@ -72,6 +78,13 @@ public class Postprocessor {
 	public void updateGraphFringe(final DefaultState start) {
 		
 		if (start.getReasonsToLeave().contains(ReasonToLeave.aborted)) {
+			return;
+		}
+			
+		final Set<RawModelState> worstSiblings = this.getWorstSiblingSuccesors(start);
+		this.fringe.prune(pt -> worstSiblings.contains(pt.getSource()));
+		
+		if (worstSiblings.contains(start)) {
 			return;
 		}
 		
@@ -100,15 +113,63 @@ public class Postprocessor {
 		// only add net yet executed or queued changes.
 		for (final PlannedTransition toDoChange : newTransitions) {
 
-			Set<Transition> transitions = new HashSet<>();
+			final Set<Transition> transitions = new HashSet<>();
 			transitions.addAll(this.rawgraph.getTransitions());
 			transitions.addAll(this.fringe.getAllPlannedTransition());
 
-			Boolean dup = transitions.stream().map(toDoChange::isSame).reduce(false, (b1, b2) -> b1 || b2);
+			final Boolean dup = transitions.stream().map(toDoChange::isSame).reduce(false, (b1, b2) -> b1 || b2);
 
 			if (!dup) {
 				this.fringe.offer(toDoChange);
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * Cut off all but the best few siblings of the given state.
+	 * 
+	 * Cut off means 
+	 * 
+	 * @param state 
+	 */
+	public Set<RawModelState> getWorstSiblingSuccesors(final DefaultState state) {
+		if (state.getIncomingTransition().isEmpty()) {
+			return Set.of(); // root
+		}
+		final DefaultState parent = (DefaultState) state.getIncomingTransition().get().getSource();
+		final List<DefaultState> siblings = parent.getOutgoingTransitions().stream().map(t -> (DefaultState) t.getTarget()).toList();
+		
+		if (siblings.size() <= keepAtLeast) {
+			return Set.of(); //too few states
+		}
+		
+		final int limit = siblings.size() - keepAtLeast;
+
+		final List<DefaultState> worstSiblings = siblings.stream().sorted((s1,s2) -> Double.compare(s1.getUtility(), s2.getUtility())).limit(limit).toList();
+
+		final Set<RawModelState> badSuccessors = new HashSet<>();
+		for (final DefaultState badState : worstSiblings) {
+			badSuccessors.add(badState);
+			badSuccessors.addAll(this.collectSuccessors(badState));
+		}	
+		return badSuccessors;
+	}
+	
+	
+	/**
+	 * 
+	 * Collect all successors of a given state.
+	 * 
+	 * @param state
+	 * @return successor states of {@code} state
+	 */
+	public Set<RawModelState> collectSuccessors(final RawModelState state) {		
+		final Set<RawModelState> successors = new HashSet<>();
+		
+		for (final RawTransition transition : state.getOutgoingTransitions()) {
+			successors.addAll(this.collectSuccessors(transition.getTarget()));
+		}
+		return successors;	
 	}
 }
