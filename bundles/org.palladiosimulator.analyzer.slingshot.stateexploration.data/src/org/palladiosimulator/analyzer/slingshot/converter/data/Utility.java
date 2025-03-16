@@ -1,11 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.converter.data;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
-import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
 
 public class Utility {
 	record UtilityData(String id, double utility, UtilityType type) {
@@ -18,63 +17,62 @@ public class Utility {
 	private static final double STEP_SIZE = 1.0;
 	private static final Logger LOGGER = Logger.getLogger(Utility.class);
 	private double totalUtility;
-	private List<UtilityData> data = new ArrayList<>();;
+	private final List<UtilityData> data = new ArrayList<>();;
 
-	private List<List<Measurement<Double>>> slo = new ArrayList<>();
-	private List<List<Measurement<Double>>> costs = new ArrayList<>();
+	private final List<List<Measurement<Double>>> slo = new ArrayList<>();
+	private final List<List<Measurement<Double>>> costs = new ArrayList<>();
 
-	public void addDataInstance(String id, List<Measurement<Number>> measurements, UtilityType type) {
+	public void addDataInstance(final String id, final List<Measurement<Number>> measurements, final UtilityType type) {
 		data.add(new UtilityData(id,
 				// Using sum to keep compatibility with backend
-				measurements.stream().mapToDouble(x -> x.measure().doubleValue()).sum()
-				, type));
-		switch(type) {
-			case SLO:  slo.add(measurements.stream().map(x -> (Measurement<Double>)((Measurement)x)).toList()); break;
-			case COST: costs.add(measurements.stream().map(x -> (Measurement<Double>)((Measurement)x)).toList()); break;
+				measurements.stream().mapToDouble(x -> x.measure().doubleValue()).sum(), type));
+		switch (type) {
+		case SLO:
+			slo.add(measurements.stream().map(x -> (Measurement<Double>) ((Measurement) x)).toList());
+			break;
+		case COST:
+			costs.add(measurements.stream().map(x -> (Measurement<Double>) ((Measurement) x)).toList());
+			break;
 		}
 	}
 
-
 	public void calculateTotalUtility() {
 
-		//System.out.println("SLO TIMESTAPS:");
-		//System.out.println("MIN:" + slo.stream().mapToDouble(
-		//		x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).min().orElse(-1)
-		//	).filter(x -> x >= -0.5)
-		//		.min()
-		//		.orElse(-1));
-		//System.out.println("MAX:" + slo.stream().mapToDouble(
-		//		x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).max().orElse(-1)
-		//	).max()
-		//		.orElse(-1));
-		//System.out.println("ALL:" + slo.stream().map(
-		//		x -> {return x.stream().map(y -> { return y.timeStamp();}).toList();}).toList());
+		// System.out.println("SLO TIMESTAPS:");
+		// System.out.println("MIN:" + slo.stream().mapToDouble(
+		// x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).min().orElse(-1)
+		// ).filter(x -> x >= -0.5)
+		// .min()
+		// .orElse(-1));
+		// System.out.println("MAX:" + slo.stream().mapToDouble(
+		// x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).max().orElse(-1)
+		// ).max()
+		// .orElse(-1));
+		// System.out.println("ALL:" + slo.stream().map(
+		// x -> {return x.stream().map(y -> { return
+		// y.timeStamp();}).toList();}).toList());
 
-		//System.out.println("\n\nCOST TIMESTAPS:");
-		//System.out.println("MIN:" + costs.stream().mapToDouble(
-		//		x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).min().orElse(-1)
-		//	).filter(x -> x >= -0.5)
-		//		.min()
-		//		.orElse(-1));
-		//System.out.println("MAX:" + costs.stream().mapToDouble(
-		//		x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).max().orElse(-1)
-		//	).max()
-		//		.orElse(-1));
-		//System.out.println("ALL:" + costs.stream().map(
-		//		x -> {return x.stream().map(y -> { return y.timeStamp();}).toList();}).toList());
+		// System.out.println("\n\nCOST TIMESTAPS:");
+		// System.out.println("MIN:" + costs.stream().mapToDouble(
+		// x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).min().orElse(-1)
+		// ).filter(x -> x >= -0.5)
+		// .min()
+		// .orElse(-1));
+		// System.out.println("MAX:" + costs.stream().mapToDouble(
+		// x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).max().orElse(-1)
+		// ).max()
+		// .orElse(-1));
+		// System.out.println("ALL:" + costs.stream().map(
+		// x -> {return x.stream().map(y -> { return
+		// y.timeStamp();}).toList();}).toList());
 
-		var maybeMin  = List.of(
-			slo.stream().mapToDouble(
-					x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).min().orElse(-1)
-				).filter(x -> x >= -0.5)
-					.min()
-					.orElse(-1),
-			costs.stream().mapToDouble(
-					x -> x.stream().mapToDouble(y -> {return y.timeStamp();}).max().orElse(-1)
-					).filter(x -> x >= -0.5)
-						.min()
-						.orElse(-1)
-		).stream().mapToDouble(x -> x).filter(x -> x >= -0.5).min();
+		final var maybeMin = List.of(slo.stream().mapToDouble(x -> x.stream().mapToDouble(y -> {
+			return y.timeStamp();
+		}).min().orElse(-1)).filter(x -> x >= -0.5).min().orElse(-1),
+				costs.stream().mapToDouble(x -> x.stream().mapToDouble(y -> {
+					return y.timeStamp();
+				}).max().orElse(-1)).filter(x -> x >= -0.5).min().orElse(-1)).stream().mapToDouble(x -> x)
+				.filter(x -> x >= -0.5).min();
 
 		// When maybeMin is empty then no data series has any measurements
 		if(maybeMin.isEmpty()) {
@@ -82,132 +80,132 @@ public class Utility {
 			return;
 		}
 
-		double min = (int) maybeMin.getAsDouble();
-		var max  = (int) List.of(
-				slo.stream().mapToDouble(
-						x -> x.stream().mapToDouble(y -> { return y.timeStamp();}).max().orElse(-1)
-					).max()
-						.orElse(-1),
-				costs.stream().mapToDouble(
-						x -> x.stream().mapToDouble(y -> {return y.timeStamp();}).max().orElse(-1)
-						).max()
-							.orElse(-1)
-			).stream().mapToDouble(x -> x).max().getAsDouble();
+		final double min = (int) maybeMin.getAsDouble();
+		final var max = (int) List.of(slo.stream().mapToDouble(x -> x.stream().mapToDouble(y -> {
+			return y.timeStamp();
+		}).max().orElse(-1)).max().orElse(-1), costs.stream().mapToDouble(x -> x.stream().mapToDouble(y -> {
+			return y.timeStamp();
+		}).max().orElse(-1)).max().orElse(-1)).stream().mapToDouble(x -> x).max().getAsDouble();
 
-		//System.out.println("Total:");
-		//System.out.println("Min: " + min);
-		//System.out.println("Max: " + max);
+		// System.out.println("Total:");
+		// System.out.println("Min: " + min);
+		// System.out.println("Max: " + max);
 
-
-		List<List<Measurement<Double>>> sloIntervals = computeIntervals(min, max, slo);
-		List<List<Measurement<Double>>> costIntervals = computeIntervals(min, max, costs);
+		final List<List<Measurement<Double>>> sloIntervals = computeIntervals(min, max, slo);
+		final List<List<Measurement<Double>>> costIntervals = computeIntervals(min, max, costs);
 
 		// ensure that the length of all list is equal
-		if(sloIntervals.stream().map(x -> { return x.size();}).distinct().count() > 1 ||
-				costIntervals.stream().map(x -> { return x.size();}).distinct().count() > 1) {
-			throw new IllegalStateException("Measurements differ in length. \nSLO ("+ sloIntervals.stream().map(x -> { return x.size();}).distinct().toList() +"):\n" + sloIntervals + "\nCost ("+ costIntervals.stream().map(x -> { return x.size();}).distinct().toList() +"):\n" + costIntervals);
+		if(sloIntervals.stream().map(x -> {
+			return x.size();
+		}).distinct().count() > 1 || costIntervals.stream().map(x -> {
+			return x.size();
+		}).distinct().count() > 1) {
+			throw new IllegalStateException("Measurements differ in length. \nSLO (" + sloIntervals.stream().map(x -> {
+				return x.size();
+			}).distinct().toList() + "):\n" + sloIntervals + "\nCost (" + costIntervals.stream().map(x -> {
+				return x.size();
+			}).distinct().toList() + "):\n" + costIntervals);
 		}
 
-		List<Measurement<Double>> toIntegrate = new ArrayList<Measurement<Double>>();
-		var length = sloIntervals.get(0).size();
+		final List<Measurement<Double>> toIntegrate = new ArrayList<Measurement<Double>>();
+		final var length = sloIntervals.get(0).size();
 
 		for(int i = 0; i < length; i++) {
 			final int a = i;
-			var slo = sloIntervals.stream().mapToDouble(x -> x.get(a).measure()).sum();
-			var cost = costIntervals.stream().mapToDouble(x -> x.get(a).measure()).sum();
+			final var slo = sloIntervals.stream().mapToDouble(x -> x.get(a).measure()).sum();
+			final var cost = costIntervals.stream().mapToDouble(x -> x.get(a).measure()).sum();
 			// ensure equality of all timestamps
-			var timeStampMax = List.of(costIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).max(),
-					sloIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).max()
-					).stream().mapToDouble(x -> x.orElse(0.0)).max().orElse(1.0);
-			var timeStampMin = List.of(costIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).min(),
-					sloIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).min()
-					).stream().mapToDouble(x -> x.orElse(0.0)).min().orElse(0.0);
+			final var timeStampMax = List
+					.of(costIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).max(),
+							sloIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).max())
+					.stream().mapToDouble(x -> x.orElse(0.0)).max().orElse(1.0);
+			final var timeStampMin = List
+					.of(costIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).min(),
+							sloIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).min())
+					.stream().mapToDouble(x -> x.orElse(0.0)).min().orElse(0.0);
 			if(timeStampMax != timeStampMin) {
-				throw new IllegalStateException("Measurements have different timestamps at index "+ i +". SLO:\n" + sloIntervals.get(i) + "\nCost:\n" + costIntervals.get(i));
+				throw new IllegalStateException("Measurements have different timestamps at index " + i + ". SLO:\n"
+						+ sloIntervals.get(i) + "\nCost:\n" + costIntervals.get(i));
 			}
 
-			toIntegrate.add(new Measurement<Double>(slo/cost, timeStampMin));
+			toIntegrate.add(new Measurement<Double>(slo / cost, timeStampMin));
 		}
 
 		totalUtility = calculateAreaUnderCurve(toIntegrate);
-
 
 		// cleanup for serialization
 		slo.clear();
 		costs.clear();
 	}
 
-	private static List<List<Measurement<Double>>> computeIntervals(double start, double end, List<List<Measurement<Double>>> list) {
-		return list.stream().map(
-					x -> computeIntervalList(start, end, new ArrayList<>(x))
-				).toList();
+	private static List<List<Measurement<Double>>> computeIntervals(final double start, final double end,
+			final List<List<Measurement<Double>>> list) {
+		return list.stream().map(x -> computeIntervalList(start, end, new ArrayList<>(x))).toList();
 
 	}
 
-	private static List<Measurement<Double>> computeIntervalList(double start, double end, List<Measurement<Double>> list) {
-		var result = new ArrayList<Measurement<Double>>();
+	private static List<Measurement<Double>> computeIntervalList(final double start, final double end,
+			final List<Measurement<Double>> list) {
+		final var result = new ArrayList<Measurement<Double>>();
 
-		//System.out.println("computeIntervalList");
+		// System.out.println("computeIntervalList");
 
-		var iterator = list.listIterator();
+		final var iterator = list.listIterator();
 
-		if(iterator.hasNext() == false) {
-			//System.out.println("iterator empty fill with 0");
+		if (iterator.hasNext() == false) {
+			// System.out.println("iterator empty fill with 0");
 			fillCarry(start, end, result, 0.0);
 		} else {
 			var carry = 0.0;
-			for(double s = start; s <= end; s += STEP_SIZE) {
-				if(iterator.hasNext() == false) {
-					//System.out.println("iterator got empty, fill with carry");
+			for (double s = start; s <= end; s += STEP_SIZE) {
+				if (iterator.hasNext() == false) {
+					// System.out.println("iterator got empty, fill with carry");
 					fillCarry(s, end, result, carry);
 					break;
 				}
-				var current = iterator.next();
+				final var current = iterator.next();
 
-				//System.out.println("Filling carry at (" + s + ") until timestamp: " + current.timeStamp());
-				for(; s + STEP_SIZE <= current.timeStamp(); s += STEP_SIZE) {
+				// System.out.println("Filling carry at (" + s + ") until timestamp: " +
+				// current.timeStamp());
+				for (; s + STEP_SIZE <= current.timeStamp(); s += STEP_SIZE) {
 					result.add(new Measurement<Double>(carry, s));
 				}
-				//System.out.println("Stopping carry fill at (" + s + ")");
+				// System.out.println("Stopping carry fill at (" + s + ")");
 				// when we reach this point, current.timeStamp() is between s and s+STEP_SIZE
 				// now we aggregate all measurements in this interval
-				//System.out.println("computing new carry");
-				var measurements = new ArrayList<Double>();
+				// System.out.println("computing new carry");
+				final var measurements = new ArrayList<Double>();
 				measurements.add(current.measure());
 				while(iterator.hasNext()) {
-					var next = iterator.next();
-					if(next.timeStamp() < s+STEP_SIZE) {
+					final var next = iterator.next();
+					if (next.timeStamp() < s + STEP_SIZE) {
 						measurements.add(next.measure());
 					} else {
-						//set iterator back
+						// set iterator back
 						iterator.previous();
 						break;
 					}
 				}
 				carry = measurements.stream().mapToDouble(x -> x).average().orElse(0.0);
-				//System.out.println("New carry: " + carry);
+				// System.out.println("New carry: " + carry);
 				result.add(new Measurement<Double>(carry, s));
 			}
 
 		}
 
-		//System.out.println("Computed intervals with length" + result.size());
-
+		// System.out.println("Computed intervals with length" + result.size());
 
 		return result;
 	}
 
-	private static void fillCarry(double start, double end, List<Measurement<Double>> list, double carry) {
-		//System.out.println("Beginn fill at: " + list.size());
+	private static void fillCarry(final double start, final double end, final List<Measurement<Double>> list,
+			final double carry) {
+		// System.out.println("Beginn fill at: " + list.size());
 		for(double s = start; s <= end; s += STEP_SIZE) {
 			list.add(new Measurement<Double>(carry, s));
 		}
-		//System.out.println("End fill at: " + list.size());
+		// System.out.println("End fill at: " + list.size());
 	}
-
-
-
-
 
 	/**
 	 * Calculates the area under a curve represented by a set of measurements.
@@ -220,7 +218,7 @@ public class Utility {
 
 		// Iterate through the measurements pairwise to calculate the area under each
 		// segment
-		for (int i = 0; i < toIntegrate.size() - 1; i++) {
+		for(int i = 0; i < toIntegrate.size() - 1; i++) {
 			// Current and next measurement points
 			final var current = toIntegrate.get(i);
 			final var next = toIntegrate.get(i + 1);
@@ -240,8 +238,6 @@ public class Utility {
 
 		return area;
 	}
-
-
 
 	/**
 	 * Calculates the area of a trapezoid defined by two points on a curve.
@@ -266,10 +262,8 @@ public class Utility {
 		return area;
 	}
 
-
 	public double getTotalUtilty() {
 		return totalUtility;
 	}
-
 
 }
