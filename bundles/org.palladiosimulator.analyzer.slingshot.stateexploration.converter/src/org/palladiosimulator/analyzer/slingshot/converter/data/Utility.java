@@ -36,6 +36,12 @@ public class Utility {
 		}
 	}
 
+	/**
+	 * Calculates the total utility.
+	 *
+	 * Ensures that attributes {@code slo} and {@code costs} are empty, for smaller serialisation.
+	 *
+	 */
 	public void calculateTotalUtility() {
 
 		// System.out.println("SLO TIMESTAPS:");
