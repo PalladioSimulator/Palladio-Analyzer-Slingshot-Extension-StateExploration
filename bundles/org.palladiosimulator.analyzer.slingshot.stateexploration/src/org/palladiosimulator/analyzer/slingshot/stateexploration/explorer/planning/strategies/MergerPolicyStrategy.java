@@ -40,6 +40,11 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * max occurrence of policy per transition. 1 means, each policy at max once.  
 	 */
 	private static final int MAX_OCCURRENCE_PER_POLICY = 1;
+	
+	/** 
+	 * max set (list) size  
+	 */
+	private static final int MAX_LIST_SIZE = 2; // TODO
 
 	private final DefaultState state;
 
@@ -117,7 +122,8 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 		Set<ProactiveReconfiguration> proactiveReconfs = new HashSet<>();
 
 		for (ModelAdjustmentRequested adj : newAdj) {
-			if (countAdjustment(oldAdj, adj) < MAX_OCCURRENCE_PER_POLICY) {
+			if (countAdjustment(oldAdj, adj) < MAX_OCCURRENCE_PER_POLICY &&
+					oldAdj.size() < MAX_LIST_SIZE) {
 				for (int i = 0; i <= oldAdj.size(); i++) {
 					List<ModelAdjustmentRequested> tmp = new ArrayList<>(oldAdj);
 					tmp.add(i, adj);
@@ -125,7 +131,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 				}
 			} else {
 				LOGGER.debug(String.format(
-						"no new change based on policy %s because it already occurs more than %d times in the base change.",
+						"no new change based on policy %s because it already occurs more than %d times in the base change. Or because the resulting change list will be to big.",
 						adj.getScalingPolicy().getEntityName(), MAX_OCCURRENCE_PER_POLICY));
 			}
 		}
@@ -168,8 +174,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * 
 	 * @param change
 	 * @param reconf
-	 * @return true, iff reconf is already in change too often, i.e. shall not be
-	 *         added again.
+	 * @return nmber of occurences of reconf in change.
 	 */
 	private long countAdjustment(final List<ModelAdjustmentRequested> change, final ModelAdjustmentRequested reconf) {
 		String policyId = reconf.getScalingPolicy().getId();

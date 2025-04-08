@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -19,6 +20,17 @@ import org.palladiosimulator.spd.ScalingPolicy;
  */
 public class CutOffConcerns {
 	private static final Logger LOGGER = Logger.getLogger(CutOffConcerns.class.getName());
+	
+	private final DefaultGraph graph;
+	
+	private static final double BACKTRACK_FACTOR = 4;
+	private final double backtrackDistance; 
+
+	public CutOffConcerns(final DefaultGraph graph, final double minStateDuration) {
+		super();
+		this.graph = graph;
+		this.backtrackDistance = BACKTRACK_FACTOR * minStateDuration;
+	}
 
 	public boolean shouldExplore(final PlannedTransition future) {
 		LOGGER.debug(String.format("Evaluation future %s.", future.toString()));

@@ -57,7 +57,7 @@ public class Preprocessor {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 		this.minDuration = minDuration;
-		this.cutOffConcerns = new CutOffConcerns();
+		this.cutOffConcerns = new CutOffConcerns(graph, minDuration);
 	}
 
 	/**
