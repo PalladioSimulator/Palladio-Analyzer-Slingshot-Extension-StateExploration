@@ -28,6 +28,18 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	private static final long serialVersionUID = -7468814179743463536L;
 
 	private final DefaultState root;
+	
+	private DefaultState furthestState;
+
+	public DefaultState getFurthestState() {
+		return furthestState;
+	}
+
+	public void updateFurthestState(final DefaultState updateState) {
+		if (updateState.getStartTime() > this.furthestState.getStartTime()) {
+			this.furthestState = updateState;
+		}
+	}
 
 	/**
 	 *
@@ -39,6 +51,8 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 
 		this.root = this.insertStateFor(0.0, rootArchConfig);
 		this.root.setSnapshot(new InMemorySnapshot(Set.of()));
+		
+		this.furthestState = this.root;
 	}
 
 

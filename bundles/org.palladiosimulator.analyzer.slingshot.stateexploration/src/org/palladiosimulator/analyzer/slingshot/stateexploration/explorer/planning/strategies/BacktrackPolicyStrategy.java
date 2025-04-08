@@ -27,6 +27,8 @@ import org.palladiosimulator.spd.ScalingPolicy;
 public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 
 	private final DefaultState state;
+	
+	private static final int MAX_DISTANCE = 3;
 
 	/**
 	 * Create new {@link BacktrackPolicyStrategy}.
@@ -80,11 +82,13 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 			predecessor = getPredecessor(state);
 		}
 
-		while (policyAlreadyExploredAtState(predecessor, event.getScalingPolicy())) {
+		int distance = 0; 
+		while (distance < MAX_DISTANCE && policyAlreadyExploredAtState(predecessor, event.getScalingPolicy())) {
 			if (this.graph.getRoot().equals(predecessor)) {
 				return List.of();
 			}
 			predecessor = getPredecessor(predecessor);
+			distance++;
 		}
 
 		return List.of(new PlannedTransition(Optional.of(new ProactiveReconfiguration(event)), predecessor));

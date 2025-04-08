@@ -83,7 +83,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 			for (Reconfiguration newReconf : createPermutations(reconf.getReactiveReconfigurationEvents(),
 					reactiveAdjustments)) {
-				if (!this.contains(collectedReconfs, newReconf)) {
+				if (!contains(collectedReconfs, newReconf)) {
 					final PlannedTransition todoChange = new PlannedTransition(Optional.of(newReconf), predecessor);
 					newTodos.add(todoChange);
 				} else {
@@ -152,7 +152,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param newChange the element to check the container for.
 	 * @return true iff {@code changes} contains {@code newChange}.
 	 */
-	private boolean contains(final Set<Reconfiguration> changes, final Reconfiguration newChange) {
+	private static boolean contains(final Set<Reconfiguration> changes, final Reconfiguration newChange) {
 
 		final String newChangeIds = newChange.getReactiveReconfigurationEvents().stream()
 				.map(e -> e.getScalingPolicy().getId()).sorted().reduce("", (a, b) -> a + b);
