@@ -104,7 +104,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe = new FringeFringe(new PriorityTransitionQueue()); // new FIFOTransitionQueue()
 
 		systemDriver.postEvent(
-				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
+				new StateExploredEventMessage(this.convertState(this.graph.getRoot(), null, null)));
 
 		this.preprocessor = new Preprocessor(this.graph, this.fringe,
 				LaunchconfigAccess.getMinDuration(launchConfigurationParams));
@@ -206,7 +206,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
-		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
+		final StateGraphNode node = this.convertState(current, config.getParentId(), policies);
 
 		final double prev = current.getIncomingTransition().isEmpty() ? 0
 				: ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
@@ -225,6 +225,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		}
 	}
 
+	
+	private StateGraphNode convertState(final RawModelState state, final String parentId,
+			final List<ScalingPolicy> scalingPolicies) {
+		return StateGraphConverter.convertState(state.getArchitecureConfiguration().getMonitorRepository(), state.getMeasurements(), state.getArchitecureConfiguration().getSLOs(), state.getStartTime(), state.getEndTime(), state.getId(), parentId, scalingPolicies);
+	}
+	
 	/**
 	 *
 	 * Create a SimuComConfig for the next simulation run.

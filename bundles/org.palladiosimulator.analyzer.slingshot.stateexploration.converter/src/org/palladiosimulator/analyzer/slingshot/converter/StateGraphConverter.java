@@ -2,15 +2,15 @@ package org.palladiosimulator.analyzer.slingshot.converter;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.measure.Measure;
+import java.util.Optional;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
-import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
+import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.monitorrepository.Monitor;
+import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.servicelevelobjective.ServiceLevelObjective;
+import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveRepository;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -28,9 +28,11 @@ public class StateGraphConverter {
 	 * @param scalingPolicies policies in order of execution. first policy must be applied at first.
 	 * @return
 	 */
-	public static StateGraphNode convertState(final RawModelState state, final String parentId,
+	public static StateGraphNode convertState(final Optional<MonitorRepository> monitorRepository,
+            final ExperimentSetting expSetting,
+            final Optional<ServiceLevelObjectiveRepository> sloRepository, final double startTime, final double endTime, final String stateId, final String parentId,
 			final List<ScalingPolicy> scalingPolicies) {
-		List<ServiceLevelObjective> slos = new ArrayList<>();
+		final List<ServiceLevelObjective> slos = new ArrayList<>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 
 		/**
@@ -38,28 +40,28 @@ public class StateGraphConverter {
 		 * This is a workaround because otherwise the reading the monitor of the SLO
 		 * MeasurmentDescription for the Measuring Point would be null.
 		 */
-		if (state.getArchitecureConfiguration().getMonitorRepository().isPresent()) {
-			for (final Monitor monitor : state.getArchitecureConfiguration().getMonitorRepository().get()
-					.getMonitors()) {
+		if (monitorRepository.isPresent()) {
+			for (final Monitor monitor : monitorRepository.get().getMonitors()) {
 				// System.out.println(monitor.getEntityName());
 			}
 		}
-		
+
 
 		// Add SLOs
-		if (state.getArchitecureConfiguration() != null && state.getArchitecureConfiguration().getSLOs().isPresent()) {
-			for (final ServiceLevelObjective slo : state.getArchitecureConfiguration().getSLOs().get()
+		if (sloRepository.isPresent()) {
+			for (final ServiceLevelObjective slo : sloRepository.get()
 					.getServicelevelobjectives()) {
 				slos.add(slo);
 			}
 		}
-		
+
 		// Add Measurements
-		if (state.getMeasurements() != null) {
-			measuremnets = MeasurementConverter.visitExperiementSetting(state.getMeasurements());
+		if (expSetting != null) {
+		    final MeasurementConverter converter = new MeasurementConverter(startTime, endTime);
+			measuremnets = converter.visitExperiementSetting(expSetting);
 		}
 
-		return new StateGraphNode(state.getId(), state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId,
+		return new StateGraphNode(stateId, startTime, endTime, measuremnets, slos, parentId,
 				scalingPolicies);
 	}
 }
