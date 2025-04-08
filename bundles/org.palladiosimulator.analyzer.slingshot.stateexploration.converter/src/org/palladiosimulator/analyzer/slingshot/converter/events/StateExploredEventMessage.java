@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.messages;
+package org.palladiosimulator.analyzer.slingshot.converter.events;
 
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
@@ -14,7 +14,7 @@ public class StateExploredEventMessage extends EventMessage<StateGraphNode> {
 
 	public static final String MESSAGE_MAPPING_IDENTIFIER = "StateExplored";
 
-	public StateExploredEventMessage(final StateGraphNode payload) {
-		super(MESSAGE_MAPPING_IDENTIFIER, payload);
+    public StateExploredEventMessage(final StateGraphNode payload, final String creator) {
+        super(MESSAGE_MAPPING_IDENTIFIER, payload, creator);
 	}
 }

@@ -6,11 +6,11 @@ import java.util.Optional;
 
 import javax.inject.Named;
 
+import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanCreatedEventMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.PlanStepAppliedEventMessage;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.spd.SPD;

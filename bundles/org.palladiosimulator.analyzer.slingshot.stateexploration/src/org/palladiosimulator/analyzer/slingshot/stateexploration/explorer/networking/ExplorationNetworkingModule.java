@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 
 import javax.inject.Named;
 
+import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.networking.data.Message;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
@@ -12,7 +13,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ArchitectureMessageDispatcher;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.RequestArchitectureMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 import com.google.gson.JsonElement;
