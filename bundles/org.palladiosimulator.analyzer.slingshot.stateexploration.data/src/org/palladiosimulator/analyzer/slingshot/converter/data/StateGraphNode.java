@@ -8,6 +8,7 @@ import javax.measure.Measure;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
+import org.palladiosimulator.metricspec.constants.MetricDescriptionConstants;
 import org.palladiosimulator.servicelevelobjective.LinearFuzzyThreshold;
 import org.palladiosimulator.servicelevelobjective.NegativeQuadraticFuzzyThreshold;
 import org.palladiosimulator.servicelevelobjective.QuadraticFuzzyThreshold;
@@ -62,7 +63,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 		}
 
 		for (final var ms : measurements) {
-			if (ms.getMonitorName().startsWith("Cost_")) {
+			if (ms.getMetricDescriptionId().equals(MetricDescriptionConstants.COST_OF_RESOURCE_CONTAINERS.getId())) {
 				utility.addDataInstance(ms.getMonitorName(), ms.getElements(), Utility.UtilityType.COST);
 			}
 		}
