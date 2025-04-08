@@ -37,4 +37,5 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
  org.palladiosimulator.analyzer.slingshot.networking.data,
  org.scaledl.usageevolution,
- org.palladiosimulator.mdsdprofiles.api
+ org.palladiosimulator.mdsdprofiles.api,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter

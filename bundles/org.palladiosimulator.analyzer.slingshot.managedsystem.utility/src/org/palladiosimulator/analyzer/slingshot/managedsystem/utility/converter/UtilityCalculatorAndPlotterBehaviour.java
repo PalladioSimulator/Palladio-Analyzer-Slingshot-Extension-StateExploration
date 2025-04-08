@@ -9,15 +9,15 @@ import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
+import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.converter.StateGraphConverter;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.data.MeasurementSet;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.events.UtilityIntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.utility.plotter.CSVCreator;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.utility.plotter.CSVCreator.DataPoint;
@@ -89,15 +89,15 @@ public class UtilityCalculatorAndPlotterBehaviour implements SimulationBehaviorE
     public void onSimulationFinished(final SimulationFinished event) {
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
-        final StateGraphNode node = StateGraphConverter.convertState(this.monitorRepo, this.expSetting, this.sloRepo,
-                prevUtilityTimestamp, event.time());
+        final StateGraphNode node = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting, Optional.of(this.sloRepo),
+                prevUtilityTimestamp, event.time(), "", "", List.of());
         nodes.add(node);
 
         persistUtilityData();
         persistAggregatedUtilityData();
 
-        final StateGraphNode totalNode = StateGraphConverter.convertState(this.monitorRepo, this.expSetting,
-                this.sloRepo, 0, event.time());
+        final StateGraphNode totalNode = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting,
+                Optional.of(this.sloRepo), 0, event.time(), "", "", List.of());
 
         persistOtherMeasurementData(totalNode);
     }
@@ -184,8 +184,8 @@ public class UtilityCalculatorAndPlotterBehaviour implements SimulationBehaviorE
     public Result<UtilityIntervalPassed> onUtilityIntervalPassed(final UtilityIntervalPassed event) {
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
-        final StateGraphNode node = StateGraphConverter.convertState(this.monitorRepo, this.expSetting, this.sloRepo,
-                prevUtilityTimestamp, event.time());
+        final StateGraphNode node = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting, Optional.of(this.sloRepo),
+                prevUtilityTimestamp, event.time(), "", "", List.of());
 
         nodes.add(node);
 

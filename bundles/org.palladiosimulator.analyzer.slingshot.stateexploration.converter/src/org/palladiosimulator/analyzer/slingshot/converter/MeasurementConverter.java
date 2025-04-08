@@ -36,35 +36,41 @@ import com.google.common.base.Objects;
  *
  */
 public class MeasurementConverter {
-	
+
 	private static final Logger LOGGER = Logger.getLogger(MeasurementConverter.class);
-	
+
 	public final static String POINT_IN_TIME = "Point in Time";
 	public final static String RESPONSE_TIME = "Response Time";
 
+    private final double startTime;
+    private final double endTime;
 
+    public MeasurementConverter(final double startTime, final double endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
 
-	public static List<MeasurementSet> visitExperiementSetting(final ExperimentSetting es) {
-		return es.getExperimentRuns().stream().map(x -> MeasurementConverter.visitExperimentRun(x)).flatMap(y -> y.stream()).toList();
+	public List<MeasurementSet> visitExperiementSetting(final ExperimentSetting es) {
+		return es.getExperimentRuns().stream().map(x -> this.visitExperimentRun(x)).flatMap(y -> y.stream()).toList();
 	}
 
-	public static List<MeasurementSet> visitExperimentRun(final ExperimentRun er) {
-		return er.getMeasurement().stream().map(x -> MeasurementConverter.visitMeasurment(x)).flatMap(y -> y.stream()).toList();
+	public List<MeasurementSet> visitExperimentRun(final ExperimentRun er) {
+		return er.getMeasurement().stream().map(x -> this.visitMeasurment(x)).flatMap(y -> y.stream()).toList();
 	}
 
-	public static List<MeasurementSet> visitMeasurment(final org.palladiosimulator.edp2.models.ExperimentData.Measurement m) {
-		return m.getMeasurementRanges().stream().map(x -> MeasurementConverter.visitMeasurementRange(x)).flatMap(y -> y.stream()).toList();
+	public List<MeasurementSet> visitMeasurment(final org.palladiosimulator.edp2.models.ExperimentData.Measurement m) {
+		return m.getMeasurementRanges().stream().map(x -> this.visitMeasurementRange(x)).flatMap(y -> y.stream()).toList();
 	}
 
-	public static List<MeasurementSet> visitMeasurementRange(final MeasurementRange mr) {
+	public List<MeasurementSet> visitMeasurementRange(final MeasurementRange mr) {
 		if (mr.getRawMeasurements() == null)
 			throw new IllegalStateException("No RawMeasurments found!");
 
-		return MeasurementConverter.visitRawMeasurments(mr.getRawMeasurements());
+		return this.visitRawMeasurments(mr.getRawMeasurements());
 	}
-	
-	
-	
+
+
+
 	/**
 	 * This extracts the information of all data series from the raw measurement. It
 	 * is asserted that the first data series contains the point in time and second
@@ -75,7 +81,7 @@ public class MeasurementConverter {
 	 * @param rawMeasurments
 	 * @return
 	 */
-	public static List<MeasurementSet> visitRawMeasurments(final RawMeasurements rawMeasurments) {
+	public List<MeasurementSet> visitRawMeasurments(final RawMeasurements rawMeasurments) {
 		final List<MeasurementSet> measurments = new ArrayList<MeasurementSet>();
 
 		if (rawMeasurments.getMeasurementRange().getMeasurement().getMeasuringType().getMetric().eContainer() == null)
@@ -104,7 +110,7 @@ public class MeasurementConverter {
 	}
 
 
-	private static MeasurementSet processDataSeries(final DataSeries dataSeries1, final DataSeries dataSeries2, final BaseMetricDescription bmc1, final BaseMetricDescription bmc2) {
+	private MeasurementSet processDataSeries(final DataSeries dataSeries1, final DataSeries dataSeries2, final BaseMetricDescription bmc1, final BaseMetricDescription bmc2) {
 		final Predicate<? super MeasurementSpecification> filter = (x ->
 		MetricDescriptionUtility.isBaseMetricDescriptionSubsumedByMetricDescription(bmc1, x.getMetricDescription()) ||
 		MetricDescriptionUtility.isBaseMetricDescriptionSubsumedByMetricDescription(bmc2, x.getMetricDescription()));
@@ -123,7 +129,7 @@ public class MeasurementConverter {
 	}
 
 
-	private static MeasurementSet processDataSeries(final List<Number> timestamps, final DataSeries dataSeries, final Predicate<? super MeasurementSpecification> filter) {
+	private MeasurementSet processDataSeries(final List<Number> timestamps, final DataSeries dataSeries, final Predicate<? super MeasurementSpecification> filter) {
 		final var measureName = dataSeries.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint().getStringRepresentation();
 		final var monitorRepo = Slingshot.getInstance().getInstance(MonitorRepository.class);
 		final var mpoint = dataSeries.getRawMeasurements().getMeasurementRange().getMeasurement().getMeasuringType().getMeasuringPoint();
@@ -154,7 +160,9 @@ public class MeasurementConverter {
 		}
 
 		for (int j = 0; j < timestamps.size(); j++) {
-			ms.add(new MeasurementSet.Measurement<Number>(values.get(j), timestamps.get(j).doubleValue()));
+		    if (timestamps.get(j).doubleValue() >= this.startTime && timestamps.get(j).doubleValue() <= this.endTime) {
+		        ms.add(new MeasurementSet.Measurement<Number>(values.get(j), timestamps.get(j).doubleValue()));
+		    }
 		}
 
 		return ms;
@@ -171,7 +179,7 @@ public class MeasurementConverter {
 	 */
 	private static List<Number> visitDataSeries(final DataSeries ds) {
 		final var dao = (MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
-		
+
 		final List<Measure<Number, Duration>> measures = dao.getMeasurements();
 
 		final var numbers = measures.stream().map(measure -> measure.getValue()).toList();
@@ -184,11 +192,11 @@ public class MeasurementConverter {
 
 		return numbers;
 	}
-	
-	
+
+
 	private static List<Measure> visitDataSeriesMeasure(final DataSeries ds) {
 		final var dao = (MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
-		
+
 		final List<Measure> measures = dao.getMeasurements().stream().map(x -> (Measure)x).toList();
 
 		try {

@@ -26,4 +26,4 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  org.apache.log4j,
  de.uka.ipd.sdq.workflow.mdsd.blackboard,
  org.palladiosimulator.analyzer.workflow,
- org.palladiosimulator.analyzer.slingshot.stateexploration.converter.data
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter

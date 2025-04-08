@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.managedsystem.messages;
 
-import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 
 /**
