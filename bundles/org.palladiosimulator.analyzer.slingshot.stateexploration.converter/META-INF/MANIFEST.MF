@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: StateexplorationConverter
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.converter
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.converter
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Export-Package: org.palladiosimulator.analyzer.slingshot.converter
+Require-Bundle: org.palladiosimulator.spd,
+ org.palladiosimulator.servicelevelobjective,
+ org.apache.log4j,
+ org.palladiosimulator.edp2.util,
+ org.palladiosimulator.analyzer.slingshot.core,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter.data,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.data
