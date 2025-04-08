@@ -8,8 +8,6 @@ import javax.measure.Measure;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet.Measurement;
-import org.palladiosimulator.analyzer.slingshot.converter.data.Utility.UtilityType;
-import org.palladiosimulator.metricspec.constants.MetricDescriptionConstants;
 import org.palladiosimulator.servicelevelobjective.LinearFuzzyThreshold;
 import org.palladiosimulator.servicelevelobjective.NegativeQuadraticFuzzyThreshold;
 import org.palladiosimulator.servicelevelobjective.QuadraticFuzzyThreshold;
@@ -43,26 +41,29 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 				(Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
-	private static Utility calcUtility(double startTime, double endTime, List<MeasurementSet> measurements,
-			List<ServiceLevelObjective> slos) {
+	private static Utility calcUtility(final double startTime, final double endTime,
+			final List<MeasurementSet> measurements, final List<ServiceLevelObjective> slos) {
 		final var utility = new Utility();
 
 		for (final ServiceLevelObjective slo : slos) {
 			final MeasurementSet ms = measurements.stream()
 					.filter(x -> x.getSpecificationId().equals(slo.getMeasurementSpecification().getId())).findFirst()
 					.orElse(null);
-			if (ms != null) {
-				var value = calculateAreaUnderCurveMeasure(ms, slo);
 
-				utility.addDataInstance(slo.getId(), value, UtilityType.SLO);
+			if (ms != null) {
+				// Is this correct?
+				final var points = IntStream.range(0, ms.getElements().size()).mapToObj(x -> {
+					return new Measurement<Number>(
+							getGrade(ms.obtainMeasure().get(x), slo.getLowerThreshold(), slo.getUpperThreshold()),
+							ms.getElements().get(x).timeStamp());
+				}).toList();
+				utility.addDataInstance(slo.getId(), points, Utility.UtilityType.SLO);
 			}
 		}
 
 		for (final var ms : measurements) {
-			if (ms.getMetricDescriptionId().equals(MetricDescriptionConstants.COST_OF_RESOURCE_CONTAINERS.getId())) {
-				final var points = ms.getElements().stream().sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList();
-				final double area = calculateAreaUnderCurve(points);
-				utility.addDataInstance(ms.getMonitorName(), -area, UtilityType.COST);
+			if (ms.getMonitorName().startsWith("Cost_")) {
+				utility.addDataInstance(ms.getMonitorName(), ms.getElements(), Utility.UtilityType.COST);
 			}
 		}
 
@@ -82,7 +83,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 	 * https://github.com/PalladioSimulator/Palladio-Addons-ServiceLevelObjectives/blob/master/bundles/org.palladiosimulator.servicelevelobjective.edp2/src/org/palladiosimulator/servicelevelobjective/edp2/mappers/SLOViolationEDP2DatasourceMapper.java
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static double getGrade(Measure measurement, Threshold lower, Threshold upper) {
+	private static double getGrade(final Measure measurement, final Threshold lower, final Threshold upper) {
 
 		if (lower != null) {
 			final Measure lowerThresholdHardLimit = lower.getThresholdLimit();
@@ -119,10 +120,10 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 	 * Handles grading of measurements in lower fuzzy range
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static double gradeSoftLowerThreshold(Measure toGrade, SoftThreshold lowerThreshold) {
-		double x = (double) toGrade.getValue();
-		double soft = lowerThreshold.getSoftLimit().doubleValue(toGrade.getUnit());
-		double hard = lowerThreshold.getThresholdLimit().doubleValue(toGrade.getUnit());
+	private static double gradeSoftLowerThreshold(final Measure toGrade, final SoftThreshold lowerThreshold) {
+		final double x = (double) toGrade.getValue();
+		final double soft = lowerThreshold.getSoftLimit().doubleValue(toGrade.getUnit());
+		final double hard = lowerThreshold.getThresholdLimit().doubleValue(toGrade.getUnit());
 
 		if (lowerThreshold instanceof LinearFuzzyThreshold) {
 			return 1 / (soft - hard) * (x - hard);
@@ -140,10 +141,10 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 	 * Handles grading of measurements in upper fuzzy range
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static double gradeSoftUpperThreshold(Measure toGrade, SoftThreshold upperThreshold) {
-		double x = (double) toGrade.getValue();
-		double soft = upperThreshold.getSoftLimit().doubleValue(toGrade.getUnit());
-		double hard = upperThreshold.getThresholdLimit().doubleValue(toGrade.getUnit());
+	private static double gradeSoftUpperThreshold(final Measure toGrade, final SoftThreshold upperThreshold) {
+		final double x = (double) toGrade.getValue();
+		final double soft = upperThreshold.getSoftLimit().doubleValue(toGrade.getUnit());
+		final double hard = upperThreshold.getThresholdLimit().doubleValue(toGrade.getUnit());
 		if (upperThreshold instanceof LinearFuzzyThreshold) {
 			return -1 / (hard - soft) * (x - hard);
 		}
@@ -204,16 +205,16 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 	 * @param slo          SLOs to grade against
 	 * @return area under graded curve.
 	 */
-	private static double calculateAreaUnderCurveMeasure(final MeasurementSet measurements, final ServiceLevelObjective slo) {
+	private static double calculateAreaUnderCurveMeasure(final MeasurementSet measurements,
+			final ServiceLevelObjective slo) {
 		double area = 0.0;
 
 		final List<Measurement<Number>> points = IntStream.range(0, measurements.getElements().size()).mapToObj(x -> {
 			return new Measurement<Number>(
 					getGrade(measurements.obtainMeasure().get(x), slo.getLowerThreshold(), slo.getUpperThreshold()),
 					measurements.getElements().get(x).timeStamp());
-		}).sorted(Comparator.comparingDouble((x) -> x.timeStamp()))
-				.toList();
-		
+		}).sorted(Comparator.comparingDouble((x) -> x.timeStamp())).toList();
+
 		// Iterate through the measurements pairwise to calculate the area under each
 		// segment
 		for (int i = 0; i < points.size() - 1; i++) {
