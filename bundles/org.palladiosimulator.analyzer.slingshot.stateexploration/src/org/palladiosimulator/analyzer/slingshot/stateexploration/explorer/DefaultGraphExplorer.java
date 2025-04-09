@@ -211,7 +211,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
-		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
+		final String parentId = current.getIncomingTransition().get().getSource().getId();
+		
+		final StateGraphNode node = StateGraphConverter.convertState(current, parentId, policies);
 
 		final double prev = current.getIncomingTransition().isEmpty() ? 0
 				: ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();

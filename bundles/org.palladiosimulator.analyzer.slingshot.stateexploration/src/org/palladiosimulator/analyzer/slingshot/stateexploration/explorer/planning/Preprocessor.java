@@ -116,7 +116,7 @@ public class Preprocessor {
 
 		if (change.isEmpty()) {
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, List.of(),
-					this.createStateInitEvents(start.getAdjustorStateValues()), start.getId());
+					this.createStateInitEvents(start.getAdjustorStateValues()));
 		}
 
 		if (change.get() instanceof final Reconfiguration reconf) {
@@ -134,7 +134,7 @@ public class Preprocessor {
 			}
 
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvents,
-					this.createStateInitEvents(initValues), start.getId());
+					this.createStateInitEvents(initValues));
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");

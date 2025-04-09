@@ -26,18 +26,16 @@ public class SimulationInitConfiguration {
 
 	/** Adjustments. Beware, order must be preserved.*/
 	private final List<ModelAdjustmentRequested> events;
-	private final String parentId;
 
 	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultStateBuilder stateToExplore,
 			final double explorationDuration, final List<ModelAdjustmentRequested> events,
-			final Set<SPDAdjustorStateInitialized> initializationEvents, final String parentId) {
+			final Set<SPDAdjustorStateInitialized> initializationEvents) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
 		this.events = events;
 		this.initializationEvents = initializationEvents;
-		this.parentId = parentId;
 	}
 
 	public Snapshot getSnapToInitOn() {
@@ -74,9 +72,5 @@ public class SimulationInitConfiguration {
 				+ "] - "
 				+ " application "
 				+ "]";
-	}
-
-	public String getParentId() {
-		return this.parentId;
 	}
 }
