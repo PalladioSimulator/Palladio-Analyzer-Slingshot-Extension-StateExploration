@@ -116,7 +116,7 @@ public class Preprocessor {
 
 		if (change.isEmpty()) {
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, List.of(),
-					this.createStateInitEvents(start.getAdjustorStateValues()));
+					this.createStateInitEvents(start.getSnapshot().getSPDAdjustorStateValues()));
 		}
 
 		if (change.get() instanceof final Reconfiguration reconf) {
@@ -125,7 +125,7 @@ public class Preprocessor {
 			final Collection<SPDAdjustorStateValues> initValues = new HashSet<>();
 
 			for (final ScalingPolicy policy : reconf.getAppliedPolicies()) {
-				initValues.addAll(updateInitValues(policy, start.getAdjustorStateValues()));
+				initValues.addAll(updateInitValues(policy, start.getSnapshot().getSPDAdjustorStateValues()));
 			}
 
 			final List<ModelAdjustmentRequested> initEvents = new ArrayList<>();

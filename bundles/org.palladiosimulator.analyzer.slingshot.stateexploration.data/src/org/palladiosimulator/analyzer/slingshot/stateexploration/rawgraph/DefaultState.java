@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
@@ -40,8 +39,6 @@ public class DefaultState implements RawModelState {
 
 	private double utility = 0;
 
-	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
-
 	/**
 	 * 
 	 * @param pointInTime
@@ -54,13 +51,11 @@ public class DefaultState implements RawModelState {
 	 * @param reasonsToLeave
 	 */
 	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
-			final DefaultGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Collection<SPDAdjustorStateValues> adjustorStateValues, final Set<ReasonToLeave> reasonsToLeave) {
+			final DefaultGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Set<ReasonToLeave> reasonsToLeave) {
 		this.graph = graph;
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
 		this.reasonsToLeave = reasonsToLeave;
-
-		this.adjustorStateValues = adjustorStateValues;
 		
 		this.experimentSetting = settings;
 		this.snapshot = snapshot;
@@ -77,19 +72,6 @@ public class DefaultState implements RawModelState {
 	 */
 	public Snapshot getSnapshot() {
 		return snapshot;
-	}
-	
-	/**
-	 * Get the state of the {@code SPDAdjustorState} at the end of this state.
-	 * 
-	 * TODO : this should be part of the snapshot, or should it?
-	 * 
-	 * Needed start a new simulation run that resumes the simulation at the end of this state.
-	 * 
-	 * @return state of the {@code SPDAdjustorState} at the end of this state.
-	 */
-	public Set<SPDAdjustorStateValues> getAdjustorStateValues() {
-		return Set.copyOf(this.adjustorStateValues);
 	}
 
 	public double getUtility() {

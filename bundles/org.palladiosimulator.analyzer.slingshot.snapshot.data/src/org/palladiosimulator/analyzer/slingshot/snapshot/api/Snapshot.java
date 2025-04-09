@@ -1,15 +1,17 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
 /**
  *
- * Snaphshot of a Simulation run.
+ * Snapshot of a Simulation run.
  *
  * @author Sophie Stieß
  *
@@ -37,11 +39,27 @@ public interface Snapshot {
 	 *         reconfiguration.
 	 */
 	public List<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent();
-
+	
 	/**
 	 *
 	 * @param event {@link ModelAdjustmentRequested} event, that ended the
 	 *              snapshotted state.
 	 */
 	public void addModelAdjustmentRequestedEvent(ModelAdjustmentRequested event);
+	
+	/**
+	 * Get the state of the {@code SPDAdjustorState} at the end of this state.
+	 * 
+	 * Needed start a new simulation run that resumes the simulation at the end of this state.
+	 * 
+	 * @return state of the {@code SPDAdjustorState} at the end of this state.
+	 */
+	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues();
+
+	/**
+	 * 
+	 * 
+	 * @param value value to be added to this snapshot
+	 */
+	public void addSPDAdjustorStateValues(final SPDAdjustorStateValues value);
 }

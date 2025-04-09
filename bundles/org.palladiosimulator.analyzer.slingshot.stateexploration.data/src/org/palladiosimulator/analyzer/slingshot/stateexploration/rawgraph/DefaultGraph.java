@@ -39,7 +39,7 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	public DefaultGraph(final ArchitectureConfiguration rootArchConfig) {
 		super(RawTransition.class);
 		
-		this.root = new DefaultState(0, rootArchConfig, this, null, new InMemorySnapshot(Set.of()), 0, Set.of(), Set.of());
+		this.root = new DefaultState(0, rootArchConfig, this, null, new InMemorySnapshot(Set.of()), 0, Set.of());
 		this.furthestState = this.root;
 		
 		this.addVertex(root);		

@@ -1,11 +1,9 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
@@ -37,9 +35,6 @@ public class DefaultStateBuilder {
 
 	/* must be filled at the end of a simulation run */
 	private final Set<ReasonToLeave> reasonsToLeave = new HashSet<>();
-
-	/* may be filled at the end of a simulation run */
-	private final Collection<SPDAdjustorStateValues> adjustorStateValues = new HashSet<>();
 
 	/* must be set at the end of a simulation run */
 	private double duration = -1;
@@ -73,10 +68,6 @@ public class DefaultStateBuilder {
 
 	public void addReasonToLeave(final ReasonToLeave reasonToLeave) {
 		this.reasonsToLeave.add(reasonToLeave);
-	}
-
-	public void addAdjustorStateValues(final Collection<SPDAdjustorStateValues> adjustorStateValues) {
-		this.adjustorStateValues.addAll(adjustorStateValues);
 	}
 
 	/**
@@ -133,8 +124,7 @@ public class DefaultStateBuilder {
 				"Each builder may only be used to build exactly one state. This builder was already used to create a new state and cannot be used again.");
 		this.stateIsBuilt = true;
 
-		return new DefaultState(startTime, archConfig, graph, experimentSetting, snapshot, duration,
-				adjustorStateValues, reasonsToLeave);
+		return new DefaultState(startTime, archConfig, graph, experimentSetting, snapshot, duration, reasonsToLeave);
 	}
 	
 	/**

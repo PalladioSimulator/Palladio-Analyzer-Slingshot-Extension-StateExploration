@@ -347,7 +347,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/**
 	 *
-	 * NB : state is complete.
+	 * NB : state builder is complete.
 	 *
 	 * @param event
 	 * @return
@@ -359,8 +359,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		
 		this.refineReasonsToLeave(event);
 		
-		halfDoneState.addAdjustorStateValues(
-				this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time())).toList());
+		this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time())).forEach(s -> event.getEntity().addSPDAdjustorStateValues(s));
 		
 		// also offset targetgroup state values. --> ???
 
