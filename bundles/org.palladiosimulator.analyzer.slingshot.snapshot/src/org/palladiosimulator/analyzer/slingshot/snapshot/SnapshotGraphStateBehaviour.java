@@ -45,7 +45,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiate
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
@@ -86,7 +86,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	private final SimuComConfig simuComConfig;
 
 	/* State representing current simulation run */
-	private final DefaultState halfDoneState;
+	private final DefaultStateBuilder halfDoneState;
 	/* Snapshotted events taken from earlier simulation run */
 	private final Set<DESEvent> eventsToInitOn;
 
@@ -106,7 +106,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	private final EventsToInitOnWrapper wrapper;
 
 	@Inject
-	public SnapshotGraphStateBehaviour(final @Nullable DefaultState halfDoneState,
+	public SnapshotGraphStateBehaviour(final @Nullable DefaultStateBuilder halfDoneState,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsWrapper,
 			final @Nullable SimuComConfig simuComConfig,
 			final Allocation allocation, final MonitorRepository monitorrepo) {
@@ -180,7 +180,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.initOffsets(this.eventsToInitOn);
 		final Set<DESEvent> eventsToInitOnNoIntervallPassed = this.removeTakeCostMeasurement(this.eventsToInitOn);
 		
-		List<DESEvent> allEvents = new ArrayList<>();
+		final List<DESEvent> allEvents = new ArrayList<>();
 		allEvents.addAll(wrapper.getStateInitEvents());
 		allEvents.addAll(wrapper.getAdjustmentEvents());
 		allEvents.addAll(eventsToInitOnNoIntervallPassed);
@@ -292,6 +292,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 */
 	@Subscribe
 	public void onCalculatorRegistered(final CalculatorRegistered calculatorRegistered) {
+		
+		//SKip, if already set!
 
 		final List<Repository> repos = RepositoryManager.getCentralRepository().getAvailableRepositories();
 

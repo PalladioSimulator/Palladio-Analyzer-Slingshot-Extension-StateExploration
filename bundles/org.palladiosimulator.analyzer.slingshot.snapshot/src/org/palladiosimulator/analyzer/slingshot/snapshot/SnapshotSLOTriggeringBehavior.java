@@ -22,7 +22,7 @@ import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementU
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.metricspec.MetricDescription;
 import org.palladiosimulator.monitorrepository.MeasurementSpecification;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
@@ -52,7 +52,7 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveReposito
 public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotSLOTriggeringBehavior.class);
 
-	private final DefaultState state;
+	private final DefaultStateBuilder state;
 	private final ServiceLevelObjectiveRepository sloRepo;
 	private final Configuration semanticSpd;
 
@@ -65,7 +65,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	private final double minDuration;
 
 	@Inject
-	public SnapshotSLOTriggeringBehavior(final @Nullable DefaultState state,
+	public SnapshotSLOTriggeringBehavior(final @Nullable DefaultStateBuilder state,
 			final @Nullable ServiceLevelObjectiveRepository sloRepo, final @Nullable SnapshotConfiguration config,
 			final @Nullable Configuration semanticSpd) {
 

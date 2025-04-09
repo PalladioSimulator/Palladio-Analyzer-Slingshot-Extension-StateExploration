@@ -20,7 +20,7 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcon
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.semanticspd.CompetingConsumersGroupCfg;
 import org.palladiosimulator.semanticspd.Configuration;
 import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
@@ -47,7 +47,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 
 	private int adjusmentCounter = 0;
 
-	private final DefaultState state;
+	private final DefaultStateBuilder state;
 	private final SimulationScheduling scheduling;
 
 	private final boolean activated;
@@ -57,7 +57,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	private final Configuration config;
 
 	@Inject
-	public SnapshotAbortionBehavior(final @Nullable DefaultState state,
+	public SnapshotAbortionBehavior(final @Nullable DefaultStateBuilder state,
 			final @Nullable EventsToInitOnWrapper eventsWapper, final SimulationScheduling scheduling,
 			@Nullable final Configuration config, @Nullable final SPD spd) {
 		this.state = state;
@@ -75,10 +75,10 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 			 * because apparently some scale ins reduce the number of assemblies, but not
 			 * the number of resource containers. Unclear whether this is a bug or a feature in the SPD transformations.
 			 */
-			Set<EObject> targetGroups = spd.getTargetGroups().stream().map(tg -> getUnitOf(tg))
+			final Set<EObject> targetGroups = spd.getTargetGroups().stream().map(tg -> getUnitOf(tg))
 					.collect(Collectors.toSet());
 
-			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+			for (final TargetGroupCfg tgcfg : config.getTargetCfgs()) {
 				if (targetGroups.contains(getUnitOf(tgcfg))) {
 					tg2size.put(tgcfg, getSizeOf(tgcfg));
 				}
@@ -114,7 +114,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		if (adjusmentCounter == adjustmentEvents.size()) {
 			LOGGER.debug("Beginn Abortion check for " + state.getId());
 
-			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+			for (final TargetGroupCfg tgcfg : config.getTargetCfgs()) {
 				if (tg2size.containsKey(tgcfg)) {
 					LOGGER.debug(tgcfg.getClass().getSimpleName() + ": old " + tg2size.get(tgcfg) + " new "
 							+ getSizeOf(tgcfg));
@@ -136,11 +136,11 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	private static int getSizeOf(final TargetGroupCfg tgcfg) {
-		if (tgcfg instanceof ElasticInfrastructureCfg ecfg) {
+		if (tgcfg instanceof final ElasticInfrastructureCfg ecfg) {
 			return ecfg.getElements().size();
-		} else if (tgcfg instanceof ServiceGroupCfg scfg) {
+		} else if (tgcfg instanceof final ServiceGroupCfg scfg) {
 			return scfg.getElements().size();
-		} else if (tgcfg instanceof CompetingConsumersGroupCfg ccfg) {
+		} else if (tgcfg instanceof final CompetingConsumersGroupCfg ccfg) {
 			return ccfg.getElements().size();
 		} else {
 			throw new IllegalArgumentException(
@@ -155,11 +155,11 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	private static EObject getUnitOf(final TargetGroupCfg tgcfg) {
-		if (tgcfg instanceof ElasticInfrastructureCfg ecfg) {
+		if (tgcfg instanceof final ElasticInfrastructureCfg ecfg) {
 			return ecfg.getUnit();
-		} else if (tgcfg instanceof ServiceGroupCfg scfg) {
+		} else if (tgcfg instanceof final ServiceGroupCfg scfg) {
 			return scfg.getUnit();
-		} else if (tgcfg instanceof CompetingConsumersGroupCfg ccfg) {
+		} else if (tgcfg instanceof final CompetingConsumersGroupCfg ccfg) {
 			return ccfg.getUnit();
 		} else {
 			throw new IllegalArgumentException(
@@ -174,11 +174,11 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	 * @return
 	 */
 	private static EObject getUnitOf(final TargetGroup tg) {
-		if (tg instanceof ElasticInfrastructure etg) {
+		if (tg instanceof final ElasticInfrastructure etg) {
 			return etg.getUnit();
-		} else if (tg instanceof ServiceGroup stg) {
+		} else if (tg instanceof final ServiceGroup stg) {
 			return stg.getUnitAssembly();
-		} else if (tg instanceof CompetingConsumersGroup ctg) {
+		} else if (tg instanceof final CompetingConsumersGroup ctg) {
 			return ctg.getUnitAssembly();
 		} else {
 			throw new IllegalArgumentException("TargetGroup of unknown type, cannot determine size of elements.");

@@ -13,13 +13,13 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.SPD;
@@ -84,7 +84,7 @@ public class Preprocessor {
 		}
 
 		final DefaultState start = next.getStart();
-		final DefaultState end = this.createNewGraphNode(next);
+		final DefaultStateBuilder end = new DefaultStateBuilder(this.rawgraph, next);
 
 		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
 
@@ -110,9 +110,9 @@ public class Preprocessor {
 	 * @return
 	 */
 	private SimulationInitConfiguration createConfigBasedOnChange(final Optional<Change> change,
-			final DefaultState start, final DefaultState end) {
+			final DefaultState start, final DefaultStateBuilder end) {
 
-		final double duration = this.calculateRunDuration(start);
+		final double duration = this.minDuration;
 
 		if (change.isEmpty()) {
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, List.of(),
@@ -235,40 +235,6 @@ public class Preprocessor {
 		rvals.add(newvalues);
 
 		return rvals;
-	}
-
-	/**
-	 * Create a new graph note with a new arch configuration.
-	 *
-	 * creating a fully connected Graph node encompasses : - copying architecture
-	 * configuration from preceding state. - setting the start time of the new node
-	 * wrt. global time. - adding the node to the graph's node list. - creating
-	 * transition to connect new node t predecessor.
-	 *
-	 * @return a new node, connected to its predecessor in graph.
-	 */
-	private DefaultState createNewGraphNode(final PlannedTransition next) {
-		final DefaultState predecessor = next.getStart();
-
-		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
-		final DefaultState newNode = this.rawgraph.insertStateFor(predecessor.getEndTime(), newConfig);
-
-		this.rawgraph.insertTransitionFor(next.getChange(), predecessor, newNode);
-
-		return newNode;
-	}
-
-	/**
-	 * TODO : maybe try that thing with variable intervals (again).
-	 *
-	 * @param previous
-	 * @return max duration for the next state
-	 */
-	private double calculateRunDuration(final DefaultState previous) {
-		if (previous.getDuration() == 0 || previous.isDecreaseInterval()) {
-			return minDuration;
-		}
-		return previous.getDuration() < minDuration ? minDuration : 2 * previous.getDuration();
 	}
 
 	/**

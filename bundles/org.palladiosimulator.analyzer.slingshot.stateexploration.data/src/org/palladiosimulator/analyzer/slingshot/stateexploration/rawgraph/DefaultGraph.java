@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
@@ -49,8 +48,8 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	public DefaultGraph(final ArchitectureConfiguration rootArchConfig) {
 		super(RawTransition.class);
 
-		this.root = this.insertStateFor(0.0, rootArchConfig);
-		this.root.setSnapshot(new InMemorySnapshot(Set.of()));
+		
+		this.root = this.insertStateFor(DefaultStateBuilder.getRootNodeBuilder(this, rootArchConfig));
 		
 		this.furthestState = this.root;
 	}
@@ -71,11 +70,12 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * @param archConfig
 	 * @return
 	 */
-	public DefaultState insertStateFor(final double startPointInTime, final ArchitectureConfiguration archConfig) {
-		final DefaultState newState = new DefaultState(startPointInTime, archConfig, this);
+	public DefaultState insertStateFor(final DefaultStateBuilder builder) {
+		final DefaultState newState = builder.build();
 		this.addVertex(newState);
 		return newState;
 	}
+	
 
 	/**
 	 *

@@ -1,7 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,70 +31,46 @@ public class DefaultState implements RawModelState {
 	private final ArchitectureConfiguration archConfig;
 
 	/* known at the end */
-	private double duration;
-	private Snapshot snapshot;
+	private final double duration;
+	private final Snapshot snapshot;
 	private final Set<ReasonToLeave> reasonsToLeave;
-	private boolean decreaseInterval = false;
 
 	/* known after configuration of the simulation run */
-	private ExperimentSetting experimentSetting;
+	private final ExperimentSetting experimentSetting;
 
 	private double utility = 0;
 
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
 
 	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
-			final DefaultGraph graph) {
+			final DefaultGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Collection<SPDAdjustorStateValues> adjustorStateValues, final Set<ReasonToLeave> reasonsToLeave) {
 		this.graph = graph;
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
-		this.reasonsToLeave = new HashSet<>();
+		this.reasonsToLeave = reasonsToLeave;
 
-		this.adjustorStateValues = new HashSet<>();
+		this.adjustorStateValues = adjustorStateValues;
+		
+		this.experimentSetting = settings;
+		this.snapshot = snapshot;
+
+		this.duration = duration;
 	}
 
 	public ExperimentSetting getExperimentSetting() {
 		return this.experimentSetting;
 	}
 
-	public void setExperimentSetting(final ExperimentSetting experimentSetting) {
-		this.experimentSetting = experimentSetting;
-	}
-
 	public Snapshot getSnapshot() {
 		return snapshot;
 	}
-
-	public void setSnapshot(final Snapshot snapshot) {
-		this.snapshot = snapshot;
-	}
-
-	public boolean isDecreaseInterval() {
-		return decreaseInterval;
-	}
-
-	public void setDecreaseInterval(final boolean decreaseInterval) {
-		this.decreaseInterval = decreaseInterval;
-	}
-
-	public void addReasonToLeave(final ReasonToLeave reasonToLeave) {
-		this.reasonsToLeave.add(reasonToLeave);
-	}
-
-	public void setDuration(final double duration) {
-		this.duration = duration;
-	}
-
+	
 	public double getUtility() {
 		return utility;
 	}
 
 	public void setUtility(final double utility) {
 		this.utility = utility;
-	}
-
-	public void addAdjustorStateValues(final Collection<SPDAdjustorStateValues> adjustorStateValues) {
-		this.adjustorStateValues.addAll(adjustorStateValues);
 	}
 
 	public Set<SPDAdjustorStateValues> getAdjustorStateValues() {
@@ -134,11 +109,6 @@ public class DefaultState implements RawModelState {
 	public double getDuration() {
 		return this.duration;
 	}
-
-//	@Override
-//	public String toString() {
-//		return "DefaultState [archConfig=" + archConfig.getSegment() + ", reasonToLeave=" + reasonsToLeave + "]";
-//	}
 	
 	@Override
 	public String toString() {

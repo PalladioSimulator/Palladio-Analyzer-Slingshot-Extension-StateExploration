@@ -35,6 +35,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateE
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PriorityTransitionQueue;
@@ -201,7 +202,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config configuration of exploration cycle to be post processed.
 	 */
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
-		final DefaultState current = config.getStateToExplore();
+		
+		final DefaultStateBuilder builder = config.getStateToExplore();
+		
+		// add to graph 
+		final DefaultState current = this.graph.insertStateFor(builder);
+		this.graph.insertTransitionFor(builder.getPlannedTransition().getChange(), builder.getPlannedTransition().getStart(), current);		
 
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
@@ -266,10 +272,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final double interval = config.getExplorationDuration();
 
-		final boolean notRootSuccesor = this.graph.getRoot().getOutgoingTransitions().stream()
-				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
+		final boolean isRootSuccesor = config.getStateToExplore().getPlannedTransition().getStart().equals(this.graph.getRoot());
 
-		return new SnapshotConfiguration(interval, notRootSuccesor,
+		return new SnapshotConfiguration(interval, !isRootSuccesor,
 				LaunchconfigAccess.getSensibility(launchConfigurationParams),
 				LaunchconfigAccess.getMinDuration(launchConfigurationParams));
 	}
