@@ -106,6 +106,12 @@ public class DefaultStateBuilder {
 		return this.info;
 	}
 
+	
+
+	/** Toggls, to ensure that the builder fathers only one state and one transition */
+	private boolean stateIsBuilt = false;
+	private boolean transitionIsBuilt = false;
+	
 	/**
 	 * Build a new {@link DefaultState} based on this builder.
 	 * 
@@ -114,16 +120,34 @@ public class DefaultStateBuilder {
 	 * 
 	 * @return a new {@link DefaultState}
 	 * @throws IllegalStateException if this operation is called while the builder
-	 *                               is still incomplete.
+	 *                               is still incomplete, or if one attempts to use this builder to create multiple states.
 	 */
-	protected DefaultState build() {
+	protected DefaultState buildState() {
 		Preconditions.checkState(!reasonsToLeave.isEmpty(), "Cannot build state, reasons to leave were not yet added.");
 		Preconditions.checkState(duration >= 0, "Cannot build state, duration was not yet set.");
 		Preconditions.checkState(snapshot != null, "Cannot build state, because snapshot was not yet set.");
 		Preconditions.checkState(experimentSetting != null,
 				"Cannot build state, because experiment settings were not yet set.");
 
+		Preconditions.checkState(!stateIsBuilt,
+				"Each builder may only be used to build exactly one state. This builder was already used to create a new state and cannot be used again.");
+		this.stateIsBuilt = true;
+
 		return new DefaultState(startTime, archConfig, graph, experimentSetting, snapshot, duration,
 				adjustorStateValues, reasonsToLeave);
+	}
+	
+	/**
+	 * Build a new {@link DefaultTransition} based on this builder.
+	 * 
+	 * @return a new {@link DefaultTransition}
+	 * @throws IllegalStateException if one attempts to use this builder to create multiple transitions.
+	 */
+	protected DefaultTransition buildTransition() {
+		Preconditions.checkState(!transitionIsBuilt,
+				"Each builder may only be used to build exactly one transition. This builder was already used to create a new transition and cannot be used again.");
+		this.transitionIsBuilt = true;
+		
+		return new DefaultTransition(this.change, graph);
 	}
 }

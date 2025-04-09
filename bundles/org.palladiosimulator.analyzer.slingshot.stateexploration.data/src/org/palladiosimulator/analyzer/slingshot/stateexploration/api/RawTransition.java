@@ -13,11 +13,12 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transi
  *
  * They are directed and carry information about the change that the got us from the transition's source state to it's target state.
  *
- * @author stiesssh
+ * @author Sophie Stieß
  *
  */
 public interface RawTransition extends Transition {
 
+	@Override
 	public RawModelState getSource();
 	public RawModelState getTarget();
 
@@ -40,6 +41,7 @@ public interface RawTransition extends Transition {
 	 *
 	 * @return
 	 */
+	@Override
 	public Optional<Change> getChange();
 
 	/**

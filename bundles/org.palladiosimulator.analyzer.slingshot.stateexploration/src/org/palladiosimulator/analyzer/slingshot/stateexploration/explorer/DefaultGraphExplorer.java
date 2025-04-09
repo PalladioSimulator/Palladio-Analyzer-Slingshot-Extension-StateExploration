@@ -206,8 +206,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final DefaultStateBuilder builder = config.getStateToExplore();
 
 		// add to graph
-		final DefaultState current = this.graph.insertStateAndTranstitionFor(builder);
-
+		final DefaultState current = this.graph.createAndInsertState(builder);
+		
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
@@ -222,10 +222,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		current.setUtility(value);
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node));
-
-		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
-		// to include for the prioritazion of the fringe.
-		this.graph.updateFurthestState(current);
 
 		if (current.getEndTime() < this.horizonLength) {
 			this.postprocessor.updateGraphFringe(current);

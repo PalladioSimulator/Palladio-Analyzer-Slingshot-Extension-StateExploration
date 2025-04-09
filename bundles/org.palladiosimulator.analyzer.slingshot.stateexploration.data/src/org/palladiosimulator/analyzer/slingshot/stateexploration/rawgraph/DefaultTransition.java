@@ -6,11 +6,23 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelSta
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 
-public class DefaultTransition implements RawTransition, Transition {
+
+/**
+ * 
+ * @author Sophie Stieß
+ *
+ */
+public class DefaultTransition implements RawTransition {
 	private final Optional<Change> change;
 
 	private final DefaultGraph graph;
 
+	/**
+	 * Create a new transition.
+	 * 
+	 * @param change
+	 * @param graph
+	 */
 	protected DefaultTransition(final Optional<Change> change, final DefaultGraph graph) {
 		super();
 		this.change = change;

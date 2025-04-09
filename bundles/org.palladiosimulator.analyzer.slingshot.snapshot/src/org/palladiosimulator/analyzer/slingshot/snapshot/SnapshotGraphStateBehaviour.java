@@ -64,7 +64,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
  *
  * Behavioural Extension to handle everything related to the RawGraphState.
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 @OnEvent(when = CalculatorRegistered.class, then = {})
@@ -98,7 +98,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	private final Allocation allocation;
 
-	/* for deleting monitors and MP of scaled in resources */
+	/* for deleting monitors and MP of scaled-in resources */
 	private final MonitorRepository monitorrepo;
 	private final MeasuringPointRepository measuringpointsrepo;
 	
