@@ -68,14 +68,26 @@ public class DefaultState implements RawModelState {
 		this.duration = duration;
 	}
 
-	public ExperimentSetting getExperimentSetting() {
-		return this.experimentSetting;
-	}
-
+	/**
+	 * Get the snapshot of the simulator state at the end of this state.
+	 * 
+	 * Needed start a new simulation run that resumes the simulation at the end of this state.
+	 * 
+	 * @return snapshot of the Simulator state at the end of this state.
+	 */
 	public Snapshot getSnapshot() {
 		return snapshot;
 	}
 	
+	/**
+	 * Get the state of the {@code SPDAdjustorState} at the end of this state.
+	 * 
+	 * TODO : this should be part of the snapshot, or should it?
+	 * 
+	 * Needed start a new simulation run that resumes the simulation at the end of this state.
+	 * 
+	 * @return state of the {@code SPDAdjustorState} at the end of this state.
+	 */
 	public Set<SPDAdjustorStateValues> getAdjustorStateValues() {
 		return Set.copyOf(this.adjustorStateValues);
 	}
@@ -104,10 +116,9 @@ public class DefaultState implements RawModelState {
 	}
 
 	@Override
-	public ExperimentSetting getMeasurements() {
-		return this.getExperimentSetting();
+	public ExperimentSetting getExperimentSetting() {
+		return this.experimentSetting;
 	}
-
 
 	@Override
 	public Collection<ReasonToLeave> getReasonsToLeave() {

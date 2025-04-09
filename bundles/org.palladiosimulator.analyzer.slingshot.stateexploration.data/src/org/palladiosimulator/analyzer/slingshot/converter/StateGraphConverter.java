@@ -3,10 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.converter;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.measure.Measure;
-
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
-import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.monitorrepository.Monitor;
@@ -30,7 +27,7 @@ public class StateGraphConverter {
 	 */
 	public static StateGraphNode convertState(final RawModelState state, final String parentId,
 			final List<ScalingPolicy> scalingPolicies) {
-		List<ServiceLevelObjective> slos = new ArrayList<>();
+		final List<ServiceLevelObjective> slos = new ArrayList<>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 
 		/**
@@ -55,8 +52,8 @@ public class StateGraphConverter {
 		}
 		
 		// Add Measurements
-		if (state.getMeasurements() != null) {
-			measuremnets = MeasurementConverter.visitExperiementSetting(state.getMeasurements());
+		if (state.getExperimentSetting() != null) {
+			measuremnets = MeasurementConverter.visitExperiementSetting(state.getExperimentSetting());
 		}
 
 		return new StateGraphNode(state.getId(), state.getStartTime(), state.getEndTime(), measuremnets, slos, parentId,
