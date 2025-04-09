@@ -112,7 +112,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		}
 
 		if (adjusmentCounter == adjustmentEvents.size()) {
-			LOGGER.debug("Beginn Abortion check for " + state.getId());
+			LOGGER.debug("Beginn Abortion check");
 
 			for (final TargetGroupCfg tgcfg : config.getTargetCfgs()) {
 				if (tg2size.containsKey(tgcfg)) {
@@ -125,7 +125,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 			}
 			state.addReasonToLeave(ReasonToLeave.aborted);
 			scheduling.scheduleEvent(new SnapshotInitiated(0));
-			LOGGER.debug("Abort " + state.getId());
+			LOGGER.debug("Abort");
 		}
 	}
 

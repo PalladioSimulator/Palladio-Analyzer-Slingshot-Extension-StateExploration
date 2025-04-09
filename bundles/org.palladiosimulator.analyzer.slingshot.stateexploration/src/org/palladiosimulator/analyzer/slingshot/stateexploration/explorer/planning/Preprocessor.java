@@ -86,9 +86,9 @@ public class Preprocessor {
 		final DefaultState start = next.getStart();
 		final DefaultStateBuilder end = new DefaultStateBuilder(this.rawgraph, next);
 
-		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
+		if (end.getStartupInformation().architecureConfiguration().getSPD().isPresent()) {
 
-			final SPD spd = end.getArchitecureConfiguration().getSPD().get();
+			final SPD spd = end.getStartupInformation().architecureConfiguration().getSPD().get();
 
 			this.updateSimulationTimeTriggeredPolicy(spd, start.getDuration());
 
@@ -130,7 +130,7 @@ public class Preprocessor {
 
 			final List<ModelAdjustmentRequested> initEvents = new ArrayList<>();
 			for (final ModelAdjustmentRequested event : reconf.getReactiveReconfigurationEvents()) {
-				initEvents.add(new AdjustorEventConcerns(end.getArchitecureConfiguration()).copy(event));
+				initEvents.add(new AdjustorEventConcerns(end.getStartupInformation().architecureConfiguration()).copy(event));
 			}
 
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvents,

@@ -1,14 +1,13 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
-import java.util.Optional;
 import java.util.Set;
 
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -49,19 +48,10 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 		super(RawTransition.class);
 
 		
-		this.root = this.insertStateFor(DefaultStateBuilder.getRootNodeBuilder(this, rootArchConfig));
-		
+		this.root = new DefaultState(0, rootArchConfig, this, null, new InMemorySnapshot(Set.of()), 0, Set.of(), Set.of());
 		this.furthestState = this.root;
-	}
-
-
-
-	public DefaultTransition insertTransitionFor(final Optional<Change> change, final RawModelState source,
-			final RawModelState target) {
-		final DefaultTransition newTransition = new DefaultTransition(change, this);
-		this.addEdge(source, target, newTransition);
-		return newTransition;
-
+		
+		this.addVertex(root);		
 	}
 
 	/**
@@ -70,9 +60,13 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * @param archConfig
 	 * @return
 	 */
-	public DefaultState insertStateFor(final DefaultStateBuilder builder) {
+	public DefaultState insertStateAndTranstitionFor(final DefaultStateBuilder builder) {
 		final DefaultState newState = builder.build();
 		this.addVertex(newState);
+		
+		final DefaultTransition newTransition = new DefaultTransition(builder.getPPInfo().change(), this);
+		this.addEdge(builder.getPPInfo().predecessor(), newState, newTransition);
+		
 		return newState;
 	}
 	

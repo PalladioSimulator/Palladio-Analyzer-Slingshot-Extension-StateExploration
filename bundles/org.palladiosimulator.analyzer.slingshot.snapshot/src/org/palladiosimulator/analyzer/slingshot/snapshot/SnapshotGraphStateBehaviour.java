@@ -38,7 +38,6 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
-import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
@@ -130,7 +129,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		}
 
 		if (activated) {
-			assert halfDoneState.getSnapshot() == null : "Snapshot already set, but should not be!";
 			this.eventsToInitOn = eventsWrapper.getOtherEvents();
 		} else {
 			this.eventsToInitOn = Set.of();
@@ -338,7 +336,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	@PreIntercept
 	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
 			final IntervalPassed event) {
-		event.setTime(event.time() + halfDoneState.getStartTime());
+		event.setTime(event.time() + halfDoneState.getStartupInformation().startTime());
 		return InterceptionResult.success();
 	}
 
@@ -359,22 +357,21 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		halfDoneState.setSnapshot(event.getEntity());
 		halfDoneState.setDuration(event.time());
 		
-		this.refineReasonsToLeave(event.getEntity());
+		this.refineReasonsToLeave(event);
 		
 		halfDoneState.addAdjustorStateValues(
 				this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time())).toList());
 		
-		// also offset targetgroup state values. 
+		// also offset targetgroup state values. --> ???
 
-		// Do not add the state anywhere, just finalise it. Assumption is, it already is
-		// in the graph.
+		// Do not build the state. The state will be build in the explorere. 
+		
 		return Result.of(new SimulationFinished());
 	}
 
 	/**
 	 * Update persisted model files, because reconfiguration now happens at
-	 * runtime,https://chat.rss.iste.uni-stuttgart.de/group/Floriments-doctor-hat
-	 * i.e. not yet propagated to file.
+	 * runtime, i.e. not yet propagated to file.
 	 *
 	 * @param modelAdjusted
 	 */
@@ -442,10 +439,11 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 *
 	 * @param snapshot snapshot of current state
 	 */
-	private void refineReasonsToLeave(final Snapshot snapshot) {
-		if (!snapshot.getModelAdjustmentRequestedEvent().isEmpty()) {
+	private void refineReasonsToLeave(final SnapshotFinished event) {
+		if (!event.getEntity().getModelAdjustmentRequestedEvent().isEmpty()) {
 			halfDoneState.addReasonToLeave(ReasonToLeave.reactiveReconfiguration);
-		} else if (halfDoneState.getReasonsToLeave().isEmpty()) {
+		} 
+		if (event.time() == snapshotConfig.getMinDuration()) {
 			halfDoneState.addReasonToLeave(ReasonToLeave.interval);
 		}
 	}

@@ -42,6 +42,17 @@ public class DefaultState implements RawModelState {
 
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
 
+	/**
+	 * 
+	 * @param pointInTime
+	 * @param archConfig
+	 * @param graph
+	 * @param settings
+	 * @param snapshot
+	 * @param duration
+	 * @param adjustorStateValues
+	 * @param reasonsToLeave
+	 */
 	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
 			final DefaultGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Collection<SPDAdjustorStateValues> adjustorStateValues, final Set<ReasonToLeave> reasonsToLeave) {
 		this.graph = graph;
@@ -65,6 +76,10 @@ public class DefaultState implements RawModelState {
 		return snapshot;
 	}
 	
+	public Set<SPDAdjustorStateValues> getAdjustorStateValues() {
+		return Set.copyOf(this.adjustorStateValues);
+	}
+
 	public double getUtility() {
 		return utility;
 	}
@@ -73,8 +88,12 @@ public class DefaultState implements RawModelState {
 		this.utility = utility;
 	}
 
-	public Set<SPDAdjustorStateValues> getAdjustorStateValues() {
-		return Set.copyOf(this.adjustorStateValues);
+	/**
+	 *
+	 * @return distance between this state and root.
+	 */
+	public int lenghtOfHistory() {
+		return DefaultGraph.distance(this, this.graph.getRoot());
 	}
 
 	/* to match the interface */
@@ -135,13 +154,5 @@ public class DefaultState implements RawModelState {
 	@Override
 	public Set<RawTransition> getOutgoingTransitions() {
 		return this.graph.outgoingEdgesOf(this);
-	}
-
-	/**
-	 *
-	 * @return distance between this state and root.
-	 */
-	public int lenghtOfHistory() {
-		return DefaultGraph.distance(this, this.graph.getRoot());
 	}
 }

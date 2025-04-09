@@ -140,8 +140,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * 
 	 * <br>
 	 * <b>Note</b>: For the state exploration, we must do this <b>before</b> we
-	 * create the root node. When creating the root node, we save a copy of
-	 * the models to file, and all unresolved references go missing on save.
+	 * create the root node. When creating the root node, we save a copy of the
+	 * models to file, and all unresolved references go missing on save.
 	 */
 	private void applyStereotypeFake() {
 		final ResourceEnvironment fake = ResourceenvironmentFactory.eINSTANCE.createResourceEnvironment();
@@ -171,7 +171,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.updatePCMPartitionProvider(config);
 		// update simucomconfig
 		final SimuComConfig simuComConfig = this.prepareSimuComConfig(
-				config.getStateToExplore().getArchitecureConfiguration().getSegment(), config.getExplorationDuration());
+				config.getStateToExplore().getStartupInformation().architecureConfiguration().getSegment(), config.getExplorationDuration());
 		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config);
 
@@ -202,12 +202,11 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config configuration of exploration cycle to be post processed.
 	 */
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
-		
+
 		final DefaultStateBuilder builder = config.getStateToExplore();
-		
-		// add to graph 
-		final DefaultState current = this.graph.insertStateFor(builder);
-		this.graph.insertTransitionFor(builder.getPlannedTransition().getChange(), builder.getPlannedTransition().getStart(), current);		
+
+		// add to graph
+		final DefaultState current = this.graph.insertStateAndTranstitionFor(builder);
 
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
@@ -225,7 +224,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
 		// to include for the prioritazion of the fringe.
 		this.graph.updateFurthestState(current);
-		
+
 		if (current.getEndTime() < this.horizonLength) {
 			this.postprocessor.updateGraphFringe(current);
 		}
@@ -272,7 +271,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final double interval = config.getExplorationDuration();
 
-		final boolean isRootSuccesor = config.getStateToExplore().getPlannedTransition().getStart().equals(this.graph.getRoot());
+		final boolean isRootSuccesor = config.getStateToExplore().getStartupInformation().predecessor().equals(this.graph.getRoot());
 
 		return new SnapshotConfiguration(interval, !isRootSuccesor,
 				LaunchconfigAccess.getSensibility(launchConfigurationParams),
@@ -291,7 +290,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
-		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
+		config.getStateToExplore().getStartupInformation().architecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
 	}
 
