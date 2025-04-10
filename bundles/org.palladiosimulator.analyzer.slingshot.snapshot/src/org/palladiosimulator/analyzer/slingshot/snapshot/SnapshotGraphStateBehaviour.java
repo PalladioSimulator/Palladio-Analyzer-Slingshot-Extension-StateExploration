@@ -101,14 +101,14 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	/* for deleting monitors and MP of scaled-in resources */
 	private final MonitorRepository monitorrepo;
 	private final MeasuringPointRepository measuringpointsrepo;
-	
+
 	private final EventsToInitOnWrapper wrapper;
 
 	@Inject
 	public SnapshotGraphStateBehaviour(final @Nullable DefaultStateBuilder halfDoneState,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsWrapper,
-			final @Nullable SimuComConfig simuComConfig,
-			final Allocation allocation, final MonitorRepository monitorrepo) {
+			final @Nullable SimuComConfig simuComConfig, final Allocation allocation,
+			final MonitorRepository monitorrepo) {
 
 		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null
 				&& !monitorrepo.getMonitors().isEmpty();
@@ -118,7 +118,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.simuComConfig = simuComConfig;
 		this.allocation = allocation;
 		this.monitorrepo = monitorrepo;
-		
+
 		this.wrapper = eventsWrapper;
 
 		if (this.monitorrepo.getMonitors().isEmpty()) {
@@ -164,7 +164,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 * Return (and thereby submit for scheduling) the snapshotted events from
 	 * earlier simulation run.
 	 * 
-	 * TODO changes this, because the result mixes up the event order. 
+	 * TODO changes this, because the result mixes up the event order.
 	 *
 	 * @param simulationStarted
 	 * @return
@@ -172,18 +172,19 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	@Subscribe
 	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
 		assert snapshotConfig.isStartFromSnapshot()
-		|| (this.eventsToInitOn.isEmpty() && !wrapper.getAdjustmentEvents().isEmpty())
-		: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
+				|| (this.eventsToInitOn.isEmpty() && !wrapper.getAdjustmentEvents().isEmpty())
+				: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
 
 		this.initOffsets(this.eventsToInitOn);
 		final Set<DESEvent> eventsToInitOnNoIntervallPassed = this.removeTakeCostMeasurement(this.eventsToInitOn);
-		
+
 		final List<DESEvent> allEvents = new ArrayList<>();
 		allEvents.addAll(wrapper.getStateInitEvents());
 		allEvents.addAll(wrapper.getAdjustmentEvents());
 		allEvents.addAll(eventsToInitOnNoIntervallPassed);
 
-		LOGGER.info("Initialise on " + wrapper.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy().getEntityName()).toList());
+		LOGGER.info("Initialise on "
+				+ wrapper.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy().getEntityName()).toList());
 
 		return Result.of(allEvents);
 	}
@@ -191,10 +192,12 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	/**
 	 * Route a {@link SimulationStarted} event.
 	 * 
-	 * If there are any initialisation events, the event is always routed to this class. 
+	 * If there are any initialisation events, the event is always routed to this
+	 * class.
 	 * 
-	 * If the simulation starts from a snapshot, the event is aborted to all other simulator classes.
-	 * Otherwise, event delivered to the other classes and the simulation starts normally. 
+	 * If the simulation starts from a snapshot, the event is aborted to all other
+	 * simulator classes. Otherwise, event delivered to the other classes and the
+	 * simulation starts normally.
 	 *
 	 *
 	 * @param information interception information
@@ -209,19 +212,21 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 			return InterceptionResult.abort(); // won't be delivered.
 		}
 
-		// TODO : actually, i think we need not abort forwarding the simulation started to this class.  
+		// TODO : actually, i think we need not abort forwarding the simulation started
+		// to this class.
 		if (information.getEnclosingType().get().equals(this.getClass())) {
 			// delievering to this class, if there is any event for initialisation.
-			if (!this.eventsToInitOn.isEmpty() || !this.wrapper.getAdjustmentEvents().isEmpty() || !this.wrapper.getStateInitEvents().isEmpty()) {
+			if (!this.eventsToInitOn.isEmpty() || !this.wrapper.getAdjustmentEvents().isEmpty()
+					|| !this.wrapper.getStateInitEvents().isEmpty()) {
 				return InterceptionResult.success();
 			} else {
-				return InterceptionResult.abort(); 
+				return InterceptionResult.abort();
 			}
 		} else {
-			if (snapshotConfig.isStartFromSnapshot()) { 
+			if (snapshotConfig.isStartFromSnapshot()) {
 				return InterceptionResult.abort();
 			} else {
-				return InterceptionResult.success(); 
+				return InterceptionResult.success();
 			}
 		}
 	}
@@ -251,8 +256,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		if (handleCosts && event.time() == 0) {
 			costMeasurementStore.add(event);
 
-			if (this.eventsToInitOn.stream().filter(ModelAdjustmentRequested.class::isInstance).findAny()
-					.isPresent()) {
+			if (this.eventsToInitOn.stream().filter(ModelAdjustmentRequested.class::isInstance).findAny().isPresent()) {
 				return InterceptionResult.abort();
 			}
 		}
@@ -290,8 +294,8 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	 */
 	@Subscribe
 	public void onCalculatorRegistered(final CalculatorRegistered calculatorRegistered) {
-		
-		//SKip, if already set!
+
+		// SKip, if already set!
 
 		final List<Repository> repos = RepositoryManager.getCentralRepository().getAvailableRepositories();
 
@@ -325,9 +329,9 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 
 	/**
 	 *
-	 * Catch {@link TakeCostMeasurement} events (usage evolution) from the snapshot and
-	 * offset them into the "future". Otherwise, we will get the wrong values from
-	 * the Load Intensity model.
+	 * Catch {@link TakeCostMeasurement} events (usage evolution) from the snapshot
+	 * and offset them into the "future". Otherwise, we will get the wrong values
+	 * from the Load Intensity model.
 	 *
 	 * @param information interception information
 	 * @param event       intercepted event
@@ -356,21 +360,22 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	public Result<SimulationFinished> onSnapshotFinished(final SnapshotFinished event) {
 		halfDoneState.setSnapshot(event.getEntity());
 		halfDoneState.setDuration(event.time());
-		
+
 		this.refineReasonsToLeave(event);
-		
-		this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time())).forEach(s -> event.getEntity().addSPDAdjustorStateValues(s));
-		
+
+		this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time()))
+				.forEach(s -> event.getEntity().addSPDAdjustorStateValues(s));
+
 		// also offset targetgroup state values. --> ???
 
-		// Do not build the state. The state will be build in the explorere. 
-		
+		// Do not build the state. The state will be build in the explorer.
+
 		return Result.of(new SimulationFinished());
 	}
 
 	/**
-	 * Update persisted model files, because reconfiguration now happens at
-	 * runtime, i.e. not yet propagated to file.
+	 * Update persisted model files, because reconfiguration now happens at runtime,
+	 * i.e. not yet propagated to file.
 	 *
 	 * @param modelAdjusted
 	 */
@@ -387,6 +392,17 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		this.handleCosts = false;
 
 		return Result.of(costMeasurementStore);
+	}
+
+	/**
+	 * Subscribe to the {@link SPDAdjustorStateInitialized} events, because we also
+	 * need those states for the next simulation.
+	 *
+	 * @param event
+	 */
+	@Subscribe
+	public void onAdjustorStateUpdated(final SPDAdjustorStateInitialized event) {
+		this.policyIdToValues.put(event.getStateValues().scalingPolicyId(), event.getStateValues());
 	}
 
 	/**
@@ -415,17 +431,6 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	}
 
 	/**
-	 * Subscribe to the {@link SPDAdjustorStateInitialized} events, because we also
-	 * need those states for the next simulation.
-	 *
-	 * @param event
-	 */
-	@Subscribe
-	public void onAdjustorStateUpdated(final SPDAdjustorStateInitialized event) {
-		this.policyIdToValues.put(event.getStateValues().scalingPolicyId(), event.getStateValues());
-	}
-	
-	/**
 	 *
 	 * Refines the reasons to leave by adding missing reasons based on the snapshot.
 	 *
@@ -441,7 +446,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 	private void refineReasonsToLeave(final SnapshotFinished event) {
 		if (!event.getEntity().getModelAdjustmentRequestedEvent().isEmpty()) {
 			halfDoneState.addReasonToLeave(ReasonToLeave.reactiveReconfiguration);
-		} 
+		}
 		if (event.time() == snapshotConfig.getMinDuration()) {
 			halfDoneState.addReasonToLeave(ReasonToLeave.interval);
 		}
@@ -489,10 +494,11 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		final int numberScales = stateValues.numberScales();
 		final double coolDownEnd = stateValues.coolDownEnd() > 0.0 ? stateValues.coolDownEnd() - referenceTime : 0.0;
 		final int numberOfScalesInCooldown = stateValues.numberOfScalesInCooldown();
-		
+
 		final List<ScalingPolicy> enactedPolicies = new ArrayList<>(stateValues.enactedPolicies()); // unchanged
-		final List<Double> enactmentTimeOfPolicies = stateValues.enactmentTimeOfPolicies().stream().map(time -> time-referenceTime).toList();
-		
+		final List<Double> enactmentTimeOfPolicies = stateValues.enactmentTimeOfPolicies().stream()
+				.map(time -> time - referenceTime).toList();
+
 		return new SPDAdjustorStateValues(stateValues.scalingPolicy(), latestAdjustmentAtSimulationTime, numberScales,
 				coolDownEnd, numberOfScalesInCooldown, enactedPolicies, enactmentTimeOfPolicies);
 	}
