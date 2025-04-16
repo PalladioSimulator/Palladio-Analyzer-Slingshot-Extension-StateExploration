@@ -115,7 +115,6 @@ public class SnapshotCostMeasurementsBehaviour implements SimulationBehaviorExte
 	 */
 	@Subscribe
 	public Result<TakeCostMeasurement> onSnapshotInitiated(final SnapshotInitiated event) {
-		this.handleCosts = false;
 		return Result.of(costMeasurementStore);
 	}
 
@@ -126,6 +125,7 @@ public class SnapshotCostMeasurementsBehaviour implements SimulationBehaviorExte
 	 */
 	@Subscribe
 	public Result<TakeCostMeasurement> onModelAdjusted(final ModelAdjusted modelAdjusted) {
+		this.handleCosts = false;
 		return Result.of(costMeasurementStore);
 	}
 }
