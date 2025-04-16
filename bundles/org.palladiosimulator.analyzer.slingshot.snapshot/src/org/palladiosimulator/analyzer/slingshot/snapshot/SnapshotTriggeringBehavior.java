@@ -12,6 +12,7 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehavio
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.InterceptorInformation;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
+import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
@@ -27,9 +28,12 @@ import org.palladiosimulator.spd.targets.TargetGroup;
 
 /**
  *
- * Triggers snapshot if a reconfiguration was triggered.
+ * Triggers the creation of a {@link Snapshot} if a reconfiguration was
+ * triggered, but before it gets applied.
  *
- * @author Sarah Stieß
+ * Drops reconfigurations under certain circumstances. 
+ *
+ * @author Sophie Stieß
  *
  */
 public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
@@ -50,9 +54,9 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 			final @Nullable Configuration config) {
 		this.state = state;
 		this.scheduling = scheduling;
-		this.adjustmentEvents =  eventsWapper == null ? null : eventsWapper.getAdjustmentEvents();
+		this.adjustmentEvents = eventsWapper == null ? null : eventsWapper.getAdjustmentEvents();
 		this.config = config;
-		
+
 		this.activated = state != null && eventsWapper != null;
 	}
 
@@ -61,13 +65,28 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 		return this.activated;
 	}
 
+	/**
+	 * 
+	 * Preintercept {@link ModelAdjustmentRequested} and trigger a the creation of a
+	 * {@link Snapshot}, if the intercepted event belongs to a reactive
+	 * reconfiguration.
+	 * 
+	 * Beware: all {@link ModelAdjustmentRequested} events that are part of the
+	 * simulation run initialisation must be ignored.
+	 * 
+	 * @param information
+	 * @param event
+	 * @return
+	 */
 	@PreIntercept
 	public InterceptionResult preInterceptModelAdjustmentRequested(final InterceptorInformation information,
 			final ModelAdjustmentRequested event) {
 		// only intercept triggered adjustments. do not intercept snapped adjustments..
-		// assumption: do not copy adjustor events from the FEL, i.e. the "first" adjustor is always from the snapshot.
+		// assumption: do not copy adjustor events from the FEL, i.e. the "first"
+		// adjustor is always from the snapshot.
 		if (adjustmentEvents.contains(event)) {
-			LOGGER.debug(String.format("Succesfully route %s to %s", event.getName(), information.getEnclosingType().get().getSimpleName()));
+			LOGGER.debug(String.format("Succesfully route %s to %s", event.getName(),
+					information.getEnclosingType().get().getSimpleName()));
 			return InterceptionResult.success();
 		}
 
@@ -79,25 +98,32 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 		state.addReasonToLeave(ReasonToLeave.reactiveReconfiguration);
 		scheduling.scheduleEvent(new SnapshotInitiated(0, event));
 
-		LOGGER.debug(String.format("Abort routing %s to %s", event.getName(), information.getEnclosingType().get().getSimpleName()));
+		LOGGER.debug(String.format("Abort routing %s to %s", event.getName(),
+				information.getEnclosingType().get().getSimpleName()));
 		return InterceptionResult.abort();
 	}
 
 	/**
+	 * Drop the application of a scaling policy, if the adjustment is a scale in on
+	 * the minimal architecture reconfiguration.
+	 * 
+	 * This is some kind of short-cut to the {@link SnapshotAbortionBehavior} that
+	 * ensures a decent state length. If we rely {@link SnapshotAbortionBehavior}
+	 * only, we get a lot of aborted states that could have been skipped. Scale ins
+	 * on the minimal architecture reconfiguration keep happening if the demand is
+	 * very low. But also, reconfiguration makes no sense in these cases, thus it is
+	 * reasonable to drop them.
 	 *
-	 * @param start
-	 * @param event
-	 * @return
+	 * @param policy
+	 * @return true iff the policy shall be dropped, false otherwise.
 	 */
 	private boolean isDrop(final ScalingPolicy policy) {
-		if (policy.getAdjustmentType() instanceof final StepAdjustment adjustment
-				&& adjustment.getStepValue() < 0) {
+		if (policy.getAdjustmentType() instanceof final StepAdjustment adjustment && adjustment.getStepValue() < 0) {
 			// Scale in!
 			final TargetGroup tg = policy.getTargetGroup();
 			if (tg instanceof final ElasticInfrastructure ei) {
 				final List<ElasticInfrastructureCfg> elements = config.getTargetCfgs().stream()
-						.filter(ElasticInfrastructureCfg.class::isInstance)
-						.map(ElasticInfrastructureCfg.class::cast)
+						.filter(ElasticInfrastructureCfg.class::isInstance).map(ElasticInfrastructureCfg.class::cast)
 						.filter(eic -> eic.getUnit().getId().equals(ei.getUnit().getId())).toList();
 
 				if (elements.size() != 1) {
@@ -109,8 +135,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 			if (tg instanceof final ServiceGroup sg) {
 				final List<ServiceGroupCfg> elements = config.getTargetCfgs().stream()
-						.filter(ServiceGroupCfg.class::isInstance)
-						.map(ServiceGroupCfg.class::cast)
+						.filter(ServiceGroupCfg.class::isInstance).map(ServiceGroupCfg.class::cast)
 						.filter(sgc -> sgc.getUnit().getId().equals(sg.getUnitAssembly().getId())).toList();
 
 				if (elements.size() != 1) {

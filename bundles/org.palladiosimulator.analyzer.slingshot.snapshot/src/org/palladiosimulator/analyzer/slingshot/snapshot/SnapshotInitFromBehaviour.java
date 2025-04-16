@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
@@ -31,10 +32,26 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotC
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 
-
 /**
  *
- * TODO initialization stuff
+ * This Class is all about the events needed for initialising a new simulation
+ * run based on a previously snapshotted simulation run.
+ * 
+ * This encompasses:
+ * <li>routing the {@link SimulationStarted} event, such that this simulation
+ * start off with one set request only. Otherwise, the simulation run would
+ * start with the requests from the snapshot but also create additional
+ * requests, as it would at the beginning of a 'normal' simulation.
+ * <li>re-publish events that used to be scheduled, i.e. events from the future
+ * event list of the previous simulation run.
+ * <li>publish {@link ModelAdjustmentRequested} event(s) if pro- or reactive
+ * reconfiguration are planned for this simulation run.
+ * <li>publish additional events to set the state of the statefull components of
+ * the simulator.
+ * <li>publish the {@link SnapshotInitiated} event, to mark the end of this
+ * simulation run (unless it ends earlier for other reasons.)
+ * <li>offset all {@link ModelPassedEvent}s that are leftover from the previous
+ * state into the past.
  *
  * @author Sophie Stieß
  *
@@ -46,10 +63,9 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 
 	private static final Logger LOGGER = Logger.getLogger(SnapshotInitFromBehaviour.class);
 
-	/* Configurations */
 	private final SnapshotConfiguration snapshotConfig;
 
-	/* Snapshotted events taken from earlier simulation run */
+	/** Snapshotted events taken from earlier simulation run */
 	private final Set<DESEvent> eventsToInitOn;
 
 	/* helper */
@@ -60,9 +76,10 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 	private final EventsToInitOnWrapper wrapper;
 
 	@Inject
-	public SnapshotInitFromBehaviour(final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsWrapper) {
+	public SnapshotInitFromBehaviour(final @Nullable SnapshotConfiguration snapshotConfig,
+			final @Nullable EventsToInitOnWrapper eventsWrapper) {
 
-		this.activated = snapshotConfig != null;
+		this.activated = snapshotConfig != null && eventsWrapper != null;
 
 		this.snapshotConfig = snapshotConfig;
 
@@ -87,7 +104,8 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 	 * simulation run.
 	 *
 	 * @param configurationStarted
-	 * @return
+	 * @return {@link SnapshotInitiated} event indicating the lates point in time
+	 *         for a snapshot.
 	 */
 	@Subscribe
 	public Result<SnapshotInitiated> onConfigurationStarted(
@@ -131,13 +149,13 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 	/**
 	 * Route a {@link SimulationStarted} event.
 	 * 
-	 * If there are any initialisation events, the event is always routed to this
-	 * class.
+	 * If there are any events to be published for initialising the simulator, the
+	 * event is always routed to this class.
 	 * 
-	 * If the simulation starts from a snapshot, the event is aborted to all other
-	 * simulator classes. Otherwise, event delivered to the other classes and the
-	 * simulation starts normally.
-	 *
+	 * If the simulation starts from a snapshot, the {@link SimulationStarted} event
+	 * is aborted to all other simulator classes. Otherwise, the
+	 * {@link SimulationStarted} event is also delivered to the other classes and
+	 * the simulation starts normally.
 	 *
 	 * @param information interception information
 	 * @param event       intercepted event
@@ -173,6 +191,20 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 	/**
 	 * Catch {@link ModelPassedEvent} from the snapshot and offset them into the
 	 * past.
+	 * 
+	 * This is necessary, because durations, such as response time, are calculated
+	 * based on {@link ModelPassedEvent} events.
+	 * 
+	 * Example: A request enters the system at t = 5 and leaves at t = 15. However,
+	 * at t = 10, a snapshot is taken, and a new simulation run is started.
+	 * 
+	 * The {@link ModelPassedEvent} event, that indicated the request entering the
+	 * system at t = 5 is part of the snapshot and is published at the beginning of
+	 * the new simulation run. However, the re-published event, now has time t = 10,
+	 * wrt. the entire exploration, respectively t = 0, wrt. the new simulation run.
+	 * Thus the event must be offsetted into the past by 5s to get the correct
+	 * response time.
+	 * 
 	 *
 	 * @param information interception information
 	 * @param event       intercepted event

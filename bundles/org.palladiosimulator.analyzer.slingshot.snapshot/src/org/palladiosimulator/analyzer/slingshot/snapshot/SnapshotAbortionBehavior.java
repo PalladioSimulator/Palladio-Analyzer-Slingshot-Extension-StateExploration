@@ -34,9 +34,16 @@ import org.palladiosimulator.spd.targets.TargetGroup;
 
 /**
  *
- * Triggers snapshot if a reconfiguration was triggered.
+ * Abort simulation runs, that start with adjustments that cancel each other out
+ * or otherwise yield no changes.
+ * 
+ * As an example: if a simulation starts with two reconfigurations, on to scale
+ * out by 1 container, and one to scale in by one container, they cancel each
+ * other out and the architecture configuration remains unchanged. As such, the
+ * simulation run would behave similar to a simulation run with the same parent
+ * state and a NOOP transition.
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 @OnEvent(when = ModelAdjusted.class, then = {})
@@ -71,9 +78,10 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		if (spd != null && config != null) {
 
 			/*
-			 * [S3] Consider only target group configs with a matching target group. This is necessary,
-			 * because apparently some scale ins reduce the number of assemblies, but not
-			 * the number of resource containers. Unclear whether this is a bug or a feature in the SPD transformations.
+			 * [S3] Consider only target group configs with a matching target group. This is
+			 * necessary, because apparently some scale ins reduce the number of assemblies,
+			 * but not the number of resource containers. Unclear whether this is a bug or a
+			 * feature in the SPD transformations.
 			 */
 			final Set<EObject> targetGroups = spd.getTargetGroups().stream().map(tg -> getUnitOf(tg))
 					.collect(Collectors.toSet());
@@ -94,8 +102,15 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Assumption: all intended reconfiguration happen before further reactive
+	 * 
+	 * Checker whether the number of resource containers changed after all planned adjustment were applied.
+	 * 
+	 * If the number of resource containers remains unchanged or is back to the initial number, this simulation is aborted. 
+	 * 
+	 * Assumption: all planned reconfiguration happen before further reactive
 	 * reconfiguration happen.
+	 * 
+	 * TODO : also check size of service groups.
 	 * 
 	 * @param modelAdjusted
 	 */
@@ -130,10 +145,10 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Access helper
+	 * Helper for accessing the size of a {@link TargetGroupCfg} (the thing from the semantic SPD).
 	 * 
-	 * @param tgcfg
-	 * @return
+	 * @param tgcfg the target group configuration to be accessed
+	 * @return size of the target group configuration
 	 */
 	private static int getSizeOf(final TargetGroupCfg tgcfg) {
 		if (tgcfg instanceof final ElasticInfrastructureCfg ecfg) {
@@ -149,10 +164,10 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Access helper
+	 * Helper for accessing the unit of a {@link TargetGroupCfg} (the thing from the semantic SPD).
 	 * 
-	 * @param tgcfg
-	 * @return
+	 * @param tgcfg the target group configuration to be accessed
+	 * @return unit of the given target group configuration
 	 */
 	private static EObject getUnitOf(final TargetGroupCfg tgcfg) {
 		if (tgcfg instanceof final ElasticInfrastructureCfg ecfg) {
@@ -168,10 +183,10 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Access helper
+	 * Helper for accessing the unit of a {@link TargetGroup} (the thing from the normal SPD).
 	 * 
-	 * @param tg
-	 * @return
+	 * @param tg the target group to be accessed.
+	 * @return unit of the given target group
 	 */
 	private static EObject getUnitOf(final TargetGroup tg) {
 		if (tg instanceof final ElasticInfrastructure etg) {

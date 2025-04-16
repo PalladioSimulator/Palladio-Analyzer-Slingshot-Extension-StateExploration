@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed;
@@ -256,7 +255,7 @@ public class SnapshotGraphStateBehaviour implements SimulationBehaviorExtension 
 		if (handleCosts && event.time() == 0) {
 			costMeasurementStore.add(event);
 
-			if (this.eventsToInitOn.stream().filter(ModelAdjustmentRequested.class::isInstance).findAny().isPresent()) {
+			if (!this.wrapper.getAdjustmentEvents().isEmpty()) {
 				return InterceptionResult.abort();
 			}
 		}

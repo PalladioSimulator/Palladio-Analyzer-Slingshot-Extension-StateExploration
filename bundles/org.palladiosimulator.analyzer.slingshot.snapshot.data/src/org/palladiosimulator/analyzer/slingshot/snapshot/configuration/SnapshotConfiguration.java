@@ -16,7 +16,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.configuration;
  * - yes / no
  * - which snapshot?
  *
- * @author stiesssh
+ * @author Sophie Stieß
  *
  */
 public final class SnapshotConfiguration {

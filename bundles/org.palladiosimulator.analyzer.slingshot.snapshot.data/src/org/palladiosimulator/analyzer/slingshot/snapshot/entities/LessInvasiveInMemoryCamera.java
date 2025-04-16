@@ -26,6 +26,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
+import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
@@ -33,19 +34,34 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
 
 import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
 
+/**
+ * 
+ * This class creates a {@link Snapshot} based on a the record of a {@link EventRecord} and the future events from the {@link SimulationEngine}.
+ * 
+ * All events in the snapshot are copies of the originals. 
+ * Also, delays are already adjusted and offsets for resending those events are encoded into {@link DESEvent#time}.
+ * 
+ * 
+ * @author Sophie Stieß
+ *
+ */
 public final class LessInvasiveInMemoryCamera implements Camera {
 	private static final Logger LOGGER = Logger.getLogger(LessInvasiveInMemoryCamera.class);
 
-	/** keep in sync with ordiginal */
+	/** Beware: keep in sync with original */
 	private static final String FAKE = "fakeID";
 
+	/** Access to past events, that must go into the snapshot.*/
 	private final LessInvasiveInMemoryRecord record;
+
+	/** Access to future events, that must go into the snapshot.*/
 	private final SimulationEngine engine;
 
 	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
 
 	private final CloneHelper helper;
 
+	/** Required argument for creating clone helpers*/
 	private final PCMResourceSetPartition set;
 
 	public LessInvasiveInMemoryCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
@@ -73,9 +89,9 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 
 	/**
 	 *
-	 * Adjust delay of {@link UsageModelPassedElement} event.
+	 * Encode offset for resending the given {@link UsageModelPassedElement} event.
 	 *
-	 * Must create a copy of the event, because the delay is immutable.
+	 * Create a copy of the event.
 	 *
 	 * @param event event to be offsetted
 	 * @return offsetted event
@@ -86,9 +102,9 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 
 	/**
 	 *
-	 * Adjust delay of {@link SEFFModelPassedElement} event.
+	 * Encode offset for resending the given {@link SEFFModelPassedElement} event.
 	 *
-	 * Must create a copy of the event, because the delay is immutable.
+	 * Create a copy of the event.
 	 *
 	 * @param event event to be offsetted
 	 * @return offsetted event
@@ -124,7 +140,7 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	}
 
 	/**
-	 * Collect and clone all state relevant events from the past and the future.
+	 * Collect and clone all state relevant events from the past and the future and adjust offsetts, if necessary.
 	 *
 	 * @return Set of events for recreating the state.
 	 */
@@ -166,7 +182,7 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	 * Get {@link ModelAdjustmentRequested} events, that happened at the point in
 	 * time the snapshot was taken, but did not trigger it.
 	 *
-	 * As the there is no guarantee on the order of events, that happen at the same
+	 * As there is no guarantee on the order of events, that happen at the same
 	 * point in time, the {@link ModelAdjustmentRequested} events are either
 	 * directly scheduled, or already wrapped into {@link SnapshotInitiated} or
 	 * {@link SnapshotTaken} events.
@@ -176,17 +192,20 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	private List<ModelAdjustmentRequested> getScheduledReconfigurations() {
 		final List<ModelAdjustmentRequested> events = new ArrayList<>();
 
+		/* Scheduled ModelAdjustmentRequested */
 		engine.getScheduledEvents().stream()
 		.filter(ModelAdjustmentRequested.class::isInstance)
 		.map(ModelAdjustmentRequested.class::cast)
 		.forEach(events::add);
 
+		/* ModelAdjustmentRequested already processed into SnapshotInitiated events */
 		engine.getScheduledEvents().stream()
 		.filter(SnapshotInitiated.class::isInstance)
 		.map(SnapshotInitiated.class::cast)
 		.filter(e -> e.getTriggeringEvent().isPresent())
 		.forEach(e -> events.add(e.getTriggeringEvent().get()));
 
+		/* ModelAdjustmentRequested already processed into SnapshotTaken events */
 		engine.getScheduledEvents().stream()
 		.filter(SnapshotTaken.class::isInstance)
 		.map(SnapshotTaken.class::cast)
@@ -197,7 +216,11 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	}
 	
 	/**
+	 * Denormalizes the demand of the open jobs and creates {@link JobInitiated}
+	 * events to reinsert them to their respective Processor Sharing Resource.
 	 *
+	 * C.f. {@link LessInvasiveInMemoryCamera#handlePFCFSJobs(Set, Set)} for details on the demand denormalized.
+	 * 
 	 * @param jobrecords
 	 * @return
 	 */

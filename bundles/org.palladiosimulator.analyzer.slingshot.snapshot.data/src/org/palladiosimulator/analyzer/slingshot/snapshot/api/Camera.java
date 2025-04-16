@@ -1,15 +1,14 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
 /**
- * This is the camera...
+ * This is the camera for taking the snapshot.
  *
  * (my mental image is like this : through my camera's viewfinder i watch stuff
  * change and sometime i release the shutter and get a picture of how stuff
  * looks at a certain point in time.)
  *
- * TODO : find proper name for this.
  *
- * @author stiesssh
+ * @author Sophie Stieß
  *
  */
 public interface Camera {

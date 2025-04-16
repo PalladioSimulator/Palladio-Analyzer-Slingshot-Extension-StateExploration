@@ -14,9 +14,20 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Defaul
 import org.scaledl.usageevolution.UsageEvolution;
 
 /**
- *
- * Usage Evolution continuous offset. 
- *
+ * Behaviour to continuously offset the {@link IntervalPassed} events for the
+ * usage evolution.
+ * 
+ * Keep in mind: All simulation runs start at t=0s, even if the state they
+ * represent starts at t > 0s. Without offsetting the {@link IntervalPassed}
+ * events we would always replay the first few seconds of the usage evolution,
+ * which we clearly do not want. Instead we want to keep reading from the model
+ * where we left of with the previous simulation run, thus we offset all events
+ * for the usage evolution with the start time of the current state.
+ * 
+ * Another thing to keep in mind: this is only necessary for the usage
+ * evolution, because the usage evolution model is the only time dependent
+ * model.
+ * 
  * @author Sophie Stieß
  *
  */
@@ -28,11 +39,13 @@ public class OffsetForUsageEvolutionBehaviour implements SimulationBehaviorExten
 	private final double startTime;
 
 	@Inject
-	public OffsetForUsageEvolutionBehaviour(final @Nullable DefaultStateBuilder halfDoneState, @Nullable final UsageEvolution usageEvolutionModel) {
+	public OffsetForUsageEvolutionBehaviour(final @Nullable DefaultStateBuilder stateBuilder,
+			@Nullable final UsageEvolution usageEvolutionModel) {
 
-		this.activated = halfDoneState != null && usageEvolutionModel != null;
+		this.activated = stateBuilder != null && usageEvolutionModel != null
+				&& stateBuilder.getStartupInformation().startTime() > 0;
 
-		this.startTime = halfDoneState.getStartupInformation().startTime();
+		this.startTime = stateBuilder.getStartupInformation().startTime();
 	}
 
 	@Override

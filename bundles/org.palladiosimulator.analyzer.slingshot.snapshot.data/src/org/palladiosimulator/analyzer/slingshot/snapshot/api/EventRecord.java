@@ -16,15 +16,24 @@ import org.palladiosimulator.pcm.usagemodel.Stop;
 /**
  *
  * A Record holding all Events relevant for recreating a Simulation Run.
+ * 
+ * The simulator has some state full component. If we cannot export the state of
+ * those components, we must keep track of the events that caused that state,
+ * and resend those events to recreate the state.
+ * 
+ * If at the point of time of taking the snaphshot, the events necessary for recreating the states
+ * are already in the past, we cannot access them anymore. Thus we must record them before
+ * hand.
+ * 
  * Currently, those events are:
  *
- * - UsageModelPassedElement for the CalculatorState
+ * <li>Instances of {@link UsageModelPassedElement} and
+ * {@link SEFFModelPassedElement} for recreating the state of calculators. 
  *
- * - JobInitialised for FCFS Resources
- *
- * - JobInitialised for ProcessorSharingResources
- *
- * @author stiesssh
+ * <li>Instances of {@link JobInitiated} for FCFS and processor sharing
+ * resources for recreating the internal state of the simulated resources. Beware: 
+ * 
+ * @author Sophie Stieß
  *
  */
 public interface EventRecord {
@@ -54,14 +63,12 @@ public interface EventRecord {
 	 */
 	public Set<JobRecord> getProcSharingJobRecords();
 
-
 	/**
 	 * Store the given event, as it started a calculation at a calculator.
 	 *
 	 * @param event event that started a calculation.
 	 */
 	public void addInitiatedCalculator(final UsageModelPassedElement<Start> event);
-
 
 	/**
 	 * Remove event that started the calculation finished by the given event from
@@ -96,12 +103,11 @@ public interface EventRecord {
 
 	/**
 	 * Update an existing record for the job entity in the given event.
-	 *
+	 * 
 	 * @param event event holding the job entity
 	 * @throws IllegalArgumentException
 	 */
 	public void updateJobRecord(final JobInitiated event);
-
 
 	/**
 	 * Remove the record of the job entity in the given event, if it exists.

@@ -15,17 +15,14 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorSta
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
-import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
-import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
+import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
-import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
@@ -37,7 +34,8 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
 /**
  *
- * Behavioural Extension to handle everything related to the RawGraphState.
+ * Behavioural Extension for putting more values into the
+ * {@link DefaultStateBuilder}.
  *
  * @author Sophie Stieß
  *
@@ -45,7 +43,6 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 @OnEvent(when = CalculatorRegistered.class, then = {})
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
 @OnEvent(when = SPDAdjustorStateInitialized.class, then = {})
-@OnEvent(when = SnapshotInitiated.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
 public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension {
 
 	private static final Logger LOGGER = Logger.getLogger(SnapshotStateUpdateBehaviour.class);
@@ -55,22 +52,22 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 	private final SimuComConfig simuComConfig;
 
 	/* State representing current simulation run */
-	private final DefaultStateBuilder halfDoneState;
-	/* Snapshotted events taken from earlier simulation run */
+	private final DefaultStateBuilder stateBuilder;
 
 	private final Map<String, SPDAdjustorStateValues> policyIdToValues;
 
-
-	private final boolean activated;
-
+	/**
+	 * 
+	 * @param stateBuilder   for saving the collected state information
+	 * @param snapshotConfig for access to additional information (e.g. min.
+	 *                       duration)
+	 * @param simuComConfig  for access to the experiment settings
+	 */
 	@Inject
-	public SnapshotStateUpdateBehaviour(final @Nullable DefaultStateBuilder halfDoneState,
-			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable EventsToInitOnWrapper eventsWrapper,
-			final @Nullable SimuComConfig simuComConfig) {
+	public SnapshotStateUpdateBehaviour(final @Nullable DefaultStateBuilder stateBuilder,
+			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable SimuComConfig simuComConfig) {
 
-		this.activated = halfDoneState != null && snapshotConfig != null && simuComConfig != null;
-
-		this.halfDoneState = halfDoneState;
+		this.stateBuilder = stateBuilder;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
 
@@ -79,22 +76,26 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 
 	@Override
 	public boolean isActive() {
-		return this.activated;
+		return stateBuilder != null && snapshotConfig != null && simuComConfig != null;
 	}
 
-
 	/**
-	 * Add the measurements to the raw state.
+	 * Add access to all measurements to the raw state.
 	 *
 	 * Subscribes to {@link CalculatorRegistered} because the experiment settings
 	 * are created during calculator registration.
+	 * 
+	 * Keep in mind: in this operation we save a reference to the experiment
+	 * settings, but at this point in time the settings are still empty. The actual
+	 * measurements are only added during the simulation run
 	 *
-	 * @param calculatorRegistered
+	 * @param calculatorRegistered signifies that the {@link ExperimentSetting} are
+	 *                             now created.
 	 */
 	@Subscribe
 	public void onCalculatorRegistered(final CalculatorRegistered calculatorRegistered) {
 
-		// SKip, if already set!
+		// TODO Skip, if already set!
 
 		final List<Repository> repos = RepositoryManager.getCentralRepository().getAvailableRepositories();
 
@@ -123,20 +124,25 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 					settings.size()));
 		}
 
-		this.halfDoneState.setExperimentSetting(settings.get(0));
+		this.stateBuilder.setExperimentSetting(settings.get(0));
 	}
 
 	/**
+	 * 
+	 * Add the {@link Snapshot} object and the state duration to the builder.
+	 * 
+	 * Also add the {@link SPDAdjustorStateValues}s to the snapshot. 
+	 * 
+	 * Once this operation was executed, the state builder is complete.
 	 *
-	 * NB : state builder is complete.
-	 *
-	 * @param event
-	 * @return
+	 * @param event signifies that the snapshot is complete.
+	 * @return {@link SimulationFinished} event to trigger the end of the current
+	 *         simulation run.
 	 */
 	@Subscribe
 	public Result<SimulationFinished> onSnapshotFinished(final SnapshotFinished event) {
-		halfDoneState.setSnapshot(event.getEntity());
-		halfDoneState.setDuration(event.time());
+		stateBuilder.setSnapshot(event.getEntity());
+		stateBuilder.setDuration(event.time());
 
 		this.refineReasonsToLeave(event);
 
@@ -176,10 +182,10 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 	 */
 	private void refineReasonsToLeave(final SnapshotFinished event) {
 		if (!event.getEntity().getModelAdjustmentRequestedEvent().isEmpty()) {
-			halfDoneState.addReasonToLeave(ReasonToLeave.reactiveReconfiguration);
+			stateBuilder.addReasonToLeave(ReasonToLeave.reactiveReconfiguration);
 		}
 		if (event.time() == snapshotConfig.getMinDuration()) {
-			halfDoneState.addReasonToLeave(ReasonToLeave.interval);
+			stateBuilder.addReasonToLeave(ReasonToLeave.interval);
 		}
 	}
 
