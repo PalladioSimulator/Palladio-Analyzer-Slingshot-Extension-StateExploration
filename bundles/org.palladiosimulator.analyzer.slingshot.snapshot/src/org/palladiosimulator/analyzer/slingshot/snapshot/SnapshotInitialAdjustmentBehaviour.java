@@ -1,7 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,15 +11,9 @@ import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.Model
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelChange;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ResourceEnvironmentChange;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
-import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
-import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.EventCardinality;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
-import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.InterceptorInformation;
-import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
-import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringPoint;
@@ -34,51 +26,37 @@ import org.palladiosimulator.pcmmeasuringpoint.ResourceContainerMeasuringPoint;
 
 /**
  *
- * TODO something costs and adjustments
+ * This behaviour is responsible for things that relate to the initial
+ * adjustment of a simulation run.
  * 
- * Additional handling in case of starting simulation with an adjustment?
+ * Keep in mind, the initial adjustment are the pro- or reactive adjustments
+ * that are scheduled at the beginning of the simulation.
  * 
- * TODO : i think there was a bug wrt. cost in case of starting with adaption.
+ * For the handling of adaptations during, respectively at the end of a
+ * simulation run, see {@link SnapshotTriggeringBehavior}.
  * 
  * @author Sophie Stieß
  *
  */
-@OnEvent(when = ModelAdjusted.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
-@OnEvent(when = SnapshotInitiated.class, then = { TakeCostMeasurement.class }, cardinality = EventCardinality.MANY)
+@OnEvent(when = ModelAdjusted.class, then = {}, cardinality = EventCardinality.MANY)
 public class SnapshotInitialAdjustmentBehaviour implements SimulationBehaviorExtension {
 
 	private static final Logger LOGGER = Logger.getLogger(SnapshotInitialAdjustmentBehaviour.class);
 
 	private final boolean activated;
-	private final boolean startWithAdaption;
 
 	/* for saving stuff to file */
 	private final Allocation allocation;
 
 	/* for deleting monitors and MP of scaled-in resources */
 	private final MonitorRepository monitorrepo;
-	private final MeasuringPointRepository measuringpointsrepo;
-
-	/* for handling cost measurements */
-	Collection<TakeCostMeasurement> costMeasurementStore = new ArrayList<>();
-	private boolean handleCosts = true;
 
 	@Inject
-	public SnapshotInitialAdjustmentBehaviour(final @Nullable EventsToInitOnWrapper eventsWrapper, final Allocation allocation,
-			final MonitorRepository monitorrepo) {
-
-
+	public SnapshotInitialAdjustmentBehaviour(final @Nullable EventsToInitOnWrapper eventsWrapper,
+			final Allocation allocation, final MonitorRepository monitorrepo) {
 		this.allocation = allocation;
 		this.monitorrepo = monitorrepo;
 
-		if (this.monitorrepo.getMonitors().isEmpty()) {
-			this.measuringpointsrepo = null;
-		} else {
-			this.measuringpointsrepo = this.monitorrepo.getMonitors().get(0).getMeasuringPoint()
-					.getMeasuringPointRepository();
-		}
-
-		this.startWithAdaption = !eventsWrapper.getAdjustmentEvents().isEmpty();
 		this.activated = eventsWrapper != null;
 	}
 
@@ -88,48 +66,18 @@ public class SnapshotInitialAdjustmentBehaviour implements SimulationBehaviorExt
 	}
 
 	/**
+	 * Save models back to file after an adjustment.
+	 * 
+	 * In case of a scale in, also remove all superfluous monitors and
+	 * measuringpoints.
+	 * 
+	 * We must write the adjusted models back to file or to preserve the correct
+	 * architecture for future simulation runs.
 	 *
-	 * Intercept {@link TakeCostMeasurement} events.
-	 *
-	 * For two reasons: Firstly, get to know all resources with cost measures to
-	 * trigger a measurement in case of a snapshot. Secondly, abort the events, if
-	 * the state starts with an adaptation. In this case, cost must only be measured
-	 * after the adaptation, c.f.
-	 * {@link SnapshotInitialAdjustmentBehaviour#onModelAdjusted(ModelAdjusted)}
-	 *
-	 *
-	 * @param information
-	 * @param event
-	 * @return success, if this state starts without adaptation, abort other wise.
-	 */
-	@PreIntercept
-	public InterceptionResult preInterceptTakeCostMeasurement(final InterceptorInformation information,
-			final TakeCostMeasurement event) {
-
-		if (handleCosts && event.time() == 0) {
-			costMeasurementStore.add(event);
-
-			if (startWithAdaption) {
-				return InterceptionResult.abort();
-			}
-		}
-		return InterceptionResult.success();
-
-	}
-
-	@Subscribe
-	public Result<TakeCostMeasurement> onSnapshotInitiated(final SnapshotInitiated event) {
-		return Result.of(costMeasurementStore);
-	}
-
-	/**
-	 * Update persisted model files, because reconfiguration now happens at runtime,
-	 * i.e. not yet propagated to file.
-	 *
-	 * @param modelAdjusted
+	 * @param modelAdjusted adjustment and resulting changes that just happened.
 	 */
 	@Subscribe
-	public Result<TakeCostMeasurement> onModelAdjusted(final ModelAdjusted modelAdjusted) {
+	public void onModelAdjusted(final ModelAdjusted modelAdjusted) {
 		for (final ModelChange<?> change : modelAdjusted.getChanges()) {
 			if (change instanceof final ResourceEnvironmentChange resEnvChange) {
 				for (final ResourceContainer container : resEnvChange.getDeletedResourceContainers()) {
@@ -138,28 +86,37 @@ public class SnapshotInitialAdjustmentBehaviour implements SimulationBehaviorExt
 			}
 		}
 		ArchitectureConfigurationUtil.saveWhitelisted(this.allocation.eResource().getResourceSet());
-		this.handleCosts = false;
-
-		return Result.of(costMeasurementStore);
 	}
 
 	/**
-	 * Remove Monitors and Measuringpoints that reference the
-	 * {@link ResourceContainer} that was deleted during a scale in.
+	 * Remove {@link Monitor}s and {@link MeasuringPoint}s that reference the given
+	 * {@link ResourceContainer}.
+	 * 
+	 * Only removes the elements from the loaded models, but does not yet write the
+	 * changes back to file.
+	 * 
+	 * Requires that the given container is already removed from the models, i.e.,
+	 * it is already scaled in.
 	 *
-	 * TODO : danger of NPE!!! 
+	 * @note this operation is a workaround, because currently Slingshot never
+	 *       removes monitors or measuringpoints. From a functional perspective,
+	 *       this is not a problem, but it clutters the models.
 	 *
 	 * @param deleted {@link ResourceContainer} deleted during scale in.
 	 */
 	private void removeDeletedMonitoring(final ResourceContainer deleted) {
-
 		final Set<MeasuringPoint> deletedMps = new HashSet<>();
 
-		for (final MeasuringPoint mp : Set.copyOf(measuringpointsrepo.getMeasuringPoints())) {
-			if (mp instanceof final ResourceContainerMeasuringPoint rcmp
-					&& rcmp.getResourceContainer().getId().equals(deleted.getId())) {
-				deletedMps.add(rcmp);
-				measuringpointsrepo.getMeasuringPoints().remove(rcmp);
+		if (!this.monitorrepo.getMonitors().isEmpty()) {
+			final MeasuringPointRepository measuringpointsrepo = this.monitorrepo.getMonitors().get(0)
+					.getMeasuringPoint().getMeasuringPointRepository();
+
+			for (final MeasuringPoint mp : Set.copyOf(measuringpointsrepo.getMeasuringPoints())) {
+				if (mp instanceof final ResourceContainerMeasuringPoint rcmp
+						&& rcmp.getResourceContainer().getId().equals(deleted.getId())) {
+					deletedMps.add(rcmp);
+					measuringpointsrepo.getMeasuringPoints().remove(rcmp);
+				}
 			}
 		}
 
