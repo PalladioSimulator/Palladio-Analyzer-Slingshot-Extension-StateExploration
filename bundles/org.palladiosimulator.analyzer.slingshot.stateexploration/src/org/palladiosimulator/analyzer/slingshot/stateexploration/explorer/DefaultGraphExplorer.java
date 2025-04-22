@@ -15,6 +15,7 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
@@ -139,8 +140,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * 
 	 * <br>
 	 * <b>Note</b>: For the state exploration, we must do this <b>before</b> we
-	 * create the root node. When creating the root node, we save a copy of
-	 * the models to file, and all unresolved references go missing on save.
+	 * create the root node. When creating the root node, we save a copy of the
+	 * models to file, and all unresolved references go missing on save.
 	 */
 	private void applyStereotypeFake() {
 		final ResourceEnvironment fake = ResourceenvironmentFactory.eINSTANCE.createResourceEnvironment();
@@ -219,18 +220,19 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
 		// to include for the prioritazion of the fringe.
 		this.graph.updateFurthestState(current);
-		
+
 		if (current.getEndTime() < this.horizonLength) {
 			this.postprocessor.updateGraphFringe(current);
 		}
 	}
 
-	
 	private StateGraphNode convertState(final RawModelState state, final String parentId,
 			final List<ScalingPolicy> scalingPolicies) {
-		return StateGraphConverter.convertState(state.getArchitecureConfiguration().getMonitorRepository(), state.getMeasurements(), state.getArchitecureConfiguration().getSLOs(), state.getStartTime(), state.getEndTime(), state.getId(), parentId, scalingPolicies);
+		return StateGraphConverter.convertState(state.getArchitecureConfiguration().getMonitorRepository(),
+				state.getMeasurements(), state.getArchitecureConfiguration().getSLOs(), state.getStartTime(), state.getEndTime(),
+				state.getId(), parentId, scalingPolicies, new MeasurementConverter(0.0, state.getDuration()));
 	}
-	
+
 	/**
 	 *
 	 * Create a SimuComConfig for the next simulation run.

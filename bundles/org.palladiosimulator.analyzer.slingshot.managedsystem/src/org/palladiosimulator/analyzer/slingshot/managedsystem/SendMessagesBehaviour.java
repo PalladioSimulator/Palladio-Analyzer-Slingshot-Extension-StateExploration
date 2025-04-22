@@ -10,6 +10,7 @@ import javax.inject.Named;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
@@ -143,7 +144,7 @@ public class SendMessagesBehaviour implements SimulationBehaviorExtension {
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
         final StateGraphNode node = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting, Optional.of(this.sloRepo),
-                prevUtilityTimestamp, event.time(), "", "", List.of());
+                prevUtilityTimestamp, event.time(), "", "", List.of(), new MeasurementConverter(prevUtilityTimestamp, event.time()));
 
         this.systemDriver.postEvent(new StateExploredEventMessage(node, clientName));
     }

@@ -9,6 +9,7 @@ import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
+import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
@@ -90,14 +91,14 @@ public class UtilityCalculatorAndPlotterBehaviour implements SimulationBehaviorE
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
         final StateGraphNode node = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting, Optional.of(this.sloRepo),
-                prevUtilityTimestamp, event.time(), "", "", List.of());
+                prevUtilityTimestamp, event.time(), "", "", List.of(), new MeasurementConverter(prevUtilityTimestamp, event.time()));
         nodes.add(node);
 
         persistUtilityData();
         persistAggregatedUtilityData();
 
         final StateGraphNode totalNode = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting,
-                Optional.of(this.sloRepo), 0, event.time(), "", "", List.of());
+                Optional.of(this.sloRepo), 0, event.time(), "", "", List.of(), new MeasurementConverter(0, event.time()));
 
         persistOtherMeasurementData(totalNode);
     }
@@ -185,7 +186,7 @@ public class UtilityCalculatorAndPlotterBehaviour implements SimulationBehaviorE
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
         final StateGraphNode node = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting, Optional.of(this.sloRepo),
-                prevUtilityTimestamp, event.time(), "", "", List.of());
+                prevUtilityTimestamp, event.time(), "", "", List.of(), new MeasurementConverter(prevUtilityTimestamp, event.time()));
 
         nodes.add(node);
 
