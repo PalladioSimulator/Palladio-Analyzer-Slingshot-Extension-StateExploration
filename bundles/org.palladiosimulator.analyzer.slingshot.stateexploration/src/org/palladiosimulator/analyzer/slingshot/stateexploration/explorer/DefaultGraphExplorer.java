@@ -15,6 +15,7 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
@@ -223,17 +224,21 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node, "Explorer"));
 
+		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
+		// to include for the prioritazion of the fringe.
+
 		if (current.getEndTime() < this.horizonLength) {
 			this.postprocessor.updateGraphFringe(current);
 		}
 	}
 
-	
 	private StateGraphNode convertState(final RawModelState state, final String parentId,
 			final List<ScalingPolicy> scalingPolicies) {
-		return StateGraphConverter.convertState(state.getArchitecureConfiguration().getMonitorRepository(), state.getExperimentSetting(), state.getArchitecureConfiguration().getSLOs(), state.getStartTime(), state.getEndTime(), state.getId(), parentId, scalingPolicies);
+		return StateGraphConverter.convertState(state.getArchitecureConfiguration().getMonitorRepository(),
+				state.getExperimentSetting(), state.getArchitecureConfiguration().getSLOs(), state.getStartTime(), state.getEndTime(),
+				state.getId(), parentId, scalingPolicies, new MeasurementConverter(0.0, state.getDuration()));
 	}
-	
+
 	/**
 	 *
 	 * Create a SimuComConfig for the next simulation run.

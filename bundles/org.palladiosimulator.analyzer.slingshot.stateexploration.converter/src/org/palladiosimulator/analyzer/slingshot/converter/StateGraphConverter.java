@@ -15,23 +15,29 @@ import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  *
+ *
  * @author
  *
  */
 public class StateGraphConverter {
 
-	/**
-	 *
-	 *
-	 * @param state
-	 * @param parentId
-	 * @param scalingPolicies policies in order of execution. first policy must be applied at first.
-	 * @return
-	 */
+    /**
+     *
+     * @param monitorRepository
+     * @param expSetting
+     * @param sloRepository
+     * @param startTime
+     * @param endTime
+     * @param stateId
+     * @param parentId
+     * @param scalingPolicies policies in order of appliance.
+     * @param converter entire converter for state, because creation differs for managed system and exploration states and this operation cannot distinguis them.
+     * @return
+     */
 	public static StateGraphNode convertState(final Optional<MonitorRepository> monitorRepository,
             final ExperimentSetting expSetting,
             final Optional<ServiceLevelObjectiveRepository> sloRepository, final double startTime, final double endTime, final String stateId, final String parentId,
-			final List<ScalingPolicy> scalingPolicies) {
+			final List<ScalingPolicy> scalingPolicies, final MeasurementConverter converter) {
 		final List<ServiceLevelObjective> slos = new ArrayList<>();
 		List<MeasurementSet> measuremnets = new ArrayList<MeasurementSet>();
 
@@ -57,7 +63,7 @@ public class StateGraphConverter {
 
 		// Add Measurements
 		if (expSetting != null) {
-		    final MeasurementConverter converter = new MeasurementConverter(startTime, endTime);
+		    //final MeasurementConverter converter = new MeasurementConverter(startTime, endTime);
 			measuremnets = converter.visitExperiementSetting(expSetting);
 		}
 
