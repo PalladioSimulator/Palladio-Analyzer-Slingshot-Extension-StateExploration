@@ -17,7 +17,7 @@ public class Utility {
 	private static final double STEP_SIZE = 1.0;
 	private static final Logger LOGGER = Logger.getLogger(Utility.class);
 	private double totalUtility;
-	private final List<UtilityData> data = new ArrayList<>();;
+	private final List<UtilityData> data = new ArrayList<>();
 
 	private final List<List<Measurement<Double>>> slo = new ArrayList<>();
 	private final List<List<Measurement<Double>>> costs = new ArrayList<>();
@@ -39,7 +39,8 @@ public class Utility {
 	/**
 	 * Calculates the total utility.
 	 *
-	 * Ensures that attributes {@code slo} and {@code costs} are empty, for smaller serialisation.
+	 * Ensures that attributes {@code slo} and {@code costs} are empty, for smaller
+	 * serialisation.
 	 *
 	 */
 	public void calculateTotalUtility() {
@@ -81,7 +82,7 @@ public class Utility {
 				.filter(x -> x >= -0.5).min();
 
 		// When maybeMin is empty then no data series has any measurements
-		if(maybeMin.isEmpty()) {
+		if (maybeMin.isEmpty()) {
 			totalUtility = 0;
 			return;
 		}
@@ -101,7 +102,7 @@ public class Utility {
 		final List<List<Measurement<Double>>> costIntervals = computeIntervals(min, max, costs);
 
 		// ensure that the length of all list is equal
-		if(sloIntervals.stream().map(x -> {
+		if (sloIntervals.stream().map(x -> {
 			return x.size();
 		}).distinct().count() > 1 || costIntervals.stream().map(x -> {
 			return x.size();
@@ -116,7 +117,7 @@ public class Utility {
 		final List<Measurement<Double>> toIntegrate = new ArrayList<Measurement<Double>>();
 		final var length = sloIntervals.get(0).size();
 
-		for(int i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			final int a = i;
 			final var slo = sloIntervals.stream().mapToDouble(x -> x.get(a).measure()).sum();
 			final var cost = costIntervals.stream().mapToDouble(x -> x.get(a).measure()).sum();
@@ -129,7 +130,7 @@ public class Utility {
 					.of(costIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).min(),
 							sloIntervals.stream().mapToDouble(x -> x.get(a).timeStamp()).min())
 					.stream().mapToDouble(x -> x.orElse(0.0)).min().orElse(0.0);
-			if(timeStampMax != timeStampMin) {
+			if (timeStampMax != timeStampMin) {
 				throw new IllegalStateException("Measurements have different timestamps at index " + i + ". SLO:\n"
 						+ sloIntervals.get(i) + "\nCost:\n" + costIntervals.get(i));
 			}
@@ -182,7 +183,7 @@ public class Utility {
 				// System.out.println("computing new carry");
 				final var measurements = new ArrayList<Double>();
 				measurements.add(current.measure());
-				while(iterator.hasNext()) {
+				while (iterator.hasNext()) {
 					final var next = iterator.next();
 					if (next.timeStamp() < s + STEP_SIZE) {
 						measurements.add(next.measure());
@@ -207,7 +208,7 @@ public class Utility {
 	private static void fillCarry(final double start, final double end, final List<Measurement<Double>> list,
 			final double carry) {
 		// System.out.println("Beginn fill at: " + list.size());
-		for(double s = start; s <= end; s += STEP_SIZE) {
+		for (double s = start; s <= end; s += STEP_SIZE) {
 			list.add(new Measurement<Double>(carry, s));
 		}
 		// System.out.println("End fill at: " + list.size());
@@ -224,7 +225,7 @@ public class Utility {
 
 		// Iterate through the measurements pairwise to calculate the area under each
 		// segment
-		for(int i = 0; i < toIntegrate.size() - 1; i++) {
+		for (int i = 0; i < toIntegrate.size() - 1; i++) {
 			// Current and next measurement points
 			final var current = toIntegrate.get(i);
 			final var next = toIntegrate.get(i + 1);
