@@ -20,6 +20,12 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.servicelevelobjective,
  org.palladiosimulator.spd.semantic,
  org.palladiosimulator.analyzer.slingshot.cost,
- org.palladiosimulator.analyzer.slingshot.behavior.spd.data
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
+ org.palladiosimulator.analyzer.slingshot.core,
+ com.google.gson,
+ org.palladiosimulator.commons
 Export-Package: org.palladiosimulator.analyzer.slingshot.behavior.util,
- org.palladiosimulator.analyzer.slingshot.common.utils
+ org.palladiosimulator.analyzer.slingshot.common.utils,
+ spielwiese.version2,
+ spielwiese.version2.adapters,
+ spielwiese.version2.factories
