@@ -47,6 +47,7 @@ import spielwiese.version2.adapters.EObjectTypeAdapter;
 import spielwiese.version2.factories.ElistTypeAdapterFactory;
 import spielwiese.version2.factories.NonParameterizedCustomizedTypeAdapterFactory2;
 import spielwiese.version2.factories.OptionalTypeAdapterFactory;
+import spielwiese.version2.factories.SpecialLoopResolvingTypeAdapterFactory3;
 
 public class Main {
 
@@ -77,8 +78,10 @@ public class Main {
 		adaptereBuilder.registerTypeHierarchyAdapter(Class.class, new ClassTypeAdapter());
 
 		//adaptereBuilder.registerTypeAdapterFactory(new CustomizedTypeAdapterFactory<Thing>(Thing.class, objs, thingTypes) {});
-		adaptereBuilder.registerTypeAdapterFactory(new NonParameterizedCustomizedTypeAdapterFactory2(objs, thingTypes));
-		adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory(objs, thingTypes));
+		adaptereBuilder.registerTypeAdapterFactory(new SpecialLoopResolvingTypeAdapterFactory3(objs, thingTypes));
+		
+		adaptereBuilder.registerTypeAdapterFactory(new NonParameterizedCustomizedTypeAdapterFactory2(Set.of(Thing.class),objs, thingTypes));
+		adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory());
 		adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
 		
 		
@@ -172,10 +175,16 @@ public class Main {
 		return null;
 	}
 	
-	public static Set<DESEvent> createEvents() {
-		
-		
+	public static Set<DESEvent> createEvents() {	
 		final UsageModel model = readUsageModel();
+		
+		final LoopThingParent loopParent = new LoopThingParent("loopParent");
+		final LoopThingChild loopChild1 = new LoopThingChild("loopChild1", loopParent);
+		final LoopThingChild loopchild2 = new LoopThingChild("loopChild2", loopParent);
+		
+		loopParent.addLoopChild(loopChild1);
+		loopParent.addLoopChild(loopchild2);
+		
 		
 		final Thing thing1 = new Thing("thing1", null);
 		final Thing thing2 = new Thing("thing2", thing1);
@@ -187,27 +196,31 @@ public class Main {
 		final Thing thing4 = new Thing("thing4", pcmThing2);
 		
 
-		final ClassThing classThing = new ClassThing<Double>(Double.class);
+		final ClassThing classThing1 = new ClassThing<Double>(Double.class);
 		final ClassThing classThing2 = new ClassThing<Thing>(Thing.class);
 		
-		final EListThing elistThing = new EListThing(model.getUsageScenario_UsageModel().get(0).getScenarioBehaviour_UsageScenario().getActions_ScenarioBehaviour());
+		final EListThing elistThing1 = new EListThing(model.getUsageScenario_UsageModel().get(0).getScenarioBehaviour_UsageScenario().getActions_ScenarioBehaviour());
 		
-		final OptionalThing<Thing> optionalThing = new OptionalThing<>(thing1);
+		final OptionalThing<Thing> optionalThing1 = new OptionalThing<>(thing1);
 		final OptionalThing<Optional<Thing>> optionalThing2 = new OptionalThing<>(Optional.of(thing1));
+		final OptionalThing<Thing> optionalThing3 = new OptionalThing<>(null);
+		final OptionalThing<UsageModel> optionalThing4 = new OptionalThing<>(model);
 		
 		final Set<DESEvent> events = new HashSet<>();
 		events.add(new SimulationStarted());
 //		events.add(new SimulationStarted());
 //		events.add(new SimulationFinished());
-		events.add(new PCMEvent(model, thing2));
-		events.add(new PCMEvent(model, optionalThing));
+		events.add(new PCMEvent(model, loopParent));
+//		events.add(new PCMEvent(model, optionalThing1));
+//		events.add(new PCMEvent(model, optionalThing2));
+//		events.add(new PCMEvent(model, optionalThing3));
+//		events.add(new PCMEvent(model, optionalThing4));
 //		events.add(new PCMEvent(model, pcmThing1));
 //		events.add(new PCMEvent(model, pcmThing2));
 //		events.add(new PCMEvent(model, pcmThing2));
 //		events.add(new PCMEvent(model, thing4));
 		
 		return events;
-		
 	}
 	
 	public static UsageModel createUsageModel() {

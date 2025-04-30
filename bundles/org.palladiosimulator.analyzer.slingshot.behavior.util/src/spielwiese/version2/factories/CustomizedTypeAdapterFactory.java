@@ -15,7 +15,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-
 /**
  * 
  * @author https://stackoverflow.com/questions/11271375/gson-custom-seralizer-for-one-variable-of-many-in-an-object-using-typeadapter
@@ -24,6 +23,10 @@ import com.google.gson.stream.JsonWriter;
  * @param <C>
  */
 public abstract class CustomizedTypeAdapterFactory<C> implements TypeAdapterFactory {
+	
+
+	public static final String FIELD_NAME_CLASS = "class";
+	
 	private final Class<C> customizedClass;
 	
 	private final Map<String, Object> done;
@@ -78,7 +81,7 @@ public abstract class CustomizedTypeAdapterFactory<C> implements TypeAdapterFact
 						thingTypes.put(className, gson.getDelegateAdapter(forReference, TypeToken.get(value.getClass())));
 					}
 
-					obj.addProperty("class", value.getClass().getSimpleName());
+					obj.addProperty(FIELD_NAME_CLASS, value.getClass().getSimpleName());
 					obj.addProperty("refId", refId);
 					
 					obj.add("obj", delegate.toJsonTree(value));
@@ -97,7 +100,7 @@ public abstract class CustomizedTypeAdapterFactory<C> implements TypeAdapterFact
 				}
 				final JsonObject jsonObj = tree.getAsJsonObject();
 				final String id = jsonObj.get("refId").getAsString();
-				final String tt = jsonObj.get("class").getAsString();
+				final String tt = jsonObj.get(FIELD_NAME_CLASS).getAsString();
 				
 				
 				final C element = (C) thingTypes.get(tt).fromJsonTree(jsonObj.get("obj"));

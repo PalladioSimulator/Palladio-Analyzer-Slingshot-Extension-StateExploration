@@ -8,12 +8,13 @@ public class Thing {
 	public Thing getAnotherThing() {
 		return anotherThing;
 	}
-
+	
 	public Thing(final String foo, final Thing anotherThing) {
 		super();
 		this.foo = foo;
 		this.anotherThing = anotherThing;
 	}
+	
 	
 	
 

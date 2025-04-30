@@ -2,10 +2,8 @@ package spielwiese.version2.factories;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.eclipse.emf.ecore.EObject;
 
@@ -13,51 +11,46 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-
 /**
  * 
  * @author https://stackoverflow.com/questions/11271375/gson-custom-seralizer-for-one-variable-of-many-in-an-object-using-typeadapter
  * 
- * 
- * @param <C>
  */
 public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
-	private final Map<String, Object> done;
 	
-	private static final String VALUE_FIELD = "value";
-	
-	private final Map<String, TypeAdapter<?>> thingTypes;
+	public static final String OPTIONAL_VALUE_FIELD = "value";
+	public static final String OPTIONAL_EMPTY = "empty";
+	public static final String REFERENCE_FIELD = "ref"; 
+	public static final String FIELD_NAME_CLASS = NonParameterizedCustomizedTypeAdapterFactory2.FIELD_NAME_CLASS; // must remain equal. 
+
 	private final Map<String, TypeAdapter<?>> optionalValuesDelegators = new HashMap<>();
 
-	public OptionalTypeAdapterFactory(final Map<String, Object> done, final Map<String, TypeAdapter<?>> thingTypes) {
-		this.done = done;
-		this.thingTypes = thingTypes;
+	public OptionalTypeAdapterFactory() {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked") 
+	@SuppressWarnings("unchecked")
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		if (type.getRawType() == Optional.class) {
-			final TypeAdapter<T> ta = (TypeAdapter<T>) customizeMyClassAdapter(gson, (TypeToken<Class<Optional<? extends Object>>>) type);
-			return ta;
+			final TypeAdapter<T> thisAdapter = (TypeAdapter<T>) customizeMyClassAdapter(gson, (TypeToken<Class<Optional<? extends Object>>>) type);
+			optionalValuesDelegators.put(type.getRawType().getSimpleName(), thisAdapter);
+			return thisAdapter;
 		}
 		return null;
 	}
 
-	private TypeAdapter<Optional<?>> customizeMyClassAdapter(final Gson gson, final TypeToken<Class<Optional<? extends Object>>> type) {
+	private TypeAdapter<Optional<?>> customizeMyClassAdapter(final Gson gson,
+			final TypeToken<Class<Optional<? extends Object>>> type) {
 		final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-		
+
 		final OptionalTypeAdapterFactory forReference = this;
-		
-		final Set<String> alreadyJsoned = new HashSet<>(); 
-		
+
 		return new TypeAdapter<Optional<?>>() {
 			@Override
 			public void write(final JsonWriter out, final Optional<? extends Object> value) throws IOException {
@@ -66,76 +59,72 @@ public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
 					return;
 				}
 
+				// dangerous, hash of optional is hash of value.
 				final String refId = String.valueOf(value.hashCode());
-				if (alreadyJsoned.contains(refId)) {
-					elementAdapter.write(out, new JsonPrimitive(refId));
-				} else {
 
-					final JsonObject obj = new JsonObject();
+				final JsonObject obj = new JsonObject();
 
-					obj.addProperty("class", value.getClass().getSimpleName());
-					obj.addProperty("refId", refId);
-					
-					if (value.isPresent()) {
-						obj.addProperty("refId", "opt$" + refId);
-						
-						final String valueClassName = value.get().getClass().getSimpleName();
-						
-						// cannot create delegator upfront, becaus we do not know actual value up front.
-						if (!optionalValuesDelegators.containsKey(valueClassName)) {
-							optionalValuesDelegators.put(valueClassName, gson.getDelegateAdapter(forReference, TypeToken.get(value.get().getClass())));
-						}
-						final TypeAdapter<Object> delegate = (TypeAdapter<Object>) optionalValuesDelegators.get(valueClassName);
-						obj.add(VALUE_FIELD, delegate.toJsonTree(value.get()));
-						
-					} else {
-						obj.addProperty("refId", "opt$" + 0);
+				obj.addProperty(FIELD_NAME_CLASS, value.getClass().getSimpleName());
+
+				if (value.isPresent()) {
+
+					final String valueClassName = value.get().getClass().getSimpleName();
+
+					// cannot create delegator upfront, becaus we do not know actual value up front.
+					if (!optionalValuesDelegators.containsKey(valueClassName)) {
+						optionalValuesDelegators.put(valueClassName, gson.getDelegateAdapter(forReference, TypeToken.get(value.get().getClass())));
 					}
+					final TypeAdapter<Object> delegate = (TypeAdapter<Object>) optionalValuesDelegators.get(valueClassName);
+					final JsonElement valueJson =  delegate.toJsonTree(value.get());
 					
-					
-					alreadyJsoned.add(refId);
+					if (valueJson.isJsonObject() || valueJson.getAsString().startsWith("file:")) {
+						obj.add(OPTIONAL_VALUE_FIELD, valueJson);
+					} else {
+						final JsonObject refWarp = new JsonObject();
+						refWarp.addProperty(FIELD_NAME_CLASS, value.get().getClass().getSimpleName());
+						refWarp.add(REFERENCE_FIELD, valueJson);
+						obj.add(OPTIONAL_VALUE_FIELD, refWarp);
+					}
 
-					elementAdapter.write(out, obj);
+				} else {
+					obj.addProperty(OPTIONAL_VALUE_FIELD, OPTIONAL_EMPTY);
 				}
+
+				elementAdapter.write(out, obj);
+
 			}
 
 			@Override
 			public Optional<?> read(final JsonReader in) throws IOException {
 				final JsonElement tree = elementAdapter.read(in);
-				if (!tree.isJsonObject() && done.containsKey(tree.getAsString()) ) {
-					return (Optional<?>) done.get(tree.getAsString());
-				}
-				final JsonObject jsonObj = tree.getAsJsonObject();
-				final String id = jsonObj.get("refId").getAsString();
-				final String tt = jsonObj.get("class").getAsString();
-				
-				final Optional<?> element;
-				
-				if (id.equals("opt$0")) {
-					element = Optional.empty();
-				} else {
-					
-					if (jsonObj.get(VALUE_FIELD).isJsonObject()) {
 
-					final String innerTt = jsonObj.get(VALUE_FIELD).getAsJsonObject().get("class").getAsString();
-					
+				final JsonObject jsonObj = tree.getAsJsonObject();
+				final JsonElement value = jsonObj.get(OPTIONAL_VALUE_FIELD);
+
+				final Optional<?> element;
+
+				if (value.isJsonObject()) {
+					final String innerTt = value.getAsJsonObject().get(FIELD_NAME_CLASS).getAsString();
+
 					final TypeAdapter<Object> delegate = (TypeAdapter<Object>) optionalValuesDelegators.get(innerTt);
-					final Object innerElement2 = delegate.fromJsonTree(jsonObj.get(VALUE_FIELD));
-					element = Optional.of(innerElement2);
-					
-					} else if (jsonObj.get(VALUE_FIELD).isJsonArray()) {
-						throw new JsonParseException("Cannot parse array inside Optional, not yet implemented.");
+					if (value.getAsJsonObject().has(REFERENCE_FIELD)) {
+						element = Optional.of(delegate.fromJsonTree(value.getAsJsonObject().get(REFERENCE_FIELD)));
 					} else {
-						if (jsonObj.get(VALUE_FIELD).getAsString().startsWith("file:")) {						
-							element = Optional.of(gson.fromJson(jsonObj.get(VALUE_FIELD), EObject.class));
-						} else {
-							final TypeAdapter<Object> delegate = (TypeAdapter<Object>) optionalValuesDelegators.values().iterator().next();
-							final Object innerElement2 = delegate.fromJsonTree(jsonObj.get(VALUE_FIELD));
-							element = Optional.of(innerElement2);
-						}
+						element = Optional.of(delegate.fromJsonTree(value));
+					}
+
+				} else if (value.isJsonArray()) {
+					throw new JsonParseException("Unexpected and unhandled primitive inside Optional: " + value.toString());
+				} else {
+					if (value.getAsString().equals(OPTIONAL_EMPTY)) {
+						return Optional.empty();
+					} else if (value.getAsString().startsWith("file:")) {
+						element = Optional.of(gson.fromJson(value, EObject.class));
+					} else {
+						throw new JsonParseException("Unexpected and unhandled primitive inside Optional: " + value.toString());
 					}
 				}
-				
+
 				return element;
 			}
 		};

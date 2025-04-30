@@ -15,31 +15,37 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import spielwiese.version2.Thing;
-
 
 /**
  * 
  * @author https://stackoverflow.com/questions/11271375/gson-custom-seralizer-for-one-variable-of-many-in-an-object-using-typeadapter
  * 
- * 
- * @param <R>
  */
 public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapterFactory {
-	private final Set<Class<?>> customizedClasses = Set.of(Thing.class);
+
+	public static final String FIELD_NAME_CLASS = "class";
+	public static final String FIELD_NAME_ID_FOR_REFERENCE = "refId";
+
+	
+	private final Set<Class<?>> customizedClasses;
 	
 	private final Map<String, Object> done;
 	private final Map<String, TypeAdapter<?>> thingTypes;
 	
 	final Set<String> alreadyJsoned = new HashSet<>(); 
 
-	public NonParameterizedCustomizedTypeAdapterFactory2(final Map<String, Object> done, final Map<String, TypeAdapter<?>> thingTypes) {
+	/**
+	 * 
+	 * @param done
+	 * @param thingTypes
+	 */
+	public NonParameterizedCustomizedTypeAdapterFactory2(final Set<Class<?>> customizables, final Map<String, Object> done, final Map<String, TypeAdapter<?>> thingTypes) {
 		this.done = done;
 		this.thingTypes = thingTypes;
+		this.customizedClasses = customizables;
 	}
 
 	@Override
-//	@SuppressWarnings("unchecked") 
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		for (final Class<?> clazz : customizedClasses) {
 			if (clazz.isAssignableFrom(type.getRawType())) {
@@ -58,8 +64,6 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 	private <R> TypeAdapter<R> customizeMyClassAdapter(final Gson gson, final TypeToken<R> type) {
 		final TypeAdapter<R> delegate = gson.getDelegateAdapter(this, type);
 		final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-		
-//		final NonParameterizedCustomizedTypeAdapterFactory2 forReference = this;
 				
 		return new TypeAdapter<R>() {
 			@Override
@@ -75,25 +79,18 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 				}
 
 				final String refId = String.valueOf(value.hashCode());
+				
 				if (alreadyJsoned.contains(refId)) {
 					elementAdapter.write(out, new JsonPrimitive(refId));
 				} else {
-
+					alreadyJsoned.add(refId);
 					final JsonObject obj = new JsonObject();
-					
-//					final String className = value.getClass().getSimpleName();	
-//					final TypeAdapter<?> ta = gson.getDelegateAdapter(forReference, TypeToken.get(value.getClass()));
-//					
-//					if (!thingTypes.containsKey(className)) {
-//						thingTypes.put(className, gson.getDelegateAdapter(forReference, TypeToken.get(value.getClass())));
-//					}
 
-					obj.addProperty("class", value.getClass().getSimpleName());
-					obj.addProperty("refId", refId);
+					obj.addProperty(FIELD_NAME_CLASS, value.getClass().getSimpleName());
+					obj.addProperty(FIELD_NAME_ID_FOR_REFERENCE, refId);
 					
 					obj.add("obj", delegate.toJsonTree(value));
 					
-					alreadyJsoned.add(refId);
 
 					elementAdapter.write(out, obj);
 				}
@@ -105,9 +102,12 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 				if (!tree.isJsonObject() && done.containsKey(tree.getAsString()) ) {
 					return (R) done.get(tree.getAsString());
 				}
+				if (!tree.isJsonObject() && !done.containsKey(tree.getAsString()) ) {
+					return null;
+				}
 				final JsonObject jsonObj = tree.getAsJsonObject();
-				final String id = jsonObj.get("refId").getAsString();
-				final String tt = jsonObj.get("class").getAsString();
+				final String id = jsonObj.get(FIELD_NAME_ID_FOR_REFERENCE).getAsString();
+				final String tt = jsonObj.get(FIELD_NAME_CLASS).getAsString();
 				
 				
 				final R element = (R) thingTypes.get(tt).fromJsonTree(jsonObj.get("obj"));

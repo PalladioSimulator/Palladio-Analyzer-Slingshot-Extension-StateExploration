@@ -7,6 +7,6 @@ public class OptionalThing<T> extends Thing{
 	
 	public OptionalThing(final T thing) {
 		super("foo", null);
-		this.optional = Optional.of(thing);
+		this.optional = thing == null ? Optional.empty() : Optional.of(thing);
 	}
 }
