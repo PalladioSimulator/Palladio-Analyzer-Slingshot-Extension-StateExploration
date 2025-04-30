@@ -32,5 +32,6 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.servicelevelobjective,
  org.palladiosimulator.analyzer.slingshot.behavior.spd,
  org.palladiosimulator.pcm.edp2.measuringpoint,
+ com.google.gson,
  org.scaledl.usageevolution
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot
