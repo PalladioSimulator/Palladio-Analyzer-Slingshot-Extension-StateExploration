@@ -1,6 +1,12 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -191,7 +197,29 @@ public class SnapshotSerailisationBehavior implements SimulationBehaviorExtensio
 		System.out.println("Hello Moon");	
 		
 		
+		final String tmpDir = java.lang.System.getProperty("java.io.tmpdir");
+		final String file = tmpDir + "test.json";
 		
+		try {
+			final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			writer.write(eventJsonString);
+			writer.flush();
+		} catch (final IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			
+		}
+		
+		
+		 try {
+			final FileReader reader= new FileReader(file);
+			final String readString = Files.readString((new File(file)).toPath());
+			System.out.println(readString);
+		} catch (final IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private Set<Class<?>> applicableClasses() {
