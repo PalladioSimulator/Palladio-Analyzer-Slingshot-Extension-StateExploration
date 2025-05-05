@@ -32,7 +32,7 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcon
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -46,6 +46,7 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 
+import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 import spielwiese.version2.EventAndType;
 import spielwiese.version2.adapters.ClassTypeAdapter;
 import spielwiese.version2.adapters.EObjectTypeAdapter;
@@ -76,10 +77,10 @@ public class SnapshotSerailisationBehavior implements SimulationBehaviorExtensio
 	private final Gson gsonwithAdapter;
 
 	@Inject
-	public SnapshotSerailisationBehavior(final @Nullable ExploredStateBuilder state) {
+	public SnapshotSerailisationBehavior(final @Nullable MDSDBlackboard blackboard) {
 		this.activated = true;
 		
-		this.set = state.getStartupInformation().architecureConfiguration().getResourceSet();
+		this.set = blackboard.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID).getResourceSet();
 		
 		initialiseEventTypeMap();
 		
@@ -188,6 +189,9 @@ public class SnapshotSerailisationBehavior implements SimulationBehaviorExtensio
 		final DESEvent events2 = gson.fromJson(eventJsonString, set2Type);
 
 		System.out.println("Hello Moon");	
+		
+		
+		
 	}
 
 	private Set<Class<?>> applicableClasses() {

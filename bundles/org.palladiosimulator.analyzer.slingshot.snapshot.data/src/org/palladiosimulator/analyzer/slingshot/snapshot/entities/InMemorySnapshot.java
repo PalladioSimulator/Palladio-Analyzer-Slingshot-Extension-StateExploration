@@ -16,7 +16,7 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
  *
  * Snaphshot of a Simulation run that holds all information in memory.
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 public final class InMemorySnapshot implements Snapshot {
