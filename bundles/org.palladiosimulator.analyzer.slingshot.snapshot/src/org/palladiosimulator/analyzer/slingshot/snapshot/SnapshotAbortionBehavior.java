@@ -20,7 +20,7 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcon
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.semanticspd.CompetingConsumersGroupCfg;
 import org.palladiosimulator.semanticspd.Configuration;
 import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
@@ -34,9 +34,16 @@ import org.palladiosimulator.spd.targets.TargetGroup;
 
 /**
  *
- * Triggers snapshot if a reconfiguration was triggered.
+ * Abort simulation runs, that start with adjustments that cancel each other out
+ * or otherwise yield no changes.
+ * 
+ * As an example: if a simulation starts with two reconfigurations, on to scale
+ * out by 1 container, and one to scale in by one container, they cancel each
+ * other out and the architecture configuration remains unchanged. As such, the
+ * simulation run would behave similar to a simulation run with the same parent
+ * state and a NOOP transition.
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 @OnEvent(when = ModelAdjusted.class, then = {})
@@ -47,7 +54,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 
 	private int adjusmentCounter = 0;
 
-	private final DefaultState state;
+	private final DefaultStateBuilder state;
 	private final SimulationScheduling scheduling;
 
 	private final boolean activated;
@@ -57,7 +64,7 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	private final Configuration config;
 
 	@Inject
-	public SnapshotAbortionBehavior(final @Nullable DefaultState state,
+	public SnapshotAbortionBehavior(final @Nullable DefaultStateBuilder state,
 			final @Nullable EventsToInitOnWrapper eventsWapper, final SimulationScheduling scheduling,
 			@Nullable final Configuration config, @Nullable final SPD spd) {
 		this.state = state;
@@ -71,14 +78,15 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		if (spd != null && config != null) {
 
 			/*
-			 * [S3] Consider only target group configs with a matching target group. This is necessary,
-			 * because apparently some scale ins reduce the number of assemblies, but not
-			 * the number of resource containers. Unclear whether this is a bug or a feature in the SPD transformations.
+			 * [S3] Consider only target group configs with a matching target group. This is
+			 * necessary, because apparently some scale ins reduce the number of assemblies,
+			 * but not the number of resource containers. Unclear whether this is a bug or a
+			 * feature in the SPD transformations.
 			 */
-			Set<EObject> targetGroups = spd.getTargetGroups().stream().map(tg -> getUnitOf(tg))
+			final Set<EObject> targetGroups = spd.getTargetGroups().stream().map(tg -> getUnitOf(tg))
 					.collect(Collectors.toSet());
 
-			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+			for (final TargetGroupCfg tgcfg : config.getTargetCfgs()) {
 				if (targetGroups.contains(getUnitOf(tgcfg))) {
 					tg2size.put(tgcfg, getSizeOf(tgcfg));
 				}
@@ -94,8 +102,15 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Assumption: all intended reconfiguration happen before further reactive
+	 * 
+	 * Checker whether the number of resource containers changed after all planned adjustment were applied.
+	 * 
+	 * If the number of resource containers remains unchanged or is back to the initial number, this simulation is aborted. 
+	 * 
+	 * Assumption: all planned reconfiguration happen before further reactive
 	 * reconfiguration happen.
+	 * 
+	 * TODO : also check size of service groups.
 	 * 
 	 * @param modelAdjusted
 	 */
@@ -112,9 +127,9 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 		}
 
 		if (adjusmentCounter == adjustmentEvents.size()) {
-			LOGGER.debug("Beginn Abortion check for " + state.getId());
+			LOGGER.debug("Beginn Abortion check");
 
-			for (TargetGroupCfg tgcfg : config.getTargetCfgs()) {
+			for (final TargetGroupCfg tgcfg : config.getTargetCfgs()) {
 				if (tg2size.containsKey(tgcfg)) {
 					LOGGER.debug(tgcfg.getClass().getSimpleName() + ": old " + tg2size.get(tgcfg) + " new "
 							+ getSizeOf(tgcfg));
@@ -125,22 +140,22 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 			}
 			state.addReasonToLeave(ReasonToLeave.aborted);
 			scheduling.scheduleEvent(new SnapshotInitiated(0));
-			LOGGER.debug("Abort " + state.getId());
+			LOGGER.debug("Abort");
 		}
 	}
 
 	/**
-	 * Access helper
+	 * Helper for accessing the size of a {@link TargetGroupCfg} (the thing from the semantic SPD).
 	 * 
-	 * @param tgcfg
-	 * @return
+	 * @param tgcfg the target group configuration to be accessed
+	 * @return size of the target group configuration
 	 */
 	private static int getSizeOf(final TargetGroupCfg tgcfg) {
-		if (tgcfg instanceof ElasticInfrastructureCfg ecfg) {
+		if (tgcfg instanceof final ElasticInfrastructureCfg ecfg) {
 			return ecfg.getElements().size();
-		} else if (tgcfg instanceof ServiceGroupCfg scfg) {
+		} else if (tgcfg instanceof final ServiceGroupCfg scfg) {
 			return scfg.getElements().size();
-		} else if (tgcfg instanceof CompetingConsumersGroupCfg ccfg) {
+		} else if (tgcfg instanceof final CompetingConsumersGroupCfg ccfg) {
 			return ccfg.getElements().size();
 		} else {
 			throw new IllegalArgumentException(
@@ -149,17 +164,17 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Access helper
+	 * Helper for accessing the unit of a {@link TargetGroupCfg} (the thing from the semantic SPD).
 	 * 
-	 * @param tgcfg
-	 * @return
+	 * @param tgcfg the target group configuration to be accessed
+	 * @return unit of the given target group configuration
 	 */
 	private static EObject getUnitOf(final TargetGroupCfg tgcfg) {
-		if (tgcfg instanceof ElasticInfrastructureCfg ecfg) {
+		if (tgcfg instanceof final ElasticInfrastructureCfg ecfg) {
 			return ecfg.getUnit();
-		} else if (tgcfg instanceof ServiceGroupCfg scfg) {
+		} else if (tgcfg instanceof final ServiceGroupCfg scfg) {
 			return scfg.getUnit();
-		} else if (tgcfg instanceof CompetingConsumersGroupCfg ccfg) {
+		} else if (tgcfg instanceof final CompetingConsumersGroupCfg ccfg) {
 			return ccfg.getUnit();
 		} else {
 			throw new IllegalArgumentException(
@@ -168,17 +183,17 @@ public class SnapshotAbortionBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Access helper
+	 * Helper for accessing the unit of a {@link TargetGroup} (the thing from the normal SPD).
 	 * 
-	 * @param tg
-	 * @return
+	 * @param tg the target group to be accessed.
+	 * @return unit of the given target group
 	 */
 	private static EObject getUnitOf(final TargetGroup tg) {
-		if (tg instanceof ElasticInfrastructure etg) {
+		if (tg instanceof final ElasticInfrastructure etg) {
 			return etg.getUnit();
-		} else if (tg instanceof ServiceGroup stg) {
+		} else if (tg instanceof final ServiceGroup stg) {
 			return stg.getUnitAssembly();
-		} else if (tg instanceof CompetingConsumersGroup ctg) {
+		} else if (tg instanceof final CompetingConsumersGroup ctg) {
 			return ctg.getUnitAssembly();
 		} else {
 			throw new IllegalArgumentException("TargetGroup of unknown type, cannot determine size of elements.");

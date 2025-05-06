@@ -40,7 +40,7 @@ public interface RawModelState {
 	 *
 	 * @return
 	 */
-	public ExperimentSetting getMeasurements();
+	public ExperimentSetting getExperimentSetting();
 
 	/**
 	 * Get the point in time the state started
@@ -57,7 +57,7 @@ public interface RawModelState {
 	public double getEndTime();
 
 	/**
-	 * Get the duration the state lasted. Only applicable after the state is over.
+	 * Get the duration the state lasted.
 	 *
 	 * @return duration in seconds
 	 */
@@ -81,6 +81,4 @@ public interface RawModelState {
 	 * @return
 	 */
 	public Collection<ReasonToLeave> getReasonsToLeave();
-
-	// getSLOFullfillment() ?
 }

@@ -35,6 +35,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateE
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PriorityTransitionQueue;
@@ -139,8 +140,8 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * 
 	 * <br>
 	 * <b>Note</b>: For the state exploration, we must do this <b>before</b> we
-	 * create the root node. When creating the root node, we save a copy of
-	 * the models to file, and all unresolved references go missing on save.
+	 * create the root node. When creating the root node, we save a copy of the
+	 * models to file, and all unresolved references go missing on save.
 	 */
 	private void applyStereotypeFake() {
 		final ResourceEnvironment fake = ResourceenvironmentFactory.eINSTANCE.createResourceEnvironment();
@@ -170,7 +171,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.updatePCMPartitionProvider(config);
 		// update simucomconfig
 		final SimuComConfig simuComConfig = this.prepareSimuComConfig(
-				config.getStateToExplore().getArchitecureConfiguration().getSegment(), config.getExplorationDuration());
+				config.getStateToExplore().getStartupInformation().architecureConfiguration().getSegment(), config.getExplorationDuration());
 		// ????
 		final SnapshotConfiguration snapConfig = createSnapConfig(config);
 
@@ -201,12 +202,18 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config configuration of exploration cycle to be post processed.
 	 */
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
-		final DefaultState current = config.getStateToExplore();
 
+		final DefaultStateBuilder builder = config.getStateToExplore();
+
+		// add to graph
+		final DefaultState current = this.graph.createAndInsertState(builder);
+		
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
-		final StateGraphNode node = StateGraphConverter.convertState(current, config.getParentId(), policies);
+		final String parentId = current.getIncomingTransition().get().getSource().getId();
+		
+		final StateGraphNode node = StateGraphConverter.convertState(current, parentId, policies);
 
 		final double prev = current.getIncomingTransition().isEmpty() ? 0
 				: ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
@@ -216,10 +223,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node));
 
-		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
-		// to include for the prioritazion of the fringe.
-		this.graph.updateFurthestState(current);
-		
 		if (current.getEndTime() < this.horizonLength) {
 			this.postprocessor.updateGraphFringe(current);
 		}
@@ -266,10 +269,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		final double interval = config.getExplorationDuration();
 
-		final boolean notRootSuccesor = this.graph.getRoot().getOutgoingTransitions().stream()
-				.filter(t -> t.getTarget().equals(config.getStateToExplore())).findAny().isEmpty();
+		final boolean isRootSuccesor = config.getStateToExplore().getStartupInformation().predecessor().equals(this.graph.getRoot());
 
-		return new SnapshotConfiguration(interval, notRootSuccesor,
+		return new SnapshotConfiguration(interval, !isRootSuccesor,
 				LaunchconfigAccess.getSensibility(launchConfigurationParams),
 				LaunchconfigAccess.getMinDuration(launchConfigurationParams));
 	}
@@ -286,7 +288,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 * @param config Config for next simulation run
 	 */
 	private void updatePCMPartitionProvider(final SimulationInitConfiguration config) {
-		config.getStateToExplore().getArchitecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
+		config.getStateToExplore().getStartupInformation().architecureConfiguration().transferModelsToSet(this.initModels.getResourceSet());
 
 	}
 

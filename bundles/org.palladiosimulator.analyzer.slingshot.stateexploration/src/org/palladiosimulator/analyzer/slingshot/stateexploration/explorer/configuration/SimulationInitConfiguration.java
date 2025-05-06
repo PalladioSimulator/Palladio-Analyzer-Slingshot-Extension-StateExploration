@@ -6,7 +6,7 @@ import java.util.Set;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
 
 /**
  * Configuration that holds all (most?) information for starting a new
@@ -18,7 +18,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Defaul
 public class SimulationInitConfiguration {
 
 	private final Snapshot snapToInitOn;
-	private final DefaultState stateToExplore;
+	private final DefaultStateBuilder stateToExplore;
 	private final double explorationDuration;
 
 	/** Events that are not part of the simulation, but only for initialising the SPD Interpreter. */
@@ -26,25 +26,23 @@ public class SimulationInitConfiguration {
 
 	/** Adjustments. Beware, order must be preserved.*/
 	private final List<ModelAdjustmentRequested> events;
-	private final String parentId;
 
-	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultState stateToExplore,
+	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultStateBuilder stateToExplore,
 			final double explorationDuration, final List<ModelAdjustmentRequested> events,
-			final Set<SPDAdjustorStateInitialized> initializationEvents, final String parentId) {
+			final Set<SPDAdjustorStateInitialized> initializationEvents) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
 		this.explorationDuration = explorationDuration;
 		this.events = events;
 		this.initializationEvents = initializationEvents;
-		this.parentId = parentId;
 	}
 
 	public Snapshot getSnapToInitOn() {
 		return this.snapToInitOn;
 	}
 
-	public DefaultState getStateToExplore() {
+	public DefaultStateBuilder getStateToExplore() {
 		return this.stateToExplore;
 	}
 
@@ -67,20 +65,12 @@ public class SimulationInitConfiguration {
 
 	@Override
 	public String toString() {
-		
-		String type = stateToExplore.getIncomingTransition().isEmpty() ? " - " : stateToExplore.getIncomingTransition().get().getType().toString();
-		
 		return "SimulationInitConfiguration [stateToExplore=" + stateToExplore
 				+ ", explorationDuration=" + explorationDuration + ", policies=[" + events.stream()
 				.map(e -> e.getScalingPolicy().getEntityName() + "(" + e.getScalingPolicy().getId() + ")")
 				.reduce("", (a, b) -> a + ", " + b)
 				+ "] - "
-				+ type 
 				+ " application "
 				+ "]";
-	}
-
-	public String getParentId() {
-		return this.parentId;
 	}
 }

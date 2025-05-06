@@ -27,7 +27,9 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
+import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.JobRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
@@ -43,7 +45,15 @@ import org.palladiosimulator.pcm.usagemodel.Stop;
 
 /**
  *
- * TODO
+ * Behaviour responsible for creating a {@link Snapshot}.
+ * 
+ * This includes keeping track of and recording information, that must be
+ * included in the snapshot but cannot be accessed directly once taking a
+ * snapshot is triggered. This behaviour subscribes to, or pre- and postintercepts the
+ * recorded events, but the actual recording is forwarded to a instance of
+ * {@link EventRecord}.
+ * 
+ * For taking the actual snapshot, this class uses an instance of {@link Camera}.
  *
  * @author Sophie Stieß
  *
@@ -59,7 +69,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	/* flags to prevent duplicate snapshots */
 	private boolean snapshotIsTaken = false;
 	private boolean snapshotIsFinished = false;
-	
+
 	private final LessInvasiveInMemoryRecord recorder;
 	private final Camera camera;
 
@@ -70,7 +80,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 			final MonitorRepository monitorRepository, final SimulationScheduling scheduling,
 			final PCMResourceSetPartitionProvider set) {
 		// can i somehow include this in the injection part?
-		// should work with this Model an the 'bind' instruction.
+		// should work with this Model and the 'bind' instruction.
 
 		this.recorder = new LessInvasiveInMemoryRecord();
 		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get());
@@ -82,6 +92,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.recorder.addInitiatedCalculator(event);
 
 	}
+
 	@Subscribe(reified = Stop.class)
 	public void onUsageScenarioStoped(final UsageModelPassedElement<Stop> event) {
 		this.recorder.removeFinishedCalculator(event);
@@ -104,9 +115,10 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	}
 
 	/**
-	 * Create JobRecord before the {@link JobInitiated} get processed, with initial
+	 * Create a {@link JobRecord} before the {@link JobInitiated} get processed to capture the initial
 	 * demand.
 	 *
+	 * @see {@link SnapshotRecordingBehavior#postInterceptJobInitiated(InterceptorInformation, JobInitiated, Result)s}
 	 * @param information
 	 * @param event
 	 * @return
@@ -120,19 +132,11 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		return InterceptionResult.success();
 	}
 
-	@PreIntercept
-	public InterceptionResult preInterceptJobAborted(final InterceptorInformation information,
-			final JobAborted event) {
-		if (event.getEntity().getId().equals(FAKE)) {
-			return InterceptionResult.abort();
-		}
-		return InterceptionResult.success();
-	}
-
 	/**
-	 * Update JobRecord after the {@link JobInitiated} got processed, to set
-	 * normalized demand.
+	 * Update JobRecord after the {@link JobInitiated} got processed, to capture the
+	 * normalized demand. This is necessary because the demand is normalized with the resources processing rate, when entering the resource, and we need both demands.
 	 *
+	 * @see {@link SnapshotRecordingBehavior#preInterceptJobInitiated(InterceptorInformation, JobInitiated)}
 	 * @param information
 	 * @param event
 	 * @param result
@@ -146,12 +150,26 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		}
 		return InterceptionResult.success();
 	}
+	
+	/**
+	 * When recreating the simulator state in {@link }
+	 * @param information
+	 * @param event
+	 * @return
+	 */
+	@PreIntercept
+	public InterceptionResult preInterceptJobAborted(final InterceptorInformation information, final JobAborted event) {
+		if (event.getEntity().getId().equals(FAKE)) {
+			return InterceptionResult.abort();
+		}
+		return InterceptionResult.success();
+	}
 
 	/**
 	 * The actual snapping.
 	 *
-	 * @param snapshotTaken
-	 * @return
+	 * @param snapshotTaken event to signify that every things is ready for the snapshot to be taken.
+	 * @return event to signify that the snapshot has been taken.
 	 */
 	@Subscribe
 	public Result<SnapshotFinished> onSnapshotTakenEvent(final SnapshotTaken snapshotTaken) {
@@ -160,7 +178,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 			return Result.of();
 		}
 		this.snapshotIsFinished = true;
-		
+
 		final Snapshot snapshot = camera.takeSnapshot();
 
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
@@ -173,7 +191,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 
 	/**
 	 *
-	 * Trigger updates to  all processor sharing resource states.
+	 * Trigger updates to all processor sharing resource states.
 	 *
 	 * @param snapshotInitiated
 	 * @return
@@ -188,9 +206,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.snapshotIsTaken = true;
 
 		// Cast to ActiveJob is feasible, because LinkingJobs are always FCFS.
-		this.scheduleProcSharingUpdatesHelper(
-				recorder.getProcSharingJobRecords().stream().map(record -> (ActiveJob) record.getJob())
-				.collect(Collectors.toSet()));
+		this.scheduleProcSharingUpdatesHelper(recorder.getProcSharingJobRecords().stream()
+				.map(record -> (ActiveJob) record.getJob()).collect(Collectors.toSet()));
 
 		return Result.of(new SnapshotTaken(0, snapshotInitiated.getTriggeringEvent()));
 	}

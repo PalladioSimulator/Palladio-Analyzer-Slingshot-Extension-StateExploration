@@ -5,6 +5,16 @@ import java.util.Optional;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 
+/**
+ * 
+ * Transition to a state, that does not yet exist. 
+ * 
+ * {@link PlannedTransition} are for populating the fringe. 
+ * 
+ * 
+ * @author Sophie Stieß
+ *
+ */
 public class PlannedTransition implements Transition {
 	private final DefaultState start;
 	private final Optional<Change> change;

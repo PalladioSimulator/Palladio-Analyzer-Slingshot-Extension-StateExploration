@@ -1,11 +1,9 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
@@ -32,58 +30,48 @@ public class DefaultState implements RawModelState {
 	private final ArchitectureConfiguration archConfig;
 
 	/* known at the end */
-	private double duration;
-	private Snapshot snapshot;
+	private final double duration;
+	private final Snapshot snapshot;
 	private final Set<ReasonToLeave> reasonsToLeave;
-	private boolean decreaseInterval = false;
 
 	/* known after configuration of the simulation run */
-	private ExperimentSetting experimentSetting;
+	private final ExperimentSetting experimentSetting;
 
 	private double utility = 0;
 
-	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
-
+	/**
+	 * 
+	 * @param pointInTime
+	 * @param archConfig
+	 * @param graph
+	 * @param settings
+	 * @param snapshot
+	 * @param duration
+	 * @param adjustorStateValues
+	 * @param reasonsToLeave
+	 */
 	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
-			final DefaultGraph graph) {
+			final DefaultGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Set<ReasonToLeave> reasonsToLeave) {
 		this.graph = graph;
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
-		this.reasonsToLeave = new HashSet<>();
+		this.reasonsToLeave = reasonsToLeave;
+		
+		this.experimentSetting = settings;
+		this.snapshot = snapshot;
 
-		this.adjustorStateValues = new HashSet<>();
+		this.duration = duration;
 	}
 
-	public ExperimentSetting getExperimentSetting() {
-		return this.experimentSetting;
-	}
-
-	public void setExperimentSetting(final ExperimentSetting experimentSetting) {
-		this.experimentSetting = experimentSetting;
-	}
-
+	/**
+	 * Get the snapshot of the simulator state at the end of this state.
+	 * 
+	 * Needed start a new simulation run that resumes the simulation at the end of this state.
+	 * 
+	 * @return snapshot of the Simulator state at the end of this state.
+	 */
 	public Snapshot getSnapshot() {
 		return snapshot;
-	}
-
-	public void setSnapshot(final Snapshot snapshot) {
-		this.snapshot = snapshot;
-	}
-
-	public boolean isDecreaseInterval() {
-		return decreaseInterval;
-	}
-
-	public void setDecreaseInterval(final boolean decreaseInterval) {
-		this.decreaseInterval = decreaseInterval;
-	}
-
-	public void addReasonToLeave(final ReasonToLeave reasonToLeave) {
-		this.reasonsToLeave.add(reasonToLeave);
-	}
-
-	public void setDuration(final double duration) {
-		this.duration = duration;
 	}
 
 	public double getUtility() {
@@ -94,12 +82,12 @@ public class DefaultState implements RawModelState {
 		this.utility = utility;
 	}
 
-	public void addAdjustorStateValues(final Collection<SPDAdjustorStateValues> adjustorStateValues) {
-		this.adjustorStateValues.addAll(adjustorStateValues);
-	}
-
-	public Set<SPDAdjustorStateValues> getAdjustorStateValues() {
-		return Set.copyOf(this.adjustorStateValues);
+	/**
+	 *
+	 * @return distance between this state and root.
+	 */
+	public int lenghtOfHistory() {
+		return DefaultGraph.distance(this, this.graph.getRoot());
 	}
 
 	/* to match the interface */
@@ -110,10 +98,9 @@ public class DefaultState implements RawModelState {
 	}
 
 	@Override
-	public ExperimentSetting getMeasurements() {
-		return this.getExperimentSetting();
+	public ExperimentSetting getExperimentSetting() {
+		return this.experimentSetting;
 	}
-
 
 	@Override
 	public Collection<ReasonToLeave> getReasonsToLeave() {
@@ -134,11 +121,6 @@ public class DefaultState implements RawModelState {
 	public double getDuration() {
 		return this.duration;
 	}
-
-//	@Override
-//	public String toString() {
-//		return "DefaultState [archConfig=" + archConfig.getSegment() + ", reasonToLeave=" + reasonsToLeave + "]";
-//	}
 	
 	@Override
 	public String toString() {
@@ -165,13 +147,5 @@ public class DefaultState implements RawModelState {
 	@Override
 	public Set<RawTransition> getOutgoingTransitions() {
 		return this.graph.outgoingEdgesOf(this);
-	}
-
-	/**
-	 *
-	 * @return distance between this state and root.
-	 */
-	public int lenghtOfHistory() {
-		return DefaultGraph.distance(this, this.graph.getRoot());
 	}
 }
