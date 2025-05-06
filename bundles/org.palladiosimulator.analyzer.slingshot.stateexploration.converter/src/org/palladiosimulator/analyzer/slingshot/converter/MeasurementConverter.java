@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.managedsystem.converter;
+package org.palladiosimulator.analyzer.slingshot.converter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,8 +8,8 @@ import javax.measure.Measure;
 import javax.measure.quantity.Duration;
 
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.data.MeasurementSet;
 import org.palladiosimulator.edp2.dao.MeasurementsDao;
 import org.palladiosimulator.edp2.dao.exception.DataNotAccessibleException;
 import org.palladiosimulator.edp2.models.ExperimentData.DataSeries;
@@ -28,11 +28,11 @@ import com.google.common.base.Objects;
 
 
 /**
- * Functions to extract information from different Palladio Objects.
+ * Static functions to extract information from different Palladio Objects
  *
  * Flats the beforehand 4 steps deep nesting to 2.
  *
- * @author Jonas Edlhuber, Sophie Stieß
+ * @author Jonas Edlhuber
  *
  */
 public class MeasurementConverter {
@@ -42,10 +42,10 @@ public class MeasurementConverter {
 	public final static String POINT_IN_TIME = "Point in Time";
 	public final static String RESPONSE_TIME = "Response Time";
 
-	private final double startTime;
-	private final double endTime;
+    private final double startTime;
+    private final double endTime;
 
-	public MeasurementConverter(final double startTime, final double endTime) {
+    public MeasurementConverter(final double startTime, final double endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
     }
@@ -116,11 +116,11 @@ public class MeasurementConverter {
 		MetricDescriptionUtility.isBaseMetricDescriptionSubsumedByMetricDescription(bmc2, x.getMetricDescription()));
 
 		if (bmc1.getName().equals(POINT_IN_TIME)) {
-			final var timestamp = this.visitDataSeries(dataSeries1);
+			final var timestamp = MeasurementConverter.visitDataSeries(dataSeries1);
 			return processDataSeries(timestamp, dataSeries2, filter);
 		}
 		else if (bmc2.getName().equals(POINT_IN_TIME)) {
-			final var timestamp = this.visitDataSeries(dataSeries2);
+			final var timestamp = MeasurementConverter.visitDataSeries(dataSeries2);
 			return processDataSeries(timestamp, dataSeries1, filter);
 		} else {
 			return null;
@@ -139,8 +139,8 @@ public class MeasurementConverter {
 		final var specification = monitor.getMeasurementSpecifications().stream()
 				.filter(filter)
 				.findAny().orElse(null);
-		final var values = this.visitDataSeries(dataSeries);
-		final var measure = this.visitDataSeriesMeasure(dataSeries);
+		final var values = MeasurementConverter.visitDataSeries(dataSeries);
+		final var measure = MeasurementConverter.visitDataSeriesMeasure(dataSeries);
 
 		if (timestamps.size() != values.size())
 			throw new IllegalStateException("Number of point in time values and measurments value do not match!");
@@ -177,7 +177,7 @@ public class MeasurementConverter {
 	 * @param ds DataSeries with doubles
 	 * @return ArrayList of Doubles
 	 */
-	private List<Number> visitDataSeries(final DataSeries ds) {
+	private static List<Number> visitDataSeries(final DataSeries ds) {
 		final var dao = (MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
 
 		final List<Measure<Number, Duration>> measures = dao.getMeasurements();
@@ -194,7 +194,7 @@ public class MeasurementConverter {
 	}
 
 
-	private List<Measure> visitDataSeriesMeasure(final DataSeries ds) {
+	private static List<Measure> visitDataSeriesMeasure(final DataSeries ds) {
 		final var dao = (MeasurementsDao<Number, Duration>) MeasurementsUtility.<Duration>getMeasurementsDao(ds);
 
 		final List<Measure> measures = dao.getMeasurements().stream().map(x -> (Measure)x).toList();

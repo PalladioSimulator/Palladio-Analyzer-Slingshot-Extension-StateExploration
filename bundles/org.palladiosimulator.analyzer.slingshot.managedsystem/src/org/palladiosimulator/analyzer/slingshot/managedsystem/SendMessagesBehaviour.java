@@ -10,6 +10,10 @@ import javax.inject.Named;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
@@ -19,12 +23,9 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehavio
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.converter.StateGraphConverter;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.events.UtilityIntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.ManagedSystemFinishedMessage;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.ManagedSystemStartedMessage;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
@@ -142,8 +143,8 @@ public class SendMessagesBehaviour implements SimulationBehaviorExtension {
     private void publishUtility(final DESEvent event) {
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
-        final StateGraphNode node = StateGraphConverter.convertState(this.monitorRepo, this.expSetting, this.sloRepo,
-                prevUtilityTimestamp, event.time());
+        final StateGraphNode node = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting, Optional.of(this.sloRepo),
+                prevUtilityTimestamp, event.time(), "", "", List.of(), new MeasurementConverter(prevUtilityTimestamp, event.time()));
 
         this.systemDriver.postEvent(new StateExploredEventMessage(node, clientName));
     }

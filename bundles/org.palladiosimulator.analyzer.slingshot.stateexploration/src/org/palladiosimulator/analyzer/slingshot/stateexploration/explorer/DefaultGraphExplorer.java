@@ -15,8 +15,10 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
@@ -31,7 +33,6 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.config
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Postprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Preprocessor;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
@@ -105,7 +106,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe = new FringeFringe(new PriorityTransitionQueue()); // new FIFOTransitionQueue()
 
 		systemDriver.postEvent(
-				new StateExploredEventMessage(StateGraphConverter.convertState(this.graph.getRoot(), null, null)));
+				new StateExploredEventMessage(this.convertState(this.graph.getRoot(), null, null), "Explorer"));
 
 		this.preprocessor = new Preprocessor(this.graph, this.fringe,
 				LaunchconfigAccess.getMinDuration(launchConfigurationParams));
@@ -211,9 +212,9 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
 
+
 		final String parentId = current.getIncomingTransition().get().getSource().getId();
-		
-		final StateGraphNode node = StateGraphConverter.convertState(current, parentId, policies);
+		final StateGraphNode node = this.convertState(current, parentId, policies);
 
 		final double prev = current.getIncomingTransition().isEmpty() ? 0
 				: ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
@@ -221,11 +222,21 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 		current.setUtility(value);
 
-		this.systemDriver.postEvent(new StateExploredEventMessage(node));
+		this.systemDriver.postEvent(new StateExploredEventMessage(node, "Explorer"));
+
+		// TODO : this is temporal. remove later on. Actually this is a reasonable idea
+		// to include for the prioritazion of the fringe.
 
 		if (current.getEndTime() < this.horizonLength) {
 			this.postprocessor.updateGraphFringe(current);
 		}
+	}
+
+	private StateGraphNode convertState(final RawModelState state, final String parentId,
+			final List<ScalingPolicy> scalingPolicies) {
+		return StateGraphConverter.convertState(state.getArchitecureConfiguration().getMonitorRepository(),
+				state.getExperimentSetting(), state.getArchitecureConfiguration().getSLOs(), state.getStartTime(), state.getEndTime(),
+				state.getId(), parentId, scalingPolicies, new MeasurementConverter(0.0, state.getDuration()));
 	}
 
 	/**

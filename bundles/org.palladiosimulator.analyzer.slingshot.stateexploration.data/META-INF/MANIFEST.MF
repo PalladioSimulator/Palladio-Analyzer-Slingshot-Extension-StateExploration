@@ -5,9 +5,7 @@ Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.d
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.data
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Export-Package: org.palladiosimulator.analyzer.slingshot.converter,
- org.palladiosimulator.analyzer.slingshot.converter.data,
- org.palladiosimulator.analyzer.slingshot.stateexploration.api,
+Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.change.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events,
  org.palladiosimulator.analyzer.slingshot.stateexploration.messages,
@@ -27,4 +25,5 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  org.palladiosimulator.analyzer.slingshot.core,
  org.apache.log4j,
  de.uka.ipd.sdq.workflow.mdsd.blackboard,
- org.palladiosimulator.analyzer.workflow
+ org.palladiosimulator.analyzer.workflow,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter
