@@ -13,7 +13,6 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExt
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
@@ -24,7 +23,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.TriggerExplorationEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.DefaultGraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.GraphExplorer;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.analyzer.workflow.jobs.LoadModelIntoBlackboardJob;
@@ -91,7 +90,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 			this.explorerLock.lock();
 			try {
 				this.initEvent = event;
-				this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+				this.explorer = new GraphExplorer(this.initEvent.getLaunchConfigurationParams(),
 						this.initEvent.getMonitor(), this.initEvent.getBlackboard());
 				this.explorationState = ExplorationState.RUNNING;
 				LOGGER.warn("Start Exploration " + EventMessage.EXPLORATION_ID);
@@ -172,10 +171,10 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 		LOGGER.warn("********** Transitions : ");
 		this.explorer.getGraph().getTransitions().stream()
 				.forEach(t -> LOGGER.warn(
-						String.format("%s : %.2f type : %s, policies: %s", t.getName(), t.getPointInTime(), t.getType(),
+						String.format("%s : %.2f, policies: %s", t.getName(), t.getPointInTime(),
 								t.getChange().isEmpty() ? "[ ]"
 										: ((Reconfiguration) t.getChange().get()).getAppliedPolicies().stream()
-												.map(p -> p.getEntityName()).reduce("", (s, p) -> s + " " + p))));
+												.map(p -> p.getEntityName()).reduce("", (s, p) -> s + " " + p) + " " + t.getChange().get().getClass().getSimpleName())));
 	}
 
 	@Subscribe
@@ -243,7 +242,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 			provider.set((PCMResourceSetPartition) blackboard
 					.getPartition(ConstantsContainer.DEFAULT_PCM_INSTANCE_PARTITION_ID));
 
-			this.explorer = new DefaultGraphExplorer(this.initEvent.getLaunchConfigurationParams(),
+			this.explorer = new GraphExplorer(this.initEvent.getLaunchConfigurationParams(),
 					this.initEvent.getMonitor(), blackboard);
 		} finally {
 			this.explorerLock.unlock();

@@ -25,10 +25,8 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.TransitionType;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Postprocessor;
@@ -63,9 +61,9 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  * @author Sarah Stieß
  *
  */
-public class DefaultGraphExplorer implements GraphExplorer {
+public class GraphExplorer {
 
-	private static final Logger LOGGER = Logger.getLogger(DefaultGraphExplorer.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(GraphExplorer.class.getName());
 
 	/** content changes with each iteration */
 	private final PCMResourceSetPartition initModels;
@@ -86,7 +84,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	private final int horizonLength;
 
-	public DefaultGraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
+	public GraphExplorer(final Map<String, Object> launchConfigurationParams, final IProgressMonitor monitor,
 			final MDSDBlackboard blackboard) {
 		super();
 		this.initModels = (PCMResourceSetPartition) blackboard
@@ -152,7 +150,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		StereotypeAPI.applyStereotype(fake, "CostReport");
 	}
 
-	@Override
 	public void exploreNextState() {
 		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
 
@@ -303,12 +300,10 @@ public class DefaultGraphExplorer implements GraphExplorer {
 
 	}
 
-	@Override
 	public boolean hasUnexploredChanges() {
 		return !this.fringe.isEmpty();
 	}
 
-	@Override
 	public RawStateGraph getGraph() {
 		return this.graph;
 	}
@@ -318,7 +313,6 @@ public class DefaultGraphExplorer implements GraphExplorer {
 	 *
 	 * @param focusedStates
 	 */
-	@Override
 	public void refocus(final Collection<RawModelState> focusedStates) {
 
 		// find states to be refocused in the graph.
@@ -326,7 +320,7 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		for (final RawModelState rawModelState : focusedStates) {
 
 			final boolean gotNopped = this.graph.outgoingEdgesOf(rawModelState).stream()
-					.anyMatch(t -> t.getType() == TransitionType.NOP);
+					.anyMatch(t -> t.getChange().isEmpty());
 
 			final boolean gonnaGetNopped = this.fringe.containsNopTodoFor(rawModelState);
 
@@ -343,14 +337,12 @@ public class DefaultGraphExplorer implements GraphExplorer {
 		this.fringe.prune(pruningCriteria);
 	}
 
-	@Override
 	public void focus(final Collection<RawModelState> focusedStates) {
 		final Predicate<PlannedTransition> pruningCriteria = change -> !focusedStates.contains(change.getStart());
 
 		this.fringe.prune(pruningCriteria);
 	}
 
-	@Override
 	public void pruneByTime(final double time) {
 		final Predicate<PlannedTransition> pruningCriteria = change -> change.getStart().getStartTime() < time;
 

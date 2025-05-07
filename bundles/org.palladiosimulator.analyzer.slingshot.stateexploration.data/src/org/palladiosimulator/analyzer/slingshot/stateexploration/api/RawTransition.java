@@ -3,9 +3,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.api;
 import java.util.Optional;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.EnvironmentChange;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transition;
 
 /**
@@ -43,23 +40,6 @@ public interface RawTransition extends Transition {
 	 */
 	@Override
 	public Optional<Change> getChange();
-
-	/**
-	 *
-	 * @return
-	 */
-	default TransitionType getType() {
-		if (this.getChange().isEmpty()) {
-			return TransitionType.NOP;
-		} else if (this.getChange().get() instanceof ReactiveReconfiguration) {
-			return TransitionType.reactiveReconfiguration;
-		} else if (this.getChange().get() instanceof ProactiveReconfiguration) {
-			return TransitionType.proactiveReconfiguration;
-		} else if (this.getChange().get() instanceof EnvironmentChange) {
-			return TransitionType.environmentChange;
-		}
-		return TransitionType.unknown;
-	}
 
 	/**
 	 * Concatenate source and target id to transistion name.

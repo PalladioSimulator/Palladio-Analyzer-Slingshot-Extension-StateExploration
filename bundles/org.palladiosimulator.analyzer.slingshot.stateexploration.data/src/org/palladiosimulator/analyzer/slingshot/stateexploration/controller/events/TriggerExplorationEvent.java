@@ -1,7 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events;
 
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 
 /**
  *

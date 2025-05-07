@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.GraphExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 
 /**
