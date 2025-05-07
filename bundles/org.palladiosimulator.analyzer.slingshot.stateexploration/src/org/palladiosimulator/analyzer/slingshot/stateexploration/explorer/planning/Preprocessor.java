@@ -17,11 +17,11 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
 import org.palladiosimulator.spd.constraints.policy.CooldownConstraint;

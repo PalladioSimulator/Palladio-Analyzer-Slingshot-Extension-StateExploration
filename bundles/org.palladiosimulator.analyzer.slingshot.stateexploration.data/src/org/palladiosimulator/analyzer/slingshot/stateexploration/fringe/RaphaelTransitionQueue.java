@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.fringe;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -7,6 +7,8 @@ import java.util.PriorityQueue;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 
 /**
  *

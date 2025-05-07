@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.graph;
 
 import java.util.Collection;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.fringe;
 
 import java.util.AbstractQueue;
 import java.util.Collection;
@@ -11,6 +11,9 @@ import javax.measure.quantity.Force;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.Transition;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**

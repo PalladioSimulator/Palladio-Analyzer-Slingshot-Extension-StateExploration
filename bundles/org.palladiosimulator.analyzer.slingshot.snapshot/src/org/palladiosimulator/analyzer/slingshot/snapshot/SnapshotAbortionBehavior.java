@@ -19,8 +19,8 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 import org.palladiosimulator.semanticspd.CompetingConsumersGroupCfg;
 import org.palladiosimulator.semanticspd.Configuration;
 import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;

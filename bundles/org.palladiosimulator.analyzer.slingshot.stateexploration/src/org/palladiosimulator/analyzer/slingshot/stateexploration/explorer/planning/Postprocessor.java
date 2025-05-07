@@ -12,12 +12,12 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLea
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.Transition;
 
 /**
  *

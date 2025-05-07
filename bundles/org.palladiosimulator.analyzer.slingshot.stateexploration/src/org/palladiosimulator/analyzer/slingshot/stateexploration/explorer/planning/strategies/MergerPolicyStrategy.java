@@ -11,10 +11,10 @@ import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 
 /**
  *

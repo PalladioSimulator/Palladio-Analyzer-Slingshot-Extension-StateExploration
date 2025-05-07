@@ -15,8 +15,8 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Intercep
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 import org.palladiosimulator.semanticspd.Configuration;
 import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
 import org.palladiosimulator.semanticspd.ServiceGroupCfg;

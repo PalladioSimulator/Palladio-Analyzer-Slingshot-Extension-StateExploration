@@ -23,7 +23,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.GraphExplorer;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.analyzer.workflow.jobs.LoadModelIntoBlackboardJob;

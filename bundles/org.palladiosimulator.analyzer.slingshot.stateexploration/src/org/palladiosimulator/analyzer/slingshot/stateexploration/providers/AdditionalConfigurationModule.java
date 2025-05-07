@@ -6,7 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 
 /**
  *

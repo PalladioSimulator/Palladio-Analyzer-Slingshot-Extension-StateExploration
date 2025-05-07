@@ -10,7 +10,7 @@ import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.InterceptorInformation;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.scaledl.usageevolution.UsageEvolution;
 
 /**

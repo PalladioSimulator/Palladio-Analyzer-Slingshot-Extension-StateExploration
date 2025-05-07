@@ -3,10 +3,10 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**

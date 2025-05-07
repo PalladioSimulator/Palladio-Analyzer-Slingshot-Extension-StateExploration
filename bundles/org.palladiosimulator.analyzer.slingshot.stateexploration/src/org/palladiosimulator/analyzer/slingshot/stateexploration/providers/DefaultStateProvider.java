@@ -3,7 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 
 
 /**

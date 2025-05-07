@@ -18,8 +18,8 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscrib
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.RequestArchitectureMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
 
 
 /**

@@ -2,10 +2,10 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 
 import java.util.List;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 
 import com.google.common.base.Preconditions;
 

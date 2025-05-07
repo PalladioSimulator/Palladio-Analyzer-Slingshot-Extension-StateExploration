@@ -22,7 +22,7 @@ import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementU
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.palladiosimulator.metricspec.MetricDescription;
 import org.palladiosimulator.monitorrepository.MeasurementSpecification;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;

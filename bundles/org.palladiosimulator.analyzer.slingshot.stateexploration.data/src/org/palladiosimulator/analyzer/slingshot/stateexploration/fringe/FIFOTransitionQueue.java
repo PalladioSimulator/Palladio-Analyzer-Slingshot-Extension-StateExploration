@@ -1,10 +1,11 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
+package org.palladiosimulator.analyzer.slingshot.stateexploration.fringe;
 
 import java.util.AbstractQueue;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
 
 /**
  *

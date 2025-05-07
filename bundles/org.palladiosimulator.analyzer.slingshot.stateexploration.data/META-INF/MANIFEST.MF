@@ -8,8 +8,9 @@ Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.change.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events,
- org.palladiosimulator.analyzer.slingshot.stateexploration.messages,
- org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph
+ org.palladiosimulator.analyzer.slingshot.stateexploration.fringe,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.graph,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.messages
 Require-Bundle: org.palladiosimulator.monitorrepository,
  org.palladiosimulator.spd,
  org.palladiosimulator.analyzer.slingshot.common,

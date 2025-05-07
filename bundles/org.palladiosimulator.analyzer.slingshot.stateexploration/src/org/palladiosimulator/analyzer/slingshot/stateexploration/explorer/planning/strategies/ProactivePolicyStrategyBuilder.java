@@ -1,8 +1,8 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 
 import com.google.common.base.Preconditions;
 

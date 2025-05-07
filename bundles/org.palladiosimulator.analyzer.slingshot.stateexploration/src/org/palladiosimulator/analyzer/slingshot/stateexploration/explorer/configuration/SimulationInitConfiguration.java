@@ -6,7 +6,7 @@ import java.util.Set;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 
 /**
  * Configuration that holds all (most?) information for starting a new
