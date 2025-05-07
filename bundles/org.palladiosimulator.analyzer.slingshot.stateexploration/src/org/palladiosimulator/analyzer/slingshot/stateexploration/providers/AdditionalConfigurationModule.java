@@ -6,7 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 
 /**
  *
@@ -27,7 +27,7 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	@Override
 	protected void configure() {
 		bind(SnapshotConfiguration.class).toProvider(snapConfigProvider);
-		bind(DefaultStateBuilder.class).toProvider(defaultStateProvider);
+		bind(ExploredStateBuilder.class).toProvider(defaultStateProvider);
 		bind(EventsToInitOnWrapper.class).toProvider(eventsToInitOnProvider);
 	}
 

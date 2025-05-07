@@ -16,7 +16,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 import org.palladiosimulator.semanticspd.Configuration;
 import org.palladiosimulator.semanticspd.ElasticInfrastructureCfg;
 import org.palladiosimulator.semanticspd.ServiceGroupCfg;
@@ -41,7 +41,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 
 	private final List<ModelAdjustmentRequested> adjustmentEvents;
 
-	private final DefaultStateBuilder state;
+	private final ExploredStateBuilder state;
 	private final SimulationScheduling scheduling;
 
 	private final boolean activated;
@@ -49,7 +49,7 @@ public class SnapshotTriggeringBehavior implements SimulationBehaviorExtension {
 	private final Configuration config;
 
 	@Inject
-	public SnapshotTriggeringBehavior(final @Nullable DefaultStateBuilder state,
+	public SnapshotTriggeringBehavior(final @Nullable ExploredStateBuilder state,
 			final @Nullable EventsToInitOnWrapper eventsWapper, final SimulationScheduling scheduling,
 			final @Nullable Configuration config) {
 		this.state = state;

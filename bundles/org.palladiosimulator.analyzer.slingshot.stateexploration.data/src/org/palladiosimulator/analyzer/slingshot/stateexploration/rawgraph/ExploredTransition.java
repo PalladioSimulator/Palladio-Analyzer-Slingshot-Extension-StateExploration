@@ -2,8 +2,6 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 
 import java.util.Optional;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 
 
@@ -12,10 +10,10 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
  * @author Sophie Stieß
  *
  */
-public class DefaultTransition implements RawTransition {
+public class ExploredTransition implements Transition {
 	private final Optional<Change> change;
 
-	private final DefaultGraph graph;
+	private final StateGraph graph;
 
 	/**
 	 * Create a new transition.
@@ -23,20 +21,18 @@ public class DefaultTransition implements RawTransition {
 	 * @param change
 	 * @param graph
 	 */
-	protected DefaultTransition(final Optional<Change> change, final DefaultGraph graph) {
+	protected ExploredTransition(final Optional<Change> change, final StateGraph graph) {
 		super();
 		this.change = change;
 		this.graph = graph;
 	}
 
-
 	@Override
-	public RawModelState getSource() {
+	public ExploredState getSource() {
 		return this.graph.getEdgeSource(this);
 	}
 
-	@Override
-	public RawModelState getTarget() {
+	public ExploredState getTarget() {
 		return this.graph.getEdgeTarget(this);
 	}
 
@@ -52,5 +48,13 @@ public class DefaultTransition implements RawTransition {
 		} else {
 			return String.format("%s for %s", change.get().toString(), getSource().getId());
 		}
+	}
+	
+	public double getPointInTime() {
+		return this.getSource().getEndTime();
+	}
+
+	public String getName() {
+		return String.format("%s -> %s", getSource().getId(),getTarget().getId());
 	}
 }

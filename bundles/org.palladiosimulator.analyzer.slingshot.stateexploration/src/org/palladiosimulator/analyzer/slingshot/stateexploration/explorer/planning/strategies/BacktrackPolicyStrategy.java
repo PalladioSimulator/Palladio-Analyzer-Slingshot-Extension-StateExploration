@@ -6,8 +6,8 @@ import java.util.Optional;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.ScalingPolicy;
@@ -26,7 +26,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
  */
 public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 
-	private final DefaultState state;
+	private final ExploredState state;
 	
 	private static final int MAX_DISTANCE = 3;
 
@@ -37,7 +37,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected BacktrackPolicyStrategy(final DefaultGraph graph, final FringeFringe fringe, final DefaultState state) {
+	protected BacktrackPolicyStrategy(final StateGraph graph, final FringeFringe fringe, final ExploredState state) {
 		super(graph, fringe);
 		this.state = state;
 	}
@@ -74,9 +74,9 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @return A set with the proactive change, of an empty set if no fitting
 	 *         predecessor exists.
 	 */
-	private List<PlannedTransition> createProactiveChange(final DefaultState state,
+	private List<PlannedTransition> createProactiveChange(final ExploredState state,
 			final ModelAdjustmentRequested event) {
-		DefaultState predecessor = state;
+		ExploredState predecessor = state;
 
 		if (!this.graph.getRoot().equals(state)) {
 			predecessor = getPredecessor(state);
@@ -103,7 +103,7 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param policy
 	 * @return
 	 */
-	private boolean policyAlreadyExploredAtState(final DefaultState state, final ScalingPolicy policy) {
+	private boolean policyAlreadyExploredAtState(final ExploredState state, final ScalingPolicy policy) {
 		return this.graph.hasOutTransitionFor(state, policy) || this.fringe.containsTodoFor(state, policy);
 	}
 
@@ -115,10 +115,10 @@ public class BacktrackPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param state
 	 * @return
 	 */
-	private DefaultState getPredecessor(final DefaultState state) {
+	private ExploredState getPredecessor(final ExploredState state) {
 		assert !this.graph.getRoot().equals(state);
 
-		return (DefaultState) graph.getTransitions().stream()
+		return (ExploredState) graph.getTransitions().stream()
 				.filter(t -> t.getTarget().equals(state))
 				.map(t -> t.getSource())
 				.findFirst().get();

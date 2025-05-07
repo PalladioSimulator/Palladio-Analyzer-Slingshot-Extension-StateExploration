@@ -6,8 +6,6 @@ import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
@@ -21,9 +19,9 @@ import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
  * @author stiesssh
  *
  */
-public class DefaultState implements RawModelState {
+public class ExploredState {
 
-	private final DefaultGraph graph;
+	private final StateGraph graph;
 
 	/* known at start */
 	private final double startTime;
@@ -50,8 +48,8 @@ public class DefaultState implements RawModelState {
 	 * @param adjustorStateValues
 	 * @param reasonsToLeave
 	 */
-	protected DefaultState(final double pointInTime, final ArchitectureConfiguration archConfig,
-			final DefaultGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Set<ReasonToLeave> reasonsToLeave) {
+	protected ExploredState(final double pointInTime, final ArchitectureConfiguration archConfig,
+			final StateGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Set<ReasonToLeave> reasonsToLeave) {
 		this.graph = graph;
 		this.startTime = pointInTime;
 		this.archConfig = archConfig;
@@ -87,37 +85,29 @@ public class DefaultState implements RawModelState {
 	 * @return distance between this state and root.
 	 */
 	public int lenghtOfHistory() {
-		return DefaultGraph.distance(this, this.graph.getRoot());
+		return StateGraph.distance(this, this.graph.getRoot());
 	}
 
-	/* to match the interface */
-
-	@Override
 	public ArchitectureConfiguration getArchitecureConfiguration() {
 		return this.archConfig;
 	}
 
-	@Override
 	public ExperimentSetting getExperimentSetting() {
 		return this.experimentSetting;
 	}
 
-	@Override
 	public Collection<ReasonToLeave> getReasonsToLeave() {
 		return reasonsToLeave;
 	}
 
-	@Override
 	public double getStartTime() {
 		return this.startTime;
 	}
 
-	@Override
 	public double getEndTime() {
 		return this.startTime + this.duration;
 	}
 
-	@Override
 	public double getDuration() {
 		return this.duration;
 	}
@@ -127,15 +117,14 @@ public class DefaultState implements RawModelState {
 		return "[" + archConfig.getSegment() + " (" + reasonsToLeave + ")]";
 	}
 
-	@Override
-	public Optional<RawTransition> getIncomingTransition() {
+	public Optional<ExploredTransition> getIncomingTransition() {
 		if (this.graph.getRoot().equals(this)) {
 			return Optional.empty();
 		}
 
 		assert this.graph.incomingEdgesOf(this).size() == 1 : String.format("Illegal number of incoming edges for state %s.", this.toString());
 
-		final Optional<RawTransition> transition = this.graph.incomingEdgesOf(this).stream().findFirst();
+		final Optional<ExploredTransition> transition = this.graph.incomingEdgesOf(this).stream().findFirst();
 
 		if (transition.isEmpty()) {
 			throw new IllegalStateException(String.format("No incoming edges for non-root state %s.", this.toString()));
@@ -144,8 +133,11 @@ public class DefaultState implements RawModelState {
 		return transition;
 	}
 
-	@Override
-	public Set<RawTransition> getOutgoingTransitions() {
+	public Set<ExploredTransition> getOutgoingTransitions() {
 		return this.graph.outgoingEdgesOf(this);
+	}
+	
+	public String getId() {
+		return getArchitecureConfiguration().getSegment();
 	}
 }

@@ -3,9 +3,9 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -21,12 +21,12 @@ import org.palladiosimulator.spd.ScalingPolicy;
 public class CutOffConcerns {
 	private static final Logger LOGGER = Logger.getLogger(CutOffConcerns.class.getName());
 	
-	private final DefaultGraph graph;
+	private final StateGraph graph;
 
 	private static final double BACKTRACK_FACTOR = 4;
 	private final double backtrackDistance; 
 
-	public CutOffConcerns(final DefaultGraph graph, final double minStateDuration) {
+	public CutOffConcerns(final StateGraph graph, final double minStateDuration) {
 		super();
 		this.graph = graph;
 		this.backtrackDistance = BACKTRACK_FACTOR * minStateDuration;
@@ -55,13 +55,13 @@ public class CutOffConcerns {
 	 */
 	private boolean matchesPattern(final PlannedTransition change) {
 
-		final DefaultState current = change.getStart();
+		final ExploredState current = change.getStart();
 
 		if (current.getIncomingTransition().isEmpty()) { // root?
 			return false;
 		}
 
-		final DefaultState prev = (DefaultState) current.getIncomingTransition().get().getSource();
+		final ExploredState prev = current.getIncomingTransition().get().getSource();
 
 		return sameChange(current, prev) && bothNOOP(change, current.getIncomingTransition().get());
 	}
@@ -72,11 +72,11 @@ public class CutOffConcerns {
 	 * @param prev
 	 * @return
 	 */
-	private static boolean bothNOOP(final PlannedTransition current, final RawTransition prev) {
+	private static boolean bothNOOP(final PlannedTransition current, final ExploredTransition prev) {
 		return current.getChange().isEmpty() && prev.getChange().isEmpty();
 	}
 	
-	private static boolean prevNOOP(final RawTransition prev) {
+	private static boolean prevNOOP(final ExploredTransition prev) {
 		return prev.getChange().isEmpty();
 	}
 
@@ -86,7 +86,7 @@ public class CutOffConcerns {
 	 * @param prev
 	 * @return
 	 */
-	private static boolean sameChange(final DefaultState current, final DefaultState prev) {
+	private static boolean sameChange(final ExploredState current, final ExploredState prev) {
 		if (current.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()
 				|| prev.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
 			return false;

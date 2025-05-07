@@ -23,7 +23,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
@@ -35,7 +35,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 /**
  *
  * Behavioural Extension for putting more values into the
- * {@link DefaultStateBuilder}.
+ * {@link ExploredStateBuilder}.
  *
  * @author Sophie Stieß
  *
@@ -52,7 +52,7 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 	private final SimuComConfig simuComConfig;
 
 	/* State representing current simulation run */
-	private final DefaultStateBuilder stateBuilder;
+	private final ExploredStateBuilder stateBuilder;
 
 	private final Map<String, SPDAdjustorStateValues> policyIdToValues;
 
@@ -64,7 +64,7 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 	 * @param simuComConfig  for access to the experiment settings
 	 */
 	@Inject
-	public SnapshotStateUpdateBehaviour(final @Nullable DefaultStateBuilder stateBuilder,
+	public SnapshotStateUpdateBehaviour(final @Nullable ExploredStateBuilder stateBuilder,
 			final @Nullable SnapshotConfiguration snapshotConfig, final @Nullable SimuComConfig simuComConfig) {
 
 		this.stateBuilder = stateBuilder;

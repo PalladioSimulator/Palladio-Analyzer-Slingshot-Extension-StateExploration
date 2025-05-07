@@ -25,16 +25,14 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.UriBasedArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Postprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Preprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PriorityTransitionQueue;
@@ -73,7 +71,7 @@ public class GraphExplorer {
 	private final Preprocessor preprocessor;
 	private final Postprocessor postprocessor;
 
-	private final DefaultGraph graph;
+	private final StateGraph graph;
 	private final FringeFringe fringe;
 
 	private final IProgressMonitor monitor;
@@ -98,7 +96,7 @@ public class GraphExplorer {
 
 		EcoreUtil.resolveAll(initModels.getResourceSet());
 
-		this.graph = new DefaultGraph(UriBasedArchitectureConfiguration.createRootArchConfig(
+		this.graph = new StateGraph(ArchitectureConfiguration.createRootArchConfig(
 				this.initModels.getResourceSet(), LaunchconfigAccess.getModelLocation(launchConfigurationParams)));
 
 		this.fringe = new FringeFringe(new PriorityTransitionQueue()); // new FIFOTransitionQueue()
@@ -201,10 +199,10 @@ public class GraphExplorer {
 	 */
 	private void postProcessExplorationCycle(final SimulationInitConfiguration config) {
 
-		final DefaultStateBuilder builder = config.getStateToExplore();
+		final ExploredStateBuilder builder = config.getStateToExplore();
 
 		// add to graph
-		final DefaultState current = this.graph.createAndInsertState(builder);
+		final ExploredState current = this.graph.createAndInsertState(builder);
 		
 		final List<ScalingPolicy> policies = config.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy())
 				.toList();
@@ -214,7 +212,7 @@ public class GraphExplorer {
 		final StateGraphNode node = this.convertState(current, parentId, policies);
 
 		final double prev = current.getIncomingTransition().isEmpty() ? 0
-				: ((DefaultState) current.getIncomingTransition().get().getSource()).getUtility();
+				: current.getIncomingTransition().get().getSource().getUtility();
 		final double value = node.utility().getTotalUtilty() == 0 ? prev : node.utility().getTotalUtilty();
 
 		current.setUtility(value);
@@ -229,7 +227,7 @@ public class GraphExplorer {
 		}
 	}
 
-	private StateGraphNode convertState(final RawModelState state, final String parentId,
+	private StateGraphNode convertState(final ExploredState state, final String parentId,
 			final List<ScalingPolicy> scalingPolicies) {
 		return StateGraphConverter.convertState(state.getArchitecureConfiguration().getMonitorRepository(),
 				state.getExperimentSetting(), state.getArchitecureConfiguration().getSLOs(), state.getStartTime(), state.getEndTime(),
@@ -304,7 +302,7 @@ public class GraphExplorer {
 		return !this.fringe.isEmpty();
 	}
 
-	public RawStateGraph getGraph() {
+	public StateGraph getGraph() {
 		return this.graph;
 	}
 
@@ -313,11 +311,11 @@ public class GraphExplorer {
 	 *
 	 * @param focusedStates
 	 */
-	public void refocus(final Collection<RawModelState> focusedStates) {
+	public void refocus(final Collection<ExploredState> focusedStates) {
 
 		// find states to be refocused in the graph.
 
-		for (final RawModelState rawModelState : focusedStates) {
+		for (final ExploredState rawModelState : focusedStates) {
 
 			final boolean gotNopped = this.graph.outgoingEdgesOf(rawModelState).stream()
 					.anyMatch(t -> t.getChange().isEmpty());
@@ -327,7 +325,7 @@ public class GraphExplorer {
 			if (gotNopped || gonnaGetNopped) {
 				continue;
 			} else {
-				this.fringe.offer(new PlannedTransition(Optional.empty(), (DefaultState) rawModelState));
+				this.fringe.offer(new PlannedTransition(Optional.empty(), rawModelState));
 			}
 
 		}
@@ -337,7 +335,7 @@ public class GraphExplorer {
 		this.fringe.prune(pruningCriteria);
 	}
 
-	public void focus(final Collection<RawModelState> focusedStates) {
+	public void focus(final Collection<ExploredState> focusedStates) {
 		final Predicate<PlannedTransition> pruningCriteria = change -> !focusedStates.contains(change.getStart());
 
 		this.fringe.prune(pruningCriteria);
@@ -351,7 +349,7 @@ public class GraphExplorer {
 
 	private void pruneGraphByTime(final double time) {
 
-		final Set<RawModelState> statesToDelete = this.graph.getStates().stream().filter(s -> s.getEndTime() < time)
+		final Set<ExploredState> statesToDelete = this.graph.getStates().stream().filter(s -> s.getEndTime() < time)
 				.collect(Collectors.toSet());
 
 		this.graph.removeAllVertices(statesToDelete); // removes only vertexes, and also all edges.

@@ -6,7 +6,7 @@ import java.util.Set;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 
 /**
  * Configuration that holds all (most?) information for starting a new
@@ -18,7 +18,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Defaul
 public class SimulationInitConfiguration {
 
 	private final Snapshot snapToInitOn;
-	private final DefaultStateBuilder stateToExplore;
+	private final ExploredStateBuilder stateToExplore;
 	private final double explorationDuration;
 
 	/** Events that are not part of the simulation, but only for initialising the SPD Interpreter. */
@@ -27,7 +27,7 @@ public class SimulationInitConfiguration {
 	/** Adjustments. Beware, order must be preserved.*/
 	private final List<ModelAdjustmentRequested> events;
 
-	public SimulationInitConfiguration(final Snapshot snapToInitOn, final DefaultStateBuilder stateToExplore,
+	public SimulationInitConfiguration(final Snapshot snapToInitOn, final ExploredStateBuilder stateToExplore,
 			final double explorationDuration, final List<ModelAdjustmentRequested> events,
 			final Set<SPDAdjustorStateInitialized> initializationEvents) {
 		super();
@@ -42,7 +42,7 @@ public class SimulationInitConfiguration {
 		return this.snapToInitOn;
 	}
 
-	public DefaultStateBuilder getStateToExplore() {
+	public ExploredStateBuilder getStateToExplore() {
 		return this.stateToExplore;
 	}
 

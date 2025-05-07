@@ -17,9 +17,9 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Chan
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.spd.SPD;
@@ -47,13 +47,13 @@ public class Preprocessor {
 
 	private static final Logger LOGGER = Logger.getLogger(Preprocessor.class.getName());
 
-	private final DefaultGraph rawgraph;
+	private final StateGraph rawgraph;
 	private final FringeFringe fringe;
 	private final CutOffConcerns cutOffConcerns;
 
 	private final double minDuration;
 
-	public Preprocessor(final DefaultGraph graph, final FringeFringe fringe, final double minDuration) {
+	public Preprocessor(final StateGraph graph, final FringeFringe fringe, final double minDuration) {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 		this.minDuration = minDuration;
@@ -83,8 +83,8 @@ public class Preprocessor {
 			next = this.fringe.poll();
 		}
 
-		final DefaultState start = next.getStart();
-		final DefaultStateBuilder end = new DefaultStateBuilder(this.rawgraph, next);
+		final ExploredState start = next.getStart();
+		final ExploredStateBuilder end = new ExploredStateBuilder(this.rawgraph, next);
 
 		if (end.getStartupInformation().architecureConfiguration().getSPD().isPresent()) {
 
@@ -110,7 +110,7 @@ public class Preprocessor {
 	 * @return
 	 */
 	private SimulationInitConfiguration createConfigBasedOnChange(final Optional<Change> change,
-			final DefaultState start, final DefaultStateBuilder end) {
+			final ExploredState start, final ExploredStateBuilder end) {
 
 		final double duration = this.minDuration;
 

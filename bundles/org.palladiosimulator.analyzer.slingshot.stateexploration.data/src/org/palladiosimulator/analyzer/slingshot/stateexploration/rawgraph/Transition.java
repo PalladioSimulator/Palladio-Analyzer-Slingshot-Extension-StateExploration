@@ -3,15 +3,13 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph;
 import java.util.Iterator;
 import java.util.Optional;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
  * Shared parent interface for all transitions, such that we are able to compare
- * {@link PlannedTransition}s from the fringe and actual {@link DefaultState}s
+ * {@link PlannedTransition}s from the fringe and actual {@link ExploredState}s
  * from the graph.
  * 
  * @author Sophie Stieß
@@ -20,7 +18,7 @@ import org.palladiosimulator.spd.ScalingPolicy;
 public interface Transition {
 	public Optional<Change> getChange();
 
-	public RawModelState getSource();
+	public ExploredState getSource();
 
 	/**
 	 * 

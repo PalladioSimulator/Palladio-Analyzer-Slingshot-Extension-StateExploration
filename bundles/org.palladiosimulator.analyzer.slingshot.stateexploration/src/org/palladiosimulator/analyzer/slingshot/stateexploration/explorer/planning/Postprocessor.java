@@ -8,14 +8,13 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transition;
@@ -43,7 +42,7 @@ public class Postprocessor {
 
 	private final int keepAtLeast;
 	
-	private final DefaultGraph rawgraph;
+	private final StateGraph rawgraph;
 	private final FringeFringe fringe;
 
 	private final ProactivePolicyStrategyBuilder proactiveStrategyBuilder;
@@ -53,7 +52,7 @@ public class Postprocessor {
 	 * @param graph
 	 * @param fringe
 	 */
-	public Postprocessor(final DefaultGraph graph, final FringeFringe fringe) {
+	public Postprocessor(final StateGraph graph, final FringeFringe fringe) {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 
@@ -75,13 +74,13 @@ public class Postprocessor {
 	 *
 	 * @param start state that we just finished exploring.
 	 */
-	public void updateGraphFringe(final DefaultState start) {
+	public void updateGraphFringe(final ExploredState start) {
 		
 		if (start.getReasonsToLeave().contains(ReasonToLeave.aborted)) {
 			return;
 		}
 			
-		final Set<RawModelState> worstSiblings = this.getWorstSiblingSuccesors(start);
+		final Set<ExploredState> worstSiblings = this.getWorstSiblingSuccesors(start);
 		this.fringe.prune(pt -> worstSiblings.contains(pt.getSource()));
 		
 		if (worstSiblings.contains(start)) {
@@ -133,12 +132,12 @@ public class Postprocessor {
 	 * 
 	 * @param state 
 	 */
-	public Set<RawModelState> getWorstSiblingSuccesors(final DefaultState state) {
+	public Set<ExploredState> getWorstSiblingSuccesors(final ExploredState state) {
 		if (state.getIncomingTransition().isEmpty()) {
 			return Set.of(); // root
 		}
-		final DefaultState parent = (DefaultState) state.getIncomingTransition().get().getSource();
-		final List<DefaultState> siblings = parent.getOutgoingTransitions().stream().map(t -> (DefaultState) t.getTarget()).toList();
+		final ExploredState parent = state.getIncomingTransition().get().getSource();
+		final List<ExploredState> siblings = parent.getOutgoingTransitions().stream().map(t -> t.getTarget()).toList();
 		
 		if (siblings.size() <= keepAtLeast) {
 			return Set.of(); //too few states
@@ -146,10 +145,10 @@ public class Postprocessor {
 		
 		final int limit = siblings.size() - keepAtLeast;
 
-		final List<DefaultState> worstSiblings = siblings.stream().sorted((s1,s2) -> Double.compare(s1.getUtility(), s2.getUtility())).limit(limit).toList();
+		final List<ExploredState> worstSiblings = siblings.stream().sorted((s1,s2) -> Double.compare(s1.getUtility(), s2.getUtility())).limit(limit).toList();
 
-		final Set<RawModelState> badSuccessors = new HashSet<>();
-		for (final DefaultState badState : worstSiblings) {
+		final Set<ExploredState> badSuccessors = new HashSet<>();
+		for (final ExploredState badState : worstSiblings) {
 			badSuccessors.add(badState);
 			badSuccessors.addAll(this.collectSuccessors(badState));
 		}	
@@ -164,10 +163,10 @@ public class Postprocessor {
 	 * @param state
 	 * @return successor states of {@code} state
 	 */
-	public Set<RawModelState> collectSuccessors(final RawModelState state) {		
-		final Set<RawModelState> successors = new HashSet<>();
+	public Set<ExploredState> collectSuccessors(final ExploredState state) {		
+		final Set<ExploredState> successors = new HashSet<>();
 		
-		for (final RawTransition transition : state.getOutgoingTransitions()) {
+		for (final ExploredTransition transition : state.getOutgoingTransitions()) {
 			successors.addAll(this.collectSuccessors(transition.getTarget()));
 		}
 		return successors;	

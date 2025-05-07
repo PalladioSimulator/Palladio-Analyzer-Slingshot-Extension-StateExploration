@@ -5,9 +5,6 @@ import java.util.Set;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.InMemorySnapshot;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawStateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawTransition;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -19,15 +16,15 @@ import com.google.common.base.Preconditions;
  * @author Sarah Stieß
  *
  */
-public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, RawTransition> implements RawStateGraph {
+public class StateGraph extends SimpleDirectedWeightedGraph<ExploredState, ExploredTransition> {
 
 	private static final long serialVersionUID = -7468814179743463536L;
 
 	/** root state of the graph. Has no incoming transitions. */
-	private final DefaultState root;
+	private final ExploredState root;
 	
 	/** state with the latest start time in the graph */
-	private DefaultState furthestState;
+	private ExploredState furthestState;
 	
 	/**
 	 * Create a new graph instance. 
@@ -36,27 +33,24 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 *
 	 * @param rootArchConfig architecture configuration for the root node.
 	 */
-	public DefaultGraph(final ArchitectureConfiguration rootArchConfig) {
-		super(RawTransition.class);
+	public StateGraph(final ArchitectureConfiguration rootArchConfig) {
+		super(ExploredTransition.class);
 		
-		this.root = new DefaultState(0, rootArchConfig, this, null, new InMemorySnapshot(Set.of()), 0, Set.of());
+		this.root = new ExploredState(0, rootArchConfig, this, null, new InMemorySnapshot(Set.of()), 0, Set.of());
 		this.furthestState = this.root;
 		
 		this.addVertex(root);		
 	}
 	
-	@Override
-	public DefaultState getRoot() {
+	public ExploredState getRoot() {
 		return this.root;
 	}
 
-	@Override
-	public Set<RawModelState> getStates() {
+	public Set<ExploredState> getStates() {
 		return Set.copyOf(this.vertexSet());
 	}
 
-	@Override
-	public Set<RawTransition> getTransitions() {
+	public Set<ExploredTransition> getTransitions() {
 		return Set.copyOf(this.edgeSet());
 	}
 	
@@ -65,7 +59,7 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * 
 	 * @return state with the latest start time
 	 */
-	public DefaultState getFurthestState() {
+	public ExploredState getFurthestState() {
 		return furthestState;
 	}
 
@@ -77,11 +71,11 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * @param builder builder to create the new state and transition. 
 	 * @return the newly created state.
 	 */
-	public DefaultState createAndInsertState(final DefaultStateBuilder builder) {
-		final DefaultState newState = builder.buildState();
+	public ExploredState createAndInsertState(final ExploredStateBuilder builder) {
+		final ExploredState newState = builder.buildState();
 		this.addVertex(newState);
 		
-		final DefaultTransition newTransition = builder.buildTransition();
+		final ExploredTransition newTransition = builder.buildTransition();
 		
 		this.addEdge(builder.getPPInfo().predecessor(), newState, newTransition);	
 		this.updateFurthestState(newState);
@@ -96,7 +90,7 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * 
 	 * @param state 
 	 */
-	private void updateFurthestState(final DefaultState state) {
+	private void updateFurthestState(final ExploredState state) {
 		if (state.getStartTime() > this.furthestState.getStartTime()) {
 			this.furthestState = state;
 		}
@@ -111,7 +105,7 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * @param matchee
 	 * @return true, iff {@code vertex} has an outgoing transition that applies the given scaling policy.
 	 */
-	public boolean hasOutTransitionFor(final RawModelState vertex, final ScalingPolicy matchee) {		
+	public boolean hasOutTransitionFor(final ExploredState vertex, final ScalingPolicy matchee) {		
 		Preconditions.checkArgument(this.vertexSet().contains(vertex), String.format("State %s is not in the graph, but must be.", vertex.toString()));
 		
 		return this.outgoingEdgesOf(vertex).stream()
@@ -123,13 +117,13 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	/**
 	 * Check whether the given transition matches the given policy. 
 	 * 
-	 * (Intended as helper for {@link DefaultGraph#hasOutTransitionFor(RawModelState, ScalingPolicy)} only.) 
+	 * (Intended as helper for {@link StateGraph#hasOutTransitionFor(RawModelState, ScalingPolicy)} only.) 
 	 * 
 	 * @param transition transition
 	 * @param matchee policy to match
 	 * @return true, iff {@code transition} matches {@code matchee}.
 	 */
-	private boolean isOutTransitionFor(final RawTransition transition, final ScalingPolicy matchee) {	
+	private boolean isOutTransitionFor(final ExploredTransition transition, final ScalingPolicy matchee) {	
 		return transition.getChange().isPresent()
 		&& transition.getChange().get() instanceof Reconfiguration
 		&& this.isReconfigurationFor((Reconfiguration) transition.getChange().get(), matchee);
@@ -138,7 +132,7 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	/**
 	 * Check whether the given reconfiguration matches the given policy.  
 	 *
-	 * (Intended as helper for {@link DefaultGraph#isOutTransitionFor(RawTransition, ScalingPolicy)} only.)
+	 * (Intended as helper for {@link StateGraph#isOutTransitionFor(RawTransition, ScalingPolicy)} only.)
 	 *
 	 * @param reconf reconfiguration 
 	 * @param matchee policy to match
@@ -161,8 +155,8 @@ public class DefaultGraph extends SimpleDirectedWeightedGraph<RawModelState, Raw
 	 * 
 	 * @throws IllegalArgumentException if the state given as predecessor does not precede the other state.
 	 */
-	public static int distance(final RawModelState state, final RawModelState predecessor) {
-		RawModelState current = state;
+	public static int distance(final ExploredState state, final ExploredState predecessor) {
+		ExploredState current = state;
 		int distance = 0;
 
 		while (!current.equals(predecessor)) {

@@ -112,14 +112,14 @@ public final class PriorityTransitionQueue extends PriorityQueue<PlannedTransiti
 			public int compare(final PlannedTransition change1, final PlannedTransition change2) {
 
 				// the longer one is better -> the shorter one is "the least"
-				final Comparator<DefaultState> historyLengthComparator = Comparator.comparingInt(s -> s.lenghtOfHistory());
+				final Comparator<ExploredState> historyLengthComparator = Comparator.comparingInt(s -> s.lenghtOfHistory());
 
 				// the longer one is better -> the shorter one is "the least"
-				final Comparator<DefaultState> endTimeComparator = Comparator.comparingDouble(s -> s.getEndTime());
+				final Comparator<ExploredState> endTimeComparator = Comparator.comparingDouble(s -> s.getEndTime());
 
 				// the more the better -> the fewer one is "least" (end up with a line, because
 				// newest state has always zero out transitions -> "least"
-				final Comparator<DefaultState> cardinalityComparator = Comparator
+				final Comparator<ExploredState> cardinalityComparator = Comparator
 						.comparingInt(s -> s.getOutgoingTransitions().size());
 
 				// the one with NOP shall be "the least"

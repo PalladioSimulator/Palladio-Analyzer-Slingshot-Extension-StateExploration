@@ -5,15 +5,15 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
 import com.google.common.base.Preconditions;
 
 /**
- * Builder Class for {@link DefaultState}.
+ * Builder Class for {@link ExploredState}.
  * 
  * Cannot be used to build the root node.
  *
@@ -24,11 +24,11 @@ import com.google.common.base.Preconditions;
  * @author Sophie Stieß
  *
  */
-public class DefaultStateBuilder {
+public class ExploredStateBuilder {
 
 	/* known at start */
-	private final DefaultGraph graph;
-	private final DefaultState predecessor;
+	private final StateGraph graph;
+	private final ExploredState predecessor;
 	private final Optional<Change> change;
 	private final double startTime;
 	private final ArchitectureConfiguration archConfig;
@@ -43,7 +43,7 @@ public class DefaultStateBuilder {
 	/* must be set after configuration of the simulation run */
 	private ExperimentSetting experimentSetting = null;
 
-	public DefaultStateBuilder(final DefaultGraph graph, final PlannedTransition plannedTransition) {
+	public ExploredStateBuilder(final StateGraph graph, final PlannedTransition plannedTransition) {
 		this.graph = graph;
 		this.predecessor = plannedTransition.getStart();
 		this.change = plannedTransition.getChange();
@@ -74,7 +74,7 @@ public class DefaultStateBuilder {
 	 * Information about the state to be build by this builder, that are required
 	 * while preprocessing and initialising the simulation run.
 	 */
-	public record StartupInfo(DefaultState predecessor, ArchitectureConfiguration architecureConfiguration,
+	public record StartupInfo(ExploredState predecessor, ArchitectureConfiguration architecureConfiguration,
 			double startTime) {
 	}
 
@@ -84,7 +84,7 @@ public class DefaultStateBuilder {
 	 * Information about the state to be build by this builder, that are required
 	 * while postprocessing the simulation run.
 	 */
-	public record PostProcessInfo(DefaultState predecessor, Optional<Change> change) {
+	public record PostProcessInfo(ExploredState predecessor, Optional<Change> change) {
 	}
 
 	private final PostProcessInfo ppInfo;
@@ -104,16 +104,16 @@ public class DefaultStateBuilder {
 	private boolean transitionIsBuilt = false;
 	
 	/**
-	 * Build a new {@link DefaultState} based on this builder.
+	 * Build a new {@link ExploredState} based on this builder.
 	 * 
 	 * Requires all attributes to be set. If some attributes are missing or were not
 	 * updated as intended, building the state fails.
 	 * 
-	 * @return a new {@link DefaultState}
+	 * @return a new {@link ExploredState}
 	 * @throws IllegalStateException if this operation is called while the builder
 	 *                               is still incomplete, or if one attempts to use this builder to create multiple states.
 	 */
-	protected DefaultState buildState() {
+	protected ExploredState buildState() {
 		Preconditions.checkState(!reasonsToLeave.isEmpty(), "Cannot build state, reasons to leave were not yet added.");
 		Preconditions.checkState(duration >= 0, "Cannot build state, duration was not yet set.");
 		Preconditions.checkState(snapshot != null, "Cannot build state, because snapshot was not yet set.");
@@ -124,20 +124,20 @@ public class DefaultStateBuilder {
 				"Each builder may only be used to build exactly one state. This builder was already used to create a new state and cannot be used again.");
 		this.stateIsBuilt = true;
 
-		return new DefaultState(startTime, archConfig, graph, experimentSetting, snapshot, duration, reasonsToLeave);
+		return new ExploredState(startTime, archConfig, graph, experimentSetting, snapshot, duration, reasonsToLeave);
 	}
 	
 	/**
-	 * Build a new {@link DefaultTransition} based on this builder.
+	 * Build a new {@link ExploredTransition} based on this builder.
 	 * 
-	 * @return a new {@link DefaultTransition}
+	 * @return a new {@link ExploredTransition}
 	 * @throws IllegalStateException if one attempts to use this builder to create multiple transitions.
 	 */
-	protected DefaultTransition buildTransition() {
+	protected ExploredTransition buildTransition() {
 		Preconditions.checkState(!transitionIsBuilt,
 				"Each builder may only be used to build exactly one transition. This builder was already used to create a new transition and cannot be used again.");
 		this.transitionIsBuilt = true;
 		
-		return new DefaultTransition(this.change, graph);
+		return new ExploredTransition(this.change, graph);
 	}
 }

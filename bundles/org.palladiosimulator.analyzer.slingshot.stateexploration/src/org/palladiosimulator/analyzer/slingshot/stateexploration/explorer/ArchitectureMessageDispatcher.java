@@ -17,9 +17,9 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExt
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ModelAccess;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.messages.RequestArchitectureMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
 
 
 /**
@@ -51,13 +51,13 @@ public class ArchitectureMessageDispatcher implements SystemBehaviorExtension {
 	public void onMessageRecieved(final RequestArchitectureMessage sim) {
 		try {
 			LOGGER.info("Reacting to RequestArchitectureMessage");
-			final DefaultState state = Slingshot.getInstance().getInstance(DefaultState.class);
+			final ExploredState state = Slingshot.getInstance().getInstance(ExploredState.class);
 			if (state == null) {
 				LOGGER.info(
 						"Cannot post Architecture, because current state is null. Did you already start the exploration?");
 				return;
 			}
-			final ModelAccess access = state.getArchitecureConfiguration();
+			final ArchitectureConfiguration access = state.getArchitecureConfiguration();
 
 			final var allocationResource = access.getAllocation().eResource();
 			final var systemResource = access.getSystem().eResource();

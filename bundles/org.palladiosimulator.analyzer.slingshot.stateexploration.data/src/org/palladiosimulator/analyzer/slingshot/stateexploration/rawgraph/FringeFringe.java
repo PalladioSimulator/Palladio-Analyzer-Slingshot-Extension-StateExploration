@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import javax.measure.quantity.Force;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.spd.ScalingPolicy;
 
@@ -46,7 +45,7 @@ public final class FringeFringe {
 	 * @return true if a {@link PlannedTransition} that applies {@code matchee} to
 	 *         {@code state} is in the fringe, false otherwise.
 	 */
-	public boolean containsTodoFor(final RawModelState state, final ScalingPolicy matchee) {
+	public boolean containsTodoFor(final ExploredState state, final ScalingPolicy matchee) {
 		final Predicate<PlannedTransition> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isPresent()
 				&& todo.getChange().get() instanceof Reconfiguration
@@ -60,7 +59,7 @@ public final class FringeFringe {
 	 * @param state
 	 * @return
 	 */
-	public Set<Reconfiguration> getPlannedReconfFor(final RawModelState state) {
+	public Set<Reconfiguration> getPlannedReconfFor(final ExploredState state) {
 		return queuedDate.stream().filter(todo -> todo.getStart().equals(state) && todo.getChange().isPresent())
 				.map(todo -> todo.getChange().get())
 				.filter(Reconfiguration.class::isInstance)
@@ -95,7 +94,7 @@ public final class FringeFringe {
 	 * @return true if a {@link PlannedTransition} that without reconfiguration is the
 	 *         fringe, false otherwise.
 	 */
-	public boolean containsNopTodoFor(final RawModelState state) {
+	public boolean containsNopTodoFor(final ExploredState state) {
 		final Predicate<PlannedTransition> pred = todo -> todo.getStart().equals(state)
 				&& todo.getChange().isEmpty();
 
@@ -125,7 +124,7 @@ public final class FringeFringe {
 		queuedDate.removeAll(toBePruned);
 	}
 
-	public boolean offer(PlannedTransition e) {
+	public boolean offer(final PlannedTransition e) {
 		return this.queuedDate.offer(e);
 	}
 

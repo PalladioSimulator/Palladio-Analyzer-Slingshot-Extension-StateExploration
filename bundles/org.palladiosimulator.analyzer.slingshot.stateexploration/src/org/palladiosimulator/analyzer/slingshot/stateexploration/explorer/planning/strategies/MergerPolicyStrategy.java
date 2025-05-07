@@ -11,8 +11,8 @@ import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.FringeFringe;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
 
@@ -46,7 +46,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 */
 	private static final int MAX_LIST_SIZE = 2; // TODO
 
-	private final DefaultState state;
+	private final ExploredState state;
 
 	/**
 	 * Create new {@link MergerPolicyStrategy}.
@@ -54,8 +54,8 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected MergerPolicyStrategy(final DefaultGraph graph, final FringeFringe fringe,
-			final DefaultState state) {
+	protected MergerPolicyStrategy(final StateGraph graph, final FringeFringe fringe,
+			final ExploredState state) {
 		super(graph, fringe);
 		this.state = state;
 	}
@@ -73,7 +73,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 		final List<ModelAdjustmentRequested> reactiveAdjustments = state.getSnapshot()
 				.getModelAdjustmentRequestedEvent();
-		final DefaultState predecessor = (DefaultState) state.getIncomingTransition().get().getSource();
+		final ExploredState predecessor = (ExploredState) state.getIncomingTransition().get().getSource();
 
 		final Set<Reconfiguration> collectedReconfs = collectReconfigurationsAt(predecessor);
 
@@ -192,7 +192,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param predecessor state for which reconfigurations are collected.
 	 * @return Set of already explored or planned {@link Reconfiguration}s
 	 */
-	private Set<Reconfiguration> collectReconfigurationsAt(final DefaultState predecessor) {
+	private Set<Reconfiguration> collectReconfigurationsAt(final ExploredState predecessor) {
 		final Set<Reconfiguration> collectedChanges = new HashSet<>();
 
 		final Set<Reconfiguration> exploredChanges = predecessor.getOutgoingTransitions().stream()

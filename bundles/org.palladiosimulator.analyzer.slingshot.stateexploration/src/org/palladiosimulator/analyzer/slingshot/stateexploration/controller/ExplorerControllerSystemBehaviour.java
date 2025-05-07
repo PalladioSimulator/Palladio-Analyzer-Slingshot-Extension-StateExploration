@@ -13,7 +13,6 @@ import org.palladiosimulator.analyzer.slingshot.core.extension.SystemBehaviorExt
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.ExplorationControllerEvent;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.FocusOnStatesEvent;
@@ -24,6 +23,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.even
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobStarted;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.GraphExplorer;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredState;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.analyzer.workflow.jobs.LoadModelIntoBlackboardJob;
@@ -147,7 +147,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 */
 	@Deprecated
 	private void testFocusHandling() {
-		final Set<RawModelState> someStates = new HashSet<>();
+		final Set<ExploredState> someStates = new HashSet<>();
 		someStates.addAll(this.explorer.getGraph().getStates());
 		someStates.remove(this.explorer.getGraph().getRoot());
 
@@ -279,7 +279,7 @@ public class ExplorerControllerSystemBehaviour implements SystemBehaviorExtensio
 	 * @param stateIds
 	 * @return
 	 */
-	private Collection<RawModelState> mapStateIdsToState(final Collection<String> stateIds) {
+	private Collection<ExploredState> mapStateIdsToState(final Collection<String> stateIds) {
 		return this.explorer.getGraph().getStates().stream().filter(s -> stateIds.contains(s.getId())).toList();
 
 	}

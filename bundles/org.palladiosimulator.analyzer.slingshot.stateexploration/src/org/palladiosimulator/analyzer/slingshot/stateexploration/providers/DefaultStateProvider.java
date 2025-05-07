@@ -3,7 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.ExploredStateBuilder;
 
 
 /**
@@ -13,16 +13,16 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Defaul
  *
  */
 @Singleton
-public class DefaultStateProvider implements Provider<DefaultStateBuilder> {
+public class DefaultStateProvider implements Provider<ExploredStateBuilder> {
 
-	private DefaultStateBuilder state;
+	private ExploredStateBuilder state;
 
-	public void set(final DefaultStateBuilder state) {
+	public void set(final ExploredStateBuilder state) {
 		this.state = state;
 	}
 
 	@Override
-	public DefaultStateBuilder get() {
+	public ExploredStateBuilder get() {
 		return state;
 	}
 

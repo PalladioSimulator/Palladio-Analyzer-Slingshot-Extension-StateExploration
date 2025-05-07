@@ -27,13 +27,13 @@ public final class RaphaelTransitionQueue extends PriorityQueue<PlannedTransitio
 	
 	private final static Logger LOGGER = Logger.getLogger(PriorityTransitionQueue.class);
 	
-	static DefaultGraph graph;
+	static StateGraph graph;
 	static double limit;
 	static int horizon;
 
 	private static Map<Integer, Integer> polled = new HashMap<>();
 	
-	public RaphaelTransitionQueue(final DefaultGraph graph1, final int maxIterations, final int horizon1, final double md) {
+	public RaphaelTransitionQueue(final StateGraph graph1, final int maxIterations, final int horizon1, final double md) {
 		super(createForUtilityMcts());
 		graph = graph1;
 		horizon = horizon1;
