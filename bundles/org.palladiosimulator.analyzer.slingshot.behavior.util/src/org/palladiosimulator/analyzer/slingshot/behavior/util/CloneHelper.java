@@ -404,9 +404,7 @@ public final class CloneHelper {
 		}
 
 		if (context.getCurrentResultStackframe() != null) {
-			// acutally no, the result stackframe seems to be a completely different
-			// stackframe, that is not part of the user stack.
-			clonedStackFrame = clonedRequestProcessingContext.getUser().getStack().currentStackFrame();
+			clonedStackFrame = context.getCurrentResultStackframe().copyFrame();
 		}
 
 		if (context.getCallOverWireRequest().isPresent()) { // TODO probably like above
