@@ -63,3 +63,18 @@ Application class for starting a headless exploration.
 
 ECore model to configure a headless exploration.
 
+
+
+
+
+
+# JSON Serialization
+
+## On Dropping `MeasurementMade` and `MeasurementUpdated` events during Serialization
+
+Scan Paper.
+
+And skip for now. 
+
+## Drop `TakeCostMeasurement`...
+...because we take cost at t=0s anyway, i.e. ignore `TakeCostMeasurement` events from the snapshot.
