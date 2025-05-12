@@ -23,7 +23,9 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
  org.palladiosimulator.analyzer.slingshot.core,
  com.google.gson,
- org.palladiosimulator.commons
+ org.palladiosimulator.commons,
+ org.palladiosimulator.analyzer.slingshot.monitor.data,
+ org.palladiosimulator.measurementframework
 Export-Package: org.palladiosimulator.analyzer.slingshot.behavior.util,
  org.palladiosimulator.analyzer.slingshot.common.utils,
  spielwiese.version2,

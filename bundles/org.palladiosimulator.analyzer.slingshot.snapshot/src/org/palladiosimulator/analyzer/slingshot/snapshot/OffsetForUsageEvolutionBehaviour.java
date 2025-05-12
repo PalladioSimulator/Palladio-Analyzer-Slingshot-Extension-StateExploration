@@ -45,7 +45,9 @@ public class OffsetForUsageEvolutionBehaviour implements SimulationBehaviorExten
 		this.activated = stateBuilder != null && usageEvolutionModel != null
 				&& stateBuilder.getStartupInformation().startTime() > 0;
 
-		this.startTime = stateBuilder.getStartupInformation().startTime();
+				
+		this.startTime = this.activated ? stateBuilder.getStartupInformation().startTime() : 0;
+				
 	}
 
 	@Override

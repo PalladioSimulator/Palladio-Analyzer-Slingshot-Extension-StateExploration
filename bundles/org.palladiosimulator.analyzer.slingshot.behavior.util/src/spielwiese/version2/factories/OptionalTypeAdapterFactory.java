@@ -6,6 +6,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.CallOverWireRequest;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.SEFFInterpretationContext;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorWrapper;
+import org.palladiosimulator.pcm.seff.impl.StopActionImpl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -40,6 +44,12 @@ public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
 		if (type.getRawType() == Optional.class) {
 			final TypeAdapter<T> thisAdapter = (TypeAdapter<T>) customizeMyClassAdapter(gson, (TypeToken<Class<Optional<? extends Object>>>) type);
 			optionalValuesDelegators.put(type.getRawType().getSimpleName(), thisAdapter);
+			
+			optionalValuesDelegators.put("StopActionImpl", gson.getDelegateAdapter(this, TypeToken.get(StopActionImpl.class)));
+			optionalValuesDelegators.put("CallOverWireRequest", gson.getDelegateAdapter(this, TypeToken.get(CallOverWireRequest.class)));
+			optionalValuesDelegators.put("SeffBehaviorWrapper", gson.getDelegateAdapter(this, TypeToken.get(SeffBehaviorWrapper.class)));
+			optionalValuesDelegators.put("SEFFInterpretationContext", gson.getDelegateAdapter(this, TypeToken.get(SEFFInterpretationContext.class)));
+			
 			return thisAdapter;
 		}
 		return null;
@@ -105,8 +115,14 @@ public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
 
 				if (value.isJsonObject()) {
 					final String innerTt = value.getAsJsonObject().get(FIELD_NAME_CLASS).getAsString();
-
+					
+					if (!optionalValuesDelegators.containsKey(innerTt)) {
+						throw new JsonParseException("Missing delegate for optional values of type" + innerTt);
+					}
+					
 					final TypeAdapter<Object> delegate = (TypeAdapter<Object>) optionalValuesDelegators.get(innerTt);
+					
+					
 					if (value.getAsJsonObject().has(REFERENCE_FIELD)) {
 						element = Optional.of(delegate.fromJsonTree(value.getAsJsonObject().get(REFERENCE_FIELD)));
 					} else {

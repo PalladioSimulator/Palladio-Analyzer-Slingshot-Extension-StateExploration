@@ -36,6 +36,7 @@ public class SEFFBehaviourContextHolderTypeAdapterFactory implements TypeAdapter
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		if (SeffBehaviorContextHolder.class.isAssignableFrom(type.getRawType())) {
 			final String className = type.getRawType().getSimpleName();
+			// TODO: REMOVE
 			if (!thingTypes.containsKey(className)) {
 				thingTypes.put(className, gson.getDelegateAdapter(this, type)); // skips "this"
 			}
@@ -64,10 +65,12 @@ public class SEFFBehaviourContextHolderTypeAdapterFactory implements TypeAdapter
 					final List<SeffBehaviorWrapper> behaviors = (List<SeffBehaviorWrapper>) behavioursField.get(contextHolder);
 
 					for (final SeffBehaviorWrapper wrapper : behaviors) {
-						final Field contextField = SeffBehaviorWrapper.class.getDeclaredField("context");
-						contextField.setAccessible(true);
-						contextField.set(wrapper, contextHolder);
-						contextField.setAccessible(false);
+						if (wrapper != null) {
+							final Field contextField = SeffBehaviorWrapper.class.getDeclaredField("context");
+							contextField.setAccessible(true);
+							contextField.set(wrapper, contextHolder);
+							contextField.setAccessible(false);
+						}
 					}
 					
 					behavioursField.setAccessible(false);

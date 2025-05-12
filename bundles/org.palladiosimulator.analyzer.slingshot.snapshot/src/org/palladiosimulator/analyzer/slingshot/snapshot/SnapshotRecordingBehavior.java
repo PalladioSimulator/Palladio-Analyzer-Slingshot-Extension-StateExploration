@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+import java.io.File;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.even
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
@@ -32,6 +34,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.JobRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryRecord;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.SerializingCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
@@ -72,6 +75,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 
 	private final LessInvasiveInMemoryRecord recorder;
 	private final Camera camera;
+	
+	private final SerializingCamera cameraTest;
 
 	private final SimulationScheduling scheduling;
 
@@ -84,7 +89,15 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 
 		this.recorder = new LessInvasiveInMemoryRecord();
 		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get());
+		this.cameraTest = new SerializingCamera(this.recorder, engine, set.get());
 		this.scheduling = scheduling;
+		
+		
+		
+		final String loc = "/var/folders/y4/01qwswz94051py5_hwg72_740000gn/T/9d4b1810-a347-4022-98e4-69a5e92cb073/8be3d65e-4ad9-4af5-9f91-ce3053a47535/events.json";
+		
+		final Set<DESEvent> deserializedEvents = this.cameraTest.read(new File(loc));
+		System.out.println("breakpoint :)");
 	}
 
 	@Subscribe(reified = Start.class)
@@ -180,6 +193,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.snapshotIsFinished = true;
 
 		final Snapshot snapshot = camera.takeSnapshot();
+		final Snapshot otherSnapshot = cameraTest.takeSnapshot();
 
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
 			final ModelAdjustmentRequested triggeringeEvent = snapshotTaken.getTriggeringEvent().get();

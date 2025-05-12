@@ -20,7 +20,11 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.core,
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
  org.palladiosimulator.analyzer.slingshot.cost,
- org.palladiosimulator.analyzer.workflow
+ org.palladiosimulator.analyzer.workflow,
+ com.google.gson,
+ org.palladiosimulator.analyzer.slingshot.monitor.data,
+ org.palladiosimulator.analyzer.slingshot.behavior.usageevolution,
+ org.palladiosimulator.probeframework;bundle-version="5.1.0"
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot.api,
  org.palladiosimulator.analyzer.slingshot.snapshot.configuration,
  org.palladiosimulator.analyzer.slingshot.snapshot.entities,
