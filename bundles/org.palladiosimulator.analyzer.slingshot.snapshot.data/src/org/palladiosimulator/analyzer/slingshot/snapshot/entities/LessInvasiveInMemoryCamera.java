@@ -64,6 +64,8 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	/** Required argument for creating clone helpers*/
 	private final PCMResourceSetPartition set;
 
+	private final List<DESEvent> additionalEvents = new ArrayList<>();
+	
 	public LessInvasiveInMemoryCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
 			final PCMResourceSetPartition set) {
 		this.record = record;
@@ -82,8 +84,9 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 
 	@Override
 	public Snapshot takeSnapshot() {
+		this.getScheduledReconfigurations().forEach(this::addEvent);
+		
 		final Snapshot snapshot = new InMemorySnapshot(snapEvents());
-		this.getScheduledReconfigurations().forEach(snapshot::addModelAdjustmentRequestedEvent);
 		return snapshot;
 	}
 
@@ -173,7 +176,8 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		final Set<DESEvent> clonedEvents = (new CloneHelperWithVisitor(set)).clone(offsettedEvents);
 
 		this.log(clonedEvents);
-
+		
+		clonedEvents.addAll(additionalEvents); // they are not cloned. maybe problematic? but we didn't clone them earlier either. 
 		return clonedEvents;
 	}
 
@@ -301,5 +305,10 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		LOGGER.info("CWUI");
 		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e)
 		.forEach(e -> LOGGER.info(e.delay() + " " + e.time()));
+	}
+
+	@Override
+	public void addEvent(final DESEvent event) {
+		this.additionalEvents.add(event);
 	}
 }

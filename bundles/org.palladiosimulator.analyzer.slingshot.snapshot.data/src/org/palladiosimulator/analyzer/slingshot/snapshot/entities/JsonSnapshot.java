@@ -47,11 +47,6 @@ public final class JsonSnapshot implements Snapshot {
 	}
 
 	@Override
-	public void addModelAdjustmentRequestedEvent(final ModelAdjustmentRequested event) {
-		this.modelAdjustmentRequestedEvents.add(event);
-	}
-
-	@Override
 	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues() {
 		return this.adjustorStateValues;
 	}

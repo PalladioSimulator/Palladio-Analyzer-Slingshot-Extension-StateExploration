@@ -1,5 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.api;
 
+import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+
 /**
  * This is the camera for taking the snapshot.
  *
@@ -17,4 +19,9 @@ public interface Camera {
 	 * ..and this is like releasing the shutter.
 	 */
 	public Snapshot takeSnapshot();
+	
+	/**
+	 * include some more events.
+	 */
+	public void addEvent(final DESEvent event);
 }

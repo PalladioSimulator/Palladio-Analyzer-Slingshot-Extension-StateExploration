@@ -76,7 +76,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserR
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserSlept;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserStarted;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserWokeUp;
-import org.palladiosimulator.analyzer.slingshot.behavior.util.CloneHelper;
 import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
@@ -158,11 +157,11 @@ public final class SerializingCamera implements Camera {
 	private final SimulationEngine engine;
 
 	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
-
-	private final CloneHelper helper;
-
+	
 	/** Required argument for creating clone helpers */
 	private final PCMResourceSetPartition set;
+
+	private final List<DESEvent> additionalEvents = new ArrayList<>();
 
 	private final Path location;
 	private final String fileName = "events.json";
@@ -172,7 +171,6 @@ public final class SerializingCamera implements Camera {
 		this.record = record;
 		this.engine = engine;
 
-		this.helper = new CloneHelper(set);
 		this.set = set;
 
 		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
@@ -191,8 +189,8 @@ public final class SerializingCamera implements Camera {
 
 	@Override
 	public Snapshot takeSnapshot() {
+		this.getScheduledReconfigurations().forEach(this::addEvent);
 		final Snapshot snapshot = new JsonSnapshot(snapEvents());
-		this.getScheduledReconfigurations().forEach(snapshot::addModelAdjustmentRequestedEvent);
 		return snapshot;
 	}
 
@@ -674,5 +672,10 @@ public final class SerializingCamera implements Camera {
 			return foo;
 		}
 
+	}
+
+	@Override
+	public void addEvent(final DESEvent event) {
+		this.additionalEvents.add(event);
 	}
 }
