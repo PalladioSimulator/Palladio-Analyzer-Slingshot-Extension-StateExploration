@@ -10,6 +10,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.even
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ProcessorSharingJobProgressed;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ResourceDemandCalculated;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SimulationTimeReached;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.GeneralEntryRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.CallOverWireRequest;
@@ -144,35 +146,18 @@ import spielwiese.version2.factories.SEFFBehaviourWrapperTypeAdapterFactory;
  * @author Sophie Stieß
  *
  */
-public final class SerializingCamera implements Camera {
+public final class SerializingCamera extends Camera {
 	private static final Logger LOGGER = Logger.getLogger(SerializingCamera.class);
-
-	/** Beware: keep in sync with original */
-	private static final String FAKE = "fakeID";
-
-	/** Access to past events, that must go into the snapshot. */
-	private final LessInvasiveInMemoryRecord record;
-
-	/** Access to future events, that must go into the snapshot. */
-	private final SimulationEngine engine;
 
 	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
 	
-	/** Required argument for creating clone helpers */
-	private final PCMResourceSetPartition set;
-
-	private final List<DESEvent> additionalEvents = new ArrayList<>();
-
 	private final Path location;
 	private final String fileName = "events.json";
 
 	public SerializingCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
-			final PCMResourceSetPartition set) {
-		this.record = record;
-		this.engine = engine;
-
-		this.set = set;
-
+			final PCMResourceSetPartition set, final Collection<SPDAdjustorStateValues> policyIdToValues) {
+		super(record, engine, set, policyIdToValues);
+		
 		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(UsageModelPassedElement.class).then(this::clone)
 				.on(SEFFModelPassedElement.class).then(this::clone)
@@ -190,7 +175,12 @@ public final class SerializingCamera implements Camera {
 	@Override
 	public Snapshot takeSnapshot() {
 		this.getScheduledReconfigurations().forEach(this::addEvent);
-		final Snapshot snapshot = new JsonSnapshot(snapEvents());
+		
+
+		final List<SPDAdjustorStateValues> values = this.snapStateValues();
+		
+		
+		final Snapshot snapshot = new JsonSnapshot(snapEvents(), values);
 		return snapshot;
 	}
 
@@ -672,10 +662,5 @@ public final class SerializingCamera implements Camera {
 			return foo;
 		}
 
-	}
-
-	@Override
-	public void addEvent(final DESEvent event) {
-		this.additionalEvents.add(event);
 	}
 }

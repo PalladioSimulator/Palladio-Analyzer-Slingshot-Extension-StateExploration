@@ -36,6 +36,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.entities.SerializingCam
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
@@ -81,13 +82,13 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	@Inject
 	public SnapshotRecordingBehavior(final SimulationEngine engine, final Allocation allocation,
 			final MonitorRepository monitorRepository, final SimulationScheduling scheduling,
-			final PCMResourceSetPartitionProvider set) {
+			final PCMResourceSetPartitionProvider set, final EventsToInitOnWrapper wrapper) {
 		// can i somehow include this in the injection part?
 		// should work with this Model and the 'bind' instruction.
 
 		this.recorder = new LessInvasiveInMemoryRecord();
-		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get());
-		this.cameraTest = new SerializingCamera(this.recorder, engine, set.get());
+		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
+		this.cameraTest = new SerializingCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
 		this.scheduling = scheduling;
 		
 		

@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.even
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobProgressed;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InterArrivalUserInitiated;
@@ -45,34 +47,18 @@ import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
  * @author Sophie Stieß
  *
  */
-public final class LessInvasiveInMemoryCamera implements Camera {
+public final class LessInvasiveInMemoryCamera extends Camera {
 	private static final Logger LOGGER = Logger.getLogger(LessInvasiveInMemoryCamera.class);
 
-	/** Beware: keep in sync with original */
-	private static final String FAKE = "fakeID";
-
-	/** Access to past events, that must go into the snapshot.*/
-	private final LessInvasiveInMemoryRecord record;
-
-	/** Access to future events, that must go into the snapshot.*/
-	private final SimulationEngine engine;
-
 	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
-
 	private final CloneHelper helper;
-
-	/** Required argument for creating clone helpers*/
-	private final PCMResourceSetPartition set;
-
-	private final List<DESEvent> additionalEvents = new ArrayList<>();
 	
 	public LessInvasiveInMemoryCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
-			final PCMResourceSetPartition set) {
-		this.record = record;
-		this.engine = engine;
-
+			final PCMResourceSetPartition set, final Collection<SPDAdjustorStateValues> policyIdToValues) {
+		
+		super(record, engine, set, policyIdToValues);
+		
 		this.helper = new CloneHelper(set);
-		this.set = set;
 
 		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(UsageModelPassedElement.class).then(this::clone)
@@ -85,8 +71,10 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 	@Override
 	public Snapshot takeSnapshot() {
 		this.getScheduledReconfigurations().forEach(this::addEvent);
+
+		final List<SPDAdjustorStateValues> values = this.snapStateValues();
 		
-		final Snapshot snapshot = new InMemorySnapshot(snapEvents());
+		final Snapshot snapshot = new InMemorySnapshot(snapEvents(), values);
 		return snapshot;
 	}
 
@@ -305,10 +293,5 @@ public final class LessInvasiveInMemoryCamera implements Camera {
 		LOGGER.info("CWUI");
 		evt.stream().filter(e -> (e instanceof ClosedWorkloadUserInitiated)).map(e -> (ClosedWorkloadUserInitiated) e)
 		.forEach(e -> LOGGER.info(e.delay() + " " + e.time()));
-	}
-
-	@Override
-	public void addEvent(final DESEvent event) {
-		this.additionalEvents.add(event);
 	}
 }

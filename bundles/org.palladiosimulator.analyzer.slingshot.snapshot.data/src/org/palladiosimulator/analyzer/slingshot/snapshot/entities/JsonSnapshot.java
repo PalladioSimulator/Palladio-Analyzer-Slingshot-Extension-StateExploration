@@ -26,10 +26,10 @@ public final class JsonSnapshot implements Snapshot {
 	
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
 
-	public JsonSnapshot(final String events) {
+	public JsonSnapshot(final String events, final Collection<SPDAdjustorStateValues> stateValues) {
 		this.eventJson = events;
 		this.modelAdjustmentRequestedEvents = new ArrayList<>();
-		this.adjustorStateValues = new ArrayList<>();
+		this.adjustorStateValues = stateValues;
 	}
 
 
@@ -49,11 +49,5 @@ public final class JsonSnapshot implements Snapshot {
 	@Override
 	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues() {
 		return this.adjustorStateValues;
-	}
-
-	@Override
-	public void addSPDAdjustorStateValues(final SPDAdjustorStateValues value) {
-		this.adjustorStateValues.add(value);
-		
 	}
 }

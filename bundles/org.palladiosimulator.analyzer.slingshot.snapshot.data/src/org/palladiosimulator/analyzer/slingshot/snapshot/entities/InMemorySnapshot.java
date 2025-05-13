@@ -1,6 +1,5 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -29,15 +28,14 @@ public final class InMemorySnapshot implements Snapshot {
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
 
 	public InMemorySnapshot() {
-		this(Set.of());
-
+		this(Set.of(), Set.of());
 	}
 
-	public InMemorySnapshot(final Set<DESEvent> events) {
+	public InMemorySnapshot(final Set<DESEvent> events, final Collection<SPDAdjustorStateValues> stateValues) {
 		this.modelAdjustmentRequestedEvents = events.stream().filter(ModelAdjustmentRequested.class::isInstance).map(ModelAdjustmentRequested.class::cast).toList();
 		this.events = new HashSet<>(events);
 		this.events.removeAll(this.modelAdjustmentRequestedEvents);
-		this.adjustorStateValues = new ArrayList<>();
+		this.adjustorStateValues = stateValues;
 	}
 
 
@@ -55,11 +53,5 @@ public final class InMemorySnapshot implements Snapshot {
 	@Override
 	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues() {
 		return this.adjustorStateValues;
-	}
-
-	@Override
-	public void addSPDAdjustorStateValues(final SPDAdjustorStateValues value) {
-		this.adjustorStateValues.add(value);
-		
 	}
 }

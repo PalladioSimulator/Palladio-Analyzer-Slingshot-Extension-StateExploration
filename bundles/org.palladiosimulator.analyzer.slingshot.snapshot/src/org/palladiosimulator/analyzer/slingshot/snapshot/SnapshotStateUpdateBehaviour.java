@@ -1,16 +1,12 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
@@ -28,7 +24,6 @@ import org.palladiosimulator.edp2.impl.RepositoryManager;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentGroup;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 import org.palladiosimulator.edp2.models.Repository.Repository;
-import org.palladiosimulator.spd.ScalingPolicy;
 
 import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 
@@ -42,7 +37,6 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
  */
 @OnEvent(when = CalculatorRegistered.class, then = {})
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
-@OnEvent(when = SPDAdjustorStateInitialized.class, then = {})
 public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension {
 
 	private static final Logger LOGGER = Logger.getLogger(SnapshotStateUpdateBehaviour.class);
@@ -53,8 +47,6 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 
 	/* State representing current simulation run */
 	private final ExploredStateBuilder stateBuilder;
-
-	private final Map<String, SPDAdjustorStateValues> policyIdToValues;
 
 	/**
 	 * 
@@ -70,8 +62,6 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 		this.stateBuilder = stateBuilder;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
-
-		this.policyIdToValues = new HashMap<>();
 	}
 
 	@Override
@@ -146,25 +136,9 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 
 		this.refineReasonsToLeave(event);
 
-		this.policyIdToValues.values().stream().map(s -> this.setOffsets(s, event.time()))
-				.forEach(s -> event.getEntity().addSPDAdjustorStateValues(s));
-
-		// also offset targetgroup state values. --> ???
-
 		// Do not build the state. The state will be build in the explorer.
 
 		return Result.of(new SimulationFinished());
-	}
-
-	/**
-	 * Subscribe to the {@link SPDAdjustorStateInitialized} events, because we also
-	 * need those states for the next simulation.
-	 *
-	 * @param event
-	 */
-	@Subscribe
-	public void onAdjustorStateUpdated(final SPDAdjustorStateInitialized event) {
-		this.policyIdToValues.put(event.getStateValues().scalingPolicyId(), event.getStateValues());
 	}
 
 	/**
@@ -189,29 +163,4 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 		}
 	}
 
-	/**
-	 * Adjust the time of the latest adjustment and the time of the cooldown to the
-	 * reference time.
-	 *
-	 * If the latest adjustment was at t = 5 s, the cooldown ends at t = 15 s, and
-	 * the reference time is t = 10 s, then the adjusted values will be latest
-	 * adjustment at t = -5 s and cooldown end at t = 5 s.
-	 *
-	 * @param stateValues   values to be adjusted
-	 * @param referenceTime time to adjust to.
-	 * @return adjusted values.
-	 */
-	private SPDAdjustorStateValues setOffsets(final SPDAdjustorStateValues stateValues, final double referenceTime) {
-		final double latestAdjustmentAtSimulationTime = stateValues.latestAdjustmentAtSimulationTime() - referenceTime;
-		final int numberScales = stateValues.numberScales();
-		final double coolDownEnd = stateValues.coolDownEnd() > 0.0 ? stateValues.coolDownEnd() - referenceTime : 0.0;
-		final int numberOfScalesInCooldown = stateValues.numberOfScalesInCooldown();
-
-		final List<ScalingPolicy> enactedPolicies = new ArrayList<>(stateValues.enactedPolicies()); // unchanged
-		final List<Double> enactmentTimeOfPolicies = stateValues.enactmentTimeOfPolicies().stream()
-				.map(time -> time - referenceTime).toList();
-
-		return new SPDAdjustorStateValues(stateValues.scalingPolicy(), latestAdjustmentAtSimulationTime, numberScales,
-				coolDownEnd, numberOfScalesInCooldown, enactedPolicies, enactmentTimeOfPolicies);
-	}
 }

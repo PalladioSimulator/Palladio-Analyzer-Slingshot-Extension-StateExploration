@@ -48,11 +48,4 @@ public interface Snapshot {
 	 * @return state of the {@code SPDAdjustorState} at the end of this state.
 	 */
 	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues();
-
-	/**
-	 * 
-	 * 
-	 * @param value value to be added to this snapshot
-	 */
-	public void addSPDAdjustorStateValues(final SPDAdjustorStateValues value);
 }
