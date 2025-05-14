@@ -139,7 +139,7 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 					elementAdapter.write(out, new JsonPrimitive((String) value));
 				}
 
-				final String refId = String.valueOf(value.hashCode());
+				final String refId = String.valueOf(value.hashCode())+"$"+value.getClass().hashCode();
 				
 				if (alreadyJsoned.contains(refId)) {
 					elementAdapter.write(out, new JsonPrimitive(refId));
