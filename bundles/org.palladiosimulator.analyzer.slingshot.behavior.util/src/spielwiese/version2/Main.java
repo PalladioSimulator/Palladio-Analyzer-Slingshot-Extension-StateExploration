@@ -32,18 +32,12 @@ import org.palladiosimulator.pcm.usagemodel.util.UsagemodelResourceImpl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 
-import spielwiese.version2.adapters.ClassTypeAdapter;
 import spielwiese.version2.adapters.EObjectTypeAdapter;
+import spielwiese.version2.adapters.TypeTokenTypeAdapter;
+import spielwiese.version2.factories.DESEventTypeAdapterFactory;
 import spielwiese.version2.factories.ElistTypeAdapterFactory;
 import spielwiese.version2.factories.NonParameterizedCustomizedTypeAdapterFactory2;
 import spielwiese.version2.factories.OptionalTypeAdapterFactory;
@@ -70,19 +64,18 @@ public class Main {
 		// shared data structures
 		final Map<String, Object> objs = new HashMap<>();
 		final Map<String, TypeAdapter<?>> thingTypes = new HashMap<>();
-
-
 				
 		final GsonBuilder adaptereBuilder = new GsonBuilder();
 		adaptereBuilder.registerTypeHierarchyAdapter(EObject.class, new EObjectTypeAdapter(set));
-		adaptereBuilder.registerTypeHierarchyAdapter(Class.class, new ClassTypeAdapter());
+		adaptereBuilder.registerTypeHierarchyAdapter(com.google.common.reflect.TypeToken.class, new TypeTokenTypeAdapter());
 
-		//adaptereBuilder.registerTypeAdapterFactory(new CustomizedTypeAdapterFactory<Thing>(Thing.class, objs, thingTypes) {});
 		adaptereBuilder.registerTypeAdapterFactory(new SpecialLoopResolvingTypeAdapterFactory3(objs, thingTypes));
 		
 		adaptereBuilder.registerTypeAdapterFactory(new NonParameterizedCustomizedTypeAdapterFactory2(Set.of(Thing.class),objs, thingTypes));
 		adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory());
 		adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
+		
+		adaptereBuilder.registerTypeAdapterFactory(new DESEventTypeAdapterFactory());
 		
 		
 		final Gson gsonwithAdapter = adaptereBuilder.create();
@@ -91,73 +84,29 @@ public class Main {
 		final Set<EventAndType> typedEvent = new HashSet<>();
 		
 		for (final DESEvent e : events) {
-			typedEvent.add(new EventAndType(e, e.getClass().getSimpleName()));
+			typedEvent.add(new EventAndType(e, e.getClass().getCanonicalName()));
 		}
 	
 		
 		final Map<String, Class<? extends DESEvent>> eventTypes = new HashMap<>();
-		eventTypes.put(SimulationStarted.class.getSimpleName(), SimulationStarted.class);
-		eventTypes.put(SimulationFinished.class.getSimpleName(), SimulationFinished.class);
-		eventTypes.put(PCMEvent.class.getSimpleName(), PCMEvent.class);
-				
+		eventTypes.put(SimulationStarted.class.getCanonicalName(), SimulationStarted.class);
+		eventTypes.put(SimulationFinished.class.getCanonicalName(), SimulationFinished.class);
+		eventTypes.put(PCMEvent.class.getCanonicalName(), PCMEvent.class);
+		eventTypes.put(GenericPCMEvent.class.getCanonicalName(), GenericPCMEvent.class);
+		eventTypes.put(GenericPCMEvent2.class.getCanonicalName(), GenericPCMEvent2.class);
 		
-		final GsonBuilder builder = new GsonBuilder();
-		
-		builder.registerTypeHierarchyAdapter(EventAndType.class, new JsonDeserializer<DESEvent>() {
-			@Override
-			public DESEvent deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
-					throws JsonParseException {
-				
-				System.out.println("Event");
-				
-				if(json.isJsonObject()) {
-					final var tyoe = json.getAsJsonObject().get("type");
-					final var event = json.getAsJsonObject().get("event");
-					if(tyoe != null) {
-						final var eventString = tyoe.getAsString();
-						if(eventTypes.containsKey(eventString)) {
-							return gsonwithAdapter.fromJson(event, eventTypes.get(eventString));
-						} else {
-							throw new RuntimeException("Invalid message type: " + tyoe);
-						}
-					}
-				}
-				throw new RuntimeException("Failed to parse message: " + json);
-			}
-			
-		});
-		
-		builder.registerTypeHierarchyAdapter(EventAndType.class, new JsonSerializer<EventAndType>() {
-
-			@Override
-			public JsonElement serialize(final EventAndType src, final Type typeOfSrc, final JsonSerializationContext context) {
-				final JsonObject obj = new JsonObject();
-				obj.addProperty("type", src.getType());
-				//obj.add("event", context.serialize(src.getEvent()));
-				final JsonElement e = gsonwithAdapter.toJsonTree(src.getEvent());
-				obj.add("event", e);
-				
-				return obj;
-			}
-			
-		});
-		
-		final Gson gson = builder.create();
-		
-		
-		
-		final String eventJsonString = gson.toJson(typedEvent);		
-		
+		final String eventJsonString = gsonwithAdapter.toJson(events);		
 		System.out.println(eventJsonString);
 		
-		final Type set2Type = new TypeToken<HashSet<EventAndType>>(){}.getType();
+		final Type set2Type = new TypeToken<HashSet<DESEvent>>(){}.getType();
 
-		return gson.fromJson(eventJsonString, set2Type);
+		return gsonwithAdapter.fromJson(eventJsonString, set2Type);
+		
 	}
 	
 	public static UsageModel readUsageModel() {
 		createUsageModel(); // for call to eINSTANCES ;)
-		final Resource res = new UsagemodelResourceImpl(URI.createURI("file:/var/folders/y4/01qwswz94051py5_hwg72_740000gn/T/77485916-fb6b-4b32-bdc7-aaff0ab64eee/0257b639-ed16-4335-b0e0-abf6e5177491/default.usagemodel"));
+		final Resource res = new UsagemodelResourceImpl(URI.createURI("file:/var/folders/y4/01qwswz94051py5_hwg72_740000gn/T/6bcac7c2-ab7a-4fb6-98df-c5b51b7518d6/4a419e1c-38b3-4b5d-93dd-027f68d027d3/default.usagemodel"));
 
 		set.getResources().add(res);
 		if (res.getContents().isEmpty()) {
@@ -210,7 +159,7 @@ public class Main {
 		events.add(new SimulationStarted());
 //		events.add(new SimulationStarted());
 //		events.add(new SimulationFinished());
-		events.add(new PCMEvent(model, loopParent));
+//		events.add(new PCMEvent(model, loopParent));
 //		events.add(new PCMEvent(model, optionalThing1));
 //		events.add(new PCMEvent(model, optionalThing2));
 //		events.add(new PCMEvent(model, optionalThing3));
@@ -219,6 +168,12 @@ public class Main {
 //		events.add(new PCMEvent(model, pcmThing2));
 //		events.add(new PCMEvent(model, pcmThing2));
 //		events.add(new PCMEvent(model, thing4));
+		
+//		events.add(new GenericPCMEvent(model));
+		events.add(new GenericPCMEvent2<>(thing1));
+		events.add(new GenericPCMEvent2<>(model));
+		events.add(new GenericPCMEvent2<>(model));
+		events.add(new GenericPCMEvent2<>(model.getUsageScenario_UsageModel().get(0)));
 		
 		return events;
 	}

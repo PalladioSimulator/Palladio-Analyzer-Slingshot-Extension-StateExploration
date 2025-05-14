@@ -9,20 +9,16 @@ import java.lang.reflect.Type;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.AbstractJobEvent;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ActiveResourceStateUpdated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobAborted;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
@@ -78,10 +74,8 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserR
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserSlept;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserStarted;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserWokeUp;
-import org.palladiosimulator.analyzer.slingshot.behavior.util.LambdaVisitor;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
-import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
@@ -105,10 +99,6 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.measurementframework.MeasuringValue;
 import org.palladiosimulator.metricspec.metricentity.MetricEntity;
-import org.palladiosimulator.pcm.core.CoreFactory;
-import org.palladiosimulator.pcm.core.PCMRandomVariable;
-import org.palladiosimulator.pcm.seff.StartAction;
-import org.palladiosimulator.pcm.usagemodel.Start;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -122,7 +112,6 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 
-import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
 import spielwiese.version2.EventAndType;
 import spielwiese.version2.adapters.ClassTypeAdapter;
 import spielwiese.version2.adapters.EObjectTypeAdapter;
@@ -147,110 +136,38 @@ import spielwiese.version2.factories.SEFFBehaviourWrapperTypeAdapterFactory;
  *
  */
 public final class SerializingCamera extends Camera {
-	private static final Logger LOGGER = Logger.getLogger(SerializingCamera.class);
-
-	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
 	
 	private final Path location;
 	private final String fileName = "events.json";
+	
+	private final PCMResourceSetPartition set;
 
 	public SerializingCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
 			final PCMResourceSetPartition set, final Collection<SPDAdjustorStateValues> policyIdToValues) {
 		super(record, engine, set, policyIdToValues);
-		
-		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
-				.on(UsageModelPassedElement.class).then(this::clone)
-				.on(SEFFModelPassedElement.class).then(this::clone)
-				.on(ClosedWorkloadUserInitiated.class).then(this::clone)
-				.on(InterArrivalUserInitiated.class).then(this::clone)
-				.on(DESEvent.class).then(e -> e);
 
 		final String folder = set.getAllocation().eResource().getURI().trimSegments(1).toFileString();
-
 		final Path path = FileSystems.getDefault().getPath(folder, fileName);
 
-		location = path;
+		this.location = path;
+		this.set = set;
 	}
 
 	@Override
 	public Snapshot takeSnapshot() {
 		this.getScheduledReconfigurations().forEach(this::addEvent);
-		
-
 		final List<SPDAdjustorStateValues> values = this.snapStateValues();
-		
-		
-		final Snapshot snapshot = new JsonSnapshot(snapEvents(), values);
+			
+		final Snapshot snapshot = new InMemorySnapshot(snapEvents(), values);
 		return snapshot;
 	}
 
+	/**   
+	 * TODO
+	 */
 	public Set<DESEvent> read(final File file) {
 		return 	(new Serializer(set.getAllocation().eResource().getResourceSet()))
 				.deserialize(file);
-	}
-
-	/*
-	 * Creation of offsetted Events. some of them could work without the creation of
-	 * new events, but not all.
-	 */
-	private DESEvent clone(final UsageModelPassedElement<?> event) {
-		final double simulationTime = engine.getSimulationInformation().currentSimulationTime();
-		if (event.getModelElement() instanceof Start && event.time() <= simulationTime) {
-			setOffset(event.time(), simulationTime, event);
-
-		}
-		return event;
-	}
-
-	private DESEvent clone(final SEFFModelPassedElement<?> event) {
-		final double simulationTime =  engine.getSimulationInformation().currentSimulationTime();
-
-		if (event.getModelElement() instanceof StartAction && event.time() <= simulationTime) {	
-			setOffset(event.time(), simulationTime, event);
-		}
-		return event;
-	}
-
-	private DESEvent clone(final ClosedWorkloadUserInitiated event) {
-		final double simulationTime = engine.getSimulationInformation().currentSimulationTime();
-		
-		final double remainingthinktime = event.time() - simulationTime;
-
-		final CoreFactory coreFactory = CoreFactory.eINSTANCE;
-		final PCMRandomVariable var = coreFactory.createPCMRandomVariable();
-		var.setSpecification(String.valueOf(remainingthinktime));
-
-		final ThinkTime newThinktime = new ThinkTime(var);
-		return new ClosedWorkloadUserInitiated(event.getEntity(), newThinktime);
-	}
-
-	private DESEvent clone(final InterArrivalUserInitiated event) {
-		final double simulationTime = engine.getSimulationInformation().currentSimulationTime();
-		return new InterArrivalUserInitiated(event.getEntity(), event.time() - simulationTime);
-	}
-	
-	/**
-	 * Calculate an event's offset with respect to the current simulation time and
-	 * save the offset in the event's time attribute.
-	 *
-	 * If the event was created during the simulation run, the offset is the
-	 * difference between current simulation time and the event time. If the event
-	 * was created during a previous simulation run, i.e. it already entered this
-	 * simulation run with a offset into the past, the new offset is the sum of
-	 * simulation time and old offset.
-	 *
-	 * @param eventTime      publication point in time from previous simulation run
-	 * @param simulationTime current time of the simulation
-	 * @param event    the event to be modified
-	 */
-	private void setOffset(final double eventTime, final double simulationTime, final ModelPassedEvent<?> event) {
-		if (eventTime < 0) {
-			final double offset = -(eventTime - simulationTime);
-			event.setTime(offset);
-		} else {
-			final double offset = simulationTime - eventTime;
-			event.setTime(offset);
-		}
 	}
 
 	/**
@@ -259,154 +176,27 @@ public final class SerializingCamera extends Camera {
 	 *
 	 * @return Set of events for recreating the state.
 	 */
-	private String snapEvents() {
-		// get FEL
-		final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
-
-		// get events to recreate state of queues
-		final Set<JobRecord> fcfsRecords = record.getFCFSJobRecords();
-		final Set<JobRecord> procsharingRecords = record.getProcSharingJobRecords();
-
-		final Set<AbstractJobEvent> progressedFcfs = relevantEvents.stream()
-				.filter(e -> (e instanceof JobProgressed) || (e instanceof JobFinished)).map(e -> (AbstractJobEvent) e)
-				.collect(Collectors.toSet());
-
-		final Set<JobInitiated> initJobs = new HashSet<>();
-		initJobs.addAll(this.handlePFCFSJobs(fcfsRecords, progressedFcfs));
-		initJobs.addAll(this.handleProcSharingJobs(procsharingRecords));
-
-		relevantEvents.addAll(initJobs);
-		relevantEvents.addAll(record.getRecordedCalculators());
-
-		this.removeFakeThings(relevantEvents);
-
-		final Set<DESEvent> offsettedEvents = relevantEvents.stream().map(adjustOffset).collect(Collectors.toSet());
-
-		final String clonedEvents = (new Serializer(set.getAllocation().eResource().getResourceSet()))
-				.serialize(offsettedEvents); // Serialise offsettedEvents
-
+	private Set<DESEvent> snapEvents() {
+		this.serializeEvents();
+		final Set<DESEvent> clonedEvents = this.read(location.toFile());
+		clonedEvents.addAll(additionalEvents); // they are not cloned. maybe problematic? but we didn't clone them earlier either. 
 		return clonedEvents;
 	}
-
 	
-	private void removeFakeThings(final Set<DESEvent> events) {
-		events.removeIf(e -> this.isFake(e));
-	}
-	
-	private boolean isFake(final DESEvent event) {
-		if (event instanceof final AbstractJobEvent jobEvent) {
-			return jobEvent.getEntity().getId().equals(FAKE);
-		} else {
-			return false;
-		}
-	}
-	
-	/**
-	 *
-	 * Get {@link ModelAdjustmentRequested} events, that happened at the point in
-	 * time the snapshot was taken, but did not trigger it.
-	 *
-	 * As there is no guarantee on the order of events, that happen at the same
-	 * point in time, the {@link ModelAdjustmentRequested} events are either
-	 * directly scheduled, or already wrapped into {@link SnapshotInitiated} or
-	 * {@link SnapshotTaken} events.
-	 *
-	 * @return upcoming {@link ModelAdjustmentRequested} events.
-	 */
-	private List<ModelAdjustmentRequested> getScheduledReconfigurations() {
-		final List<ModelAdjustmentRequested> events = new ArrayList<>();
+	private String serializeEvents() {	
+		final Set<DESEvent> offsettedEvents = collectRelevantEvents();
 
-		/* Scheduled ModelAdjustmentRequested */
-		engine.getScheduledEvents().stream().filter(ModelAdjustmentRequested.class::isInstance)
-				.map(ModelAdjustmentRequested.class::cast).forEach(events::add);
-
-		/* ModelAdjustmentRequested already processed into SnapshotInitiated events */
-		engine.getScheduledEvents().stream().filter(SnapshotInitiated.class::isInstance)
-				.map(SnapshotInitiated.class::cast).filter(e -> e.getTriggeringEvent().isPresent())
-				.forEach(e -> events.add(e.getTriggeringEvent().get()));
-
-		/* ModelAdjustmentRequested already processed into SnapshotTaken events */
-		engine.getScheduledEvents().stream().filter(SnapshotTaken.class::isInstance).map(SnapshotTaken.class::cast)
-				.filter(e -> e.getTriggeringEvent().isPresent()).forEach(e -> events.add(e.getTriggeringEvent().get()));
-
-		return events;
+		return (new Serializer(set.getAllocation().eResource().getResourceSet()))
+				.serialize(offsettedEvents);
 	}
 
 	/**
-	 * Denormalizes the demand of the open jobs and creates {@link JobInitiated}
-	 * events to reinsert them to their respective Processor Sharing Resource.
-	 *
-	 * C.f. {@link SerializingCamera#handlePFCFSJobs(Set, Set)} for details on the
-	 * demand denormalized.
 	 * 
-	 * @param jobrecords
-	 * @return
+	 * @author Sophie Stieß
+	 *
 	 */
-	private Set<JobInitiated> handleProcSharingJobs(final Set<JobRecord> jobrecords) {
-		final Set<JobInitiated> rval = new HashSet<>();
-
-		for (final JobRecord jobRecord : jobrecords) {
-			// do the Proc Sharing Math
-			final double ratio = jobRecord.getNormalizedDemand() == 0 ? 0
-					: jobRecord.getCurrentDemand() / jobRecord.getNormalizedDemand();
-			final double reducedRequested = jobRecord.getRequestedDemand() * ratio;
-			jobRecord.getJob().updateDemand(reducedRequested);
-			rval.add(new JobInitiated(jobRecord.getJob()));
-
-		}
-		return rval;
-	}
-
-	/**
-	 * Denormalizes the demand of the open jobs and creates {@link JobInitiated}
-	 * events to reinsert them to their respective FCFS Resource.
-	 *
-	 * The demand must be denormalized, because upon receiving a
-	 * {@link JobInitiated} event, the {@link AbstractActiveResource} normalizes a
-	 * job's demand with the resource's processing rate. Thus without
-	 * denormalisation, the demand would be wrong.
-	 *
-	 * This is required for ActiveJobs, and for LinkingJobs. In case of LinkingJobs,
-	 * the throughput is used as processing rate.
-	 *
-	 * @param jobrecords     jobs waiting at an FCFS resource at the time of the
-	 *                       snapshot
-	 * @param fcfsProgressed events scheduled for simulation at the time of the
-	 *                       snapshot
-	 * @return events to reinsert all open jobs to their respective FCFS Resource
-	 */
-	private Set<JobInitiated> handlePFCFSJobs(final Set<JobRecord> jobrecords,
-			final Set<AbstractJobEvent> fcfsProgressed) {
-		final Set<JobInitiated> rval = new HashSet<>();
-
-		final Map<Job, AbstractJobEvent> progressedJobs = new HashMap<>();
-		fcfsProgressed.stream().forEach(event -> progressedJobs.put(event.getEntity(), event));
-
-		for (final JobRecord record : jobrecords) {
-			if (record.getNormalizedDemand() == 0) { // For Linking Jobs.
-				if (record.getJob().getDemand() != 0) {
-					throw new IllegalStateException(
-							String.format("Job %s of Type %s: Normalized demand is 0, but acutal demand is not.",
-									record.getJob().toString(), record.getJob().getClass().getSimpleName()));
-				}
-			} else if (progressedJobs.keySet().contains(record.getJob())) {
-				final AbstractJobEvent event = progressedJobs.get(record.getJob());
-				// time equals remaining demand because of normalization.
-				final double remainingDemand = event.time() - engine.getSimulationInformation().currentSimulationTime();
-				final double factor = record.getRequestedDemand() / record.getNormalizedDemand();
-				final double denormalizedRemainingDemand = remainingDemand * factor;
-				record.getJob().updateDemand(denormalizedRemainingDemand);
-			} else {
-				record.getJob().updateDemand(record.getRequestedDemand());
-			}
-			rval.add(new JobInitiated(record.getJob()));
-		}
-		return rval;
-	}
-
 	public class Serializer {
 
-		private final ResourceSet set;
 		private final Map<String, Object> objs = new HashMap<>();
 		private final Map<String, TypeAdapter<?>> thingTypes = new HashMap<>();
 
@@ -416,11 +206,9 @@ public final class SerializingCamera extends Camera {
 		private final Gson gsonwithAdapter;
 
 
-		OptionalTypeAdapterFactory fo;
+		OptionalTypeAdapterFactory referenceToOptionalTypeFactory;
 		
 		public Serializer(final ResourceSet set) {
-			this.set = set;
-
 			// Create Gsons
 			final GsonBuilder adaptereBuilder = new GsonBuilder();
 
@@ -438,8 +226,8 @@ public final class SerializingCamera extends Camera {
 			adaptereBuilder.registerTypeAdapterFactory(
 					new NonParameterizedCustomizedTypeAdapterFactory2(applicableClasses(), objs, thingTypes));
 
-			fo = new OptionalTypeAdapterFactory();
-			adaptereBuilder.registerTypeAdapterFactory(fo);
+			referenceToOptionalTypeFactory = new OptionalTypeAdapterFactory();
+			adaptereBuilder.registerTypeAdapterFactory(referenceToOptionalTypeFactory);
 			adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
 
 			gsonwithAdapter = adaptereBuilder.create();
@@ -457,6 +245,7 @@ public final class SerializingCamera extends Camera {
 							final var eventString = type.getAsString();
 							if (eventTypes.containsKey(eventString)) {
 								return gsonwithAdapter.fromJson(event, eventTypes.get(eventString));
+								// for SEFFModelPassed, type of entity is erased at this point, i guess. 
 							} else {
 								throw new RuntimeException("Unknown message type: " + type);
 							}

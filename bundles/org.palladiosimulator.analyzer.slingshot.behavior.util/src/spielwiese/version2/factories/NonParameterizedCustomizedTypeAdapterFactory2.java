@@ -120,8 +120,6 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 		
 
 		thingTypes.put("MeasurementUpdateInformation", gson.getDelegateAdapter(this, new TypeToken<MeasurementUpdateInformation>() {})); 
-		
-		
 	}
 
 	private <R> TypeAdapter<R> customizeMyClassAdapter(final Gson gson, final TypeToken<R> type) {

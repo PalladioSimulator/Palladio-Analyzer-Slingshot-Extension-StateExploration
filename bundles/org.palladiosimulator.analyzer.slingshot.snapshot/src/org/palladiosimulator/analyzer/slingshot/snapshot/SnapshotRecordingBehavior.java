@@ -73,9 +73,9 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private boolean snapshotIsFinished = false;
 
 	private final LessInvasiveInMemoryRecord recorder;
-	private final Camera camera;
 	
-	private final SerializingCamera cameraTest;
+	private final Camera cloningCamera;
+	private final Camera serializingCamera;
 
 	private final SimulationScheduling scheduling;
 
@@ -87,8 +87,8 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		// should work with this Model and the 'bind' instruction.
 
 		this.recorder = new LessInvasiveInMemoryRecord();
-		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
-		this.cameraTest = new SerializingCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
+		this.cloningCamera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
+		this.serializingCamera = new SerializingCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
 		this.scheduling = scheduling;
 		
 		
@@ -193,13 +193,14 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
 			final ModelAdjustmentRequested triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
-			camera.addEvent(triggeringeEvent);
+			cloningCamera.addEvent(triggeringeEvent);
+			serializingCamera.addEvent(triggeringeEvent);
 		}
-		final Snapshot snapshot = camera.takeSnapshot();
-		final Snapshot otherSnapshot = cameraTest.takeSnapshot();
+		final Snapshot clonedSnapshot = cloningCamera.takeSnapshot();
+		final Snapshot serializedSnapshot = serializingCamera.takeSnapshot();
 
 
-		return Result.of(new SnapshotFinished(snapshot));
+		return Result.of(new SnapshotFinished(serializedSnapshot));
 	}
 
 	/**

@@ -28,7 +28,7 @@ public class TypeTokenTypeAdapter extends TypeAdapter<TypeToken<?>> {
 			final Class<?> clazz = Class.forName(s);
 			return new TypeToken<>() {}.resolveType(Class.forName(s));
 		} catch (final ClassNotFoundException e) {
-			throw new JsonParseException("canno map typetoken" + s + "to type token class.", e);
+			throw new JsonParseException("cannot map typetoken" + s + " to type token class.", e);
 		}
 	}
 
