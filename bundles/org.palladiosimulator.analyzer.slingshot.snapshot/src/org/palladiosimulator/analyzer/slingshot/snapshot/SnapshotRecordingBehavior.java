@@ -75,7 +75,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private final LessInvasiveInMemoryRecord recorder;
 	
 	private final Camera cloningCamera;
-	private final Camera serializingCamera;
+	private final SerializingCamera serializingCamera;
 
 	private final SimulationScheduling scheduling;
 
@@ -93,10 +93,10 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		
 		
 		
-//		final String loc = "/var/folders/y4/01qwswz94051py5_hwg72_740000gn/T/9d4b1810-a347-4022-98e4-69a5e92cb073/8be3d65e-4ad9-4af5-9f91-ce3053a47535/events.json";
-//		
-//		final Set<DESEvent> deserializedEvents = this.cameraTest.read(new File(loc));
-		System.out.println("breakpoint :)");
+//		final String loc = "/var/folders/y4/01qwswz94051py5_hwg72_740000gn/T/3326e472-0425-427b-9095-fa42c89e4509/c24f15c2-206f-4ef4-b195-f79b57068c32/events.json";
+//
+//		final Set<DESEvent> deserializedEvents = this.serializingCamera.read(new File(loc));
+//		System.out.println("breakpoint :)");
 	}
 
 	@Subscribe(reified = Start.class)

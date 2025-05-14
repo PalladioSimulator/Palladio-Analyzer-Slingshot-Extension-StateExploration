@@ -102,20 +102,13 @@ import org.palladiosimulator.metricspec.metricentity.MetricEntity;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 
-import spielwiese.version2.EventAndType;
 import spielwiese.version2.adapters.ClassTypeAdapter;
 import spielwiese.version2.adapters.EObjectTypeAdapter;
 import spielwiese.version2.adapters.TypeTokenTypeAdapter;
+import spielwiese.version2.factories.DESEventTypeAdapterFactory;
 import spielwiese.version2.factories.ElistTypeAdapterFactory;
 import spielwiese.version2.factories.NonParameterizedCustomizedTypeAdapterFactory2;
 import spielwiese.version2.factories.OptionalTypeAdapterFactory;
@@ -202,7 +195,6 @@ public final class SerializingCamera extends Camera {
 
 		private final Map<String, Class<? extends DESEvent>> eventTypes = createTypeMap();
 
-		private final Gson gson;
 		private final Gson gsonwithAdapter;
 
 
@@ -229,49 +221,11 @@ public final class SerializingCamera extends Camera {
 			referenceToOptionalTypeFactory = new OptionalTypeAdapterFactory();
 			adaptereBuilder.registerTypeAdapterFactory(referenceToOptionalTypeFactory);
 			adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
+			
+
+			adaptereBuilder.registerTypeAdapterFactory(new DESEventTypeAdapterFactory());
 
 			gsonwithAdapter = adaptereBuilder.create();
-
-			final GsonBuilder builder = new GsonBuilder();
-
-			builder.registerTypeHierarchyAdapter(EventAndType.class, new JsonDeserializer<DESEvent>() {
-				@Override
-				public DESEvent deserialize(final JsonElement json, final Type typeOfT,
-						final JsonDeserializationContext context) throws JsonParseException {
-					if (json.isJsonObject()) {
-						final var type = json.getAsJsonObject().get("type");
-						final var event = json.getAsJsonObject().get("event");
-						if (type != null) {
-							final var eventString = type.getAsString();
-							if (eventTypes.containsKey(eventString)) {
-								return gsonwithAdapter.fromJson(event, eventTypes.get(eventString));
-								// for SEFFModelPassed, type of entity is erased at this point, i guess. 
-							} else {
-								throw new RuntimeException("Unknown message type: " + type);
-							}
-						}
-					}
-					throw new RuntimeException("Failed to parse message: " + json);
-				}
-
-			});
-
-			builder.registerTypeHierarchyAdapter(EventAndType.class, new JsonSerializer<EventAndType>() {
-
-				@Override
-				public JsonElement serialize(final EventAndType src, final Type typeOfSrc,
-						final JsonSerializationContext context) {
-					final JsonObject obj = new JsonObject();
-					obj.addProperty("type", src.getType());
-					final JsonElement e = gsonwithAdapter.toJsonTree(src.getEvent());
-					obj.add("event", e);
-
-					return obj;
-				}
-
-			});
-
-			gson = builder.create();
 		}
 
 		/**
@@ -281,9 +235,7 @@ public final class SerializingCamera extends Camera {
 		 */
 		public String serialize(final Set<DESEvent> events) {
 
-			final Set<EventAndType> eventsWithTypes = createEventAndTypes(events);
-
-			final String eventJsonString = gson.toJson(eventsWithTypes);
+			final String eventJsonString = gsonwithAdapter.toJson(this.cleanseEventSet(events));
 
 			System.out.println(eventJsonString);
 
@@ -311,10 +263,9 @@ public final class SerializingCamera extends Camera {
 
 				final String readString = Files.readString(file.toPath());
 				
-				final Type set2Type = new TypeToken<Set<EventAndType>>() {
-				}.getType();
+				final Type set2Type = new TypeToken<Set<DESEvent>>() {}.getType();
 
-				final Set<DESEvent> events2 = gson.fromJson(readString, set2Type);
+				final Set<DESEvent> events2 = gsonwithAdapter.fromJson(readString, set2Type);
 
 				return events2;
 			} catch (final IOException e) {
@@ -329,8 +280,8 @@ public final class SerializingCamera extends Camera {
 		 * @param events
 		 * @return
 		 */
-		private Set<EventAndType> createEventAndTypes(final Set<DESEvent> events) {
-			final Set<EventAndType> eventsWithTypes = new HashSet<>();
+		private Set<DESEvent> cleanseEventSet(final Set<DESEvent> events) {
+			final Set<DESEvent> eventsWithTypes = new HashSet<>();
 			final Set<Class<?>> skip = Set.of(SnapshotInitiated.class, SnapshotTaken.class, SnapshotFinished.class,
 					ProbeTaken.class, SimulationFinished.class, MeasurementMade.class, MeasurementUpdated.class, TakeCostMeasurement.class,
 					IntervalPassed.class, ProcessorSharingJobProgressed.class);
@@ -342,7 +293,7 @@ public final class SerializingCamera extends Camera {
 
 			for (final DESEvent event : events) {
 				if (!skip.contains(event.getClass())) {
-					eventsWithTypes.add(new EventAndType(event, event.getClass().getCanonicalName()));
+					eventsWithTypes.add(event);
 				}
 			}
 			return eventsWithTypes;
