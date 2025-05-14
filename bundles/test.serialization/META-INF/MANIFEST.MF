@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: TestSerialization
+Bundle-SymbolicName: test.serialization
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: test.serialization
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: com.google.gson,
+ org.palladiosimulator.pcm,
+ org.palladiosimulator.analyzer.slingshot.common,
+ org.palladiosimulator.analyzer.slingshot.eventdriver,
+ org.palladiosimulator.analyzer.slingshot.snapshot.serialization,
+ org.palladiosimulator.analyzer.slingshot.core
+Import-Package: org.apache.log4j

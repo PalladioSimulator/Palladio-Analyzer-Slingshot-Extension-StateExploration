@@ -18,6 +18,12 @@ import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.EObjectTypeAdapter;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.TypeTokenTypeAdapter;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.DESEventTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.ElistTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.EntityTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.OptionalTypeAdapterFactory;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 import org.palladiosimulator.pcm.usagemodel.ClosedWorkload;
@@ -35,13 +41,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 
-import spielwiese.version2.adapters.EObjectTypeAdapter;
-import spielwiese.version2.adapters.TypeTokenTypeAdapter;
-import spielwiese.version2.factories.DESEventTypeAdapterFactory;
-import spielwiese.version2.factories.ElistTypeAdapterFactory;
-import spielwiese.version2.factories.NonParameterizedCustomizedTypeAdapterFactory2;
-import spielwiese.version2.factories.OptionalTypeAdapterFactory;
-import spielwiese.version2.factories.SpecialLoopResolvingTypeAdapterFactory3;
+import spielwiese.SpecialLoopResolvingTypeAdapterFactory3;
+
 
 public class Main {
 
@@ -71,7 +72,7 @@ public class Main {
 
 		adaptereBuilder.registerTypeAdapterFactory(new SpecialLoopResolvingTypeAdapterFactory3(objs, thingTypes));
 		
-		adaptereBuilder.registerTypeAdapterFactory(new NonParameterizedCustomizedTypeAdapterFactory2(Set.of(Thing.class),objs, thingTypes));
+		adaptereBuilder.registerTypeAdapterFactory(new EntityTypeAdapterFactory(Set.of(Thing.class),objs, thingTypes));
 		adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory());
 		adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
 		

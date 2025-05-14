@@ -96,6 +96,15 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.ClassTypeAdapter;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.EObjectTypeAdapter;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.TypeTokenTypeAdapter;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.DESEventTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.ElistTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.EntityTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.OptionalTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.SEFFBehaviourContextHolderTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.SEFFBehaviourWrapperTypeAdapterFactory;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.measurementframework.MeasuringValue;
 import org.palladiosimulator.metricspec.metricentity.MetricEntity;
@@ -104,16 +113,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
-
-import spielwiese.version2.adapters.ClassTypeAdapter;
-import spielwiese.version2.adapters.EObjectTypeAdapter;
-import spielwiese.version2.adapters.TypeTokenTypeAdapter;
-import spielwiese.version2.factories.DESEventTypeAdapterFactory;
-import spielwiese.version2.factories.ElistTypeAdapterFactory;
-import spielwiese.version2.factories.NonParameterizedCustomizedTypeAdapterFactory2;
-import spielwiese.version2.factories.OptionalTypeAdapterFactory;
-import spielwiese.version2.factories.SEFFBehaviourContextHolderTypeAdapterFactory;
-import spielwiese.version2.factories.SEFFBehaviourWrapperTypeAdapterFactory;
 
 /**
  * 
@@ -216,7 +215,7 @@ public final class SerializingCamera extends Camera {
 
 			// register factories
 			adaptereBuilder.registerTypeAdapterFactory(
-					new NonParameterizedCustomizedTypeAdapterFactory2(applicableClasses(), objs, thingTypes));
+					new EntityTypeAdapterFactory(applicableClasses(), objs, thingTypes));
 
 			referenceToOptionalTypeFactory = new OptionalTypeAdapterFactory();
 			adaptereBuilder.registerTypeAdapterFactory(referenceToOptionalTypeFactory);
@@ -300,7 +299,7 @@ public final class SerializingCamera extends Camera {
 		}
 
 		/**
-		 * Classes listed here get (de)serialized by {@link NonParameterizedCustomizedTypeAdapterFactory2}
+		 * Classes listed here get (de)serialized by {@link EntityTypeAdapterFactory}
 		 * @return
 		 */
 		private Set<Class<?>> applicableClasses() {
@@ -321,7 +320,7 @@ public final class SerializingCamera extends Camera {
 			set.add(CallOverWireRequest.class);
 			set.add(Job.class);
 
-			// might work without
+			
 			set.add(ThinkTime.class);
 
 			set.add(MetricEntity.class); // maybe optimize with dedicated type adapter

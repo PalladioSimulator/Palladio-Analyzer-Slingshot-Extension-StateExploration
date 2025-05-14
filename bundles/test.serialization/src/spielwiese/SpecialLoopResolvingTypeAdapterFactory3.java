@@ -1,4 +1,4 @@
-package spielwiese.version2.factories;
+package spielwiese;
 
 import java.io.IOException;
 import java.lang.reflect.Field;

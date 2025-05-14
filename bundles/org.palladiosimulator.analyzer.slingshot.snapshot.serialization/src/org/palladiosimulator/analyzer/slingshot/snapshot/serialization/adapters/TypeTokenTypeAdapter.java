@@ -1,6 +1,8 @@
-package spielwiese.version2.adapters;
+package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters;
 
 import java.io.IOException;
+
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util.Shareables;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonParseException;
@@ -21,14 +23,12 @@ public class TypeTokenTypeAdapter extends TypeAdapter<TypeToken<?>> {
 
 	@Override
 	public TypeToken<?> read(final JsonReader in) throws IOException {
-
 		final String s = in.nextString();
 		
 		try {
-			final Class<?> clazz = Class.forName(s);
-			return new TypeToken<>() {}.resolveType(Class.forName(s));
+			return new TypeToken<>() {}.resolveType(Shareables.getClassHelper(s));
 		} catch (final ClassNotFoundException e) {
-			throw new JsonParseException("cannot map typetoken" + s + " to type token class.", e);
+			throw new JsonParseException("Could not create TypeToke, failed to parse" + s + " to java class.", e);
 		}
 	}
 

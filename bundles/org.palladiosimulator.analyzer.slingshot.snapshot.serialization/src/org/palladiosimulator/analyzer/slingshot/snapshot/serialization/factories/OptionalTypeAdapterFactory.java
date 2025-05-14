@@ -1,4 +1,4 @@
-package spielwiese.version2.factories;
+package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,7 +23,9 @@ import com.google.gson.stream.JsonWriter;
 
 /**
  * 
- * @author https://stackoverflow.com/questions/11271375/gson-custom-seralizer-for-one-variable-of-many-in-an-object-using-typeadapter
+ * Factory to create {@link TypeAdapter}s for {@link Optional}.
+ * 
+ * @author Sophie Stieß
  * 
  */
 public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
@@ -31,7 +33,7 @@ public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
 	public static final String OPTIONAL_VALUE_FIELD = "value";
 	public static final String OPTIONAL_EMPTY = "empty";
 	public static final String REFERENCE_FIELD = "ref"; 
-	public static final String FIELD_NAME_CLASS = NonParameterizedCustomizedTypeAdapterFactory2.FIELD_NAME_CLASS; // must remain equal. 
+	public static final String FIELD_NAME_CLASS = EntityTypeAdapterFactory.FIELD_NAME_CLASS; // must remain equal. 
 
 	private final Map<String, TypeAdapter<?>> optionalValuesDelegators = new HashMap<>();
 
@@ -68,9 +70,6 @@ public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
 					elementAdapter.write(out, null);
 					return;
 				}
-
-				// dangerous, hash of optional is hash of value.
-				final String refId = String.valueOf(value.hashCode());
 
 				final JsonObject obj = new JsonObject();
 

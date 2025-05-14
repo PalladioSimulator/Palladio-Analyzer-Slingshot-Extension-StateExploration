@@ -1,4 +1,4 @@
-package spielwiese.version2.factories;
+package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -26,6 +26,7 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.sce
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.scenariobehavior.UsageScenarioBehaviorContext;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.entities.SlingshotMeasuringValue;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementUpdated.MeasurementUpdateInformation;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util.Shareables;
 import org.palladiosimulator.measurementframework.BasicMeasurement;
 import org.palladiosimulator.measurementframework.MeasuringValue;
 import org.palladiosimulator.measurementframework.TupleMeasurement;
@@ -45,13 +46,19 @@ import com.google.gson.stream.JsonWriter;
 
 /**
  * 
- * @author https://stackoverflow.com/questions/11271375/gson-custom-seralizer-for-one-variable-of-many-in-an-object-using-typeadapter
+ * Factory to create {@link TypeAdapter}s for any slingshot entities.
+ * 
+ * Notable, the adapters include the entities runtime type into the JSON, and
+ * use references if an object is referenced by multiple other objects.
+ * 
+ * @author Sophie Stieß
  * 
  */
-public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapterFactory {
+public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 
 	public static final String FIELD_NAME_CLASS = "class";
 	public static final String FIELD_NAME_ID_FOR_REFERENCE = "refId";
+	public static final String FIELD_NAME_OBJECT = "obj";
 
 	
 	private final Set<Class<?>> customizedClasses;
@@ -66,7 +73,7 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 	 * @param done
 	 * @param thingTypes
 	 */
-	public NonParameterizedCustomizedTypeAdapterFactory2(final Set<Class<?>> customizables, final Map<String, Object> done, final Map<String, TypeAdapter<?>> thingTypes) {
+	public EntityTypeAdapterFactory(final Set<Class<?>> customizables, final Map<String, Object> done, final Map<String, TypeAdapter<?>> thingTypes) {
 		this.done = done;
 		this.thingTypes = thingTypes;
 		this.customizedClasses = customizables;
@@ -115,10 +122,7 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 		thingTypes.put("UserRequest", gson.getDelegateAdapter(this, new TypeToken<UserRequest>() {}));
 		thingTypes.put("RootScenarioContext", gson.getDelegateAdapter(this, new TypeToken<RootScenarioContext>() {}));
 		thingTypes.put("GeneralEntryRequest", gson.getDelegateAdapter(this, new TypeToken<GeneralEntryRequest>() {})); 
-
 		thingTypes.put("ThinkTime", gson.getDelegateAdapter(this, new TypeToken<ThinkTime>() {})); 
-		
-
 		thingTypes.put("MeasurementUpdateInformation", gson.getDelegateAdapter(this, new TypeToken<MeasurementUpdateInformation>() {})); 
 	}
 
@@ -139,7 +143,7 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 					elementAdapter.write(out, new JsonPrimitive((String) value));
 				}
 
-				final String refId = String.valueOf(value.hashCode())+"$"+value.getClass().hashCode();
+				final String refId = Shareables.getReferenceId(value);
 				
 				if (alreadyJsoned.contains(refId)) {
 					elementAdapter.write(out, new JsonPrimitive(refId));
@@ -150,7 +154,7 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 					obj.addProperty(FIELD_NAME_CLASS, value.getClass().getSimpleName());
 					obj.addProperty(FIELD_NAME_ID_FOR_REFERENCE, refId);
 					
-					obj.add("obj", delegate.toJsonTree(value));
+					obj.add(FIELD_NAME_OBJECT, delegate.toJsonTree(value));
 					
 
 					elementAdapter.write(out, obj);
@@ -179,7 +183,7 @@ public class NonParameterizedCustomizedTypeAdapterFactory2 implements TypeAdapte
 					throw new JsonParseException("Missing Type mapping for " + tt);
 				}
 				
-				final R element = (R) thingTypes.get(tt).fromJsonTree(jsonObj.get("obj"));
+				final R element = (R) thingTypes.get(tt).fromJsonTree(jsonObj.get(FIELD_NAME_OBJECT));
 				done.put(id, element);
 				 
 				return element;

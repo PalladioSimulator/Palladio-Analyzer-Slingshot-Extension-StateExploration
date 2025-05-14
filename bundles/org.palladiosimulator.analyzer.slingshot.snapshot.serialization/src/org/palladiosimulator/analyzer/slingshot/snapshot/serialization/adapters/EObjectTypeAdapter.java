@@ -1,4 +1,4 @@
-package spielwiese.version2.adapters;
+package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters;
 
 import java.io.IOException;
 
@@ -30,8 +30,6 @@ public class EObjectTypeAdapter extends TypeAdapter<EObject> {
 	@Override
 	public EObject read(final JsonReader in) throws IOException {
 		final String s = in.nextString();
-		final EObject obj = EMFLoadHelper.loadAndResolveEObject(set, s);
-		return obj;
+		return EMFLoadHelper.loadAndResolveEObject(set, s);
 	}
-
 }

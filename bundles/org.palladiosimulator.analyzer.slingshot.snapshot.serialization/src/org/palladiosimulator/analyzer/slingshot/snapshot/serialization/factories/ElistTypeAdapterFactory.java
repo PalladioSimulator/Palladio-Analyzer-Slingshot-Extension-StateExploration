@@ -1,4 +1,4 @@
-package spielwiese.version2.factories;
+package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories;
 
 import java.io.IOException;
 
@@ -16,6 +16,10 @@ import com.google.gson.stream.JsonWriter;
 
 
 /**
+ *  
+ * Factory to create {@link TypeAdapter}s for {@link EList}s, because normal collection adapters cannot handle those lists.
+ * 
+ * The adapter is only of {@link EList}s that contain {@link EObject}s.
  * 
  * @author Sophie Stieß
  */

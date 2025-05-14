@@ -1,4 +1,4 @@
-package spielwiese.version2.factories;
+package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -17,10 +17,20 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 /**
- * Delegate actual Serialization, but resolve looping reference between {@link SeffBehaviorContextHolder} and {@link SeffBehaviorWrapper}.
+ * 
+ * Factory to create {@link TypeAdapter}s for {@link SeffBehaviorContextHolder}.
+ * 
+ * The adapter delegates actual serialization and resolve looping reference
+ * between {@link SeffBehaviorContextHolder} and {@link SeffBehaviorWrapper}.
+ * 
+ * @author Sophie Stieß
  * 
  */
 public class SEFFBehaviourContextHolderTypeAdapterFactory implements TypeAdapterFactory {
+	
+	private static final String FIELD_NAME_BEHAVIORS = "behaviors";
+	private static final String FIELD_NANME_CONTEXT = "context";
+	
 
 	private final Map<String, TypeAdapter<?>> thingTypes;
 
@@ -60,13 +70,13 @@ public class SEFFBehaviourContextHolderTypeAdapterFactory implements TypeAdapter
 				final SeffBehaviorContextHolder contextHolder = delegate.read(in);
 
 				try {
-					final Field behavioursField = SeffBehaviorContextHolder.class.getDeclaredField("behaviors");
+					final Field behavioursField = SeffBehaviorContextHolder.class.getDeclaredField(FIELD_NAME_BEHAVIORS);
 					behavioursField.setAccessible(true);
 					final List<SeffBehaviorWrapper> behaviors = (List<SeffBehaviorWrapper>) behavioursField.get(contextHolder);
 
 					for (final SeffBehaviorWrapper wrapper : behaviors) {
 						if (wrapper != null) {
-							final Field contextField = SeffBehaviorWrapper.class.getDeclaredField("context");
+							final Field contextField = SeffBehaviorWrapper.class.getDeclaredField(FIELD_NANME_CONTEXT);
 							contextField.setAccessible(true);
 							contextField.set(wrapper, contextHolder);
 							contextField.setAccessible(false);

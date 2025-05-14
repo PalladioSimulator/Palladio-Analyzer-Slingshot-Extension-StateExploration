@@ -25,7 +25,8 @@ Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.slingshot.monitor.data,
  org.palladiosimulator.analyzer.slingshot.behavior.usageevolution,
  org.palladiosimulator.probeframework;bundle-version="5.1.0",
- org.palladiosimulator.spd
+ org.palladiosimulator.spd,
+ org.palladiosimulator.analyzer.slingshot.snapshot.serialization
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot.api,
  org.palladiosimulator.analyzer.slingshot.snapshot.configuration,
  org.palladiosimulator.analyzer.slingshot.snapshot.entities,
