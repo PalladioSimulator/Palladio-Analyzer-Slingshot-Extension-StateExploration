@@ -108,6 +108,7 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.measurementframework.MeasuringValue;
 import org.palladiosimulator.metricspec.metricentity.MetricEntity;
+import org.palladiosimulator.pcm.seff.impl.StopActionImpl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -217,7 +218,7 @@ public final class SerializingCamera extends Camera {
 			adaptereBuilder.registerTypeAdapterFactory(
 					new EntityTypeAdapterFactory(applicableClasses(), objs, thingTypes, Set.of()));
 
-			referenceToOptionalTypeFactory = new OptionalTypeAdapterFactory();
+			referenceToOptionalTypeFactory = new OptionalTypeAdapterFactory(createTypeSetOptionals());
 			adaptereBuilder.registerTypeAdapterFactory(referenceToOptionalTypeFactory);
 			adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
 			
@@ -226,6 +227,15 @@ public final class SerializingCamera extends Camera {
 
 			gsonwithAdapter = adaptereBuilder.create();
 		}
+		
+		
+		private Set<Class<?>> createTypeSetOptionals(){
+			return Set.of(StopActionImpl.class,
+					CallOverWireRequest.class,
+					SeffBehaviorWrapper.class,
+					SEFFInterpretationContext.class);
+		}
+		
 
 		/**
 		 * 
