@@ -215,7 +215,7 @@ public final class SerializingCamera extends Camera {
 
 			// register factories
 			adaptereBuilder.registerTypeAdapterFactory(
-					new EntityTypeAdapterFactory(applicableClasses(), objs, thingTypes));
+					new EntityTypeAdapterFactory(applicableClasses(), objs, thingTypes, Set.of()));
 
 			referenceToOptionalTypeFactory = new OptionalTypeAdapterFactory();
 			adaptereBuilder.registerTypeAdapterFactory(referenceToOptionalTypeFactory);

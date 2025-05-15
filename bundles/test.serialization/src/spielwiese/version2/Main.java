@@ -72,7 +72,7 @@ public class Main {
 
 		adaptereBuilder.registerTypeAdapterFactory(new SpecialLoopResolvingTypeAdapterFactory3(objs, thingTypes));
 		
-		adaptereBuilder.registerTypeAdapterFactory(new EntityTypeAdapterFactory(Set.of(Thing.class),objs, thingTypes));
+		adaptereBuilder.registerTypeAdapterFactory(new EntityTypeAdapterFactory(Set.of(Thing.class),objs, thingTypes, Set.of(Thing.class, OptionalThing.class)));
 		adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory());
 		adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
 		
@@ -152,6 +152,7 @@ public class Main {
 		final EListThing elistThing1 = new EListThing(model.getUsageScenario_UsageModel().get(0).getScenarioBehaviour_UsageScenario().getActions_ScenarioBehaviour());
 		
 		final OptionalThing<Thing> optionalThing1 = new OptionalThing<>(thing1);
+		final OptionalThing<Thing> optionalThing11 = new OptionalThing<>(thing1);
 		final OptionalThing<Optional<Thing>> optionalThing2 = new OptionalThing<>(Optional.of(thing1));
 		final OptionalThing<Thing> optionalThing3 = new OptionalThing<>(null);
 		final OptionalThing<UsageModel> optionalThing4 = new OptionalThing<>(model);
@@ -161,8 +162,10 @@ public class Main {
 //		events.add(new SimulationStarted());
 //		events.add(new SimulationFinished());
 //		events.add(new PCMEvent(model, loopParent));
-//		events.add(new PCMEvent(model, optionalThing1));
-//		events.add(new PCMEvent(model, optionalThing2));
+		events.add(new PCMEvent(model, optionalThing1));
+		events.add(new PCMEvent(model, thing1));
+		events.add(new PCMEvent(model, thing2));
+		events.add(new PCMEvent(model, optionalThing11));
 //		events.add(new PCMEvent(model, optionalThing3));
 //		events.add(new PCMEvent(model, optionalThing4));
 //		events.add(new PCMEvent(model, pcmThing1));
@@ -171,10 +174,10 @@ public class Main {
 //		events.add(new PCMEvent(model, thing4));
 		
 //		events.add(new GenericPCMEvent(model));
-		events.add(new GenericPCMEvent2<>(thing1));
-		events.add(new GenericPCMEvent2<>(model));
-		events.add(new GenericPCMEvent2<>(model));
-		events.add(new GenericPCMEvent2<>(model.getUsageScenario_UsageModel().get(0)));
+//		events.add(new GenericPCMEvent2<>(model));
+//		events.add(new GenericPCMEvent2<>(model.getUsageScenario_UsageModel().get(0)));
+//		events.add(new GenericPCMEvent2<>(model));
+//		events.add(new GenericPCMEvent2<>(thing1));
 		
 		return events;
 	}

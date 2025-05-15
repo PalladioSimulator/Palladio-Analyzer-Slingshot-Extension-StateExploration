@@ -44,7 +44,7 @@ public class SEFFBehaviourWrapperTypeAdapterFactory implements TypeAdapterFactor
 	@Override
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		if (SeffBehaviorWrapper.class.isAssignableFrom(type.getRawType())) {
-			final String className = type.getRawType().getSimpleName();
+			final String className = type.getRawType().getCanonicalName();
 			// TODO: REMOVE
 			if (!thingTypes.containsKey(className)) {
 				thingTypes.put(className, gson.getDelegateAdapter(this, type)); // skips "this"

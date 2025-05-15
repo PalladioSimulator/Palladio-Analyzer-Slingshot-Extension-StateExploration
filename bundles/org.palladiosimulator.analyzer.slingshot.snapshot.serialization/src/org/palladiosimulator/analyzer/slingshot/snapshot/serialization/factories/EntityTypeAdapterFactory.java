@@ -65,33 +65,32 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 	
 	private final Map<String, Object> done;
 	private final Map<String, TypeAdapter<?>> thingTypes;
+	private final Set<Class<?>> classes; 
 	
 	final Set<String> alreadyJsoned = new HashSet<>(); 
 
 	/**
 	 * 
+	 * TODO: merge customizables and classes? 
+	 * 
 	 * @param done
 	 * @param thingTypes
 	 */
-	public EntityTypeAdapterFactory(final Set<Class<?>> customizables, final Map<String, Object> done, final Map<String, TypeAdapter<?>> thingTypes) {
+	public EntityTypeAdapterFactory(final Set<Class<?>> customizables, final Map<String, Object> done, final Map<String, TypeAdapter<?>> thingTypes, final Set<Class<?>> classes) {
 		this.done = done;
 		this.thingTypes = thingTypes;
 		this.customizedClasses = customizables;
-		
-		
+		this.classes = classes;
 	}
 
 	@Override
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		if (thingTypes.isEmpty()) {
 			initThingTypes(gson);
+			initThingTypes2(gson, classes);
 		}
 		for (final Class<?> clazz : customizedClasses) {
 			if (clazz.isAssignableFrom(type.getRawType())) {
-//				final String className = type.getRawType().getSimpleName();
-//				if (!thingTypes.containsKey(className)) {
-//					thingTypes.put(className, gson.getDelegateAdapter(this, type)); // skips "this" 
-//				}
 				return customizeMyClassAdapter(gson, type);
 			}
 		}
@@ -125,6 +124,14 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 		thingTypes.put("ThinkTime", gson.getDelegateAdapter(this, new TypeToken<ThinkTime>() {})); 
 		thingTypes.put("MeasurementUpdateInformation", gson.getDelegateAdapter(this, new TypeToken<MeasurementUpdateInformation>() {})); 
 	}
+	
+	
+	
+	private void initThingTypes2(final Gson gson, final Set<Class<?>> classes) {		
+		for (final Class<?> clazz : classes) {
+			thingTypes.put(clazz.getCanonicalName(), gson.getDelegateAdapter(this, TypeToken.get(clazz)));			
+		}
+	}
 
 	private <R> TypeAdapter<R> customizeMyClassAdapter(final Gson gson, final TypeToken<R> type) {
 		final TypeAdapter<R> delegate = gson.getDelegateAdapter(this, type);
@@ -151,7 +158,7 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 					alreadyJsoned.add(refId);
 					final JsonObject obj = new JsonObject();
 
-					obj.addProperty(FIELD_NAME_CLASS, value.getClass().getSimpleName());
+					obj.addProperty(FIELD_NAME_CLASS, value.getClass().getCanonicalName());
 					obj.addProperty(FIELD_NAME_ID_FOR_REFERENCE, refId);
 					
 					obj.add(FIELD_NAME_OBJECT, delegate.toJsonTree(value));
