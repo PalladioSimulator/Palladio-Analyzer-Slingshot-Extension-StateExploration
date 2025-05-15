@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ActiveResourceStateUpdated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobAborted;
@@ -35,6 +36,8 @@ import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entiti
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.CallOverWireRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.ResourceDemandRequest;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.SEFFInterpretationContext;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.BranchBehaviorContextHolder;
+import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.RootBehaviorContextHolder;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorContextHolder;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorWrapper;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.user.RequestProcessingContext;
@@ -58,7 +61,10 @@ import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.I
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.ThinkTime;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.User;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.UserRequest;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.ClosedWorkloadUserInterpretationContext;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.OpenWorkloadUserInterpretationContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.UserInterpretationContext;
+import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.scenariobehavior.RootScenarioContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.scenariobehavior.UsageScenarioBehaviorContext;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
 import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InnerScenarioBehaviorInitiated;
@@ -81,6 +87,7 @@ import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigu
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
+import org.palladiosimulator.analyzer.slingshot.monitor.data.entities.SlingshotMeasuringValue;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementMade;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementUpdated;
@@ -106,7 +113,9 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories
 import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.SEFFBehaviourContextHolderTypeAdapterFactory;
 import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.SEFFBehaviourWrapperTypeAdapterFactory;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
+import org.palladiosimulator.measurementframework.BasicMeasurement;
 import org.palladiosimulator.measurementframework.MeasuringValue;
+import org.palladiosimulator.measurementframework.TupleMeasurement;
 import org.palladiosimulator.metricspec.metricentity.MetricEntity;
 import org.palladiosimulator.pcm.seff.impl.StopActionImpl;
 
@@ -193,12 +202,7 @@ public final class SerializingCamera extends Camera {
 		private final Map<String, Object> objs = new HashMap<>();
 		private final Map<String, TypeAdapter<?>> thingTypes = new HashMap<>();
 
-		private final Map<String, Class<? extends DESEvent>> eventTypes = createTypeMap();
-
-		private final Gson gsonwithAdapter;
-
-
-		OptionalTypeAdapterFactory referenceToOptionalTypeFactory;
+		private final Gson gson;
 		
 		public Serializer(final ResourceSet set) {
 			// Create Gsons
@@ -216,18 +220,45 @@ public final class SerializingCamera extends Camera {
 
 			// register factories
 			adaptereBuilder.registerTypeAdapterFactory(
-					new EntityTypeAdapterFactory(applicableClasses(), objs, thingTypes, Set.of()));
+					new EntityTypeAdapterFactory(applicableClasses(), objs, thingTypes, createTypeSetEntities()));
 
-			referenceToOptionalTypeFactory = new OptionalTypeAdapterFactory(createTypeSetOptionals());
-			adaptereBuilder.registerTypeAdapterFactory(referenceToOptionalTypeFactory);
+			adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory(createTypeSetOptionals()));
 			adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
 			
 
 			adaptereBuilder.registerTypeAdapterFactory(new DESEventTypeAdapterFactory());
 
-			gsonwithAdapter = adaptereBuilder.create();
+			gson = adaptereBuilder.create();
 		}
 		
+		
+		private Set<Class<?>> createTypeSetEntities(){
+			return Set.of(UserInterpretationContext.class,
+					MetricEntity.class,
+					BasicMeasurement.class,
+					User.class,
+					MeasuringValue.class,
+					SlingshotMeasuringValue.class,
+					OpenWorkloadUserInterpretationContext.class,
+					ClosedWorkloadUserInterpretationContext.class,
+					ResourceDemandRequest.class,
+					CallOverWireRequest.class,
+					SeffBehaviorWrapper.class,
+					SEFFInterpretationContext.class,
+					RequestProcessingContext.class,
+					RootBehaviorContextHolder.class,
+					TupleMeasurement.class,
+					UsageScenarioBehaviorContext.class,
+					ActiveJob.class,
+					BranchBehaviorContextHolder.class,
+					Job.class,
+					SeffBehaviorContextHolder.class,
+					UserRequest.class,
+					RootScenarioContext.class,
+					GeneralEntryRequest.class,
+					ThinkTime.class,
+					MeasurementUpdateInformation.class);
+		}
 		
 		private Set<Class<?>> createTypeSetOptionals(){
 			return Set.of(StopActionImpl.class,
@@ -244,7 +275,7 @@ public final class SerializingCamera extends Camera {
 		 */
 		public String serialize(final Set<DESEvent> events) {
 
-			final String eventJsonString = gsonwithAdapter.toJson(this.cleanseEventSet(events));
+			final String eventJsonString = gson.toJson(this.cleanseEventSet(events));
 
 			System.out.println(eventJsonString);
 
@@ -274,7 +305,7 @@ public final class SerializingCamera extends Camera {
 				
 				final Type set2Type = new TypeToken<Set<DESEvent>>() {}.getType();
 
-				final Set<DESEvent> events2 = gsonwithAdapter.fromJson(readString, set2Type);
+				final Set<DESEvent> events2 = gson.fromJson(readString, set2Type);
 
 				return events2;
 			} catch (final IOException e) {
