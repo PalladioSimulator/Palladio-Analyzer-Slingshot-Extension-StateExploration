@@ -63,10 +63,10 @@ import com.google.gson.reflect.TypeToken;
 public final class SerializingCamera extends Camera {
 	
 	private final Path location;
-	private final String fileName = "events.json";
+	private final static String fileName = "events.json";
 	
 	private final PCMResourceSetPartition partition;
-
+	
 	public SerializingCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
 			final PCMResourceSetPartition partition, final Collection<SPDAdjustorStateValues> policyIdToValues) {
 		super(record, engine, policyIdToValues);
@@ -90,9 +90,9 @@ public final class SerializingCamera extends Camera {
 	/**   
 	 * TODO
 	 */
-	public Set<DESEvent> read(final File file) {
+	public Set<DESEvent> deserialize(final String string) {
 		return (new Serializer(partition.getAllocation().eResource().getResourceSet()))
-				.deserialize(file);
+				.deserialize(string);
 	}
 
 	/**
@@ -102,17 +102,44 @@ public final class SerializingCamera extends Camera {
 	 * @return Set of events for recreating the state.
 	 */
 	private Set<DESEvent> snapEvents() {
-		this.serializeEvents();
-		final Set<DESEvent> clonedEvents = this.read(location.toFile());
-		clonedEvents.addAll(additionalEvents); // they are not cloned. maybe problematic? but we didn't clone them earlier either. 
+
+		final Set<DESEvent> todoEvents = Set.copyOf(this.collectRelevantEvents());
+		todoEvents.addAll(additionalEvents); 
+		
+		final String eventsAsString = this.serializeEvents(todoEvents);
+		final Set<DESEvent> clonedEvents = this.deserialize(eventsAsString);
 		return clonedEvents;
 	}
 	
-	private String serializeEvents() {	
-		final Set<DESEvent> offsettedEvents = collectRelevantEvents();
-
+	private String serializeEvents(final Set<DESEvent> events) {	
 		return (new Serializer(partition.getAllocation().eResource().getResourceSet()))
-				.serialize(offsettedEvents);
+				.serialize(events);
+	}
+	
+	/**
+	 * 
+	 * @param string
+	 */
+	private void write(final String string) {
+		LOGGER.debug("save json to " + location.toFile().toString());
+
+		try (final BufferedWriter writer = new BufferedWriter(new FileWriter(location.toFile()))) {
+			writer.write(string);
+			writer.flush();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String read(final File file) {
+		LOGGER.debug("read json from " + file.toString());
+
+		try (final FileReader reader = new FileReader(file)) {
+			return Files.readString(file.toPath());
+		} catch (final IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -135,42 +162,18 @@ public final class SerializingCamera extends Camera {
 		 * @return
 		 */
 		public String serialize(final Set<DESEvent> events) {
-
 			final String eventJsonString = gson.toJson(this.cleanseEventSet(events));
-
-			LOGGER.debug("save json to " + location.toFile().toString());
-
-			try (final BufferedWriter writer = new BufferedWriter(new FileWriter(location.toFile()))) {
-				writer.write(eventJsonString);
-				writer.flush();
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-
 			return eventJsonString;
 		}
 
 		/**
 		 * 
-		 * @param events
-		 * @return
+		 * @param string
+		 * @return 
 		 */
-		public Set<DESEvent> deserialize(final File file) {
-			LOGGER.debug("read json from " + file.toString());
-
-			try (final FileReader reader = new FileReader(file)) {
-
-				final String readString = Files.readString(file.toPath());
-				
+		public Set<DESEvent> deserialize(final String string) {
 				final Type set2Type = new TypeToken<Set<DESEvent>>() {}.getType();
-
-				final Set<DESEvent> events2 = gson.fromJson(readString, set2Type);
-
-				return events2;
-			} catch (final IOException e) {
-				e.printStackTrace();
-				throw new RuntimeException(e);
-			}
+				return gson.fromJson(string, set2Type);
 		}
 
 		/**
