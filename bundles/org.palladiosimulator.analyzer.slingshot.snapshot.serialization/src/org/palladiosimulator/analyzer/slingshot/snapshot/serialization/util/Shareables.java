@@ -19,7 +19,6 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
 
 public final class Shareables {
 
@@ -66,10 +65,6 @@ public final class Shareables {
 	 * @return {@link Gson} object for de/serialising a {@link DESEvent}s.
 	 */
 	public static Gson createGsonForSlingshot(final ResourceSet set) {
-		
-
-		final Map<String, TypeAdapter<?>> thingTypes = new HashMap<>();
-		
 		final GsonBuilder adaptereBuilder = new GsonBuilder();
 
 		// register direct adapters.

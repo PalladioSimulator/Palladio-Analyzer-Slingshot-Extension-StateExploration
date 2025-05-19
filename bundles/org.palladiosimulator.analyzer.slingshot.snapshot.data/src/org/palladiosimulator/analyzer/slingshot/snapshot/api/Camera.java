@@ -31,7 +31,6 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveIn
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.SerializingCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
-import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.pcm.core.CoreFactory;
 import org.palladiosimulator.pcm.core.PCMRandomVariable;
 import org.palladiosimulator.pcm.seff.StartAction;
@@ -64,21 +63,16 @@ public abstract class Camera {
 	/** Access to future events, that must go into the snapshot.*/
 	private final SimulationEngine engine;
 
-	/** Required argument for creating clone helpers*/
-	private final PCMResourceSetPartition set;
-
 	protected final List<DESEvent> additionalEvents = new ArrayList<>();
 	private final Collection<SPDAdjustorStateValues> policyIdToValues;
 	
 	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
 
-	public Camera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
-			final PCMResourceSetPartition set, final Collection<SPDAdjustorStateValues> policyIdToValues) {
+	public Camera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine, final Collection<SPDAdjustorStateValues> policyIdToValues) {
 		this.record = record;
 		this.engine = engine;
 
 		this.policyIdToValues = policyIdToValues;
-		this.set = set;
 		
 		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
 				.on(UsageModelPassedElement.class).then(this::clone)
@@ -95,6 +89,8 @@ public abstract class Camera {
 	
 	/**
 	 * include some more events.
+	 * 
+	 * actually only used for model adjustment requested events.
 	 */
 	public void addEvent(final DESEvent event) {
 		additionalEvents.add(event);

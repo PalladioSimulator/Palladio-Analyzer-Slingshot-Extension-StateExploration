@@ -30,7 +30,7 @@ public final class LessInvasiveInMemoryCamera extends Camera {
 	
 	public LessInvasiveInMemoryCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
 			final PCMResourceSetPartition set, final Collection<SPDAdjustorStateValues> policyIdToValues) {
-		super(record, engine, set, policyIdToValues);
+		super(record, engine, policyIdToValues);
 		this.set = set;
 	}
 

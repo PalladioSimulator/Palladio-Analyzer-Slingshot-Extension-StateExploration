@@ -69,7 +69,7 @@ public final class SerializingCamera extends Camera {
 
 	public SerializingCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
 			final PCMResourceSetPartition partition, final Collection<SPDAdjustorStateValues> policyIdToValues) {
-		super(record, engine, partition, policyIdToValues);
+		super(record, engine, policyIdToValues);
 
 		final String folder = partition.getAllocation().eResource().getURI().trimSegments(1).toFileString();
 		final Path path = FileSystems.getDefault().getPath(folder, fileName);
