@@ -88,13 +88,6 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		//this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
 		this.camera = new SerializingCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
 		this.scheduling = scheduling;
-		
-		
-		
-//		final String loc = "/var/folders/y4/01qwswz94051py5_hwg72_740000gn/T/3326e472-0425-427b-9095-fa42c89e4509/c24f15c2-206f-4ef4-b195-f79b57068c32/events.json";
-//
-//		final Set<DESEvent> deserializedEvents = this.serializingCamera.read(new File(loc));
-//		System.out.println("breakpoint :)");
 	}
 
 	@Subscribe(reified = Start.class)

@@ -138,9 +138,7 @@ public final class SerializingCamera extends Camera {
 
 			final String eventJsonString = gson.toJson(this.cleanseEventSet(events));
 
-			System.out.println(eventJsonString);
-
-			System.out.println("save json to " + location.toFile().toString());
+			LOGGER.debug("save json to " + location.toFile().toString());
 
 			try (final BufferedWriter writer = new BufferedWriter(new FileWriter(location.toFile()))) {
 				writer.write(eventJsonString);
@@ -158,7 +156,7 @@ public final class SerializingCamera extends Camera {
 		 * @return
 		 */
 		public Set<DESEvent> deserialize(final File file) {
-			System.out.println("read json from " + file.toString());
+			LOGGER.debug("read json from " + file.toString());
 
 			try (final FileReader reader = new FileReader(file)) {
 

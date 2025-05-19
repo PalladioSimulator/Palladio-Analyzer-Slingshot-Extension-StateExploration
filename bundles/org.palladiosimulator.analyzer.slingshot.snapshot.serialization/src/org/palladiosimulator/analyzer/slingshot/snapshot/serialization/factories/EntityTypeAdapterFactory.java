@@ -19,7 +19,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-
 /**
  * 
  * Factory to create {@link TypeAdapter}s for any slingshot entities.
@@ -35,16 +34,16 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 	public static final String FIELD_NAME_CLASS = "class";
 	public static final String FIELD_NAME_ID_FOR_REFERENCE = "refId";
 	public static final String FIELD_NAME_OBJECT = "obj";
-	
+
 	private final Map<String, Object> done = new HashMap<>();
 	private final Map<String, TypeAdapter<?>> delegateAdapters = new HashMap<>();
-	private final Set<TypeToken<?>> classes; 
-	
-	final Set<String> alreadyJsoned = new HashSet<>(); 
+	private final Set<TypeToken<?>> classes;
+
+	final Set<String> alreadyJsoned = new HashSet<>();
 
 	/**
 	 * 
-	 * TODO: merge customizables and classes? 
+	 * TODO: merge customizables and classes?
 	 * 
 	 * @param classes
 	 */
@@ -59,23 +58,23 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 				if (delegateAdapters.isEmpty()) {
 					initDelegateAdapters(gson);
 				}
-				
+
 				return customizeMyClassAdapter(gson, type);
 			}
 		}
 		return null;
 	}
-	
-	private void initDelegateAdapters(final Gson gson) {		
+
+	private void initDelegateAdapters(final Gson gson) {
 		for (final TypeToken<?> clazz : classes) {
-			delegateAdapters.put(clazz.getRawType().getCanonicalName(), gson.getDelegateAdapter(this, clazz));			
+			delegateAdapters.put(clazz.getRawType().getCanonicalName(), gson.getDelegateAdapter(this, clazz));
 		}
 	}
 
 	private <R> TypeAdapter<R> customizeMyClassAdapter(final Gson gson, final TypeToken<R> type) {
 		final TypeAdapter<R> delegate = gson.getDelegateAdapter(this, type);
 		final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-				
+
 		return new TypeAdapter<R>() {
 			@Override
 			public void write(final JsonWriter out, final R value) throws IOException {
@@ -83,14 +82,13 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 					elementAdapter.write(out, null);
 					return;
 				}
-				
+
 				if (value instanceof String) {
-					System.out.println("TODO what about strings?");
-					elementAdapter.write(out, new JsonPrimitive((String) value));
+					throw new JsonParseException("this should not have happened.");
 				}
 
 				final String refId = Shareables.getReferenceId(value);
-				
+
 				if (alreadyJsoned.contains(refId)) {
 					elementAdapter.write(out, new JsonPrimitive(refId));
 				} else {
@@ -99,9 +97,8 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 
 					obj.addProperty(FIELD_NAME_CLASS, value.getClass().getCanonicalName());
 					obj.addProperty(FIELD_NAME_ID_FOR_REFERENCE, refId);
-					
+
 					obj.add(FIELD_NAME_OBJECT, delegate.toJsonTree(value));
-					
 
 					elementAdapter.write(out, obj);
 				}
@@ -110,28 +107,29 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 			@Override
 			public R read(final JsonReader in) throws IOException {
 				final JsonElement tree = elementAdapter.read(in);
-				if (!tree.isJsonObject() && done.containsKey(tree.getAsString()) ) {
+				if (!tree.isJsonObject() && done.containsKey(tree.getAsString())) {
 					return (R) done.get(tree.getAsString());
 				}
-				if (!tree.isJsonObject() && !done.containsKey(tree.getAsString()) ) {
+				if (!tree.isJsonObject() && !done.containsKey(tree.getAsString())) {
 					return null;
 				}
 				final JsonObject jsonObj = tree.getAsJsonObject();
-				
+
 				if (!jsonObj.has(FIELD_NAME_ID_FOR_REFERENCE)) {
-					System.out.println("no reference in" + jsonObj.toString());
+					throw new JsonParseException(
+							String.format("No field %s in JSON %s", FIELD_NAME_ID_FOR_REFERENCE, jsonObj.toString()));
 				}
-				
+
 				final String id = jsonObj.get(FIELD_NAME_ID_FOR_REFERENCE).getAsString();
 				final String tt = jsonObj.get(FIELD_NAME_CLASS).getAsString();
-				
+
 				if (!delegateAdapters.containsKey(tt)) {
 					throw new JsonParseException("Missing Type mapping for " + tt);
 				}
-				
+
 				final R element = (R) delegateAdapters.get(tt).fromJsonTree(jsonObj.get(FIELD_NAME_OBJECT));
 				done.put(id, element);
-				 
+
 				return element;
 			}
 		};

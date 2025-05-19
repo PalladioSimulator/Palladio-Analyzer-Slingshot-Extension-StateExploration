@@ -53,7 +53,7 @@ import de.uka.ipd.sdq.scheduler.resources.active.AbstractActiveResource;
  */
 public abstract class Camera {
 
-	public static final Logger LOGGER = Logger.getLogger(Camera.class);
+	protected static final Logger LOGGER = Logger.getLogger(Camera.class);
 	
 	/** Beware: keep in sync with original */
 	private static final String FAKE = "fakeID";
