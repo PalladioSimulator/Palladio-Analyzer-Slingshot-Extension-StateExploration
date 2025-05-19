@@ -36,7 +36,7 @@ public class StateGraph extends SimpleDirectedWeightedGraph<ExploredState, Explo
 	public StateGraph(final ArchitectureConfiguration rootArchConfig) {
 		super(ExploredTransition.class);
 		
-		this.root = new ExploredState(0, rootArchConfig, this, null, new InMemorySnapshot(Set.of()), 0, Set.of());
+		this.root = new ExploredState(0, rootArchConfig, this, null, new InMemorySnapshot(Set.of(), Set.of()), 0, Set.of());
 		this.furthestState = this.root;
 		
 		this.addVertex(root);		

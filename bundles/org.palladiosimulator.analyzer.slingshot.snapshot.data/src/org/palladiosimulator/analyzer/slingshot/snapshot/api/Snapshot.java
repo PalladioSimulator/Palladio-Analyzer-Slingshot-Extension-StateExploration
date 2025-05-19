@@ -41,13 +41,6 @@ public interface Snapshot {
 	public List<ModelAdjustmentRequested> getModelAdjustmentRequestedEvent();
 	
 	/**
-	 *
-	 * @param event {@link ModelAdjustmentRequested} event, that ended the
-	 *              snapshotted state.
-	 */
-	public void addModelAdjustmentRequestedEvent(ModelAdjustmentRequested event);
-	
-	/**
 	 * Get the state of the {@code SPDAdjustorState} at the end of this state.
 	 * 
 	 * Needed start a new simulation run that resumes the simulation at the end of this state.
@@ -55,11 +48,4 @@ public interface Snapshot {
 	 * @return state of the {@code SPDAdjustorState} at the end of this state.
 	 */
 	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues();
-
-	/**
-	 * 
-	 * 
-	 * @param value value to be added to this snapshot
-	 */
-	public void addSPDAdjustorStateValues(final SPDAdjustorStateValues value);
 }

@@ -30,11 +30,12 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.JobRecord;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryRecord;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.SerializingCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
@@ -71,6 +72,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private boolean snapshotIsFinished = false;
 
 	private final LessInvasiveInMemoryRecord recorder;
+	
 	private final Camera camera;
 
 	private final SimulationScheduling scheduling;
@@ -78,12 +80,13 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	@Inject
 	public SnapshotRecordingBehavior(final SimulationEngine engine, final Allocation allocation,
 			final MonitorRepository monitorRepository, final SimulationScheduling scheduling,
-			final PCMResourceSetPartitionProvider set) {
+			final PCMResourceSetPartitionProvider set, final EventsToInitOnWrapper wrapper) {
 		// can i somehow include this in the injection part?
 		// should work with this Model and the 'bind' instruction.
 
 		this.recorder = new LessInvasiveInMemoryRecord();
-		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get());
+		//this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
+		this.camera = new SerializingCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
 		this.scheduling = scheduling;
 	}
 
@@ -179,14 +182,15 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		}
 		this.snapshotIsFinished = true;
 
-		final Snapshot snapshot = camera.takeSnapshot();
-
 		if (snapshotTaken.getTriggeringEvent().isPresent()) {
 			final ModelAdjustmentRequested triggeringeEvent = snapshotTaken.getTriggeringEvent().get();
-			snapshot.addModelAdjustmentRequestedEvent(triggeringeEvent);
+			camera.addEvent(triggeringeEvent);
 		}
+		
+		final Snapshot serializedSnapshot = camera.takeSnapshot();
 
-		return Result.of(new SnapshotFinished(snapshot));
+
+		return Result.of(new SnapshotFinished(serializedSnapshot));
 	}
 
 	/**
