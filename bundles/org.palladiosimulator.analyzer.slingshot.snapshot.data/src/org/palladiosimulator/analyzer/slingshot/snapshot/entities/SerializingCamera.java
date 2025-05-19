@@ -10,76 +10,16 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.ActiveJob;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.entities.jobs.Job;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ActiveResourceStateUpdated;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobAborted;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobFinished;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobProgressed;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.JobScheduled;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.PassiveResourceStateUpdated;
 import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ProcessorSharingJobProgressed;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ResourceDemandCalculated;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SimulationTimeReached;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.GeneralEntryRequest;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.CallOverWireRequest;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.resource.ResourceDemandRequest;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.SEFFInterpretationContext;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.BranchBehaviorContextHolder;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.RootBehaviorContextHolder;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorContextHolder;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.seff.behaviorcontext.SeffBehaviorWrapper;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.entities.user.RequestProcessingContext;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ActiveResourceFinished;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.CallOverWireAborted;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.CallOverWireRequested;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.CallOverWireSucceeded;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.PassiveResourceAcquired;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.PassiveResourceReleased;
 import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.RepositoryInterpretationInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ResourceDemandRequestAborted;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ResourceDemandRequested;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.ResourceRequestFailed;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFChildInterpretationStarted;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFExternalActionCalled;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInfrastructureCalled;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInterpretationFinished;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFInterpretationProgressed;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.SEFFModelPassedElement;
 import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.ThinkTime;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.User;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.UserRequest;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.ClosedWorkloadUserInterpretationContext;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.OpenWorkloadUserInterpretationContext;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.interpretationcontext.UserInterpretationContext;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.scenariobehavior.RootScenarioContext;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.entities.scenariobehavior.UsageScenarioBehaviorContext;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.ClosedWorkloadUserInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InnerScenarioBehaviorInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.InterArrivalUserInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageModelPassedElement;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageScenarioFinished;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UsageScenarioStarted;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserAborted;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserEntryRequested;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserFinished;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserInterpretationProgressed;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserRequestFinished;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserSlept;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserStarted;
-import org.palladiosimulator.analyzer.slingshot.behavior.usagemodel.events.UserWokeUp;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
@@ -87,11 +27,9 @@ import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigu
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.entities.SlingshotMeasuringValue;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementMade;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementUpdated;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementUpdated.MeasurementUpdateInformation;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.ProbeTaken;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.ProcessingTypeRevealed;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.modelvisited.MeasurementSpecificationVisited;
@@ -103,25 +41,10 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.ClassTypeAdapter;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.EObjectTypeAdapter;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.TypeTokenTypeAdapter;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.DESEventTypeAdapterFactory;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.ElistTypeAdapterFactory;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.EntityTypeAdapterFactory;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.OptionalTypeAdapterFactory;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.SEFFBehaviourContextHolderTypeAdapterFactory;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories.SEFFBehaviourWrapperTypeAdapterFactory;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util.Shareables;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
-import org.palladiosimulator.measurementframework.BasicMeasurement;
-import org.palladiosimulator.measurementframework.MeasuringValue;
-import org.palladiosimulator.measurementframework.TupleMeasurement;
-import org.palladiosimulator.metricspec.metricentity.MetricEntity;
-import org.palladiosimulator.pcm.seff.impl.StopActionImpl;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 
 /**
@@ -142,17 +65,17 @@ public final class SerializingCamera extends Camera {
 	private final Path location;
 	private final String fileName = "events.json";
 	
-	private final PCMResourceSetPartition set;
+	private final PCMResourceSetPartition partition;
 
 	public SerializingCamera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine,
-			final PCMResourceSetPartition set, final Collection<SPDAdjustorStateValues> policyIdToValues) {
-		super(record, engine, set, policyIdToValues);
+			final PCMResourceSetPartition partition, final Collection<SPDAdjustorStateValues> policyIdToValues) {
+		super(record, engine, partition, policyIdToValues);
 
-		final String folder = set.getAllocation().eResource().getURI().trimSegments(1).toFileString();
+		final String folder = partition.getAllocation().eResource().getURI().trimSegments(1).toFileString();
 		final Path path = FileSystems.getDefault().getPath(folder, fileName);
 
 		this.location = path;
-		this.set = set;
+		this.partition = partition;
 	}
 
 	@Override
@@ -168,7 +91,7 @@ public final class SerializingCamera extends Camera {
 	 * TODO
 	 */
 	public Set<DESEvent> read(final File file) {
-		return 	(new Serializer(set.getAllocation().eResource().getResourceSet()))
+		return (new Serializer(partition.getAllocation().eResource().getResourceSet()))
 				.deserialize(file);
 	}
 
@@ -188,7 +111,7 @@ public final class SerializingCamera extends Camera {
 	private String serializeEvents() {	
 		final Set<DESEvent> offsettedEvents = collectRelevantEvents();
 
-		return (new Serializer(set.getAllocation().eResource().getResourceSet()))
+		return (new Serializer(partition.getAllocation().eResource().getResourceSet()))
 				.serialize(offsettedEvents);
 	}
 
@@ -199,75 +122,13 @@ public final class SerializingCamera extends Camera {
 	 */
 	public class Serializer {
 
-		private final Map<String, Object> objs = new HashMap<>();
-		private final Map<String, TypeAdapter<?>> thingTypes = new HashMap<>();
-
 		private final Gson gson;
 		
 		public Serializer(final ResourceSet set) {
-			// Create Gsons
-			final GsonBuilder adaptereBuilder = new GsonBuilder();
-
-			// register direct adapters.
-			adaptereBuilder.registerTypeHierarchyAdapter(EObject.class, new EObjectTypeAdapter(set));
-			adaptereBuilder.registerTypeHierarchyAdapter(Class.class, new ClassTypeAdapter());
-			adaptereBuilder.registerTypeHierarchyAdapter(com.google.common.reflect.TypeToken.class,
-					new TypeTokenTypeAdapter());
-
-			// register special factory
-			adaptereBuilder.registerTypeAdapterFactory(new SEFFBehaviourContextHolderTypeAdapterFactory(thingTypes));
-			adaptereBuilder.registerTypeAdapterFactory(new SEFFBehaviourWrapperTypeAdapterFactory(thingTypes));
-
-			// register factories
-			adaptereBuilder.registerTypeAdapterFactory(
-					new EntityTypeAdapterFactory(applicableClasses(), objs, thingTypes, createTypeSetEntities()));
-
-			adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory(createTypeSetOptionals()));
-			adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
-			
-
-			adaptereBuilder.registerTypeAdapterFactory(new DESEventTypeAdapterFactory());
-
-			gson = adaptereBuilder.create();
+			gson = Shareables.createGsonForSlingshot(set);
 		}
 		
 		
-		private Set<Class<?>> createTypeSetEntities(){
-			return Set.of(UserInterpretationContext.class,
-					MetricEntity.class,
-					BasicMeasurement.class,
-					User.class,
-					MeasuringValue.class,
-					SlingshotMeasuringValue.class,
-					OpenWorkloadUserInterpretationContext.class,
-					ClosedWorkloadUserInterpretationContext.class,
-					ResourceDemandRequest.class,
-					CallOverWireRequest.class,
-					SeffBehaviorWrapper.class,
-					SEFFInterpretationContext.class,
-					RequestProcessingContext.class,
-					RootBehaviorContextHolder.class,
-					TupleMeasurement.class,
-					UsageScenarioBehaviorContext.class,
-					ActiveJob.class,
-					BranchBehaviorContextHolder.class,
-					Job.class,
-					SeffBehaviorContextHolder.class,
-					UserRequest.class,
-					RootScenarioContext.class,
-					GeneralEntryRequest.class,
-					ThinkTime.class,
-					MeasurementUpdateInformation.class);
-		}
-		
-		private Set<Class<?>> createTypeSetOptionals(){
-			return Set.of(StopActionImpl.class,
-					CallOverWireRequest.class,
-					SeffBehaviorWrapper.class,
-					SEFFInterpretationContext.class);
-		}
-		
-
 		/**
 		 * 
 		 * @param events
@@ -315,13 +176,13 @@ public final class SerializingCamera extends Camera {
 		}
 
 		/**
-		 * Type the events.
+		 * Create a set of only those events that ought to be serialised and remove all others. 
 		 * 
-		 * @param events
-		 * @return
+		 * @param events all events.
+		 * @return set of events that ought to be serialized.
 		 */
 		private Set<DESEvent> cleanseEventSet(final Set<DESEvent> events) {
-			final Set<DESEvent> eventsWithTypes = new HashSet<>();
+			final Set<DESEvent> cleansed = new HashSet<>();
 			final Set<Class<?>> skip = Set.of(SnapshotInitiated.class, SnapshotTaken.class, SnapshotFinished.class,
 					ProbeTaken.class, SimulationFinished.class, MeasurementMade.class, MeasurementUpdated.class, TakeCostMeasurement.class,
 					IntervalPassed.class, ProcessorSharingJobProgressed.class);
@@ -333,114 +194,10 @@ public final class SerializingCamera extends Camera {
 
 			for (final DESEvent event : events) {
 				if (!skip.contains(event.getClass())) {
-					eventsWithTypes.add(event);
+					cleansed.add(event);
 				}
 			}
-			return eventsWithTypes;
+			return cleansed;
 		}
-
-		/**
-		 * Classes listed here get (de)serialized by {@link EntityTypeAdapterFactory}
-		 * @return
-		 */
-		private Set<Class<?>> applicableClasses() {
-			final Set<Class<?>> set = new HashSet<>();
-
-			set.add(UsageScenarioBehaviorContext.class);
-			set.add(UserInterpretationContext.class);
-			set.add(RequestProcessingContext.class);
-			set.add(UserRequest.class);
-			set.add(User.class); // ????
-
-			// currently looking at
-			set.add(SEFFInterpretationContext.class);
-			set.add(SeffBehaviorWrapper.class);
-			set.add(SeffBehaviorContextHolder.class); // we have special TypeAdapter for this one.
-			set.add(ResourceDemandRequest.class);
-			set.add(GeneralEntryRequest.class);
-			set.add(CallOverWireRequest.class);
-			set.add(Job.class);
-
-			
-			set.add(ThinkTime.class);
-
-			set.add(MetricEntity.class); // maybe optimize with dedicated type adapter
-			set.add(MeasuringValue.class);
-			
-			set.add(MeasurementUpdateInformation.class);
-
-			return set;
-		}
-
-		private Map<String, Class<? extends DESEvent>> createTypeMap() {
-
-			final Map<String, Class<? extends DESEvent>> foo = new HashMap<>();
-
-			foo.put(CallOverWireAborted.class.getCanonicalName(), CallOverWireAborted.class);
-			foo.put(CallOverWireRequested.class.getCanonicalName(), CallOverWireRequested.class);
-			foo.put(CallOverWireSucceeded.class.getCanonicalName(), CallOverWireSucceeded.class);
-			foo.put(SEFFModelPassedElement.class.getCanonicalName(), SEFFModelPassedElement.class);
-			foo.put(UsageModelPassedElement.class.getCanonicalName(), UsageModelPassedElement.class);
-			foo.put(ActiveResourceStateUpdated.class.getCanonicalName(), ActiveResourceStateUpdated.class);
-			foo.put(JobAborted.class.getCanonicalName(), JobAborted.class);
-			foo.put(JobFinished.class.getCanonicalName(), JobFinished.class);
-			foo.put(JobInitiated.class.getCanonicalName(), JobInitiated.class);
-			foo.put(JobProgressed.class.getCanonicalName(), JobProgressed.class);
-			foo.put(ProcessorSharingJobProgressed.class.getCanonicalName(), ProcessorSharingJobProgressed.class);
-			foo.put(ResourceDemandCalculated.class.getCanonicalName(), ResourceDemandCalculated.class);
-			foo.put(ActiveResourceFinished.class.getCanonicalName(), ActiveResourceFinished.class);
-			foo.put(PassiveResourceAcquired.class.getCanonicalName(), PassiveResourceAcquired.class);
-			foo.put(PassiveResourceReleased.class.getCanonicalName(), PassiveResourceReleased.class);
-			foo.put(PassiveResourceStateUpdated.class.getCanonicalName(), PassiveResourceStateUpdated.class);
-			foo.put(ResourceDemandRequestAborted.class.getCanonicalName(), ResourceDemandRequestAborted.class);
-			foo.put(ResourceDemandRequested.class.getCanonicalName(), ResourceDemandRequested.class);
-			foo.put(ResourceRequestFailed.class.getCanonicalName(), ResourceRequestFailed.class);
-			foo.put(SEFFChildInterpretationStarted.class.getCanonicalName(), SEFFChildInterpretationStarted.class);
-			foo.put(SEFFInterpretationFinished.class.getCanonicalName(), SEFFInterpretationFinished.class);
-			foo.put(SEFFInterpretationProgressed.class.getCanonicalName(), SEFFInterpretationProgressed.class);
-			foo.put(ClosedWorkloadUserInitiated.class.getCanonicalName(), ClosedWorkloadUserInitiated.class);
-			foo.put(InnerScenarioBehaviorInitiated.class.getCanonicalName(), InnerScenarioBehaviorInitiated.class);
-			foo.put(InterArrivalUserInitiated.class.getCanonicalName(), InterArrivalUserInitiated.class);
-			foo.put(UsageScenarioFinished.class.getCanonicalName(), UsageScenarioFinished.class);
-			foo.put(UsageScenarioStarted.class.getCanonicalName(), UsageScenarioStarted.class);
-			foo.put(UserAborted.class.getCanonicalName(), UserAborted.class);
-			foo.put(UserFinished.class.getCanonicalName(), UserFinished.class);
-			foo.put(UserSlept.class.getCanonicalName(), UserSlept.class);
-			foo.put(UserStarted.class.getCanonicalName(), UserStarted.class);
-			foo.put(UserWokeUp.class.getCanonicalName(), UserWokeUp.class);
-			foo.put(JobScheduled.class.getCanonicalName(), JobScheduled.class);
-			foo.put(MeasurementMade.class.getCanonicalName(), MeasurementMade.class);
-			foo.put(MeasurementUpdated.class.getCanonicalName(), MeasurementUpdated.class);
-			foo.put(ProbeTaken.class.getCanonicalName(), ProbeTaken.class);
-			foo.put(SEFFExternalActionCalled.class.getCanonicalName(), SEFFExternalActionCalled.class);
-			foo.put(SEFFInfrastructureCalled.class.getCanonicalName(), SEFFInfrastructureCalled.class);
-			foo.put(SnapshotFinished.class.getCanonicalName(), SnapshotFinished.class);
-			foo.put(UserEntryRequested.class.getCanonicalName(), UserEntryRequested.class);
-			foo.put(UserInterpretationProgressed.class.getCanonicalName(), UserInterpretationProgressed.class);
-			foo.put(UserRequestFinished.class.getCanonicalName(), UserRequestFinished.class);
-			foo.put(IntervalPassed.class.getCanonicalName(), IntervalPassed.class);
-			foo.put(SimulationTimeReached.class.getCanonicalName(), SimulationTimeReached.class);
-
-//			foo.put(ModelAdjusted.class.getCanonicalName(), ModelAdjusted.class);
-//			foo.put(ModelAdjustmentRequested.class.getCanonicalName(), ModelAdjustmentRequested.class);
-//			foo.put(PreSimulationConfigurationStarted.class.getCanonicalName(),
-//					PreSimulationConfigurationStarted.class);
-//			foo.put(ProcessingTypeRevealed.class.getCanonicalName(), ProcessingTypeRevealed.class);
-//			foo.put(SimulationFinished.class.getCanonicalName(), SimulationFinished.class);
-//			foo.put(SimulationStarted.class.getCanonicalName(), SimulationStarted.class);
-//			foo.put(SnapshotInitiated.class.getCanonicalName(), SnapshotInitiated.class);
-//			foo.put(SnapshotTaken.class.getCanonicalName(), SnapshotTaken.class);
-//			foo.put(SPDAdjustorStateInitialized.class.getCanonicalName(), SPDAdjustorStateInitialized.class);
-//			foo.put(TakeCostMeasurement.class.getCanonicalName(), TakeCostMeasurement.class);
-//			foo.put(MonitorModelVisited.class.getCanonicalName(), MonitorModelVisited.class);
-//			foo.put(MeasurementSpecificationVisited.class.getCanonicalName(), MeasurementSpecificationVisited.class);
-//			foo.put(ProcessingTypeVisited.class.getCanonicalName(), ProcessingTypeVisited.class);
-//			foo.put(RepositoryInterpretationInitiated.class.getCanonicalName(),
-//			RepositoryInterpretationInitiated.class);
-// 			foo.put(CalculatorRegistered.class.getCanonicalName(), CalculatorRegistered.class);
-
-			return foo;
-		}
-
 	}
 }

@@ -3,6 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factorie
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -44,30 +45,50 @@ public class DESEventTypeAdapterFactory implements TypeAdapterFactory {
 	public static final String FIELD_NAME_GENERIC_TYPE_TOKEN = "genericTypeToken";
 
 	/**
-	 * According to Doc, creating delegators is costly, thus we save them, if
+	 * According to ducumentation, creating delegators is costly, thus we save them, if
 	 * possible.
 	 */
 	private final Map<TypeToken<?>, TypeAdapter<DESEvent>> eventDelegators = new HashMap<>();
+	
+	private final Set<TypeToken<?>> types; 
 
+		
 	/**
 	 * Instantiate the factory.
 	 */
-	public DESEventTypeAdapterFactory() {
+	public DESEventTypeAdapterFactory(final Set<TypeToken<?>> types) {
+		this.types = types;
 	}
-
+	
+	
+	/**
+	 * Create a new adapter for the given type. 
+	 * 
+	 * 
+	 */
 	@Override
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		if (DESEvent.class.isAssignableFrom(type.getRawType())) {
-			return (TypeAdapter<T>) customizeMyClassAdapter(gson, (TypeToken<DESEvent>) type);
+			if (eventDelegators.isEmpty()) {
+				initializeDelegators(gson);
+			}
+			final TypeAdapter<DESEvent> adapter = customizeMyClassAdapter(gson, (TypeToken<DESEvent>) type);
+			return (TypeAdapter<T>) adapter;
 		}
 		return null;
 	}
 
+	
+	private void initializeDelegators(final Gson gson) {
+		for (final TypeToken<?> typeToken : types) {
+			eventDelegators.putIfAbsent(typeToken,
+					(TypeAdapter<DESEvent>) gson.getDelegateAdapter(this, typeToken));
+		}
+	}
+	
 	private TypeAdapter<DESEvent> customizeMyClassAdapter(final Gson gson, final TypeToken<DESEvent> type) {
 		final TypeAdapter<DESEvent> delegate = gson.getDelegateAdapter(this, type); // used for writing only.
 		final TypeAdapter<JsonElement> elementAdapter = gson.getAdapter(JsonElement.class);
-
-		// final DESEventTypeAdapterFactory forReference = this;
 
 		return new TypeAdapter<DESEvent>() {
 			@Override

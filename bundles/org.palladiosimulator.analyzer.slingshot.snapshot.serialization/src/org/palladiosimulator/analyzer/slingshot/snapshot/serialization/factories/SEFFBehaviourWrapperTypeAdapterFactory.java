@@ -2,6 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factorie
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,25 +32,22 @@ public class SEFFBehaviourWrapperTypeAdapterFactory implements TypeAdapterFactor
 	private static final String FIELD_NAME_BEHAVIORS = "behaviors";
 	private static final String FIELD_NANME_CONTEXT = "context";
 	
-	private final Map<String, TypeAdapter<?>> thingTypes;
-
+	
 	/**
-	 * 
-	 * @param thingTypes
+	 * Save all adapters already created with this factory, because i dont see, why
+	 * we should create a new adapter every time.
 	 */
-	public SEFFBehaviourWrapperTypeAdapterFactory(final Map<String, TypeAdapter<?>> thingTypes) {
-		this.thingTypes = thingTypes;
-	}
+	private final Map<TypeToken<SeffBehaviorWrapper>, TypeAdapter<SeffBehaviorWrapper>> thisAdapter = new HashMap<>();
 
 	@Override
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		if (SeffBehaviorWrapper.class.isAssignableFrom(type.getRawType())) {
-			final String className = type.getRawType().getCanonicalName();
-			// TODO: REMOVE
-			if (!thingTypes.containsKey(className)) {
-				thingTypes.put(className, gson.getDelegateAdapter(this, type)); // skips "this"
+			
+			if (!thisAdapter.containsKey(type)) {
+				thisAdapter.put((TypeToken<SeffBehaviorWrapper>) type, customizeMyClassAdapter(gson, (TypeToken<SeffBehaviorWrapper>) type));
 			}
-			return (TypeAdapter<T>) customizeMyClassAdapter(gson, (TypeToken<SeffBehaviorWrapper>) type);
+			
+			return (TypeAdapter<T>) thisAdapter.get(type); 
 		}
 		return null;
 	}

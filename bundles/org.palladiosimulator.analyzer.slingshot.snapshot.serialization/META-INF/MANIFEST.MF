@@ -6,7 +6,8 @@ Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.snapshot.serialization
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters,
- org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories
+ org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories,
+ org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util
 Require-Bundle: com.google.gson,
  org.palladiosimulator.commons,
  org.eclipse.emf.ecore,
@@ -19,4 +20,7 @@ Require-Bundle: com.google.gson,
  org.palladiosimulator.analyzer.slingshot.monitor.data,
  org.palladiosimulator.metricspec,
  org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
- org.palladiosimulator.pcm
+ org.palladiosimulator.pcm,
+ de.uka.ipd.sdq.simucomframework.variables,
+ org.palladiosimulator.analyzer.slingshot.behavior.usageevolution,
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data

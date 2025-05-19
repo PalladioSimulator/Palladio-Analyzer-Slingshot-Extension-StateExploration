@@ -1,6 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -34,13 +35,10 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 	public static final String FIELD_NAME_CLASS = "class";
 	public static final String FIELD_NAME_ID_FOR_REFERENCE = "refId";
 	public static final String FIELD_NAME_OBJECT = "obj";
-
 	
-	private final Set<Class<?>> customizedClasses;
-	
-	private final Map<String, Object> done;
-	private final Map<String, TypeAdapter<?>> delegateAdapters;
-	private final Set<Class<?>> classes; 
+	private final Map<String, Object> done = new HashMap<>();
+	private final Map<String, TypeAdapter<?>> delegateAdapters = new HashMap<>();
+	private final Set<TypeToken<?>> classes; 
 	
 	final Set<String> alreadyJsoned = new HashSet<>(); 
 
@@ -48,32 +46,29 @@ public class EntityTypeAdapterFactory implements TypeAdapterFactory {
 	 * 
 	 * TODO: merge customizables and classes? 
 	 * 
-	 * @param done
-	 * @param delegateAdapters
+	 * @param classes
 	 */
-	public EntityTypeAdapterFactory(final Set<Class<?>> customizables, final Map<String, Object> done, final Map<String, TypeAdapter<?>> delegateAdapters, final Set<Class<?>> classes) {
-		this.done = done;
-		this.delegateAdapters = delegateAdapters;
-		this.customizedClasses = customizables;
+	public EntityTypeAdapterFactory(final Set<TypeToken<?>> classes) {
 		this.classes = classes;
 	}
 
 	@Override
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
-		if (delegateAdapters.isEmpty()) {
-			initDelegateAdapters(gson, classes);
-		}
-		for (final Class<?> clazz : customizedClasses) {
-			if (clazz.isAssignableFrom(type.getRawType())) {
+		for (final TypeToken<?> clazz : classes) {
+			if (clazz.getRawType().isAssignableFrom(type.getRawType())) {
+				if (delegateAdapters.isEmpty()) {
+					initDelegateAdapters(gson);
+				}
+				
 				return customizeMyClassAdapter(gson, type);
 			}
 		}
 		return null;
 	}
 	
-	private void initDelegateAdapters(final Gson gson, final Set<Class<?>> classes) {		
-		for (final Class<?> clazz : classes) {
-			delegateAdapters.put(clazz.getCanonicalName(), gson.getDelegateAdapter(this, TypeToken.get(clazz)));			
+	private void initDelegateAdapters(final Gson gson) {		
+		for (final TypeToken<?> clazz : classes) {
+			delegateAdapters.put(clazz.getRawType().getCanonicalName(), gson.getDelegateAdapter(this, clazz));			
 		}
 	}
 

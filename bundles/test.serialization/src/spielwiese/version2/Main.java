@@ -70,13 +70,15 @@ public class Main {
 		adaptereBuilder.registerTypeHierarchyAdapter(EObject.class, new EObjectTypeAdapter(set));
 		adaptereBuilder.registerTypeHierarchyAdapter(com.google.common.reflect.TypeToken.class, new TypeTokenTypeAdapter());
 
-		adaptereBuilder.registerTypeAdapterFactory(new SpecialLoopResolvingTypeAdapterFactory3(objs, thingTypes));
 		
-		adaptereBuilder.registerTypeAdapterFactory(new EntityTypeAdapterFactory(Set.of(Thing.class),objs, thingTypes, Set.of(Thing.class, OptionalThing.class)));
+		
+		adaptereBuilder.registerTypeAdapterFactory(new SpecialLoopResolvingTypeAdapterFactory3(objs, thingTypes));
+		adaptereBuilder.registerTypeAdapterFactory(new EntityTypeAdapterFactory(Set.of(
+				TypeToken.get(Thing.class), TypeToken.get(OptionalThing.class), TypeToken.get(LoopThingChild.class), TypeToken.get(LoopThingParent.class))));
 		adaptereBuilder.registerTypeAdapterFactory(new OptionalTypeAdapterFactory(Set.of()));
 		adaptereBuilder.registerTypeAdapterFactory(new ElistTypeAdapterFactory());
 		
-		adaptereBuilder.registerTypeAdapterFactory(new DESEventTypeAdapterFactory());
+		adaptereBuilder.registerTypeAdapterFactory(new DESEventTypeAdapterFactory(Set.of()));
 		
 		
 		final Gson gsonwithAdapter = adaptereBuilder.create();
@@ -161,9 +163,9 @@ public class Main {
 		events.add(new SimulationStarted());
 //		events.add(new SimulationStarted());
 //		events.add(new SimulationFinished());
-//		events.add(new PCMEvent(model, loopParent));
-		events.add(new PCMEvent(model, optionalThing1));
-		events.add(new PCMEvent(model, optionalThing11));
+		events.add(new PCMEvent(model, loopParent));
+//		events.add(new PCMEvent(model, optionalThing1));
+//		events.add(new PCMEvent(model, optionalThing11));
 		
 //		events.add(new PCMEvent(model, thing2));
 //		events.add(new PCMEvent(model, thing2));

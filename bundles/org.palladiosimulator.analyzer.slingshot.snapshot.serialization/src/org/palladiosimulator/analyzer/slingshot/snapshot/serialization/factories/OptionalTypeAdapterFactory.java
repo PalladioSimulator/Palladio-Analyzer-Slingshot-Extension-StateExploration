@@ -49,16 +49,16 @@ public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
 	public static final String OPTIONAL_VALUE_FIELD = "value";
 	/** marker for an empty optional*/
 	public static final String OPTIONAL_EMPTY = "empty";
-	/** must differ from {@link EntityTypeAdapterFactory#FIELD_NAME_ID_FOR_REFERENCE}, or else object and references will be mixed up.*/ 
+	/** must differ from {@link EntityTypeAdapterFactory#FIELD_NAME_ID_FOR_REFERENCE}, or else objects and references will be mixed up.*/ 
 	public static final String REFERENCE_FIELD = "ref";
 	/** must be equal to from {@link EntityTypeAdapterFactory#FIELD_NAME_CLASS}, or else objects and references cannot be handled in the same way. */ 
 	public static final String FIELD_NAME_CLASS = EntityTypeAdapterFactory.FIELD_NAME_CLASS; 
 
 	private final Map<String, TypeAdapter<?>> optionalValuesDelegators = new HashMap<>();
 	
-	private final Set<Class<?>> innerTypes; 
+	private final Set<TypeToken<?>> innerTypes; 
 
-	public OptionalTypeAdapterFactory(final Set<Class<?>> innerTypes) {
+	public OptionalTypeAdapterFactory(final Set<TypeToken<?>> innerTypes) {
 		this.innerTypes = new HashSet<>(innerTypes);
 	}
 	
@@ -68,18 +68,19 @@ public class OptionalTypeAdapterFactory implements TypeAdapterFactory {
 	@SuppressWarnings("unchecked")
 	public final <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
 		if (type.getRawType() == Optional.class) {
+			if (optionalValuesDelegators.isEmpty()) {
+				this.initDelegatorsMap(gson);
+			}
 			final TypeAdapter<T> thisAdapter = (TypeAdapter<T>) customizeMyClassAdapter(gson, (TypeToken<Class<Optional<? extends Object>>>) type);
-			
-			this.initDelegatorsMap(gson, innerTypes);
 			
 			return thisAdapter;
 		}
 		return null;
 	}
 
-	private void initDelegatorsMap(final Gson gson, final Set<Class<?>> classes) {	
-		for (final Class<?> clazz : classes) {
-			optionalValuesDelegators.put(clazz.getCanonicalName(), gson.getDelegateAdapter(this, TypeToken.get(clazz)));			
+	private void initDelegatorsMap(final Gson gson) {	
+		for (final TypeToken<?> token : innerTypes) {
+			optionalValuesDelegators.put(token.getRawType().getCanonicalName(), gson.getDelegateAdapter(this,token));			
 		}
 	}
 	
