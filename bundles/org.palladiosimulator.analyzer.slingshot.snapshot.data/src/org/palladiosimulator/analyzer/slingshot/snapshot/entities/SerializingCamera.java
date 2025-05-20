@@ -5,47 +5,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.events.ProcessorSharingJobProgressed;
-import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
-import org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.events.RepositoryInterpretationInitiated;
-import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
-import org.palladiosimulator.analyzer.slingshot.common.events.modelchanges.ModelAdjusted;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
-import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
-import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
-import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
-import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementMade;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementUpdated;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.ProbeTaken;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.ProcessingTypeRevealed;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.modelvisited.MeasurementSpecificationVisited;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.modelvisited.MonitorModelVisited;
-import org.palladiosimulator.analyzer.slingshot.monitor.data.events.modelvisited.ProcessingTypeVisited;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
-import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
-import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util.Shareables;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * 
@@ -56,6 +28,7 @@ import com.google.gson.reflect.TypeToken;
  * already adjusted and offsets for resending those events are encoded into
  * {@link DESEvent#time}.
  * 
+ * The copies are created by (de)serializing the events to and from Json.
  * 
  * @author Sophie Stieß
  *
@@ -81,7 +54,7 @@ public final class SerializingCamera extends Camera {
 	@Override
 	public Snapshot takeSnapshot() {
 		this.getScheduledReconfigurations().forEach(this::addEvent);
-		final List<SPDAdjustorStateValues> values = this.snapStateValues();
+		final Collection<SPDAdjustorStateValues> values = this.snapStateValues();
 			
 		final Snapshot snapshot = new InMemorySnapshot(snapEvents(), values);
 		return snapshot;
@@ -103,7 +76,7 @@ public final class SerializingCamera extends Camera {
 	 */
 	private Set<DESEvent> snapEvents() {
 
-		final Set<DESEvent> todoEvents = Set.copyOf(this.collectRelevantEvents());
+		final Set<DESEvent> todoEvents = Set.copyOf(this.collectAndOffsetEvents());
 		todoEvents.addAll(additionalEvents); 
 		
 		final String eventsAsString = this.serializeEvents(todoEvents);
@@ -141,64 +114,5 @@ public final class SerializingCamera extends Camera {
 			throw new RuntimeException(e);
 		}
 	}
-
-	/**
-	 * 
-	 * @author Sophie Stieß
-	 *
-	 */
-	public class Serializer {
-
-		private final Gson gson;
 		
-		public Serializer(final ResourceSet set) {
-			gson = Shareables.createGsonForSlingshot(set);
-		}
-		
-		
-		/**
-		 * 
-		 * @param events
-		 * @return
-		 */
-		public String serialize(final Set<DESEvent> events) {
-			final String eventJsonString = gson.toJson(this.cleanseEventSet(events));
-			return eventJsonString;
-		}
-
-		/**
-		 * 
-		 * @param string
-		 * @return 
-		 */
-		public Set<DESEvent> deserialize(final String string) {
-				final Type set2Type = new TypeToken<Set<DESEvent>>() {}.getType();
-				return gson.fromJson(string, set2Type);
-		}
-
-		/**
-		 * Create a set of only those events that ought to be serialised and remove all others. 
-		 * 
-		 * @param events all events.
-		 * @return set of events that ought to be serialized.
-		 */
-		private Set<DESEvent> cleanseEventSet(final Set<DESEvent> events) {
-			final Set<DESEvent> cleansed = new HashSet<>();
-			final Set<Class<?>> skip = Set.of(SnapshotInitiated.class, SnapshotTaken.class, SnapshotFinished.class,
-					ProbeTaken.class, SimulationFinished.class, MeasurementMade.class, MeasurementUpdated.class, TakeCostMeasurement.class,
-					IntervalPassed.class, ProcessorSharingJobProgressed.class);
-
-			final Set<Class<?>> error = Set.of(PreSimulationConfigurationStarted.class, SimulationStarted.class,
-					MonitorModelVisited.class, ProcessingTypeRevealed.class, CalculatorRegistered.class,
-					RepositoryInterpretationInitiated.class, MeasurementSpecificationVisited.class,
-					ProcessingTypeVisited.class, ModelAdjusted.class, ModelAdjustmentRequested.class);
-
-			for (final DESEvent event : events) {
-				if (!skip.contains(event.getClass())) {
-					cleansed.add(event);
-				}
-			}
-			return cleansed;
-		}
-	}
 }

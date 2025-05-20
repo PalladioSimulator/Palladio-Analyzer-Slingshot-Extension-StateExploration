@@ -1,5 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,9 +30,11 @@ import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Camera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.EventRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.DeserializeSnapshotThing;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.JobRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryRecord;
+import org.palladiosimulator.analyzer.slingshot.snapshot.entities.PlainSnapshotCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
@@ -75,6 +78,9 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private final Camera camera;
 
 	private final SimulationScheduling scheduling;
+	
+
+	private final DeserializeSnapshotThing thing;
 
 	@Inject
 	public SnapshotRecordingBehavior(final SimulationEngine engine, final Allocation allocation, final SimulationScheduling scheduling,
@@ -85,7 +91,11 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 		this.recorder = new LessInvasiveInMemoryRecord();
 		this.camera = new LessInvasiveInMemoryCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
 		//this.camera = new SerializingCamera(this.recorder, engine, set.get(), wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
+		//this.camera = new PlainSnapshotCamera(this.recorder, engine, wrapper.getStateInitEvents().stream().map(e -> e.getStateValues()).toList());
+		
 		this.scheduling = scheduling;
+		
+		this.thing = new DeserializeSnapshotThing(set.get());
 	}
 
 	@Subscribe(reified = Start.class)
@@ -185,10 +195,15 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 			camera.addEvent(triggeringeEvent);
 		}
 		
-		final Snapshot serializedSnapshot = camera.takeSnapshot();
+		final Snapshot snapshot = camera.takeSnapshot();
 
+		final Path location = Path.of("/var/folders/y4/01qwswz94051py5_hwg72_740000gn/T/snapshots/snapshot.json");
 
-		return Result.of(new SnapshotFinished(serializedSnapshot));
+		thing.serializeToFile(snapshot, location);
+		
+		final Snapshot snapshot2 = thing.deserializeFromFile(location);
+
+		return Result.of(new SnapshotFinished(snapshot));
 	}
 
 	/**

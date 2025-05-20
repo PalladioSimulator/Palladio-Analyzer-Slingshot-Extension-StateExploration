@@ -64,21 +64,27 @@ public abstract class Camera {
 	private final SimulationEngine engine;
 
 	protected final List<DESEvent> additionalEvents = new ArrayList<>();
-	private final Collection<SPDAdjustorStateValues> policyIdToValues;
+	private final Collection<SPDAdjustorStateValues> stateValues;
 	
 	private final LambdaVisitor<DESEvent, DESEvent> adjustOffset;
 
-	public Camera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine, final Collection<SPDAdjustorStateValues> policyIdToValues) {
+	/**
+	 * 
+	 * @param record
+	 * @param engine
+	 * @param stateValues
+	 */
+	public Camera(final LessInvasiveInMemoryRecord record, final SimulationEngine engine, final Collection<SPDAdjustorStateValues> stateValues) {
 		this.record = record;
 		this.engine = engine;
 
-		this.policyIdToValues = policyIdToValues;
+		this.stateValues = stateValues;
 		
 		this.adjustOffset = new LambdaVisitor<DESEvent, DESEvent>()
-				.on(UsageModelPassedElement.class).then(this::clone)
-				.on(SEFFModelPassedElement.class).then(this::clone)
-				.on(ClosedWorkloadUserInitiated.class).then(this::clone)
-				.on(InterArrivalUserInitiated.class).then(this::clone)
+				.on(UsageModelPassedElement.class).then(this::setOffset)
+				.on(SEFFModelPassedElement.class).then(this::setOffset)
+				.on(ClosedWorkloadUserInitiated.class).then(this::reduceThinktime)
+				.on(InterArrivalUserInitiated.class).then(this::reduceDelay)
 				.on(DESEvent.class).then(e -> e);
 	}
 	
@@ -97,11 +103,14 @@ public abstract class Camera {
 	}
 	
 	/**
+	 * Adjust the times in all {@link SPDAdjustorStateValues}. 
 	 * 
-	 * @return
+	 * The times are adjusted with the current simulation time.
+	 * 
+	 * @return collection of state values with updated time
 	 */
-	protected List<SPDAdjustorStateValues> snapStateValues(){
-		return this.policyIdToValues.stream().map(s -> this.copyAndOffset(s, engine.getSimulationInformation().currentSimulationTime())).toList();
+	protected Collection<SPDAdjustorStateValues> snapStateValues(){
+		return this.stateValues.stream().map(s -> this.copyAndOffset(s, engine.getSimulationInformation().currentSimulationTime())).toList();
 	}
 	
 	/**
@@ -165,13 +174,13 @@ public abstract class Camera {
 	 * Denormalizes the demand of the open jobs and creates {@link JobInitiated}
 	 * events to reinsert them to their respective Processor Sharing Resource.
 	 *
-	 * C.f. {@link SerializingCamera#handlePFCFSJobs(Set, Set)} for details on the
+	 * C.f. {@link SerializingCamera#createInitEventsForFCFS(Set, Set)} for details on the
 	 * demand denormalized.
 	 * 
 	 * @param jobrecords
 	 * @return
 	 */
-	protected Set<JobInitiated> handleProcSharingJobs(final Set<JobRecord> jobrecords) {
+	protected Set<JobInitiated> createInitEventsForProcSharing(final Set<JobRecord> jobrecords) {
 		final Set<JobInitiated> rval = new HashSet<>();
 	
 		for (final JobRecord jobRecord : jobrecords) {
@@ -204,7 +213,7 @@ public abstract class Camera {
 	 *                       snapshot
 	 * @return events to reinsert all open jobs to their respective FCFS Resource
 	 */
-	protected Set<JobInitiated> handlePFCFSJobs(final Set<JobRecord> jobrecords, final Set<AbstractJobEvent> fcfsProgressed) {
+	protected Set<JobInitiated> createInitEventsForFCFS(final Set<JobRecord> jobrecords, final Set<AbstractJobEvent> fcfsProgressed) {
 		final Set<JobInitiated> rval = new HashSet<>();
 	
 		final Map<Job, AbstractJobEvent> progressedJobs = new HashMap<>();
@@ -249,7 +258,7 @@ public abstract class Camera {
 		.forEach(e -> LOGGER.info(e.delay() + " " + e.time()));
 	}
 
-	protected DESEvent clone(final UsageModelPassedElement<?> event) {
+	protected DESEvent setOffset(final UsageModelPassedElement<?> event) {
 		final double simulationTime = engine.getSimulationInformation().currentSimulationTime();
 		if (event.getModelElement() instanceof Start && event.time() <= simulationTime) {
 			setOffset(event.time(), simulationTime, event);
@@ -258,16 +267,25 @@ public abstract class Camera {
 		return event;
 	}
 
-	protected DESEvent clone(final SEFFModelPassedElement<?> event) {
-		final double simulationTime =  engine.getSimulationInformation().currentSimulationTime();
 	
+	protected DESEvent setOffset(final SEFFModelPassedElement<?> event) {
+		final double simulationTime =  engine.getSimulationInformation().currentSimulationTime();
 		if (event.getModelElement() instanceof StartAction && event.time() <= simulationTime) {	
 			setOffset(event.time(), simulationTime, event);
 		}
 		return event;
 	}
 
-	protected DESEvent clone(final ClosedWorkloadUserInitiated event) {
+	/**
+	 * Create a copy of the given event with reduced remaining think time / delay.
+	 * 
+	 * Must create a copy, because think time get directly transformed to delay, and
+	 * delay is immutable.
+	 * 
+	 * @param event thinktime (delay) of this event will be reduced
+	 * @return copy of the given event with reduced remaining thinktime.
+	 */
+	protected DESEvent reduceThinktime(final ClosedWorkloadUserInitiated event) {
 		final double simulationTime = engine.getSimulationInformation().currentSimulationTime();
 		
 		final double remainingthinktime = event.time() - simulationTime;
@@ -275,12 +293,20 @@ public abstract class Camera {
 		final CoreFactory coreFactory = CoreFactory.eINSTANCE;
 		final PCMRandomVariable var = coreFactory.createPCMRandomVariable();
 		var.setSpecification(String.valueOf(remainingthinktime));
-	
+  
 		final ThinkTime newThinktime = new ThinkTime(var);
 		return new ClosedWorkloadUserInitiated(event.getEntity(), newThinktime);
 	}
 
-	protected DESEvent clone(final InterArrivalUserInitiated event) {
+	/**
+	 * Create a copy of the given event with reduced delay.
+	 * 
+	 * Must create a copy, because the delay is immutable.
+	 * 
+	 * @param event delay of this event will be reduced
+	 * @return copy of the given event with reduced delay
+	 */
+	protected DESEvent reduceDelay(final InterArrivalUserInitiated event) {
 		final double simulationTime = engine.getSimulationInformation().currentSimulationTime();
 		return new InterArrivalUserInitiated(event.getEntity(), event.time() - simulationTime);
 	}
@@ -309,7 +335,12 @@ public abstract class Camera {
 		}
 	}
 
-	protected Set<DESEvent> collectRelevantEvents() {
+	/**
+	 * Collect all events for reinitialising the simulator.
+	 * 
+	 * @return Set off all events for reinitialising the simulator.
+	 */
+	protected Set<DESEvent> collectAndOffsetEvents() {
 		final Set<DESEvent> relevantEvents = engine.getScheduledEvents();
 	
 		// get events to recreate state of queues
@@ -320,23 +351,23 @@ public abstract class Camera {
 				.filter(e -> (e instanceof JobProgressed) || (e instanceof JobFinished)).map(e -> (AbstractJobEvent) e)
 				.collect(Collectors.toSet());
 	
-		final Set<JobInitiated> initJobs = new HashSet<>();
-		initJobs.addAll(this.handlePFCFSJobs(fcfsRecords, progressedFcfs));
-		initJobs.addAll(this.handleProcSharingJobs(procsharingRecords));
+		relevantEvents.addAll(this.createInitEventsForFCFS(fcfsRecords, progressedFcfs));
+		relevantEvents.addAll(this.createInitEventsForProcSharing(procsharingRecords));
 	
-		relevantEvents.addAll(initJobs);
 		relevantEvents.addAll(record.getRecordedCalculators());
 	
-		this.removeFakeThings(relevantEvents);
-	
+		relevantEvents.removeIf(e -> this.isFake(e));
+		
 		final Set<DESEvent> offsettedEvents = relevantEvents.stream().map(adjustOffset).collect(Collectors.toSet());
 		return offsettedEvents;
 	}
 
-	private void removeFakeThings(final Set<DESEvent> events) {
-		events.removeIf(e -> this.isFake(e));
-	}
-
+	/**
+	 * Check whether the given event was injected to trigger a state update only.
+	 * 
+	 * @param event
+	 * @return true, if the event was injected for triggering a state update, false if it occured "naturally"
+	 */
 	private boolean isFake(final DESEvent event) {
 		if (event instanceof final AbstractJobEvent jobEvent) {
 			return jobEvent.getEntity().getId().equals(FAKE);

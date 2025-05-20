@@ -1,7 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
@@ -38,7 +37,7 @@ public final class LessInvasiveInMemoryCamera extends Camera {
 	public Snapshot takeSnapshot() {
 		this.getScheduledReconfigurations().forEach(this::addEvent);
 
-		final List<SPDAdjustorStateValues> values = this.snapStateValues();
+		final Collection<SPDAdjustorStateValues> values = this.snapStateValues();
 		
 		final Snapshot snapshot = new InMemorySnapshot(snapEvents(), values);
 		return snapshot;
@@ -52,7 +51,7 @@ public final class LessInvasiveInMemoryCamera extends Camera {
 	 * @return Set of events for recreating the state.
 	 */
 	private Set<DESEvent> snapEvents() {
-		final Set<DESEvent> offsettedEvents = this.collectRelevantEvents();
+		final Set<DESEvent> offsettedEvents = this.collectAndOffsetEvents();
 		final Set<DESEvent> clonedEvents = (new CloneHelperWithVisitor(set)).clone(offsettedEvents);
 
 		this.log(clonedEvents);

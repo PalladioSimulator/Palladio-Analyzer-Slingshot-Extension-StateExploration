@@ -23,6 +23,8 @@ public final class InMemorySnapshot implements Snapshot {
 
 	private final Set<DESEvent> events;
 
+	private final Set<DESEvent> plainEvents;
+
 	private final List<ModelAdjustmentRequested> modelAdjustmentRequestedEvents;
 	
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
@@ -32,6 +34,7 @@ public final class InMemorySnapshot implements Snapshot {
 	}
 
 	public InMemorySnapshot(final Set<DESEvent> events, final Collection<SPDAdjustorStateValues> stateValues) {
+		this.plainEvents = new HashSet<>(events);
 		this.modelAdjustmentRequestedEvents = events.stream().filter(ModelAdjustmentRequested.class::isInstance).map(ModelAdjustmentRequested.class::cast).toList();
 		this.events = new HashSet<>(events);
 		this.events.removeAll(this.modelAdjustmentRequestedEvents);
@@ -53,5 +56,10 @@ public final class InMemorySnapshot implements Snapshot {
 	@Override
 	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues() {
 		return this.adjustorStateValues;
+	}
+
+	@Override
+	public Set<DESEvent> getPlainEvents() {
+		return this.plainEvents;
 	}
 }
