@@ -16,7 +16,9 @@ import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.SingleStateSimulationWorkflowConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.ExplorationRootJob;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.SingleStateSimulationRootJob;
 import org.palladiosimulator.experimentautomation.application.ExperimentApplication;
 import org.palladiosimulator.experimentautomation.application.tooladapter.abstractsimulation.AbstractSimulationConfigFactory;
 import org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration;
@@ -34,7 +36,7 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 
 /**
  *
- * Application for running a headless Stateexploration. Requires an
+ * Application for running a single headles state simulation. Requires an
  * {@link Experiment} model instance, that defines the models et cetera.
  *
  * The path to the {@link Experiment} model instance must be provided as
@@ -45,7 +47,7 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  *
  * Based on {@link ExperimentApplication}.
  *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 public class SingeStateSimulationApplication implements IApplication {
@@ -107,12 +109,13 @@ public class SingeStateSimulationApplication implements IApplication {
 		final Map<String, Object> configMap = createConfigMap(experiment, SINGLE_STATE_SIMULATION_ID);
 
 		final SimuComConfig simuComconfig = new SimuComConfig(configMap, false);
-		final ExplorationWorkflowConfiguration config = new ExplorationWorkflowConfiguration(simuComconfig, configMap);
+		// TODO Path! 
+		final SingleStateSimulationWorkflowConfiguration config = new SingleStateSimulationWorkflowConfiguration(simuComconfig, configMap, null);
 
 		this.setModelFilesInConfig(experiment.getInitialModel(), config);
 
 		final BlackboardBasedWorkflow<MDSDBlackboard> workflow = new BlackboardBasedWorkflow<MDSDBlackboard>(
-				new ExplorationRootJob(config, null),
+				new SingleStateSimulationRootJob(config, null),
 				new MDSDBlackboard());
 
 		try {

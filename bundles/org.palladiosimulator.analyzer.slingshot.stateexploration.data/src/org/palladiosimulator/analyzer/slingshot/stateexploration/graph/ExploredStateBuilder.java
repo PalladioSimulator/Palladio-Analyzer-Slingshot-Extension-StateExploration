@@ -5,8 +5,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
@@ -113,7 +113,7 @@ public class ExploredStateBuilder {
 	 * @throws IllegalStateException if this operation is called while the builder
 	 *                               is still incomplete, or if one attempts to use this builder to create multiple states.
 	 */
-	protected ExploredState buildState() {
+	public ExploredState buildState() {
 		Preconditions.checkState(!reasonsToLeave.isEmpty(), "Cannot build state, reasons to leave were not yet added.");
 		Preconditions.checkState(duration >= 0, "Cannot build state, duration was not yet set.");
 		Preconditions.checkState(snapshot != null, "Cannot build state, because snapshot was not yet set.");
