@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs;
+package org.palladiosimulator.analyzer.slingshot.singlestatesimulation.workflow;
 
 import java.util.UUID;
 
@@ -7,8 +7,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.networking.data.EventMessage;
+import org.palladiosimulator.analyzer.slingshot.singlestatesimulation.SingleStateSimulationExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events.WorkflowJobDone;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.SingleStateSimulationExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;

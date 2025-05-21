@@ -18,7 +18,8 @@ Require-Bundle: org.eclipse.equinox.app,
  org.palladiosimulator.analyzer.slingshot.stateexploration.workflow,
  org.palladiosimulator.analyzer.slingshot.stateexploration,
  org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model,
- org.palladiosimulator.experimentautomation.application
+ org.palladiosimulator.experimentautomation.application,
+ org.palladiosimulator.analyzer.slingshot.singlestatesimulation
 Bundle-Activator: org.palladiosimulator.analyzer.slingshot.singlestatesimulation.application.Activator
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .

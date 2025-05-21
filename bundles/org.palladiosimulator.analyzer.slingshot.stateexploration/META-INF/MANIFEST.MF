@@ -8,6 +8,8 @@ Bundle-ClassPath: lib/json-20240303.jar,
  .
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.explorer,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning,
  org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui,
  org.palladiosimulator.analyzer.slingshot.stateexploration.providers
 Require-Bundle: org.palladiosimulator.edp2,

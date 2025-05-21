@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs;
+package org.palladiosimulator.analyzer.slingshot.singlestatesimulation.workflow;
 
 import org.eclipse.debug.core.ILaunch;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;

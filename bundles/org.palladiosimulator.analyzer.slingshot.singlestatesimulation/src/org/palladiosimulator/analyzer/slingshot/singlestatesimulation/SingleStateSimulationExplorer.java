@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
+package org.palladiosimulator.analyzer.slingshot.singlestatesimulation;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,8 +22,8 @@ import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.LaunchconfigAccess;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.SingleStateSimulationPreprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
