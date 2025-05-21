@@ -53,11 +53,11 @@ public class SnapshotInitialAdjustmentBehaviour implements SimulationBehaviorExt
 
 	@Inject
 	public SnapshotInitialAdjustmentBehaviour(final @Nullable EventsToInitOnWrapper eventsWrapper,
-			final Allocation allocation, final MonitorRepository monitorrepo) {
+			final Allocation allocation, final @Nullable MonitorRepository monitorrepo) {
 		this.allocation = allocation;
 		this.monitorrepo = monitorrepo;
 
-		this.activated = eventsWrapper != null;
+		this.activated = eventsWrapper != null && monitorrepo != null;
 	}
 
 	@Override
