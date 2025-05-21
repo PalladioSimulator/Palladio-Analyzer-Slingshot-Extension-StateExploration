@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -216,6 +217,15 @@ public class GraphExplorer {
 		final double value = node.utility().getTotalUtilty() == 0 ? prev : node.utility().getTotalUtilty();
 
 		current.setUtility(value);
+		
+
+  		final var parent = this.graph.getStates().stream().filter(x -> Objects.equals(x.getId(), parentId))
+				.findAny();
+
+		if (parent.isPresent()) {
+			current.setTotalDuration(parent.get().getTotalDuration() + current.getDuration());
+			current.setTotalUtility(parent.get().getTotalUtility() + current.getUtility());
+		}
 
 		this.systemDriver.postEvent(new StateExploredEventMessage(node, "Explorer"));
 

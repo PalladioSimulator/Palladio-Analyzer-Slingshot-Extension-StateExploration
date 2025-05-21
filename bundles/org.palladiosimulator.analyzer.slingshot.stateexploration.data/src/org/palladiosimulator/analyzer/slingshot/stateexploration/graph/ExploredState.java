@@ -23,6 +23,13 @@ public class ExploredState {
 
 	private final StateGraph graph;
 
+	/* for prioritising in fringe */
+	private double totalUtility;
+	private double totalDuration; 
+	private double utility = 0;
+
+	
+	
 	/* known at start */
 	private final double startTime;
 	private final ArchitectureConfiguration archConfig;
@@ -34,8 +41,6 @@ public class ExploredState {
 
 	/* known after configuration of the simulation run */
 	private final ExperimentSetting experimentSetting;
-
-	private double utility = 0;
 
 	/**
 	 * 
@@ -78,6 +83,22 @@ public class ExploredState {
 
 	public void setUtility(final double utility) {
 		this.utility = utility;
+	}
+
+	public double getTotalUtility() {
+		return totalUtility;
+	}
+
+	public void setTotalUtility(final double totalUtility) {
+		this.totalUtility = totalUtility;
+	}
+
+	public double getTotalDuration() {
+		return totalDuration;
+	}
+
+	public void setTotalDuration(final double totalDuration) {
+		this.totalDuration = totalDuration;
 	}
 
 	/**

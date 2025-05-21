@@ -83,45 +83,44 @@ public final class RaphaelTransitionQueue extends PriorityQueue<PlannedTransitio
 	}
 	
 	private static double mcts(final PlannedTransition pt) {
-//		System.out.println();
-//		System.out.println("NODE: " + pt.getSource().getId());
-//		final double n = pt.getStart().getOutgoingTransitions().size();
-//		System.out.println("Outgoing Transitions Count (n): " + n);
-//		
-//		final double u = pt.getStart().totalUtility;
-//		System.out.println("Total Utility (u): " + u);
-//		
-//		final double p = pt.getStart().getIncomingTransition().map(
-//				x -> x.getSource().getOutgoingTransitions().size()
-//		).orElse(1);
-//		System.out.println("Incoming Transition Outgoing Transitions Count (p): " + p);
-//		
-//		final double d = pt.getStart().totalDuration;
-//		System.out.println("Total Duration (d): " + d);
-//		
-//		final double h = pt.getStart().lenghtOfHistory();
-//		System.out.println("Length of History (h): " + h);
-//		
-//		final double c = Math.sqrt(2);
-//		System.out.println("Exploration Constant (c): " + c);
-//		
-//		final double lambda = 1;
-//		System.out.println("Depth Encouragement Factor (lambda): " + lambda);
-//		
-//		final double utilityPerTime = u / d;
-//		System.out.println("Utility Per Time: " + utilityPerTime);
-//		
-//		final double explorationBonus = c * Math.sqrt(Math.sqrt(n) / p);
-//		System.out.println("Exploration Bonus: " + explorationBonus);
-//		
-//		final double depthEncouragement = lambda * Math.log(d + 1);
-//		System.out.println("Depth Encouragement: " + depthEncouragement);
-//		
-//		final double result = utilityPerTime * h;// + depthEncouragement;
-//		System.out.println("Final Computed Value: " + result);
-//		
-//		return result;
-		return 0.0;
+		System.out.println();
+		System.out.println("NODE: " + pt.getSource().getId());
+		final double n = pt.getStart().getOutgoingTransitions().size();
+		System.out.println("Outgoing Transitions Count (n): " + n);
+		
+		final double u = pt.getStart().getTotalUtility();
+		System.out.println("Total Utility (u): " + u);
+		
+		final double p = pt.getStart().getIncomingTransition().map(
+				x -> x.getSource().getOutgoingTransitions().size()
+		).orElse(1);
+		System.out.println("Incoming Transition Outgoing Transitions Count (p): " + p);
+		
+		final double d = pt.getStart().getTotalDuration();
+		System.out.println("Total Duration (d): " + d);
+		
+		final double h = pt.getStart().lenghtOfHistory();
+		System.out.println("Length of History (h): " + h);
+		
+		final double c = Math.sqrt(2);
+		System.out.println("Exploration Constant (c): " + c);
+		
+		final double lambda = 1;
+		System.out.println("Depth Encouragement Factor (lambda): " + lambda);
+		
+		final double utilityPerTime = u / d;
+		System.out.println("Utility Per Time: " + utilityPerTime);
+		
+		final double explorationBonus = c * Math.sqrt(Math.sqrt(n) / p);
+		System.out.println("Exploration Bonus: " + explorationBonus);
+		
+		final double depthEncouragement = lambda * Math.log(d + 1);
+		System.out.println("Depth Encouragement: " + depthEncouragement);
+		
+		final double result = utilityPerTime * h;// + depthEncouragement;
+		System.out.println("Final Computed Value: " + result);
+		
+		return result;
 	}
 
 	private static double ps(final PlannedTransition pt) {
@@ -131,8 +130,8 @@ public final class RaphaelTransitionQueue extends PriorityQueue<PlannedTransitio
 			changeMagnitude = reconf.getReactiveReconfigurationEvents().size();
 		}
 		
-		final double u = 0.0; //pt.getStart().totalUtility;
-		final double d = 0.0; //pt.getStart().totalDuration;
+		final double u = pt.getStart().getTotalUtility();
+		final double d = pt.getStart().getTotalDuration();
 		final double h = pt.getStart().lenghtOfHistory();
 		final double n = graph.outDegreeOf(pt.getSource());;
 		
@@ -148,8 +147,8 @@ public final class RaphaelTransitionQueue extends PriorityQueue<PlannedTransitio
 	}
 
 	private static double lm(final PlannedTransition pt) {
-		final double u = 0.0; //pt.getStart().totalUtility;
-		final double d = 0.0; //pt.getStart().totalDuration;
+		final double u = pt.getStart().getTotalUtility();
+		final double d = pt.getStart().getTotalDuration();
 		final double h = pt.getStart().lenghtOfHistory();
 		
 		final var f = pt.getStart().getOutgoingTransitions().size();
@@ -158,8 +157,8 @@ public final class RaphaelTransitionQueue extends PriorityQueue<PlannedTransitio
 	}	
 	
 	private static double lml(final PlannedTransition pt) {
-		final double u = 0.0; // pt.getStart().totalUtility;
-		final double d = 0.0; // pt.getStart().totalDuration;
+		final double u = pt.getStart().getTotalUtility();
+		final double d = pt.getStart().getTotalDuration();
 		final double h = pt.getStart().lenghtOfHistory();
 
 		final int n = polled.getOrDefault(h, 0);
@@ -176,7 +175,7 @@ public final class RaphaelTransitionQueue extends PriorityQueue<PlannedTransitio
 
 		final int cs = pt.getChange().map(x -> ((Reconfiguration)x).getAppliedPolicies().size()).orElse(0);
   
-    return ((pt.getStart().getUtility() + u)/n) * Math.pow(0.75, cs);
+		return ((pt.getStart().getUtility() + u)/n) * Math.pow(0.75, cs);
 	}
 	
 	@Override
