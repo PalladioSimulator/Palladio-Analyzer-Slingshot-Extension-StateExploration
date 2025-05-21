@@ -71,7 +71,7 @@ public class SnapshotInitialAdjustmentBehaviour implements SimulationBehaviorExt
 	 * In case of a scale in, also remove all superfluous monitors and
 	 * measuringpoints.
 	 * 
-	 * We must write the adjusted models back to file or to preserve the correct
+	 * We must write the adjusted models back to file to preserve the correct
 	 * architecture for future simulation runs.
 	 *
 	 * @param modelAdjusted adjustment and resulting changes that just happened.

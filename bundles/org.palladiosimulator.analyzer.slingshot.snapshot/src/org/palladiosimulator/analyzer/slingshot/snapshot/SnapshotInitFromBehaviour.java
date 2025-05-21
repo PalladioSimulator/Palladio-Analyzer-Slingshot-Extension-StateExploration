@@ -1,8 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -17,6 +15,7 @@ import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.AbstractEntityChangedEvent;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedEvent;
+import org.palladiosimulator.analyzer.slingshot.core.api.SimulationScheduling;
 import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
@@ -65,38 +64,26 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 
 	private final SnapshotConfiguration snapshotConfig;
 
-	/** Snapshotted events taken from earlier simulation run */
-	private final Set<DESEvent> eventsToInitOn;
-
-	/* helper */
-	private final Map<ModelPassedEvent<?>, Double> event2offset;
-
-	private final boolean activated;
+	/* for displacing modelpassed events to the past */
+	private final Map<ModelPassedEvent<?>, Double> offsetMap;
 
 	private final EventsToInitOnWrapper wrapper;
 
+	private final SimulationScheduling scheduling;
+
 	@Inject
 	public SnapshotInitFromBehaviour(final @Nullable SnapshotConfiguration snapshotConfig,
-			final @Nullable EventsToInitOnWrapper eventsWrapper) {
-
-		this.activated = snapshotConfig != null && eventsWrapper != null;
-
+			final @Nullable EventsToInitOnWrapper eventsWrapper, final SimulationScheduling scheduling) {
 		this.snapshotConfig = snapshotConfig;
-
 		this.wrapper = eventsWrapper;
+		this.scheduling = scheduling;
 
-		if (activated) {
-			this.eventsToInitOn = eventsWrapper.getOtherEvents();
-		} else {
-			this.eventsToInitOn = Set.of();
-		}
-
-		this.event2offset = new HashMap<>();
+		this.offsetMap = new HashMap<>();
 	}
 
 	@Override
 	public boolean isActive() {
-		return this.activated;
+		return this.snapshotConfig != null && this.wrapper != null;
 	}
 
 	/**
@@ -118,32 +105,21 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 	 * Start the simulation run with the snapshotted events from an earlier
 	 * simulation run.
 	 *
-	 * Return (and thereby submit for scheduling) the snapshotted events from
-	 * earlier simulation run.
-	 * 
-	 * TODO changes this, because the result mixes up the event order.
+	 * Schedules the snapshotted events from earlier simulation run directly to the
+	 * engine to preserve order.
 	 *
 	 * @param simulationStarted
-	 * @return
 	 */
 	@Subscribe
-	public Result<DESEvent> onSimulationStarted(final SimulationStarted simulationStarted) {
-		assert snapshotConfig.isStartFromSnapshot()
-				|| (this.eventsToInitOn.isEmpty() && !wrapper.getAdjustmentEvents().isEmpty())
-				: "Received an SimulationStarted event, but is not configured to start from a snapshot.";
+	public void onSimulationStarted(final SimulationStarted simulationStarted) {
+		// schedule one event after the other directly to the engine to preserver order.
+		wrapper.getAdjustmentEvents().forEach(e -> scheduling.scheduleEvent(e));
 
-		this.initOffsets(this.eventsToInitOn);
-		final Set<DESEvent> eventsToInitOnNoIntervallPassed = this.removeTakeCostMeasurement(this.eventsToInitOn);
+		final Set<DESEvent> eventsToInitOn = this.removeTakeCostMeasurement(this.wrapper.getOtherEvents());
+		this.initOffsetMap(eventsToInitOn);
 
-		final List<DESEvent> allEvents = new ArrayList<>();
-		allEvents.addAll(wrapper.getStateInitEvents());
-		allEvents.addAll(wrapper.getAdjustmentEvents());
-		allEvents.addAll(eventsToInitOnNoIntervallPassed);
-
-		LOGGER.info("Initialise on "
-				+ wrapper.getAdjustmentEvents().stream().map(e -> e.getScalingPolicy().getEntityName()).toList());
-
-		return Result.of(allEvents);
+		eventsToInitOn.forEach(e -> scheduling.scheduleEvent(e));
+		wrapper.getStateInitEvents().forEach(e -> scheduling.scheduleEvent(e));
 	}
 
 	/**
@@ -168,17 +144,8 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 		if (!information.getEnclosingType().isPresent()) { // should not happen, right?
 			return InterceptionResult.abort(); // won't be delivered.
 		}
-
-		// TODO : actually, i think we need not abort forwarding the simulation started
-		// to this class.
 		if (information.getEnclosingType().get().equals(this.getClass())) {
-			// delievering to this class, if there is any event for initialisation.
-			if (!this.eventsToInitOn.isEmpty() || !this.wrapper.getAdjustmentEvents().isEmpty()
-					|| !this.wrapper.getStateInitEvents().isEmpty()) {
-				return InterceptionResult.success();
-			} else {
-				return InterceptionResult.abort();
-			}
+			return InterceptionResult.success();
 		} else {
 			if (snapshotConfig.isStartFromSnapshot()) {
 				return InterceptionResult.abort();
@@ -213,11 +180,10 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 	@PreIntercept
 	public InterceptionResult preInterceptModelPassedEvent(final InterceptorInformation information,
 			final ModelPassedEvent<?> event) {
-		if (event2offset.containsKey(event)) {
-			final double offset = event2offset.remove(event);
+		if (offsetMap.containsKey(event)) {
+			final double offset = offsetMap.remove(event);
 			event.setTime(-offset);
-			// adjust time for fakes - it's already past scheduling, thus no one really
-			// cares.
+			// adjust time for fakes - it's already past scheduling, thus scheduling order is not affeced.
 		}
 		return InterceptionResult.success();
 	}
@@ -225,22 +191,24 @@ public class SnapshotInitFromBehaviour implements SimulationBehaviorExtension {
 	/**
 	 *
 	 * Extract offset (encoded into the time field of the events) from the events
-	 * into a map and set the event's time to 0.
+	 * into a map and set the event's time to 0 for immediate scheduling.
 	 *
-	 * @param events events to extract offset from.
+	 * @param events events to extract offsets from.
 	 */
-	private void initOffsets(final Set<DESEvent> events) {
+	private void initOffsetMap(final Set<DESEvent> events) {
 		events.stream().filter(event -> event instanceof ModelPassedEvent<?>).forEach(event -> {
-			event2offset.put((ModelPassedEvent<?>) event, event.time());
+			offsetMap.put((ModelPassedEvent<?>) event, event.time());
 			event.setTime(0);
 		});
 	}
 
 	/**
-	 * Remove all {@link TakeCostMeasurement} from the given set.
+	 * Remove all {@link TakeCostMeasurement} events from the given set.
+	 * 
+	 * {@link TakeCostMeasurement} events must be removed, because we need cost
+	 * measurements at t = 0 of each state.
 	 *
 	 * @param events set of events to be cleansed.
-	 * 
 	 * @return set of events without {@link TakeCostMeasurement}
 	 */
 	private Set<DESEvent> removeTakeCostMeasurement(final Set<DESEvent> events) {
