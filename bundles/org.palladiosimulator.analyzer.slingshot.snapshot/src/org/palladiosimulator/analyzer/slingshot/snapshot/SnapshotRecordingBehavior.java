@@ -36,7 +36,6 @@ import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
-import org.palladiosimulator.monitorrepository.MonitorRepository;
 import org.palladiosimulator.pcm.allocation.Allocation;
 import org.palladiosimulator.pcm.allocation.AllocationContext;
 import org.palladiosimulator.pcm.seff.StartAction;
@@ -78,8 +77,7 @@ public class SnapshotRecordingBehavior implements SimulationBehaviorExtension {
 	private final SimulationScheduling scheduling;
 
 	@Inject
-	public SnapshotRecordingBehavior(final SimulationEngine engine, final Allocation allocation,
-			final MonitorRepository monitorRepository, final SimulationScheduling scheduling,
+	public SnapshotRecordingBehavior(final SimulationEngine engine, final Allocation allocation, final SimulationScheduling scheduling,
 			final PCMResourceSetPartitionProvider set, final EventsToInitOnWrapper wrapper) {
 		// can i somehow include this in the injection part?
 		// should work with this Model and the 'bind' instruction.

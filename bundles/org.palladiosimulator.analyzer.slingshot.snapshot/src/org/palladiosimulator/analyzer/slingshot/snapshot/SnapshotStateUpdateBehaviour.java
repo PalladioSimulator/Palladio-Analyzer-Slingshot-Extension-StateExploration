@@ -35,7 +35,6 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
  * @author Sophie Stieß
  *
  */
-@OnEvent(when = CalculatorRegistered.class, then = {})
 @OnEvent(when = SnapshotFinished.class, then = SimulationFinished.class)
 public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension {
 
@@ -62,6 +61,10 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 		this.stateBuilder = stateBuilder;
 		this.snapshotConfig = snapshotConfig;
 		this.simuComConfig = simuComConfig;
+
+		if(this.stateBuilder != null) {
+			this.stateBuilder.setExperimentSetting(this.getExperimentSetting());
+		}
 	}
 
 	@Override
@@ -78,15 +81,9 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 	 * Keep in mind: in this operation we save a reference to the experiment
 	 * settings, but at this point in time the settings are still empty. The actual
 	 * measurements are only added during the simulation run
-	 *
-	 * @param calculatorRegistered signifies that the {@link ExperimentSetting} are
-	 *                             now created.
+	 * 
 	 */
-	@Subscribe
-	public void onCalculatorRegistered(final CalculatorRegistered calculatorRegistered) {
-
-		// TODO Skip, if already set!
-
+	public ExperimentSetting getExperimentSetting() {
 		final List<Repository> repos = RepositoryManager.getCentralRepository().getAvailableRepositories();
 
 		final Optional<Repository> repo = repos.stream().filter(r -> !r.getExperimentGroups().isEmpty()).findFirst();
@@ -114,7 +111,7 @@ public class SnapshotStateUpdateBehaviour implements SimulationBehaviorExtension
 					settings.size()));
 		}
 
-		this.stateBuilder.setExperimentSetting(settings.get(0));
+		return settings.get(0);
 	}
 
 	/**
