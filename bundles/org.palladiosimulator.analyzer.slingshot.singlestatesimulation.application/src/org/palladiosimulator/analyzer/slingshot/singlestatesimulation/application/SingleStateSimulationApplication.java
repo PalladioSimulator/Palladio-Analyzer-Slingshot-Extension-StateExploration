@@ -50,7 +50,7 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
  * @author Sophie Stieß
  *
  */
-public class SingeStateSimulationApplication implements IApplication {
+public class SingleStateSimulationApplication implements IApplication {
 
 	private final String SINGLE_STATE_SIMULATION_ID = "org.palladiosimulator.singlestatesimulation";
 
