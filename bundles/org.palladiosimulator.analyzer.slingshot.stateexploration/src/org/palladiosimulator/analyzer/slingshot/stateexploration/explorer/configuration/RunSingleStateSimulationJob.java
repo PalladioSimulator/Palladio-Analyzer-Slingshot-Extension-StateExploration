@@ -8,7 +8,7 @@ import org.eclipse.emf.common.util.URI;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.extension.PCMResourceSetPartitionProvider;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.NewArchThing;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfigurationUtil;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.SingleStateSimulationExplorer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.SingleStateSimulationExplorer.SimulationResult;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
@@ -59,7 +59,7 @@ public class RunSingleStateSimulationJob implements IBlackboardInteractingJob<MD
 		this.pcmResourceSetPartitionProvider.set(partition);
 
 		final URI resultFolder = URI.createFileURI(configuration.getResultsFolder().toString());
-		NewArchThing.copyModelsForRoot(partition.getResourceSet(), resultFolder);
+		ArchitectureConfigurationUtil.copyToURI(partition.getResourceSet(), resultFolder);
 
 		LOGGER.debug("monitor: " + monitor.getClass().getName());
 		monitor.beginTask("Start Simulation", 3);
@@ -74,10 +74,8 @@ public class RunSingleStateSimulationJob implements IBlackboardInteractingJob<MD
 		final OtherStuffDeserialization stuff = new OtherStuffDeserialization(partition);
 		final OtherInitThings otherInitThings = stuff.deserialize(configuration.getOtherConfigsFile());
 		
-		final SnapshotConfiguration snaphshotConfig = new SnapshotConfiguration(
-				this.configuration.getSimuComConfig().getSimuTime(), !otherInitThings.isRootSuccesor(), otherInitThings.getSensibility(),
+		final SnapshotConfiguration snaphshotConfig = new SnapshotConfiguration(!otherInitThings.isRootSuccesor(), otherInitThings.getSensibility(),
 				this.configuration.getSimuComConfig().getSimuTime());
-		
 		
 		AdditionalConfigurationModule.snapConfigProvider.set(snaphshotConfig);
 		

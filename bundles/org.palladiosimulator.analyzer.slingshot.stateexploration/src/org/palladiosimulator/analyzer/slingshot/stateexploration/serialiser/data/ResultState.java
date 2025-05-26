@@ -4,10 +4,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.converter.data.SLO;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.converter.data.Utility;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.spd.ScalingPolicy;
 
 /**
@@ -47,7 +50,7 @@ public class ResultState {
 	 * @param reasonsToLeave
 	 * @param parentId
 	 */
-	public ResultState(final double pointInTime, final List<MeasurementSet> measurementSets, final double duration, final Set<ReasonToLeave> reasonsToLeave, final String parentId, final List<SLO> slos, final List<ScalingPolicy> outgoingPolicies, final Utility utility) {
+	public ResultState(final PCMResourceSetPartition initModels, final double pointInTime, final List<MeasurementSet> measurementSets, final double duration, final Set<ReasonToLeave> reasonsToLeave, final String parentId, final List<ScalingPolicy> outgoingPolicies, final Utility utility) {
 		this.parentId = parentId;
 		this.startTime = pointInTime;
 		this.reasonsToLeave = reasonsToLeave;
@@ -56,7 +59,8 @@ public class ResultState {
 		this.duration = duration;
 		
 		this.id = UUID.randomUUID().toString();
-		this.slos = slos;
+		this.slos = PCMResourcePartitionHelper.getSLORepository(initModels).getServicelevelobjectives().stream().map(x -> StateGraphNode.visitServiceLevelObjective(x)).toList();
+		
 		this.utility = utility;
 		this.outgoingPolicyIds = outgoingPolicies.stream().map(ScalingPolicy::getId).toList();
 	}

@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.snapshot.entities;
+package org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
@@ -26,7 +26,6 @@ import org.palladiosimulator.analyzer.slingshot.monitor.data.events.modelvisited
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
-import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util.Shareables;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

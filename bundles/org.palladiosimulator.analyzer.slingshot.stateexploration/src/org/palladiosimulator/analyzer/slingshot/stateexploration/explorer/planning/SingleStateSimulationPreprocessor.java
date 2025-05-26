@@ -15,8 +15,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorSta
 import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.palladiosimulator.analyzer.workflow.ConstantsContainer;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 import org.palladiosimulator.spd.SPD;
@@ -67,45 +65,30 @@ public class SingleStateSimulationPreprocessor {
 	 * @return Configuration for the next simulation run, or empty optional, if
 	 *         fringe has no viable change.
 	 */
-	public SimulationInitConfiguration createConfigForNextSimualtionRun(final List<ScalingPolicy> policies, final String parentId, final double startTime) {
+	public void deactivatePolicies(final List<ScalingPolicy> policies) {
 
-		final ExploredStateBuilder end = new ExploredStateBuilder(parentId, startTime);
 		final SPD spd = PCMResourcePartitionHelper.getSPD(partition); // IOBE, if no spd present.
 
 		this.deactivateReactivePolicies(spd, policies);
 		ResourceUtils.saveResource(spd.eResource());
-
-		return createConfigBasedOnChange(policies, end);
 	}
 
-	/**
-	 *
-	 *
-	 * @param change
-	 * @param start
-	 * @param end
-	 * @return
-	 */
-	private SimulationInitConfiguration createConfigBasedOnChange(final List<ScalingPolicy> policies, final ExploredStateBuilder end) {
-		if (policies.isEmpty()) {
-			return new SimulationInitConfiguration(snapshot, end, List.of(),
-					this.createStateInitEvents(snapshot.getSPDAdjustorStateValues()));
-		} else {
-			LOGGER.debug("Create InitConfiguration for Reconfiguration (Pro- or Reactive)");
 
+	
+	public List<ModelAdjustmentRequested> createInitialModelAdjustmentRequested(final List<ScalingPolicy> policies) {
+		return policies.stream().map(p -> new ModelAdjustmentRequested(p)).toList();
+	}
+	
+	
+	public Set<SPDAdjustorStateInitialized> createUpdateStateInitEvents(final List<ScalingPolicy> policies) {
 			final Collection<SPDAdjustorStateValues> initValues = new HashSet<>();
-			final List<ModelAdjustmentRequested> initEvents = new ArrayList<>();
 
 			for (final ScalingPolicy policy : policies) {
 				initValues.addAll(updateInitValues(policy, snapshot.getSPDAdjustorStateValues()));
-				initEvents.add(new ModelAdjustmentRequested(policy));
 			}
 			
-
-			return new SimulationInitConfiguration(snapshot, end, initEvents,
-					this.createStateInitEvents(initValues));
+			return this.createStateInitEvents(initValues);
 		}
-	}
 
 	/**
 	 * Deactivate all reactively applied policies at the given SPD model, that have

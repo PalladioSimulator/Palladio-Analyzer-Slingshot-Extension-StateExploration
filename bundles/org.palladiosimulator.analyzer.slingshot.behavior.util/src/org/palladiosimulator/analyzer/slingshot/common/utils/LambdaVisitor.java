@@ -1,4 +1,4 @@
-package org.palladiosimulator.analyzer.slingshot.behavior.util;
+package org.palladiosimulator.analyzer.slingshot.common.utils;
 
 import java.util.HashMap;
 import java.util.Map;

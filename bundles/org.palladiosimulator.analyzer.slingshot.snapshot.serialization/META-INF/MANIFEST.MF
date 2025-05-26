@@ -23,4 +23,9 @@ Require-Bundle: com.google.gson,
  org.palladiosimulator.pcm,
  de.uka.ipd.sdq.simucomframework.variables,
  org.palladiosimulator.analyzer.slingshot.behavior.usageevolution,
- org.palladiosimulator.analyzer.slingshot.behavior.spd.data
+ org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
+ org.palladiosimulator.analyzer.slingshot.snapshot.data,
+ org.palladiosimulator.analyzer.slingshot.cost,
+ org.palladiosimulator.analyzer.slingshot.core,
+ org.palladiosimulator.probeframework,
+ org.palladiosimulator.monitorrepository

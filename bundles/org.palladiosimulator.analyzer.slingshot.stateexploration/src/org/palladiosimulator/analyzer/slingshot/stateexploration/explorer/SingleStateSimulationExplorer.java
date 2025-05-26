@@ -1,24 +1,27 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
+import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
 import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
-import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.data.MeasurementSet;
 import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.converter.data.Utility;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationDriver;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.Postprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.SingleStateSimulationPreprocessor;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.AdditionalConfigurationModule;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.providers.EventsToInitOnWrapper;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.serialiser.data.InitState;
@@ -73,11 +76,66 @@ public class SingleStateSimulationExplorer {
 		//EcoreUtil.resolveAll(initModels.getResourceSet());
 		
 		this.snapshot = snapshot;
-		 		
-		// TODO: i actually need the preprocessor to create the simulation config. 
+
 		this.preprocessor = new SingleStateSimulationPreprocessor(snapshot, blackboard);
 	}
 
+
+
+	public SimulationResult simulateSingleState(final List<ScalingPolicy> policies, final double startTime) {
+		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
+//		
+//		final SimulationInitConfiguration config = this.preprocessor.createConfigForNextSimualtionRun(policies, this.parentId, startTime);
+		
+		final ExploredStateBuilder stateBuilder = new ExploredStateBuilder(parentId, startTime);
+		
+		final Set<SPDAdjustorStateInitialized> stateInitEvents = this.preprocessor.createUpdateStateInitEvents(policies);
+		final List<ModelAdjustmentRequested> initialAdjustments = this.preprocessor.createInitialModelAdjustmentRequested(policies);
+				
+		AdditionalConfigurationModule.defaultStateProvider.set(stateBuilder);
+		AdditionalConfigurationModule.eventsToInitOnProvider.set(new EventsToInitOnWrapper(initialAdjustments, stateInitEvents, snapshot.getEvents()));
+		
+
+		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
+		driver.init(simuComConfig, monitor);
+		driver.start();
+		
+		return this.postProcessExplorationCycle(stateBuilder);
+	}
+	
+	public record SimulationResult(ResultState state, InitState initState) {
+		
+	}
+
+	/**
+	 *
+	 * Post {@link StateExploredEventMessage}, update fringe and write utility back
+	 * to state.
+	 *
+	 * TODO : write Snapshot and measurements to file. need not write the models, because they alread are on file. 
+	 *
+	 * @param config configuration of exploration cycle to be post processed.
+	 */
+	private SimulationResult postProcessExplorationCycle(final ExploredStateBuilder stateBuilder) {
+
+		final ExploredState current = stateBuilder.buildState();
+		
+		new Postprocessor(initModels).reduceTriggerTime(current.getDuration());
+		
+		final List<ScalingPolicy> policies = current.getSnapshot().getModelAdjustmentRequestedEvent().stream().map(e -> e.getScalingPolicy())
+				.toList();
+
+		final List<MeasurementSet> measurements = new MeasurementConverter(0.0, current.getDuration()).visitExperiementSetting(current.getExperimentSetting());
+
+		final Utility utility = StateGraphNode.calcUtility(current.getStartTime(), current.getEndTime(), measurements, PCMResourcePartitionHelper.getSLORepository(initModels).getServicelevelobjectives());
+		
+		final ResultState resultState = new ResultState(initModels, current.getStartTime(), measurements, current.getDuration(), current.getReasonsToLeave(), current.getParentId(), policies, utility);
+		
+		return  new SimulationResult(resultState, new InitState(current.getEndTime(), current.getSnapshot(), current.getParentId()));
+	}
+	
+	
+	
 	/**
 	 * Applying a Profile and and the Stereotypes is necessary, because otherwise
 	 * {@link EcoreUtil#resolveAll(org.eclipse.emf.ecore.resource.ResourceSet)}
@@ -117,58 +175,4 @@ public class SingleStateSimulationExplorer {
 		StereotypeAPI.applyStereotype(fake, "CostReport");
 	}
 
-	public SimulationResult simulateSingleState(final List<ScalingPolicy> policies, final double startTime) {
-		LOGGER.info("********** DefaultGraphExplorer.explore() **********");
-		
-		final SimulationInitConfiguration config = this.preprocessor.createConfigForNextSimualtionRun(policies, this.parentId, startTime);
-		
-				
-		AdditionalConfigurationModule.defaultStateProvider.set(config.getStateToExplore());
-		AdditionalConfigurationModule.eventsToInitOnProvider.set(new EventsToInitOnWrapper(config.getAdjustmentEvents(), config.getStateInitializationEvents(), snapshot.getEvents()));
-		
-
-		final SimulationDriver driver = Slingshot.getInstance().getSimulationDriver();
-		driver.init(simuComConfig, monitor);
-		driver.start();
-		
-		return this.postProcessExplorationCycle(config);
-	}
-	
-	public record SimulationResult(ResultState state, InitState initState) {
-		
-	}
-
-	/**
-	 *
-	 * Post {@link StateExploredEventMessage}, update fringe and write utility back
-	 * to state.
-	 *
-	 * TODO : write Snapshot and measurements to file. need not write the models, because they alread are on file. 
-	 *
-	 * @param config configuration of exploration cycle to be post processed.
-	 */
-	private SimulationResult postProcessExplorationCycle(final SimulationInitConfiguration config) {
-
-		final ExploredState current = config.getStateToExplore().buildState();
-		
-		new Postprocessor(initModels).reduceTriggerTime(current.getDuration());
-		
-		final List<ScalingPolicy> policies = current.getSnapshot().getModelAdjustmentRequestedEvent().stream().map(e -> e.getScalingPolicy())
-				.toList();
-
-
-		final String parentId = current.getParentId();
-		final StateGraphNode node = this.convertState(current, parentId, policies);
-		
-		final ResultState resultState = new ResultState(current.getStartTime(), node.measurements(), current.getDuration(), current.getReasonsToLeave(), current.getParentId(), node.slos(), node.incomingPolicies(), node.utility());
-		
-		return  new SimulationResult(resultState, new InitState(current.getEndTime(), current.getSnapshot(), current.getParentId()));
-	}
-
-	private StateGraphNode convertState(final ExploredState state, final String parentId,
-			final List<ScalingPolicy> scalingPolicies) {
-		return StateGraphConverter.convertState(Optional.of(PCMResourcePartitionHelper.getMonitorRepository(initModels)),
-				state.getExperimentSetting(), Optional.of(PCMResourcePartitionHelper.getSLORepository(initModels)), state.getStartTime(), state.getEndTime(),
-				state.getId(), parentId, scalingPolicies, new MeasurementConverter(0.0, state.getDuration()));
-	}
 }

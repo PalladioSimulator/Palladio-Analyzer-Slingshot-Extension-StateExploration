@@ -42,7 +42,7 @@ public record StateGraphNode(String id, double startTime, double endTime, List<M
 				(Number) slo.getUpperThreshold().getThresholdLimit().getValue());
 	}
 
-	private static Utility calcUtility(final double startTime, final double endTime,
+	public static Utility calcUtility(final double startTime, final double endTime,
 			final List<MeasurementSet> measurements, final List<ServiceLevelObjective> slos) {
 		final var utility = new Utility();
 

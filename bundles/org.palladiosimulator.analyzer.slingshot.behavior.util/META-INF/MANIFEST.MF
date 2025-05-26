@@ -5,8 +5,7 @@ Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.behavior.util
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.behavior.util
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Export-Package: org.palladiosimulator.analyzer.slingshot.behavior.util,
- org.palladiosimulator.analyzer.slingshot.common.utils
+Export-Package: org.palladiosimulator.analyzer.slingshot.common.utils
 Require-Bundle: org.apache.log4j,
  org.palladiosimulator.analyzer.workflow,
  org.palladiosimulator.analyzer.slingshot.common,

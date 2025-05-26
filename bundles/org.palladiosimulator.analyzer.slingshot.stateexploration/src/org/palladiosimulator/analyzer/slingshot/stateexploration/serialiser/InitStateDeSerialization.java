@@ -11,8 +11,8 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorSta
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.PlainSnapshot;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.Serializer;
 import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters.EObjectTypeAdapter;
+import org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util.Serializer;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.serialiser.data.InitState;
 import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 

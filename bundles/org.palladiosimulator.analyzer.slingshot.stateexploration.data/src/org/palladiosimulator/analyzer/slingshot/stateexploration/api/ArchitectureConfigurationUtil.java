@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringpointPackage;
 import org.palladiosimulator.experimentautomation.experiments.ExperimentsPackage;
@@ -109,5 +111,37 @@ public class ArchitectureConfigurationUtil {
 			ResourceUtils.saveResource(resource);
 			LOGGER.debug(String.format("Saved resource %s.", resource.getURI().toString()));
 		}
+	}
+	
+	/**
+	 * Changes als the location of all models in the given set to the given destination Folder and writes them to file.
+	 * 
+	 * Beware, this operation has side effects, it actually changes the URIs of the models in the given set.
+	 * 
+	 * @param set set containing the models
+	 * @param destinationFolder folder to copy the models to.
+	 */
+	public static void copyToURI(final ResourceSet set, final URI destinationFolder) {
+		String cleanLocation = destinationFolder.toString();
+
+		if (destinationFolder.hasTrailingPathSeparator()) {
+			cleanLocation = cleanLocation.substring(0, cleanLocation.length() - 1);
+		}
+
+		// 1. ensure that all models are loaded.
+		EcoreUtil.resolveAll(set);
+
+		final List<Resource> whitelisted = ArchitectureConfigurationUtil.getWhitelistedResources(set);
+
+		// 2. update paths
+		for (final Resource resource : whitelisted) {
+			final String file = resource.getURI().lastSegment();
+
+			final URI newUri = URI.createURI(cleanLocation).appendSegment(file);
+			resource.setURI(newUri);
+		}
+
+		// 3. save to new path (thereby create a copy)
+		ArchitectureConfigurationUtil.saveWhitelisted(set);
 	}
 }
