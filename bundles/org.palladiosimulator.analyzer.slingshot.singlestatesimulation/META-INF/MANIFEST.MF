@@ -1,15 +1,13 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Singlestatesimulation
-Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.singlestatesimulation
+Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.singlestatesimulation;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.singlestatesimulation
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Export-Package: org.palladiosimulator.analyzer.slingshot.singlestatesimulation.workflow
 Require-Bundle: de.uka.ipd.sdq.workflow,
  de.uka.ipd.sdq.workflow.mdsd.blackboard,
  org.palladiosimulator.analyzer.slingshot.core,
- org.palladiosimulator.analyzer.slingshot.stateexploration.workflow,
  org.palladiosimulator.analyzer.workflow,
  org.palladiosimulator.analyzer.slingshot.networking.data,
  org.palladiosimulator.analyzer.slingshot.stateexploration,
@@ -25,4 +23,5 @@ Require-Bundle: de.uka.ipd.sdq.workflow,
  org.palladiosimulator.monitorrepository,
  org.palladiosimulator.servicelevelobjective,
  org.palladiosimulator.analyzer.slingshot.common.utils,
- org.palladiosimulator.analyzer.slingshot.workflow.events
+ org.palladiosimulator.analyzer.slingshot.workflow.events,
+ org.palladiosimulator.analyzer.slingshot.behavior.util;bundle-version="1.0.0"

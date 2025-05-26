@@ -10,6 +10,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
 import org.palladiosimulator.edp2.models.measuringpoint.MeasuringpointPackage;
+import org.palladiosimulator.experimentautomation.experiments.ExperimentsPackage;
 import org.palladiosimulator.monitorrepository.MonitorRepositoryPackage;
 import org.palladiosimulator.pcm.allocation.AllocationPackage;
 import org.palladiosimulator.pcm.repository.RepositoryPackage;
@@ -20,6 +21,8 @@ import org.palladiosimulator.semanticspd.SemanticspdPackage;
 import org.palladiosimulator.servicelevelobjective.ServicelevelObjectivePackage;
 import org.palladiosimulator.spd.SpdPackage;
 import org.scaledl.usageevolution.UsageevolutionPackage;
+
+import tools.descartes.dlim.DlimPackage;
 
 /**
  * Util class for the {@link ArchitectureConfiguration}.
@@ -46,10 +49,13 @@ public class ArchitectureConfigurationUtil {
 	 */
 	public static final Set<EClass> OPTIONAL_MODEL_ECLASSES = Set.of(
 			MonitorRepositoryPackage.eINSTANCE.getMonitorRepository(),
-			MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository(), SpdPackage.eINSTANCE.getSPD(),
+			MeasuringpointPackage.eINSTANCE.getMeasuringPointRepository(),
+			SpdPackage.eINSTANCE.getSPD(),
 			SemanticspdPackage.eINSTANCE.getConfiguration(),
 			ServicelevelObjectivePackage.eINSTANCE.getServiceLevelObjectiveRepository(),
-			UsageevolutionPackage.eINSTANCE.getUsageEvolution());
+			UsageevolutionPackage.eINSTANCE.getUsageEvolution(),
+			ExperimentsPackage.eINSTANCE.getExperimentRepository(),
+			DlimPackage.eINSTANCE.getSequence());
 
 	private static final Set<EClass> MERGED_MODEL_ECLASSES = new HashSet<>();
 	static {

@@ -1,38 +1,31 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.graph;
 
-import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
 /**
- * State in the raw state graph.
+ * State for single state exploration.
  *
  * Big State, with all the data i can get my hands on. to be condensed to the
  * necessary amount of data later on.
  *
  *
- * @author stiesssh
+ * @author Sophie Stieß
  *
  */
 public class ExploredState {
 
-	private final StateGraph graph;
 
-	/* for prioritising in fringe */
-	private double totalUtility;
-	private double totalDuration; 
-	private double utility = 0;
-
-	
+	/* Additional fields*/
+	private final String parentId;
+	private final String id; 
 	
 	/* known at start */
 	private final double startTime;
-	private final ArchitectureConfiguration archConfig;
 
 	/* known at the end */
 	private final double duration;
@@ -45,25 +38,22 @@ public class ExploredState {
 	/**
 	 * 
 	 * @param pointInTime
-	 * @param archConfig
-	 * @param graph
 	 * @param settings
 	 * @param snapshot
 	 * @param duration
-	 * @param adjustorStateValues
 	 * @param reasonsToLeave
+	 * @param parentId
 	 */
-	protected ExploredState(final double pointInTime, final ArchitectureConfiguration archConfig,
-			final StateGraph graph, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Set<ReasonToLeave> reasonsToLeave) {
-		this.graph = graph;
+	protected ExploredState(final double pointInTime, final ExperimentSetting settings, final Snapshot snapshot, final double duration, final Set<ReasonToLeave> reasonsToLeave, final String parentId) {
+		this.parentId = parentId;
 		this.startTime = pointInTime;
-		this.archConfig = archConfig;
 		this.reasonsToLeave = reasonsToLeave;
 		
 		this.experimentSetting = settings;
 		this.snapshot = snapshot;
-
 		this.duration = duration;
+		
+		this.id = UUID.randomUUID().toString();
 	}
 
 	/**
@@ -77,47 +67,15 @@ public class ExploredState {
 		return snapshot;
 	}
 
-	public double getUtility() {
-		return utility;
-	}
-
-	public void setUtility(final double utility) {
-		this.utility = utility;
-	}
-
-	public double getTotalUtility() {
-		return totalUtility;
-	}
-
-	public void setTotalUtility(final double totalUtility) {
-		this.totalUtility = totalUtility;
-	}
-
-	public double getTotalDuration() {
-		return totalDuration;
-	}
-
-	public void setTotalDuration(final double totalDuration) {
-		this.totalDuration = totalDuration;
-	}
-
-	/**
-	 *
-	 * @return distance between this state and root.
-	 */
-	public int lenghtOfHistory() {
-		return StateGraph.distance(this, this.graph.getRoot());
-	}
-
-	public ArchitectureConfiguration getArchitecureConfiguration() {
-		return this.archConfig;
+	public String getParentId() {
+		return parentId;
 	}
 
 	public ExperimentSetting getExperimentSetting() {
 		return this.experimentSetting;
 	}
 
-	public Collection<ReasonToLeave> getReasonsToLeave() {
+	public Set<ReasonToLeave> getReasonsToLeave() {
 		return reasonsToLeave;
 	}
 
@@ -135,30 +93,10 @@ public class ExploredState {
 	
 	@Override
 	public String toString() {
-		return "[" + archConfig.getSegment() + " (" + reasonsToLeave + ")]";
+		return "[" + this.id + " (" + reasonsToLeave + ")]";
 	}
 
-	public Optional<ExploredTransition> getIncomingTransition() {
-		if (this.graph.getRoot().equals(this)) {
-			return Optional.empty();
-		}
-
-		assert this.graph.incomingEdgesOf(this).size() == 1 : String.format("Illegal number of incoming edges for state %s.", this.toString());
-
-		final Optional<ExploredTransition> transition = this.graph.incomingEdgesOf(this).stream().findFirst();
-
-		if (transition.isEmpty()) {
-			throw new IllegalStateException(String.format("No incoming edges for non-root state %s.", this.toString()));
-		}
-
-		return transition;
-	}
-
-	public Set<ExploredTransition> getOutgoingTransitions() {
-		return this.graph.outgoingEdgesOf(this);
-	}
-	
 	public String getId() {
-		return getArchitecureConfiguration().getSegment();
+		return this.id;
 	}
 }

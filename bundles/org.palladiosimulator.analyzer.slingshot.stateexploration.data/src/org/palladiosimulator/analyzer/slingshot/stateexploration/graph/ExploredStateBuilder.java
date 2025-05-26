@@ -1,13 +1,10 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.graph;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.edp2.models.ExperimentData.ExperimentSetting;
 
 import com.google.common.base.Preconditions;
@@ -27,11 +24,8 @@ import com.google.common.base.Preconditions;
 public class ExploredStateBuilder {
 
 	/* known at start */
-	private final StateGraph graph;
-	private final ExploredState predecessor;
-	private final Optional<Change> change;
 	private final double startTime;
-	private final ArchitectureConfiguration archConfig;
+	private final String parentId;
 
 	/* must be filled at the end of a simulation run */
 	private final Set<ReasonToLeave> reasonsToLeave = new HashSet<>();
@@ -43,15 +37,13 @@ public class ExploredStateBuilder {
 	/* must be set after configuration of the simulation run */
 	private ExperimentSetting experimentSetting = null;
 
-	public ExploredStateBuilder(final StateGraph graph, final PlannedTransition plannedTransition) {
-		this.graph = graph;
-		this.predecessor = plannedTransition.getStart();
-		this.change = plannedTransition.getChange();
-		this.startTime = plannedTransition.getSource().getEndTime();
-		this.archConfig = plannedTransition.getSource().getArchitecureConfiguration().copy();
+	public ExploredStateBuilder(final String parentId, final double startTime) {
+		this.startTime = startTime;
+		this.parentId = parentId;
+	}
 
-		this.info = new StartupInfo(this.predecessor, this.archConfig, this.startTime);
-		this.ppInfo = new PostProcessInfo(this.predecessor, this.change);
+	public double getStartTime() {
+		return startTime;
 	}
 
 	public void setExperimentSetting(final ExperimentSetting experimentSetting) {
@@ -70,38 +62,8 @@ public class ExploredStateBuilder {
 		this.reasonsToLeave.add(reasonToLeave);
 	}
 
-	/**
-	 * Information about the state to be build by this builder, that are required
-	 * while preprocessing and initialising the simulation run.
-	 */
-	public record StartupInfo(ExploredState predecessor, ArchitectureConfiguration architecureConfiguration,
-			double startTime) {
-	}
-
-	private final StartupInfo info;
-
-	/**
-	 * Information about the state to be build by this builder, that are required
-	 * while postprocessing the simulation run.
-	 */
-	public record PostProcessInfo(ExploredState predecessor, Optional<Change> change) {
-	}
-
-	private final PostProcessInfo ppInfo;
-
-	public PostProcessInfo getPPInfo() {
-		return this.ppInfo;
-	}
-
-	public StartupInfo getStartupInformation() {
-		return this.info;
-	}
-
-	
-
 	/** Toggls, to ensure that the builder fathers only one state and one transition */
 	private boolean stateIsBuilt = false;
-	private boolean transitionIsBuilt = false;
 	
 	/**
 	 * Build a new {@link ExploredState} based on this builder.
@@ -124,20 +86,6 @@ public class ExploredStateBuilder {
 				"Each builder may only be used to build exactly one state. This builder was already used to create a new state and cannot be used again.");
 		this.stateIsBuilt = true;
 
-		return new ExploredState(startTime, archConfig, graph, experimentSetting, snapshot, duration, reasonsToLeave);
-	}
-	
-	/**
-	 * Build a new {@link ExploredTransition} based on this builder.
-	 * 
-	 * @return a new {@link ExploredTransition}
-	 * @throws IllegalStateException if one attempts to use this builder to create multiple transitions.
-	 */
-	protected ExploredTransition buildTransition() {
-		Preconditions.checkState(!transitionIsBuilt,
-				"Each builder may only be used to build exactly one transition. This builder was already used to create a new transition and cannot be used again.");
-		this.transitionIsBuilt = true;
-		
-		return new ExploredTransition(this.change, graph);
+		return new ExploredState(startTime, experimentSetting, snapshot, duration, reasonsToLeave, parentId);
 	}
 }

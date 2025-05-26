@@ -5,13 +5,16 @@ import javax.inject.Inject;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
+import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.cost.events.TakeCostMeasurement;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PostIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.PreIntercept;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.entity.interceptors.InterceptorInformation;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.InterceptionResult;
+import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
+import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotFinished;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
-import org.scaledl.usageevolution.UsageEvolution;
 
 /**
  * Behaviour to continuously offset the {@link IntervalPassed} events for the
@@ -31,23 +34,18 @@ import org.scaledl.usageevolution.UsageEvolution;
  * @author Sophie Stieß
  *
  */
-public class OffsetForUsageEvolutionBehaviour implements SimulationBehaviorExtension {
+public class PreventPreemptiveSimulationFinished implements SimulationBehaviorExtension {
 
-	private static final Logger LOGGER = Logger.getLogger(OffsetForUsageEvolutionBehaviour.class);
+	private static final Logger LOGGER = Logger.getLogger(PreventPreemptiveSimulationFinished.class);
 
 	private final boolean activated;
-	private final double startTime;
+
+	private boolean snapshotFinished = false;
 
 	@Inject
-	public OffsetForUsageEvolutionBehaviour(final @Nullable ExploredStateBuilder stateBuilder,
-			@Nullable final UsageEvolution usageEvolutionModel) {
+	public PreventPreemptiveSimulationFinished(final @Nullable ExploredStateBuilder stateBuilder) {
 
-		this.activated = stateBuilder != null && usageEvolutionModel != null
-				&& stateBuilder.getStartTime() > 0;
-
-				
-		this.startTime = this.activated ? stateBuilder.getStartTime() : 0;
-				
+		this.activated = stateBuilder != null;
 	}
 
 	@Override
@@ -66,9 +64,20 @@ public class OffsetForUsageEvolutionBehaviour implements SimulationBehaviorExten
 	 * @return always success
 	 */
 	@PreIntercept
-	public InterceptionResult preInterceptIntervalPassed(final InterceptorInformation information,
-			final IntervalPassed event) {
-		event.setTime(event.time() + this.startTime);
+	public InterceptionResult preInterceptSimualtionFinished(final InterceptorInformation information,
+			final SimulationFinished event) {
+		if (this.snapshotFinished) {
+			return InterceptionResult.success();
+		} else {
+			return InterceptionResult.abort();
+		}
+	}
+	
+	
+	@PostIntercept
+	public InterceptionResult postInterceptSnapshotFinished(final InterceptorInformation information,
+			final SnapshotFinished event, final Result<?> result) {
+		this.snapshotFinished = true;
 		return InterceptionResult.success();
 	}
 }

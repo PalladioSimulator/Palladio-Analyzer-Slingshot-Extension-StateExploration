@@ -19,7 +19,6 @@ public class SimulationInitConfiguration {
 
 	private final Snapshot snapToInitOn;
 	private final ExploredStateBuilder stateToExplore;
-	private final double explorationDuration;
 
 	/** Events that are not part of the simulation, but only for initialising the SPD Interpreter. */
 	private final Set<SPDAdjustorStateInitialized> initializationEvents;
@@ -27,13 +26,11 @@ public class SimulationInitConfiguration {
 	/** Adjustments. Beware, order must be preserved.*/
 	private final List<ModelAdjustmentRequested> events;
 
-	public SimulationInitConfiguration(final Snapshot snapToInitOn, final ExploredStateBuilder stateToExplore,
-			final double explorationDuration, final List<ModelAdjustmentRequested> events,
+	public SimulationInitConfiguration(final Snapshot snapToInitOn, final ExploredStateBuilder stateToExplore, final List<ModelAdjustmentRequested> events,
 			final Set<SPDAdjustorStateInitialized> initializationEvents) {
 		super();
 		this.snapToInitOn = snapToInitOn;
 		this.stateToExplore = stateToExplore;
-		this.explorationDuration = explorationDuration;
 		this.events = events;
 		this.initializationEvents = initializationEvents;
 	}
@@ -44,10 +41,6 @@ public class SimulationInitConfiguration {
 
 	public ExploredStateBuilder getStateToExplore() {
 		return this.stateToExplore;
-	}
-
-	public double getExplorationDuration() {
-		return this.explorationDuration;
 	}
 
 	public Set<SPDAdjustorStateInitialized> getStateInitializationEvents() {
@@ -66,7 +59,7 @@ public class SimulationInitConfiguration {
 	@Override
 	public String toString() {
 		return "SimulationInitConfiguration [stateToExplore=" + stateToExplore
-				+ ", explorationDuration=" + explorationDuration + ", policies=[" + events.stream()
+				+ "  " + "policies=[" + events.stream()
 				.map(e -> e.getScalingPolicy().getEntityName() + "(" + e.getScalingPolicy().getId() + ")")
 				.reduce("", (a, b) -> a + ", " + b)
 				+ "] - "

@@ -1,174 +1,109 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.Transition;
+import org.palladiosimulator.analyzer.slingshot.common.utils.PCMResourcePartitionHelper;
+import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
+import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
+import org.palladiosimulator.spd.SPD;
+import org.palladiosimulator.spd.ScalingPolicy;
+import org.palladiosimulator.spd.triggers.BaseTrigger;
+import org.palladiosimulator.spd.triggers.ScalingTrigger;
+import org.palladiosimulator.spd.triggers.expectations.ExpectedTime;
+import org.palladiosimulator.spd.triggers.stimuli.SimulationTime;
 
 /**
  *
- * Post process a node of the state graph after the node was simulated.
+ * The preprocessor creates the {@link SimulationInitConfiguration} for the next
+ * simulation run.
  * 
- * Postprocessing includes adding new planned transitions to the fringe. Planned
- * transitions include at least NOOP-transition. If the state ended with a
- * {@link ModelAdjustmentRequested} event, postprocessing also creates a planned
- * transition for a reactive reconfiguration, and multiple planned transitions
- * for proactive reconfigurations.
- * 
- * Proactive reconfigurations are added according to different strategies, c.f.
- * {@link ProactivePolicyStrategy}.
- * 
- * 
+ * The order of simulation of the planned transitions is as defined by the
+ * fringe. The preprocessor does not change the order. However, it can drop a
+ * planned transition, e.g. because it is now in the past compared to the time
+ * in the managed system.
+ *
  * @author Sophie Stieß
  *
  */
 public class Postprocessor {
 
 	private static final Logger LOGGER = Logger.getLogger(Postprocessor.class.getName());
-
-	private final int keepAtLeast;
+	private final SPD spd;
 	
-	private final StateGraph rawgraph;
-	private final FringeFringe fringe;
-
-	private final ProactivePolicyStrategyBuilder proactiveStrategyBuilder;
-
-	/**
-	 * 
-	 * @param graph
-	 * @param fringe
-	 */
-	public Postprocessor(final StateGraph graph, final FringeFringe fringe) {
-		this.rawgraph = graph;
-		this.fringe = fringe;
-
-		this.proactiveStrategyBuilder = new ProactivePolicyStrategyBuilder(this.rawgraph, this.fringe);
-
-		this.updateGraphFringe(graph.getRoot());
-		
-		this.keepAtLeast = graph.getRoot().getArchitecureConfiguration().getSPD().isEmpty() ? 1 : graph.getRoot().getArchitecureConfiguration().getSPD().get().getScalingPolicies().size();
+	public Postprocessor(final PCMResourceSetPartition partition) {
+		this.spd = PCMResourcePartitionHelper.getSPD(partition);
 	}
 
 	/**
-	 * Add new exploration directions to the graph fringe.
 	 *
-	 * To be called after the given state was simulated.
+	 * Ensures, that the state graph node, that will be simulated with the resulting configuration is already connected to the state graph. 
+	 * Ensures, that the at max one planned change is removed from the fringe.
+	 * 
+	 * Ensures, that the SPD model of the new state graph node is updated (e.g. reduced triggertimes for simulation time base triggers, and that the changes are saved to file as well. 
+	 * 
+	 * Ensures, that the {@link ModelAdjustmentRequested events} get copied and point to the corrcet (?) SPD file.
 	 *
-	 * This is where the proactive / reactive / nop changes for future iterations
-	 * are set. If we want to add more proactive changes later on, this operation is
-	 * where we should insert them.
-	 *
-	 * @param start state that we just finished exploring.
+	 * @return Configuration for the next simulation run, or empty optional, if
+	 *         fringe has no viable change.
 	 */
-	public void updateGraphFringe(final ExploredState start) {
-		
-		if (start.getReasonsToLeave().contains(ReasonToLeave.aborted)) {
-			return;
-		}
-			
-		final Set<ExploredState> worstSiblings = this.getWorstSiblingSuccesors(start);
-		this.fringe.prune(pt -> worstSiblings.contains(pt.getSource()));
-		
-		if (worstSiblings.contains(start)) {
-			return;
-		}
-		
-		// NOP Always
-		this.fringe.offer(new PlannedTransition(Optional.empty(), start));
+	public void reduceTriggerTime(final double duration) {
+		this.updateSimulationTimeTriggeredPolicy(spd, duration);
+		ResourceUtils.saveResource(spd.eResource());
+	}
 
-		// Reactive Reconfiguration - Always.
-		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
-			return;
-		}
-		// TODO : this is the "each once" implementation, but i'm not sure whether it's
-		// the best.
-		for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
-			// reactive reconf to the next state.
-			this.fringe.offer(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
-		}
+	/**
+	 * Reduces the {@link ExpectedTime} value for scaling policies with trigger
+	 * stimulus {@link SimulationTime} or deactivates the policy if the trigger is
+	 * in the past with regard to global time.
+	 *
+	 * The {@link ExpectedTime} value is reduced by the duration of the previous
+	 * state.
+	 *
+	 * @param spd    current scaling rules.
+	 * @param offset duration of the previous state
+	 */
+	private void updateSimulationTimeTriggeredPolicy(final SPD spd, final double offset) {
+		spd.getScalingPolicies().stream()
+				.filter(policy -> policy.isActive() && this.isSimulationTimeTrigger(policy.getScalingTrigger()))
+				.map(policy -> ((BaseTrigger) policy.getScalingTrigger()))
+				.forEach(trigger -> this.updateValue(((ExpectedTime) trigger.getExpectedValue()), offset));
+	}
 
-		// proactive reconfs
-		final List<PlannedTransition> newTransitions = new ArrayList<>();
+	/**
+	 * Update expected time value and deactivate, if the policy is in the past
+	 * necessary.
+	 * 
+	 * @param time                  model element to be updated
+	 * @param previousStateDuration duration to subtract from {@code time}.
+	 */
+	private void updateValue(final ExpectedTime time, final double previousStateDuration) {
+		final double triggerTime = time.getValue();
 
-		newTransitions
-				.addAll(this.proactiveStrategyBuilder.createBacktrackPolicyStrategy(start).createProactiveChanges());
-		newTransitions.addAll(
-				this.proactiveStrategyBuilder.createBacktrackMergerPolicyStrategy(start).createProactiveChanges());
+		final ScalingPolicy policy = (ScalingPolicy) time.eContainer().eContainer();
 
-		// only add net yet executed or queued changes.
-		for (final PlannedTransition toDoChange : newTransitions) {
-
-			final Set<Transition> transitions = new HashSet<>();
-			transitions.addAll(this.rawgraph.getTransitions());
-			transitions.addAll(this.fringe.getAllPlannedTransition());
-
-			final Boolean dup = transitions.stream().map(toDoChange::isSame).reduce(false, (b1, b2) -> b1 || b2);
-
-			if (!dup) {
-				this.fringe.offer(toDoChange);
-			}
+		if (triggerTime < previousStateDuration) {
+			policy.setActive(false);
+			LOGGER.debug(String.format("Deactivate Policy %s as Triggertime is in the past.", policy.getEntityName()));
+		} else {
+			time.setValue(time.getValue() - previousStateDuration);
+			LOGGER.debug(String.format("Reduce Triggertime of Policy %s by %f to %f.", policy.getEntityName(),
+					previousStateDuration, time.getValue()));
 		}
 	}
-	
-	/**
-	 * 
-	 * Cut off all but the best few siblings of the given state.
-	 * 
-	 * Cut off means 
-	 * 
-	 * @param state 
-	 */
-	public Set<ExploredState> getWorstSiblingSuccesors(final ExploredState state) {
-		if (state.getIncomingTransition().isEmpty()) {
-			return Set.of(); // root
-		}
-		final ExploredState parent = state.getIncomingTransition().get().getSource();
-		final List<ExploredState> siblings = parent.getOutgoingTransitions().stream().map(t -> t.getTarget()).toList();
-		
-		if (siblings.size() <= keepAtLeast) {
-			return Set.of(); //too few states
-		}
-		
-		final int limit = siblings.size() - keepAtLeast;
 
-		final List<ExploredState> worstSiblings = siblings.stream().sorted((s1,s2) -> Double.compare(s1.getUtility(), s2.getUtility())).limit(limit).toList();
-
-		final Set<ExploredState> badSuccessors = new HashSet<>();
-		for (final ExploredState badState : worstSiblings) {
-			badSuccessors.add(badState);
-			badSuccessors.addAll(this.collectSuccessors(badState));
-		}	
-		return badSuccessors;
-	}
-	
-	
 	/**
+	 * Check whether the given trigger is based on {@link SimulationTime} and
+	 * {@link ExpectedTime}.
 	 * 
-	 * Collect all successors of a given state.
+	 * TODO take compound triggers into consideration.
 	 * 
-	 * @param state
-	 * @return successor states of {@code} state
+	 * @param trigger trigger to be checked.
+	 * @return true iff the trigger is based on {@link SimulationTime} and
+	 *         {@link ExpectedTime}
 	 */
-	public Set<ExploredState> collectSuccessors(final ExploredState state) {		
-		final Set<ExploredState> successors = new HashSet<>();
-		
-		for (final ExploredTransition transition : state.getOutgoingTransitions()) {
-			successors.addAll(this.collectSuccessors(transition.getTarget()));
-		}
-		return successors;	
+	private boolean isSimulationTimeTrigger(final ScalingTrigger trigger) {
+		return trigger instanceof final BaseTrigger base && base.getStimulus() instanceof SimulationTime
+				&& base.getExpectedValue() instanceof ExpectedTime;
 	}
 }

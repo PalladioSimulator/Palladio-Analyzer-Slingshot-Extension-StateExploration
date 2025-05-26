@@ -26,12 +26,12 @@ public class SnapshotInitiated extends AbstractSimulationEvent {
 	private final Optional<ModelAdjustmentRequested> triggeringEvent;
 
 	public SnapshotInitiated(final double delay) {
-		super("TODO", delay);
+		super(delay);
 		this.triggeringEvent = Optional.empty();
 	}
 
 	public SnapshotInitiated(final double delay, final ModelAdjustmentRequested event) {
-		super("TODO", delay);
+		super(delay);
 		this.triggeringEvent = Optional.of(event);
 	}
 

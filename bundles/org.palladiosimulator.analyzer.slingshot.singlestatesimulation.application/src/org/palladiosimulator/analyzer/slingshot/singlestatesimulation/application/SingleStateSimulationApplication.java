@@ -14,11 +14,9 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
-import org.palladiosimulator.analyzer.slingshot.singlestatesimulation.workflow.SingleStateSimulationRootJob;
-import org.palladiosimulator.analyzer.slingshot.singlestatesimulation.workflow.SingleStateSimulationWorkflowConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.ExplorationWorkflowConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.workflow.jobs.ExplorationRootJob;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.ExplorationWorkflowConfiguration;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SingleStateSimulationRootJob;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SingleStateSimulationWorkflowConfiguration;
 import org.palladiosimulator.experimentautomation.application.ExperimentApplication;
 import org.palladiosimulator.experimentautomation.application.tooladapter.abstractsimulation.AbstractSimulationConfigFactory;
 import org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration;
@@ -54,15 +52,21 @@ public class SingleStateSimulationApplication implements IApplication {
 
 	private final String SINGLE_STATE_SIMULATION_ID = "org.palladiosimulator.singlestatesimulation";
 
+	// formerly defined in ExplorationConfiguration
+	public static final String SENSIBILITY = "Sensitivity [0, 1 (most sensitive)]";
+	public static final String MODEL_LOCATION = "Location for Arch. Configruations";
 
 	@Override
 	public Object start(final IApplicationContext context) throws Exception {
-		final Path experimentsLocation = parseCommandlineArguments(context);
+		final Path experimentsLocation = parseCommandlineArguments(context, 1);
+
 
 		final Experiment experiment = getStateExplorationExperiment(experimentsLocation).orElseThrow(() -> new IllegalArgumentException(
 				"No Experiment with tool configuration of type StateExploration(Simulation)Configuration. Cannot start exploration."));
+		
+		final SingleStateSimulationWorkflowConfiguration.LocationRecord locationRecord=  createLocationRecord(context);
 
-		launchStateExploration(experiment);
+		launchStateExploration(experiment, locationRecord);
 		
 		return IApplication.EXIT_OK;
 	}
@@ -73,14 +77,22 @@ public class SingleStateSimulationApplication implements IApplication {
 	 * @param context to parse the arguments from. Must have at least one argument.
 	 * @return first command line argument as Path.
 	 */
-	private Path parseCommandlineArguments(final IApplicationContext context) {
+	private Path parseCommandlineArguments(final IApplicationContext context, final int index) {
 		final String[] args = (String[]) context.getArguments().get("application.args");
 
-		if (args.length < 1) {
-			throw new IllegalArgumentException("The mandatory argument is missing.");
+		if (args.length < index - 1) {
+			throw new IllegalArgumentException("Less than" + index + "arguments given.");
 		}
 
-		return new Path(args[args.length-1]);
+		return new Path(args[index - 1]);
+	}
+	
+	private SingleStateSimulationWorkflowConfiguration.LocationRecord createLocationRecord(final IApplicationContext context) {
+		final java.nio.file.Path snapshotFile = parseCommandlineArguments(context, 2).toFile().toPath();
+		final java.nio.file.Path otherConfigsFile = parseCommandlineArguments(context, 3).toFile().toPath();
+		final java.nio.file.Path resultFolder = parseCommandlineArguments(context, 4).toFile().toPath();
+		
+		return new SingleStateSimulationWorkflowConfiguration.LocationRecord(snapshotFile, otherConfigsFile, resultFolder);
 	}
 
 	/**
@@ -104,15 +116,15 @@ public class SingleStateSimulationApplication implements IApplication {
 	 *
 	 * @param experiment
 	 */
-	private void launchStateExploration(final Experiment experiment) {
+	private void launchStateExploration(final Experiment experiment, final SingleStateSimulationWorkflowConfiguration.LocationRecord locationRecord) {
 
 		final Map<String, Object> configMap = createConfigMap(experiment, SINGLE_STATE_SIMULATION_ID);
 
 		final SimuComConfig simuComconfig = new SimuComConfig(configMap, false);
-		// TODO Path! 
-		final SingleStateSimulationWorkflowConfiguration config = new SingleStateSimulationWorkflowConfiguration(simuComconfig, configMap, null);
 
-		this.setModelFilesInConfig(experiment.getInitialModel(), config);
+		final SingleStateSimulationWorkflowConfiguration config = new SingleStateSimulationWorkflowConfiguration(simuComconfig, configMap, locationRecord);
+
+		this.setModelFilesInConfig(experiment, config);
 
 		final BlackboardBasedWorkflow<MDSDBlackboard> workflow = new BlackboardBasedWorkflow<MDSDBlackboard>(
 				new SingleStateSimulationRootJob(config, null),
@@ -135,7 +147,9 @@ public class SingleStateSimulationApplication implements IApplication {
 	 * @param models initial models, as defined in the experiments file.
 	 * @param config configuration to start the exploration on.
 	 */
-	private void setModelFilesInConfig(final InitialModel models, final ExplorationWorkflowConfiguration config) {
+	private void setModelFilesInConfig(final Experiment experiment, final ExplorationWorkflowConfiguration config) {
+		final InitialModel models = experiment.getInitialModel();
+		
 		this.consumeModelLocation(models.getAllocation(), s -> config.setAllocationFiles(List.of(s)));
 		this.consumeModelLocation(models.getUsageModel(), s -> config.setUsageModelFile(s));
 
@@ -144,6 +158,8 @@ public class SingleStateSimulationApplication implements IApplication {
 		this.consumeModelLocation(models.getMonitorRepository(), s -> config.addOtherModelFile(s));
 		this.consumeModelLocation(models.getServiceLevelObjectives(), s -> config.addOtherModelFile(s));
 		this.consumeModelLocation(models.getUsageEvolution(), s -> config.addOtherModelFile(s));
+		
+		this.consumeModelLocation(experiment, s -> config.addOtherModelFile(s));
 	}
 
 	/**
@@ -192,12 +208,8 @@ public class SingleStateSimulationApplication implements IApplication {
 				simulatorID,
 				List.of());
 
-		map.put(ExplorationConfiguration.MAX_EXPLORATION_CYCLES, String.valueOf(simConfig.getMaxIterations()));
-		map.put(ExplorationConfiguration.MIN_STATE_DURATION, String.valueOf(simConfig.getMinStateDuration()));
-		map.put(ExplorationConfiguration.SENSIBILITY, String.valueOf(simConfig.getSensitivity()));
-		map.put(ExplorationConfiguration.IDLE_EXPLORATION, String.valueOf(simConfig.isDoIdleExploration()));
-		map.put(ExplorationConfiguration.MODEL_LOCATION, String.valueOf(simConfig.getModeLocation()));
-		map.put(ExplorationConfiguration.HORIZON, String.valueOf(simConfig.getHorizon()));
+		map.put(SENSIBILITY, String.valueOf(simConfig.getSensitivity()));
+		map.put(MODEL_LOCATION, String.valueOf(simConfig.getModeLocation()));
 
 		return map;
 	}

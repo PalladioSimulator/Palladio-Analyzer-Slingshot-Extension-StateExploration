@@ -30,15 +30,7 @@ public interface Snapshot {
 	 *            run.
 	 * @return events to initialise the next simulation run on.
 	 */
-	public Set<DESEvent> getEvents(final PCMResourceSetPartition set);
-	
-	/**
-	 *
-	 * Get all event, but plain, without any copying or processing.
-	 * 
-	 * @return events get plain events.
-	 */
-	public Set<DESEvent> getPlainEvents();
+	public Set<DESEvent> getEvents();
 
 	/**
 	 *

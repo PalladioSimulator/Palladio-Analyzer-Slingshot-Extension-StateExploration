@@ -8,7 +8,7 @@ import org.palladiosimulator.analyzer.slingshot.common.events.AbstractSimulation
 /**
  *
  *
- * @author stiesssh
+ * @author Sophie Stieß
  *
  */
 public class SnapshotTaken extends AbstractSimulationEvent {
@@ -16,7 +16,7 @@ public class SnapshotTaken extends AbstractSimulationEvent {
 	private final Optional<ModelAdjustmentRequested> triggeringEvent;
 
 	public SnapshotTaken(final double delay, final Optional<ModelAdjustmentRequested> event) {
-		super("TODO", delay);
+		super(delay);
 		this.triggeringEvent = event;
 	}
 

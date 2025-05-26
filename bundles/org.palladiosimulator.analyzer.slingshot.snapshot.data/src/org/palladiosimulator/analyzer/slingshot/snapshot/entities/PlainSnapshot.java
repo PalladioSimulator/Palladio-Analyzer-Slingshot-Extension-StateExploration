@@ -9,7 +9,6 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.snapshot.api.Snapshot;
-import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartition;
 
 /**
  *
@@ -21,18 +20,13 @@ import org.palladiosimulator.analyzer.workflow.blackboard.PCMResourceSetPartitio
  * @author Sophie Stieß
  *
  */
-public final class PlainSnapshot implements Snapshot {
-
-	private final Set<DESEvent> events;
-
-	private final Set<DESEvent> plainEvents;
-
-	private final List<ModelAdjustmentRequested> modelAdjustmentRequestedEvents;
+public final class PlainSnapshot implements Snapshot {	
 	
+	private final Set<DESEvent> events;
+	private final List<ModelAdjustmentRequested> modelAdjustmentRequestedEvents;
 	private final Collection<SPDAdjustorStateValues> adjustorStateValues;
 
 	public PlainSnapshot(final Set<DESEvent> events, final Collection<SPDAdjustorStateValues> stateValues) {
-		this.plainEvents = new HashSet<>(events);
 		this.modelAdjustmentRequestedEvents = events.stream().filter(ModelAdjustmentRequested.class::isInstance).map(ModelAdjustmentRequested.class::cast).toList();
 		this.events = new HashSet<>(events);
 		this.events.removeAll(this.modelAdjustmentRequestedEvents);
@@ -41,7 +35,7 @@ public final class PlainSnapshot implements Snapshot {
 
 
 	@Override
-	public Set<DESEvent> getEvents(final PCMResourceSetPartition set) {
+	public Set<DESEvent> getEvents() {
 		return Set.copyOf(this.events);
 	}
 
@@ -53,10 +47,5 @@ public final class PlainSnapshot implements Snapshot {
 	@Override
 	public Collection<SPDAdjustorStateValues> getSPDAdjustorStateValues() {
 		return Set.copyOf(this.adjustorStateValues);
-	}
-
-	@Override
-	public Set<DESEvent> getPlainEvents() {
-		return Set.copyOf(this.plainEvents);
 	}
 }

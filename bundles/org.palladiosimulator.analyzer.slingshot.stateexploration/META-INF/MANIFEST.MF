@@ -10,7 +10,6 @@ Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.explorer,
  org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration,
  org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning,
- org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui,
  org.palladiosimulator.analyzer.slingshot.stateexploration.providers
 Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.snapshot.data,
@@ -36,8 +35,7 @@ Require-Bundle: org.palladiosimulator.edp2,
  org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data,
  org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data,
  com.google.gson,
- org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
- org.palladiosimulator.analyzer.slingshot.networking.data,
  org.scaledl.usageevolution,
  org.palladiosimulator.mdsdprofiles.api,
- org.palladiosimulator.analyzer.slingshot.stateexploration.converter
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter,
+ org.palladiosimulator.analyzer.slingshot.snapshot.serialization

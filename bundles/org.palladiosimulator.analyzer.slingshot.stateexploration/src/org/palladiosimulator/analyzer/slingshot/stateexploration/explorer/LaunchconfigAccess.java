@@ -3,49 +3,13 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer;
 import java.util.Map;
 
 import org.eclipse.emf.common.util.URI;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.ui.ExplorationConfiguration;
 
 public class LaunchconfigAccess {
 	
-	/**
-	 * Get {@link ExplorationConfiguration#MAX_EXPLORATION_CYCLES} from launch
-	 * configuration parameters map.
-	 *
-	 * @return number of max exploration cycles
-	 */
-	public static int getMaxIterations(final Map<String, Object> launchConfigurationParams) {
-		final String maxIteration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MAX_EXPLORATION_CYCLES);
-
-		return Integer.valueOf(maxIteration);
-	}
+	// formerly defined in ExplorationConfiguration
+	public static final String SENSIBILITY = "Sensitivity [0, 1 (most sensitive)]";
+	public static final String MODEL_LOCATION = "Location for Arch. Configruations";
 	
-	/**
-	 * Get {@link ExplorationConfiguration#HORIZON} from launch
-	 * configuration parameters map.
-	 *
-	 * @return length of horizon in seconds
-	 */
-	public static int getHorizon(final Map<String, Object> launchConfigurationParams) {
-		final String horizon = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.HORIZON);
-
-		return Integer.valueOf(horizon);
-	}
-
-	/**
-	 * Get {@link ExplorationConfiguration#MIN_STATE_DURATION} from launch
-	 * configuration parameters map.
-	 *
-	 * @return minimum duration of an exploration cycles
-	 */
-	public static double getMinDuration(final Map<String, Object> launchConfigurationParams) {
-		final String minDuration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MIN_STATE_DURATION);
-
-		return Double.valueOf(minDuration);
-	}
-
 	/**
 	 *
 	 *
@@ -56,7 +20,7 @@ public class LaunchconfigAccess {
 	 */
 	public static double getSensibility(final Map<String, Object> launchConfigurationParams) {
 		final String minDuration = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.SENSIBILITY);
+				.get(SENSIBILITY);
 
 		return Double.valueOf(minDuration);
 	}
@@ -70,7 +34,7 @@ public class LaunchconfigAccess {
 	 */
 	public static URI getModelLocation(final Map<String, Object> launchConfigurationParams) {
 		final String modelLocation = (String) launchConfigurationParams
-				.get(ExplorationConfiguration.MODEL_LOCATION);
+				.get(MODEL_LOCATION);
 
 		if (modelLocation.isBlank() || modelLocation.equals("null")) {
 			return URI.createFileURI(java.lang.System.getProperty("java.io.tmpdir"));

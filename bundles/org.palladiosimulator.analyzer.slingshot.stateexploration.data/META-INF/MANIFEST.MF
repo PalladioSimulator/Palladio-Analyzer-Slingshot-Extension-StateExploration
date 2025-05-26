@@ -7,10 +7,7 @@ Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.change.api,
- org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events,
- org.palladiosimulator.analyzer.slingshot.stateexploration.fringe,
- org.palladiosimulator.analyzer.slingshot.stateexploration.graph,
- org.palladiosimulator.analyzer.slingshot.stateexploration.messages
+ org.palladiosimulator.analyzer.slingshot.stateexploration.graph
 Require-Bundle: org.palladiosimulator.monitorrepository,
  org.palladiosimulator.spd,
  org.palladiosimulator.analyzer.slingshot.common,
@@ -21,10 +18,10 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  org.palladiosimulator.analyzer.slingshot.behavior.spd.data,
  org.palladiosimulator.analyzer.slingshot.common.utils,
  org.scaledl.usageevolution,
- org.palladiosimulator.analyzer.slingshot.networking.data;visibility:=reexport,
  org.palladiosimulator.edp2.util,
  org.palladiosimulator.analyzer.slingshot.core,
  org.apache.log4j,
  de.uka.ipd.sdq.workflow.mdsd.blackboard,
  org.palladiosimulator.analyzer.workflow,
- org.palladiosimulator.analyzer.slingshot.stateexploration.converter
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter,
+ org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model

@@ -63,7 +63,6 @@ public class StateGraphConverter {
 
 		// Add Measurements
 		if (expSetting != null) {
-		    //final MeasurementConverter converter = new MeasurementConverter(startTime, endTime);
 			measuremnets = converter.visitExperiementSetting(expSetting);
 		}
 

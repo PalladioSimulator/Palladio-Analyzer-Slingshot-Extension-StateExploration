@@ -5,8 +5,6 @@ import javax.inject.Singleton;
 
 import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 
-
-
 /**
  * Provides the {@link ExploredStateBuilder} that represents the next simulation run.
  *
@@ -14,7 +12,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredS
  *
  */
 @Singleton
-public class DefaultStateProvider implements Provider<ExploredStateBuilder> {
+public class SingleStateExploredStateBuilderProvider implements Provider<ExploredStateBuilder> {
 
 	private ExploredStateBuilder state;
 

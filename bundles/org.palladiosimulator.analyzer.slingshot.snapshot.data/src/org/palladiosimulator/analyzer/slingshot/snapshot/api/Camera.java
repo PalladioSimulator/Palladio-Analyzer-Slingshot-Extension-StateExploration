@@ -28,7 +28,6 @@ import org.palladiosimulator.analyzer.slingshot.common.utils.events.ModelPassedE
 import org.palladiosimulator.analyzer.slingshot.core.api.SimulationEngine;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.JobRecord;
 import org.palladiosimulator.analyzer.slingshot.snapshot.entities.LessInvasiveInMemoryRecord;
-import org.palladiosimulator.analyzer.slingshot.snapshot.entities.SerializingCamera;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotTaken;
 import org.palladiosimulator.pcm.core.CoreFactory;
