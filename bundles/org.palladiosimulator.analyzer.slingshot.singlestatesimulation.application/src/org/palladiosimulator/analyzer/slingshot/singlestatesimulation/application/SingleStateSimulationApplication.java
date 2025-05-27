@@ -19,7 +19,7 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.config
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SingleStateSimulationWorkflowConfiguration;
 import org.palladiosimulator.experimentautomation.application.ExperimentApplication;
 import org.palladiosimulator.experimentautomation.application.tooladapter.abstractsimulation.AbstractSimulationConfigFactory;
-import org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.StateExplorationConfiguration;
+import org.palladiosimulator.experimentautomation.application.tooladapter.slingshot.model.SlingshotConfiguration;
 import org.palladiosimulator.experimentautomation.experiments.Experiment;
 import org.palladiosimulator.experimentautomation.experiments.ExperimentRepository;
 import org.palladiosimulator.experimentautomation.experiments.ExperimentsPackage;
@@ -51,10 +51,6 @@ import de.uka.ipd.sdq.workflow.mdsd.blackboard.MDSDBlackboard;
 public class SingleStateSimulationApplication implements IApplication {
 
 	private final String SINGLE_STATE_SIMULATION_ID = "org.palladiosimulator.singlestatesimulation";
-
-	// formerly defined in ExplorationConfiguration
-	public static final String SENSIBILITY = "Sensitivity [0, 1 (most sensitive)]";
-	public static final String MODEL_LOCATION = "Location for Arch. Configruations";
 
 	@Override
 	public Object start(final IApplicationContext context) throws Exception {
@@ -107,7 +103,7 @@ public class SingleStateSimulationApplication implements IApplication {
 		final List<Experiment> experiments = loadExperimentsFromFile(modelLocation);
 
 		return experiments.stream().filter(e -> e.getToolConfiguration().stream()
-				.filter(StateExplorationConfiguration.class::isInstance).findFirst().isPresent()).findFirst();
+				.filter(SlingshotConfiguration.class::isInstance).findFirst().isPresent()).findFirst();
 	}
 
 	/**
@@ -200,17 +196,14 @@ public class SingleStateSimulationApplication implements IApplication {
 	 */
 	public Map<String, Object> createConfigMap(final Experiment experiment, final String simulatorID) {
 
-		final StateExplorationConfiguration simConfig =
-				(StateExplorationConfiguration) experiment.getToolConfiguration().stream()
-				.filter(StateExplorationConfiguration.class::isInstance).findFirst().get();
+		final SlingshotConfiguration simConfig =
+				(SlingshotConfiguration) experiment.getToolConfiguration().stream()
+				.filter(SlingshotConfiguration.class::isInstance).findFirst().get();
 
 		final Map<String, Object> map = AbstractSimulationConfigFactory.createConfigMap(experiment, simConfig,
 				simulatorID,
 				List.of());
-
-		map.put(SENSIBILITY, String.valueOf(simConfig.getSensitivity()));
-		map.put(MODEL_LOCATION, String.valueOf(simConfig.getModeLocation()));
-
+		
 		return map;
 	}
 
