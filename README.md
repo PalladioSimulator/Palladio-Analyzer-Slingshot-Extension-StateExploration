@@ -2,7 +2,7 @@
 
 ________
 
-**DISCUNTINUED**
+**DISCONTINUED**
 
 We decided to split the StateExploration in two parts:
 1. Initialising and running a single simulation based on a snapshot and creating a snapshot at the end of a simulation run.
