@@ -11,10 +11,10 @@ import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmentRequested;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ProactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 
 /**
  *
@@ -40,8 +40,13 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * max occurrence of policy per transition. 1 means, each policy at max once.  
 	 */
 	private static final int MAX_OCCURRENCE_PER_POLICY = 1;
+	
+	/** 
+	 * max set (list) size  
+	 */
+	private static final int MAX_LIST_SIZE = 2; // TODO
 
-	private final DefaultState state;
+	private final ExploredState state;
 
 	/**
 	 * Create new {@link MergerPolicyStrategy}.
@@ -49,8 +54,8 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected MergerPolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe,
-			final DefaultState state) {
+	protected MergerPolicyStrategy(final StateGraph graph, final FringeFringe fringe,
+			final ExploredState state) {
 		super(graph, fringe);
 		this.state = state;
 	}
@@ -68,7 +73,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 		final List<ModelAdjustmentRequested> reactiveAdjustments = state.getSnapshot()
 				.getModelAdjustmentRequestedEvent();
-		final DefaultState predecessor = (DefaultState) state.getIncomingTransition().get().getSource();
+		final ExploredState predecessor = (ExploredState) state.getIncomingTransition().get().getSource();
 
 		final Set<Reconfiguration> collectedReconfs = collectReconfigurationsAt(predecessor);
 
@@ -78,7 +83,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 
 			for (Reconfiguration newReconf : createPermutations(reconf.getReactiveReconfigurationEvents(),
 					reactiveAdjustments)) {
-				if (!this.contains(collectedReconfs, newReconf)) {
+				if (!contains(collectedReconfs, newReconf)) {
 					final PlannedTransition todoChange = new PlannedTransition(Optional.of(newReconf), predecessor);
 					newTodos.add(todoChange);
 				} else {
@@ -117,7 +122,8 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 		Set<ProactiveReconfiguration> proactiveReconfs = new HashSet<>();
 
 		for (ModelAdjustmentRequested adj : newAdj) {
-			if (countAdjustment(oldAdj, adj) < MAX_OCCURRENCE_PER_POLICY) {
+			if (countAdjustment(oldAdj, adj) < MAX_OCCURRENCE_PER_POLICY &&
+					oldAdj.size() < MAX_LIST_SIZE) {
 				for (int i = 0; i <= oldAdj.size(); i++) {
 					List<ModelAdjustmentRequested> tmp = new ArrayList<>(oldAdj);
 					tmp.add(i, adj);
@@ -125,7 +131,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 				}
 			} else {
 				LOGGER.debug(String.format(
-						"no new change based on policy %s because it already occurs more than %d times in the base change.",
+						"no new change based on policy %s because it already occurs more than %d times in the base change. Or because the resulting change list will be to big.",
 						adj.getScalingPolicy().getEntityName(), MAX_OCCURRENCE_PER_POLICY));
 			}
 		}
@@ -146,7 +152,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param newChange the element to check the container for.
 	 * @return true iff {@code changes} contains {@code newChange}.
 	 */
-	private boolean contains(final Set<Reconfiguration> changes, final Reconfiguration newChange) {
+	private static boolean contains(final Set<Reconfiguration> changes, final Reconfiguration newChange) {
 
 		final String newChangeIds = newChange.getReactiveReconfigurationEvents().stream()
 				.map(e -> e.getScalingPolicy().getId()).sorted().reduce("", (a, b) -> a + b);
@@ -168,8 +174,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * 
 	 * @param change
 	 * @param reconf
-	 * @return true, iff reconf is already in change too often, i.e. shall not be
-	 *         added again.
+	 * @return nmber of occurences of reconf in change.
 	 */
 	private long countAdjustment(final List<ModelAdjustmentRequested> change, final ModelAdjustmentRequested reconf) {
 		String policyId = reconf.getScalingPolicy().getId();
@@ -187,7 +192,7 @@ public class MergerPolicyStrategy extends ProactivePolicyStrategy {
 	 * @param predecessor state for which reconfigurations are collected.
 	 * @return Set of already explored or planned {@link Reconfiguration}s
 	 */
-	private Set<Reconfiguration> collectReconfigurationsAt(final DefaultState predecessor) {
+	private Set<Reconfiguration> collectReconfigurationsAt(final ExploredState predecessor) {
 		final Set<Reconfiguration> collectedChanges = new HashSet<>();
 
 		final Set<Reconfiguration> exploredChanges = predecessor.getOutgoingTransitions().stream()

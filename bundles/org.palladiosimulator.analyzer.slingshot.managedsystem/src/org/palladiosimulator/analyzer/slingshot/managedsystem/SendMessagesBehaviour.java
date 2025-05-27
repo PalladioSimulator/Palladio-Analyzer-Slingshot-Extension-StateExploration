@@ -10,19 +10,22 @@ import javax.inject.Named;
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;
 import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
+import org.palladiosimulator.analyzer.slingshot.converter.MeasurementConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.StateGraphConverter;
+import org.palladiosimulator.analyzer.slingshot.converter.data.StateGraphNode;
+import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.core.Slingshot;
 import org.palladiosimulator.analyzer.slingshot.core.api.SystemDriver;
+import org.palladiosimulator.analyzer.slingshot.core.events.PreSimulationConfigurationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationFinished;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;
 import org.palladiosimulator.analyzer.slingshot.core.extension.SimulationBehaviorExtension;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.Subscribe;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.annotations.eventcontract.OnEvent;
 import org.palladiosimulator.analyzer.slingshot.eventdriver.returntypes.Result;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.converter.StateGraphConverter;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.data.StateGraphNode;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.events.UtilityIntervalPassed;
 import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.ManagedSystemFinishedMessage;
-import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.StateExploredEventMessage;
+import org.palladiosimulator.analyzer.slingshot.managedsystem.messages.ManagedSystemStartedMessage;
 import org.palladiosimulator.analyzer.slingshot.monitor.data.events.CalculatorRegistered;
 import org.palladiosimulator.analyzer.slingshot.networking.data.NetworkingConstants;
 import org.palladiosimulator.edp2.impl.RepositoryManager;
@@ -45,6 +48,7 @@ import de.uka.ipd.sdq.simucomframework.SimuComConfig;
 @OnEvent(when = CalculatorRegistered.class, then = {})
 @OnEvent(when = SimulationFinished.class, then = {})
 @OnEvent(when = SimulationStarted.class, then = {})
+@OnEvent(when = PreSimulationConfigurationStarted.class, then = {})
 @OnEvent(when = UtilityIntervalPassed.class, then = UtilityIntervalPassed.class)
 public class SendMessagesBehaviour implements SimulationBehaviorExtension {
 
@@ -80,6 +84,19 @@ public class SendMessagesBehaviour implements SimulationBehaviorExtension {
 
         this.systemDriver = Slingshot.getInstance().getSystemDriver();
     }
+
+
+
+    /**
+    *
+    * Publish the first {@link ManagedSystemStartedMessage} event before the beginning of the simulation.
+    *
+    * @param event
+    */
+   @Subscribe
+   public void onPreSimulationConfigurationStarted(final PreSimulationConfigurationStarted event) {
+       this.systemDriver.postEvent(new ManagedSystemStartedMessage(clientName));
+   }
 
     /**
      *
@@ -126,8 +143,8 @@ public class SendMessagesBehaviour implements SimulationBehaviorExtension {
     private void publishUtility(final DESEvent event) {
         assert this.expSetting != null : "ExperimentSettings are not yet set.";
 
-        final StateGraphNode node = StateGraphConverter.convertState(this.monitorRepo, this.expSetting, this.sloRepo,
-                prevUtilityTimestamp, event.time());
+        final StateGraphNode node = StateGraphConverter.convertState(Optional.of(this.monitorRepo), this.expSetting, Optional.of(this.sloRepo),
+                prevUtilityTimestamp, event.time(), "", "", List.of(), new MeasurementConverter(prevUtilityTimestamp, event.time()));
 
         this.systemDriver.postEvent(new StateExploredEventMessage(node, clientName));
     }

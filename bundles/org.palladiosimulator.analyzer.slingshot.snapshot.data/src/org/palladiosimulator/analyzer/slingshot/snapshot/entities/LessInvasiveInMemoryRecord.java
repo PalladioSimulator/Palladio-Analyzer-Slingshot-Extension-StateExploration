@@ -28,6 +28,8 @@ import org.palladiosimulator.pcm.usagemodel.Stop;
 
 /**
  *
+ * Implementation of {@link EventRecord} that records events in inmemory data structures. 
+ *
  * @author Sarah Stieß
  *
  */
@@ -108,10 +110,10 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 	}
 
 	/**
-	 * TODO
+	 * Helper for accessing the {@link User} instance inside the given {@link Job} instance.
 	 *
-	 * @param njob
-	 * @return
+	 * @param njob job whose user to access
+	 * @return the user of the given job
 	 */
 	private User getUser(final Job njob) {
 		if (njob instanceof final ActiveJob job) {
@@ -135,6 +137,10 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 		openJob.put(user, new JobRecord(event.getEntity()));
 
 	}
+	
+	/**
+	 * Set the normalised demand for the record associated with job in the given event.
+	 */
 	@Override
 	public void updateJobRecord(final JobInitiated event) {
 		final User user = this.getUser(event.getEntity());
@@ -144,7 +150,6 @@ public class LessInvasiveInMemoryRecord implements EventRecord {
 		}
 
 		openJob.get(user).setNormalizedDemand(event.getEntity().getDemand());
-
 	}
 
 	@Override

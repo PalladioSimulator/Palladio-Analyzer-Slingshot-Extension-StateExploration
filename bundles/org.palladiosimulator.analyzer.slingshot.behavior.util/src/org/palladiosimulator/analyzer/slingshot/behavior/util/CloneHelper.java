@@ -89,7 +89,9 @@ public final class CloneHelper {
 	}
 
 	/**
-	 * TODO on a closer look : what is this does not belong here, iirc o_O
+	 * Create a copy of the given event but with reduced delay.
+	 * 
+	 * Requires that the given event is from the future event list, i.e. {@link DESEvent#time()} is already set and {@code >= simulationTime}
 	 *
 	 * @param event
 	 * @param simulationTime
@@ -107,7 +109,9 @@ public final class CloneHelper {
 	}
 
 	/**
-	 * TODO on a closer look : what is this does not belong here, iirc o_O
+	 * Create a copy of the given event but with reduced delay.
+	 * 
+	 * Requires that the given event is from the future event list, i.e. {@link DESEvent#time()} is already set and {@code >= simulationTime}
 	 *
 	 * @param event
 	 * @param simulationTime
@@ -118,11 +122,14 @@ public final class CloneHelper {
 	}
 
 	/**
-	 * TODO on a closer look : what is this does not belong here, iirc o_O
+	 * Clone a {@link UsageModelPassedElement} event but also calculate the offset
+	 * for the next simulation run and safe it in the {@code time} field.
 	 *
-	 * @param event
-	 * @param simulationTime
-	 * @return
+	 * This is not optimal but still the best option to save the offset for later.
+	 *
+	 * @param event          event to be cloned
+	 * @param simulationTime time to calculate offset
+	 * @return clone of given event with offset as time.
 	 */
 	public DESEvent clone(final UsageModelPassedElement<?> event, final double simulationTime) {
 
@@ -397,9 +404,7 @@ public final class CloneHelper {
 		}
 
 		if (context.getCurrentResultStackframe() != null) {
-			// acutally no, the result stackframe seems to be a completely different
-			// stackframe, that is not part of the user stack.
-			clonedStackFrame = clonedRequestProcessingContext.getUser().getStack().currentStackFrame();
+			clonedStackFrame = context.getCurrentResultStackframe().copyFrame();
 		}
 
 		if (context.getCallOverWireRequest().isPresent()) { // TODO probably like above

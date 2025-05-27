@@ -18,4 +18,5 @@ Require-Bundle: org.palladiosimulator.spd,
  de.uka.ipd.sdq.workflow.mdsd.blackboard;bundle-version="5.1.0",
  org.palladiosimulator.analyzer.slingshot.ui.events,
  org.palladiosimulator.analyzer.slingshot.workflow.events,
- org.palladiosimulator.analyzer.slingshot.managedsystem.data
+ org.palladiosimulator.analyzer.slingshot.managedsystem.data,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter

@@ -1,13 +1,12 @@
 package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -219,12 +218,12 @@ public class Plan {
      *
      * @return
      */
-    public Set<ModelAdjustmentRequested> executeNextStep() {
+    public List<ModelAdjustmentRequested> executeNextStep() {
 
         final Entry<Double, List<ScalingPolicy>> executedStep = this.planSteps.pollFirstEntry();
         this.executedSteps.put(executedStep.getKey(), executedStep.getValue());
 
-        final Set<ModelAdjustmentRequested> events = new HashSet<>();
+        final List<ModelAdjustmentRequested> events = new ArrayList<>();
         for (final ScalingPolicy policy : executedStep.getValue()) {
             events.add(new ModelAdjustmentRequested(policy));
         }

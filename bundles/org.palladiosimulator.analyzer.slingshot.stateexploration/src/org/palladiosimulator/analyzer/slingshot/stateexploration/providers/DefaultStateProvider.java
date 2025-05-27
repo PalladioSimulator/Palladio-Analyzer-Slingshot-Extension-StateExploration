@@ -3,27 +3,26 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.RawModelState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 
 
 /**
- * Provides the {@link RawModelState} that represents the next simulation run.
+ * Provides the {@link RawModelStateBuilder} that represents the next simulation run.
  *
  * @author Sarah Stieß
  *
  */
 @Singleton
-public class DefaultStateProvider implements Provider<DefaultState> {
+public class DefaultStateProvider implements Provider<ExploredStateBuilder> {
 
-	private DefaultState state;
+	private ExploredStateBuilder state;
 
-	public void set(final DefaultState state) {
+	public void set(final ExploredStateBuilder state) {
 		this.state = state;
 	}
 
 	@Override
-	public DefaultState get() {
+	public ExploredStateBuilder get() {
 		return state;
 	}
 

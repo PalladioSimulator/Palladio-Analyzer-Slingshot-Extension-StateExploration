@@ -10,9 +10,9 @@ Require-Bundle: org.palladiosimulator.spd,
  org.palladiosimulator.monitorrepository,
  org.palladiosimulator.servicelevelobjective,
  org.palladiosimulator.edp2.util,
- org.palladiosimulator.analyzer.slingshot.core
-Export-Package: org.palladiosimulator.analyzer.slingshot.managedsystem.converter,
- org.palladiosimulator.analyzer.slingshot.managedsystem.data,
- org.palladiosimulator.analyzer.slingshot.managedsystem.events,
+ org.palladiosimulator.analyzer.slingshot.core,
+ org.apache.log4j,
+ org.palladiosimulator.analyzer.slingshot.stateexploration.converter
+Export-Package: org.palladiosimulator.analyzer.slingshot.managedsystem.events,
  org.palladiosimulator.analyzer.slingshot.managedsystem.messages,
  org.palladiosimulator.analyzer.slingshot.managedsystem.messages.data

@@ -499,7 +499,10 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.ui.events@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.workflow.events@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.workflow@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.editor@default:default"/>
         <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.edit@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.editor@default:default"/>
         <setEntry value="org.palladiosimulator.experimentautomation@default:default"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint@default:default"/>
         <setEntry value="org.palladiosimulator.spd.semantic.transformations@default:default"/>

@@ -28,8 +28,6 @@ public class ExplorationConfiguration implements SystemBehaviorExtension {
 	public static final String HORIZON = "Horizon (distance to current state in sec)";
 	public static final String MODEL_LOCATION = "Location for Arch. Configruations";
 
-
-
 	public static final int DEFAULT_MAX_EXPLORATION_CYCLES = 20;
 	public static final int DEFAULT_MIN_STATE_DURATION = 20;
 	public static final boolean DEFAULT_IDLE_EXPLORATION = false;

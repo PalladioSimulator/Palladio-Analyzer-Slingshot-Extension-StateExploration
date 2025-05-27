@@ -13,15 +13,15 @@ import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.ModelAdjustmen
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateInitialized;
 import org.palladiosimulator.analyzer.slingshot.behavior.spd.data.SPDAdjustorStateValues;
 import org.palladiosimulator.analyzer.slingshot.common.utils.ResourceUtils;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ArchitectureConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Change;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.Reconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 import org.palladiosimulator.spd.SPD;
 import org.palladiosimulator.spd.ScalingPolicy;
 import org.palladiosimulator.spd.constraints.policy.CooldownConstraint;
@@ -47,17 +47,17 @@ public class Preprocessor {
 
 	private static final Logger LOGGER = Logger.getLogger(Preprocessor.class.getName());
 
-	private final DefaultGraph rawgraph;
-	private final DefaultGraphFringe fringe;
+	private final StateGraph rawgraph;
+	private final FringeFringe fringe;
 	private final CutOffConcerns cutOffConcerns;
 
 	private final double minDuration;
 
-	public Preprocessor(final DefaultGraph graph, final DefaultGraphFringe fringe, final double minDuration) {
+	public Preprocessor(final StateGraph graph, final FringeFringe fringe, final double minDuration) {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 		this.minDuration = minDuration;
-		this.cutOffConcerns = new CutOffConcerns();
+		this.cutOffConcerns = new CutOffConcerns(graph, minDuration);
 	}
 
 	/**
@@ -83,16 +83,16 @@ public class Preprocessor {
 			next = this.fringe.poll();
 		}
 
-		final DefaultState start = next.getStart();
-		final DefaultState end = this.createNewGraphNode(next);
+		final ExploredState start = next.getStart();
+		final ExploredStateBuilder end = new ExploredStateBuilder(this.rawgraph, next);
 
-		if (end.getArchitecureConfiguration().getSPD().isPresent()) {
+		if (end.getStartupInformation().architecureConfiguration().getSPD().isPresent()) {
 
-			final SPD spd = end.getArchitecureConfiguration().getSPD().get();
+			final SPD spd = end.getStartupInformation().architecureConfiguration().getSPD().get();
 
 			this.updateSimulationTimeTriggeredPolicy(spd, start.getDuration());
 
-			if (next.getChange().isPresent() && next.getChange().get() instanceof ReactiveReconfiguration rea) {
+			if (next.getChange().isPresent() && next.getChange().get() instanceof final ReactiveReconfiguration rea) {
 				this.deactivateReactivePolicies(spd, rea);
 			}
 			ResourceUtils.saveResource(spd.eResource());
@@ -110,13 +110,13 @@ public class Preprocessor {
 	 * @return
 	 */
 	private SimulationInitConfiguration createConfigBasedOnChange(final Optional<Change> change,
-			final DefaultState start, final DefaultState end) {
+			final ExploredState start, final ExploredStateBuilder end) {
 
-		final double duration = this.calculateRunDuration(start);
+		final double duration = this.minDuration;
 
 		if (change.isEmpty()) {
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, List.of(),
-					this.createStateInitEvents(start.getAdjustorStateValues()), start.getId());
+					this.createStateInitEvents(start.getSnapshot().getSPDAdjustorStateValues()));
 		}
 
 		if (change.get() instanceof final Reconfiguration reconf) {
@@ -125,16 +125,16 @@ public class Preprocessor {
 			final Collection<SPDAdjustorStateValues> initValues = new HashSet<>();
 
 			for (final ScalingPolicy policy : reconf.getAppliedPolicies()) {
-				initValues.addAll(updateInitValues(policy, start.getAdjustorStateValues()));
+				initValues.addAll(updateInitValues(policy, start.getSnapshot().getSPDAdjustorStateValues()));
 			}
 
 			final List<ModelAdjustmentRequested> initEvents = new ArrayList<>();
 			for (final ModelAdjustmentRequested event : reconf.getReactiveReconfigurationEvents()) {
-				initEvents.add(new AdjustorEventConcerns(end.getArchitecureConfiguration()).copy(event));
+				initEvents.add(new AdjustorEventConcerns(end.getStartupInformation().architecureConfiguration()).copy(event));
 			}
 
 			return new SimulationInitConfiguration(start.getSnapshot(), end, duration, initEvents,
-					this.createStateInitEvents(initValues), start.getId());
+					this.createStateInitEvents(initValues));
 		}
 
 		throw new UnsupportedOperationException("Environment Change not yet supported.");
@@ -151,8 +151,8 @@ public class Preprocessor {
 	 * @param spd model to deactivate policies at.
 	 * @param rea policies to deactivate
 	 */
-	private void deactivateReactivePolicies(final SPD spd, ReactiveReconfiguration rea) {
-		List<String> ids = rea.getAppliedPolicies().stream().map(p -> p.getId()).toList();
+	private void deactivateReactivePolicies(final SPD spd, final ReactiveReconfiguration rea) {
+		final List<String> ids = rea.getAppliedPolicies().stream().map(p -> p.getId()).toList();
 		spd.getScalingPolicies().stream().filter(p -> isSimulationTimeTrigger(p.getScalingTrigger()))
 				.filter(p -> ids.contains(p.getId())).forEach(p -> p.setActive(false));
 	}
@@ -180,76 +180,61 @@ public class Preprocessor {
 	private Collection<SPDAdjustorStateValues> updateInitValues(final ScalingPolicy policy,
 			final Collection<SPDAdjustorStateValues> initValues) {
 
-		final Collection<SPDAdjustorStateValues> rvals = new HashSet<>(initValues);
+		Collection<SPDAdjustorStateValues> rvals = new HashSet<>(initValues);
 
 		final Optional<CooldownConstraint> cooldownConstraint = policy.getPolicyConstraints().stream()
 				.filter(CooldownConstraint.class::isInstance).map(CooldownConstraint.class::cast).findAny();
 
-		if (cooldownConstraint.isEmpty()) {
-			return rvals;
-		}
-
 		int numberscales = 0;
 		double cooldownEnd = 0;
 		int numberscalesinCD = 0;
+		
+		List<ScalingPolicy> enactedPolicies = new ArrayList<>();
+		List<Double> enactmentTimeOfPolicies = new ArrayList<>();
 
-		final Optional<SPDAdjustorStateValues> matchingValues = initValues.stream()
+		final Optional<SPDAdjustorStateValues> policyMatch = initValues.stream()
 				.filter(v -> v.scalingPolicyId().equals(policy.getId())).findAny();
+		
 
-		if (matchingValues.isPresent()) {
-			numberscales = matchingValues.get().numberScales();
-			cooldownEnd = matchingValues.get().coolDownEnd();
-			numberscalesinCD = matchingValues.get().numberOfScalesInCooldown();
-			rvals.remove(matchingValues.get());
+		final Optional<SPDAdjustorStateValues> targetgroupMatch = initValues.stream()
+				.filter(v -> v.scalingPolicy().getTargetGroup().getId().equals(policy.getTargetGroup().getId())).findAny();
+
+		if (policyMatch.isPresent()) {
+			numberscales = policyMatch.get().numberScales();
+			cooldownEnd = policyMatch.get().coolDownEnd();
+			numberscalesinCD = policyMatch.get().numberOfScalesInCooldown();
+
+			rvals.remove(policyMatch.get());
 		}
 
-		if (numberscalesinCD < cooldownConstraint.get().getMaxScalingOperations()) {
-			numberscalesinCD++;
-		} else {
-			numberscalesinCD = 0;
-			cooldownEnd = cooldownConstraint.get().getCooldownTime();
+		if (targetgroupMatch.isPresent()) {
+			enactedPolicies = new ArrayList<>(targetgroupMatch.get().enactedPolicies());
+			enactmentTimeOfPolicies = new ArrayList<>(targetgroupMatch.get().enactmentTimeOfPolicies());
+			
+			// for all init records that target the same target group, remove the target group updates.
+			rvals = new ArrayList<>(rvals.stream().map(val -> new SPDAdjustorStateValues(val.scalingPolicy(), val.latestAdjustmentAtSimulationTime(), val.numberScales(),
+					val.coolDownEnd(), val.numberOfScalesInCooldown(), List.of(), List.of())).toList());
 		}
 
-		final SPDAdjustorStateValues newvalues = new SPDAdjustorStateValues(policy.getId(), 0.0, numberscales + 1,
-				cooldownEnd, numberscalesinCD);
+		if (cooldownConstraint.isPresent()) {
+			if (numberscalesinCD < cooldownConstraint.get().getMaxScalingOperations()) {
+				numberscalesinCD++;
+			} else {
+				numberscalesinCD = 0;
+				cooldownEnd = cooldownConstraint.get().getCooldownTime();
+			}
+		}
+		
+		enactmentTimeOfPolicies.add(0.0);
+		enactedPolicies.add(policy);
+
+		// only the new/updated init record (i.e. the one for the most recent policy) holds the init values for the targetgroup. 
+		final SPDAdjustorStateValues newvalues = new SPDAdjustorStateValues(policy, 0.0, numberscales + 1,
+				cooldownEnd, numberscalesinCD, enactedPolicies, enactmentTimeOfPolicies); 
 
 		rvals.add(newvalues);
 
 		return rvals;
-	}
-
-	/**
-	 * Create a new graph note with a new arch configuration.
-	 *
-	 * creating a fully connected Graph node encompasses : - copying architecture
-	 * configuration from preceding state. - setting the start time of the new node
-	 * wrt. global time. - adding the node to the graph's node list. - creating
-	 * transition to connect new node t predecessor.
-	 *
-	 * @return a new node, connected to its predecessor in graph.
-	 */
-	private DefaultState createNewGraphNode(final PlannedTransition next) {
-		final DefaultState predecessor = next.getStart();
-
-		final ArchitectureConfiguration newConfig = predecessor.getArchitecureConfiguration().copy();
-		final DefaultState newNode = this.rawgraph.insertStateFor(predecessor.getEndTime(), newConfig);
-
-		this.rawgraph.insertTransitionFor(next.getChange(), predecessor, newNode);
-
-		return newNode;
-	}
-
-	/**
-	 * TODO : maybe try that thing with variable intervals (again).
-	 *
-	 * @param previous
-	 * @return max duration for the next state
-	 */
-	private double calculateRunDuration(final DefaultState previous) {
-		if (previous.getDuration() == 0 || previous.isDecreaseInterval()) {
-			return minDuration;
-		}
-		return previous.getDuration() < minDuration ? minDuration : 2 * previous.getDuration();
 	}
 
 	/**
@@ -302,8 +287,8 @@ public class Preprocessor {
 	 * @return true iff the trigger is based on {@link SimulationTime} and
 	 *         {@link ExpectedTime}
 	 */
-	private boolean isSimulationTimeTrigger(ScalingTrigger trigger) {
-		return trigger instanceof BaseTrigger base && base.getStimulus() instanceof SimulationTime
+	private boolean isSimulationTimeTrigger(final ScalingTrigger trigger) {
+		return trigger instanceof final BaseTrigger base && base.getStimulus() instanceof SimulationTime
 				&& base.getExpectedValue() instanceof ExpectedTime;
 	}
 

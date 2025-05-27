@@ -2,10 +2,10 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.plann
 
 import java.util.List;
 
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
 
 import com.google.common.base.Preconditions;
 
@@ -16,8 +16,8 @@ import com.google.common.base.Preconditions;
  */
 public abstract class ProactivePolicyStrategy {
 
-	protected final DefaultGraph graph;
-	protected final DefaultGraphFringe fringe;
+	protected final StateGraph graph;
+	protected final FringeFringe fringe;
 
 	/**
 	 * Create new {@link ProactivePolicyStrategy}.
@@ -26,14 +26,14 @@ public abstract class ProactivePolicyStrategy {
 	 * @param graph  graph of the exploration, must not be {@code null}.
 	 * @param fringe fringe of the exploration, must not be {@code null}.
 	 */
-	protected ProactivePolicyStrategy(final DefaultGraph graph, final DefaultGraphFringe fringe) {
+	protected ProactivePolicyStrategy(final StateGraph graph, final FringeFringe fringe) {
 		this.graph = Preconditions.checkNotNull(graph);
 		this.fringe = Preconditions.checkNotNull(fringe);
 	}
 
 	/**
 	 *
-	 * Create proactive reconfigurations based on the given {@link DefaultState}.
+	 * Create proactive reconfigurations based on the given {@link ExploredState}.
 	 *
 	 * Ensures, that all of the {@link PlannedTransition}s in the resulting list are yet
 	 * unexplored. I.e. neither is any of them is in the state graphs fringe, nor

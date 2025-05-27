@@ -22,7 +22,7 @@ import org.palladiosimulator.analyzer.slingshot.monitor.data.events.MeasurementU
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.snapshot.events.SnapshotInitiated;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLeave;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 import org.palladiosimulator.metricspec.MetricDescription;
 import org.palladiosimulator.monitorrepository.MeasurementSpecification;
 import org.palladiosimulator.pcm.resourceenvironment.ResourceContainer;
@@ -38,21 +38,20 @@ import org.palladiosimulator.servicelevelobjective.ServiceLevelObjectiveReposito
  *
  * This class does <strong>not</strong> use the raw measurements provided by
  * {@code MeasurementMade} events. Instead it uses the aggregated values
- * provided by {@code MeasurementUpdated} events. Beware: The aggregated values
- * provided by {@code MeasurementUpdated} events are aggregated according to the
- * {@code ProcessingType} elements defined in the {@code MonitorRepository}.
- * This class does not aggregate on its own.
+ * provided by {@code MeasurementUpdated} events.
+ * 
+ * Beware: The aggregated values provided by {@code MeasurementUpdated} events
+ * are aggregated according to the {@code ProcessingType} elements defined in
+ * the {@code MonitorRepository}. This class does not aggregate on its own.
  *
- *
- *
- * @author Sarah Stieß
+ * @author Sophie Stieß
  *
  */
 @OnEvent(when = MeasurementUpdated.class, then = SnapshotInitiated.class)
 public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtension {
 	private static final Logger LOGGER = Logger.getLogger(SnapshotSLOTriggeringBehavior.class);
 
-	private final DefaultState state;
+	private final ExploredStateBuilder state;
 	private final ServiceLevelObjectiveRepository sloRepo;
 	private final Configuration semanticSpd;
 
@@ -65,7 +64,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 	private final double minDuration;
 
 	@Inject
-	public SnapshotSLOTriggeringBehavior(final @Nullable DefaultState state,
+	public SnapshotSLOTriggeringBehavior(final @Nullable ExploredStateBuilder state,
 			final @Nullable ServiceLevelObjectiveRepository sloRepo, final @Nullable SnapshotConfiguration config,
 			final @Nullable Configuration semanticSpd) {
 
@@ -90,8 +89,8 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 					continue;
 				}
 				if (slo.getLowerThreshold() != null && slo.getUpperThreshold() == null) {
-					LOGGER.debug(
-							String.format("No upper threshold for %s [%s], will be ignored", slo.getName(), slo.getId()));
+					LOGGER.debug(String.format("No upper threshold for %s [%s], will be ignored", slo.getName(),
+							slo.getId()));
 					continue;
 				}
 
@@ -103,8 +102,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 					mp2range.get(mp).add(new SingleEndedRange(
 							(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(), sensitivity));
 				} else {
-					mp2range.get(mp)
-					.add(new DoubleEndedRange(
+					mp2range.get(mp).add(new DoubleEndedRange(
 							(Measure<Object, Quantity>) slo.getUpperThreshold().getThresholdLimit(),
 							(Measure<Object, Quantity>) slo.getLowerThreshold().getThresholdLimit(), sensitivity));
 				}
@@ -145,7 +143,7 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 				LOGGER.debug(String.format(
 						"Triggering snapshot due to closeness to SLO for %s at measuring point %s. Value is %s",
 						event.getEntity().getProcessingType().getMeasurementSpecification().getMetricDescription()
-						.getName(),
+								.getName(),
 						event.getEntity().getMeasuringPoint().getStringRepresentation(), value.toString()));
 				this.mp2range.clear(); // reset to avoid additional Snapshot Initiations.
 				return Result.of(new SnapshotInitiated(0.0));
@@ -168,8 +166,8 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 				.getResourceContainer_ProcessingResourceSpecification();
 
 		final List<EList<ResourceContainer>> elements = this.semanticSpd.getTargetCfgs().stream()
-				.filter(ElasticInfrastructureCfg.class::isInstance).map(ElasticInfrastructureCfg.class::cast).map(cfg -> cfg.getElements())
-				.filter(set -> set.contains(container)).toList();
+				.filter(ElasticInfrastructureCfg.class::isInstance).map(ElasticInfrastructureCfg.class::cast)
+				.map(cfg -> cfg.getElements()).filter(set -> set.contains(container)).toList();
 
 		if (elements.isEmpty()) {
 			LOGGER.warn(String.format("No matching target group configuration for %s[s%] ", container.getEntityName(),
@@ -183,7 +181,6 @@ public class SnapshotSLOTriggeringBehavior implements SimulationBehaviorExtensio
 			return elements.get(0).size() == 1;
 		}
 	}
-
 
 	/**
 	 * Value range with upper and lower sensibility bound. Bounds are calculated

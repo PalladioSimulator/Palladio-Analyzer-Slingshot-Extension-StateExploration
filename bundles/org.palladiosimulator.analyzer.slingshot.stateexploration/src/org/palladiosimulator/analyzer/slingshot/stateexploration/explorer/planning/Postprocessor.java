@@ -12,11 +12,12 @@ import org.palladiosimulator.analyzer.slingshot.stateexploration.api.ReasonToLea
 import org.palladiosimulator.analyzer.slingshot.stateexploration.change.api.ReactiveReconfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategy;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.planning.strategies.ProactivePolicyStrategyBuilder;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraph;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultGraphFringe;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.PlannedTransition;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.Transition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.fringe.FringeFringe;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.PlannedTransition;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.StateGraph;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.Transition;
 
 /**
  *
@@ -39,8 +40,10 @@ public class Postprocessor {
 
 	private static final Logger LOGGER = Logger.getLogger(Postprocessor.class.getName());
 
-	private final DefaultGraph rawgraph;
-	private final DefaultGraphFringe fringe;
+	private final int keepAtLeast;
+	
+	private final StateGraph rawgraph;
+	private final FringeFringe fringe;
 
 	private final ProactivePolicyStrategyBuilder proactiveStrategyBuilder;
 
@@ -49,13 +52,15 @@ public class Postprocessor {
 	 * @param graph
 	 * @param fringe
 	 */
-	public Postprocessor(final DefaultGraph graph, final DefaultGraphFringe fringe) {
+	public Postprocessor(final StateGraph graph, final FringeFringe fringe) {
 		this.rawgraph = graph;
 		this.fringe = fringe;
 
 		this.proactiveStrategyBuilder = new ProactivePolicyStrategyBuilder(this.rawgraph, this.fringe);
 
 		this.updateGraphFringe(graph.getRoot());
+		
+		this.keepAtLeast = graph.getRoot().getArchitecureConfiguration().getSPD().isEmpty() ? 1 : graph.getRoot().getArchitecureConfiguration().getSPD().get().getScalingPolicies().size();
 	}
 
 	/**
@@ -69,14 +74,21 @@ public class Postprocessor {
 	 *
 	 * @param start state that we just finished exploring.
 	 */
-	public void updateGraphFringe(final DefaultState start) {
+	public void updateGraphFringe(final ExploredState start) {
 		
 		if (start.getReasonsToLeave().contains(ReasonToLeave.aborted)) {
 			return;
 		}
+			
+		final Set<ExploredState> worstSiblings = this.getWorstSiblingSuccesors(start);
+		this.fringe.prune(pt -> worstSiblings.contains(pt.getSource()));
+		
+		if (worstSiblings.contains(start)) {
+			return;
+		}
 		
 		// NOP Always
-		this.fringe.add(new PlannedTransition(Optional.empty(), start));
+		this.fringe.offer(new PlannedTransition(Optional.empty(), start));
 
 		// Reactive Reconfiguration - Always.
 		if (start.getSnapshot().getModelAdjustmentRequestedEvent().isEmpty()) {
@@ -86,7 +98,7 @@ public class Postprocessor {
 		// the best.
 		for (final ModelAdjustmentRequested event : start.getSnapshot().getModelAdjustmentRequestedEvent()) {
 			// reactive reconf to the next state.
-			this.fringe.add(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
+			this.fringe.offer(new PlannedTransition(Optional.of(new ReactiveReconfiguration(event)), start));
 		}
 
 		// proactive reconfs
@@ -100,15 +112,63 @@ public class Postprocessor {
 		// only add net yet executed or queued changes.
 		for (final PlannedTransition toDoChange : newTransitions) {
 
-			Set<Transition> transitions = new HashSet<>();
+			final Set<Transition> transitions = new HashSet<>();
 			transitions.addAll(this.rawgraph.getTransitions());
 			transitions.addAll(this.fringe.getAllPlannedTransition());
 
-			Boolean dup = transitions.stream().map(toDoChange::isSame).reduce(false, (b1, b2) -> b1 || b2);
+			final Boolean dup = transitions.stream().map(toDoChange::isSame).reduce(false, (b1, b2) -> b1 || b2);
 
 			if (!dup) {
-				this.fringe.add(toDoChange);
+				this.fringe.offer(toDoChange);
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * Cut off all but the best few siblings of the given state.
+	 * 
+	 * Cut off means 
+	 * 
+	 * @param state 
+	 */
+	public Set<ExploredState> getWorstSiblingSuccesors(final ExploredState state) {
+		if (state.getIncomingTransition().isEmpty()) {
+			return Set.of(); // root
+		}
+		final ExploredState parent = state.getIncomingTransition().get().getSource();
+		final List<ExploredState> siblings = parent.getOutgoingTransitions().stream().map(t -> t.getTarget()).toList();
+		
+		if (siblings.size() <= keepAtLeast) {
+			return Set.of(); //too few states
+		}
+		
+		final int limit = siblings.size() - keepAtLeast;
+
+		final List<ExploredState> worstSiblings = siblings.stream().sorted((s1,s2) -> Double.compare(s1.getUtility(), s2.getUtility())).limit(limit).toList();
+
+		final Set<ExploredState> badSuccessors = new HashSet<>();
+		for (final ExploredState badState : worstSiblings) {
+			badSuccessors.add(badState);
+			badSuccessors.addAll(this.collectSuccessors(badState));
+		}	
+		return badSuccessors;
+	}
+	
+	
+	/**
+	 * 
+	 * Collect all successors of a given state.
+	 * 
+	 * @param state
+	 * @return successor states of {@code} state
+	 */
+	public Set<ExploredState> collectSuccessors(final ExploredState state) {		
+		final Set<ExploredState> successors = new HashSet<>();
+		
+		for (final ExploredTransition transition : state.getOutgoingTransitions()) {
+			successors.addAll(this.collectSuccessors(transition.getTarget()));
+		}
+		return successors;	
 	}
 }

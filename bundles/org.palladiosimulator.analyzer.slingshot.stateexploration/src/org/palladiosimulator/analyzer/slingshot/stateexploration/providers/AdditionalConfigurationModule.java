@@ -6,7 +6,7 @@ import org.palladiosimulator.analyzer.slingshot.common.events.DESEvent;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
 import org.palladiosimulator.analyzer.slingshot.snapshot.configuration.SnapshotConfiguration;
 import org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.configuration.SimulationInitConfiguration;
-import org.palladiosimulator.analyzer.slingshot.stateexploration.rawgraph.DefaultState;
+import org.palladiosimulator.analyzer.slingshot.stateexploration.graph.ExploredStateBuilder;
 
 /**
  *
@@ -27,9 +27,8 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	@Override
 	protected void configure() {
 		bind(SnapshotConfiguration.class).toProvider(snapConfigProvider);
-		bind(DefaultState.class).toProvider(defaultStateProvider);
+		bind(ExploredStateBuilder.class).toProvider(defaultStateProvider);
 		bind(EventsToInitOnWrapper.class).toProvider(eventsToInitOnProvider);
-
 	}
 
 	/**
@@ -40,11 +39,10 @@ public class AdditionalConfigurationModule extends AbstractSlingshotExtension {
 	 * @param initConfig
 	 * @param otherEvents
 	 */
-	public static void updateProviders(final SnapshotConfiguration config, final SimulationInitConfiguration initConfig, Set<DESEvent> otherEvents) {
+	public static void updateProviders(final SnapshotConfiguration config, final SimulationInitConfiguration initConfig, final Set<DESEvent> otherEvents) {
 		snapConfigProvider.set(config);
 		defaultStateProvider.set(initConfig.getStateToExplore());
 		eventsToInitOnProvider.set(new EventsToInitOnWrapper(initConfig.getAdjustmentEvents(), initConfig.getStateInitializationEvents(), otherEvents));
-
 	}
 
 	@Override
