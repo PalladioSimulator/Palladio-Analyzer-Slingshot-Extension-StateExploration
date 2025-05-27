@@ -6,7 +6,7 @@
     <stringAttribute key="bootstrap" value=""/>
     <stringAttribute key="checked" value="[NONE]"/>
     <booleanAttribute key="clearConfig" value="true"/>
-    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/headless-SSS"/>
+    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/headless-SSS-wtf"/>
     <booleanAttribute key="default" value="true"/>
     <booleanAttribute key="default_auto_start" value="true"/>
     <intAttribute key="default_start_level" value="4"/>
@@ -87,6 +87,9 @@
         <setEntry value="lpg.runtime.java@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy-agent@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy@default:default"/>
+        <setEntry value="org.antlr.runtime*3.2.0.v201101311130@default:default"/>
+        <setEntry value="org.antlr.runtime*4.7.2.v20200218-0804@default:default"/>
+        <setEntry value="org.aopalliance@default:default"/>
         <setEntry value="org.apache.ant@default:default"/>
         <setEntry value="org.apache.batik.bridge@default:default"/>
         <setEntry value="org.apache.batik.constants*1.14.0.v20210324-0332@default:default"/>

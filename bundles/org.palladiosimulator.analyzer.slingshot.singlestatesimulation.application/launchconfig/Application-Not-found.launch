@@ -12,7 +12,6 @@
     <intAttribute key="default_start_level" value="4"/>
     <setAttribute key="deselected_workspace_bundles">
         <setEntry value="org.palladiosimulator.analyzer.slingshot.ui"/>
-        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.edit"/>
         <setEntry value="org.palladiosimulator.spd.edit"/>
         <setEntry value="org.palladiosimulator.spd.editor"/>
         <setEntry value="org.palladiosimulator.spd.measuringpoint.edit"/>
@@ -30,7 +29,6 @@
     <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.eclipse.swt.graphics.Resource.reportNonDisposed=true -Dosgi.noShutdown=true"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <setAttribute key="selected_target_bundles">
-        <setEntry value="aopalliance@default:default"/>
         <setEntry value="ca.umontreal.iro.simul.ssj@default:default"/>
         <setEntry value="ch.ethz.iks.r_osgi.remote@default:default"/>
         <setEntry value="com.google.dagger@default:default"/>
@@ -84,8 +82,6 @@
         <setEntry value="lpg.runtime.java@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy-agent@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy@default:default"/>
-        <setEntry value="org.antlr.runtime*3.2.0.v20220404-1927@default:default"/>
-        <setEntry value="org.antlr.runtime*4.7.2.v20221112-0806@default:default"/>
         <setEntry value="org.apache.ant@default:default"/>
         <setEntry value="org.apache.batik.bridge@default:default"/>
         <setEntry value="org.apache.batik.constants*1.14.0.v20210324-0332@default:default"/>
@@ -486,8 +482,6 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor.processingtype.feedthrough@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor.utils@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.monitor@default:default"/>
-        <setEntry value="org.palladiosimulator.analyzer.slingshot.networking.data@default:default"/>
-        <setEntry value="org.palladiosimulator.analyzer.slingshot.networking@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.singlestatesimulation.application@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.snapshot.data@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.snapshot.serialization@default:default"/>
@@ -498,8 +492,9 @@
         <setEntry value="org.palladiosimulator.analyzer.slingshot.ui.events@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.workflow.events@default:default"/>
         <setEntry value="org.palladiosimulator.analyzer.slingshot.workflow@default:default"/>
-        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model.editor@default:default"/>
-        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.slingshot.model.edit@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.slingshot.model.editor@default:default"/>
+        <setEntry value="org.palladiosimulator.experimentautomation.application.tooladapter.slingshot.model@default:default"/>
         <setEntry value="org.palladiosimulator.experimentautomation.edit@default:default"/>
         <setEntry value="org.palladiosimulator.experimentautomation.editor@default:default"/>
         <setEntry value="org.palladiosimulator.experimentautomation@default:default"/>
