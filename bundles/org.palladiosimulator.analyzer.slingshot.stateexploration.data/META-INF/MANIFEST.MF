@@ -24,4 +24,4 @@ Require-Bundle: org.palladiosimulator.monitorrepository,
  de.uka.ipd.sdq.workflow.mdsd.blackboard,
  org.palladiosimulator.analyzer.workflow,
  org.palladiosimulator.analyzer.slingshot.stateexploration.converter,
- org.palladiosimulator.experimentautomation.application.tooladapter.stateexploration.model
+ org.palladiosimulator.experimentautomation
