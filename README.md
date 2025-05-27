@@ -1,5 +1,17 @@
 # Palladio-Analyzer-Slingshot-Extension-StateExploration
 
+________
+
+**DISCUNTINUED**
+
+We decided to split the StateExploration in two parts:
+1. Initialising and running a single simulation based on a snapshot and creating a snapshot at the end of a simulation run.
+2. Directing what to simulate and creation of the stateGraph.  
+
+The former (1.) remains an extension to the Slingshot Simulator (c.f. https://github.com/PalladioSimulator/Palladio-Analyzer-Slingshot-Extension-Initialisation) and the latter (2.) move to a seperated tool, that is not directly related to Slingshot or Palladio.
+
+________
+
 Slingshot Extension to do state space exploration as envisioned for the MENTOR DFG project.  
 
 Still under construction. 
