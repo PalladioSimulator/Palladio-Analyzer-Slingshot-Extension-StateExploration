@@ -21,8 +21,8 @@
       <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.resourcesimulation.data"/>
       <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.systemsimulation.data"/>
       <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.usagesimulation.data"/>
-      <import plugin="org.palladiosimulator.pcm" version="5.1.0" match="greaterOrEqual"/>
-      <import plugin="de.uka.ipd.sdq.simucomframework.variables" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.pcm"/>
+      <import plugin="de.uka.ipd.sdq.simucomframework.variables"/>
       <import plugin="org.palladiosimulator.analyzer.slingshot.common"/>
       <import plugin="org.palladiosimulator.analyzer.slingshot.common.utils"/>
       <import plugin="org.palladiosimulator.monitorrepository"/>

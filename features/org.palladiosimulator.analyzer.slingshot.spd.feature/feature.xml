@@ -28,9 +28,9 @@
       <import plugin="org.eclipse.emf.ecore.xmi"/>
       <import plugin="org.palladiosimulator.edp2"/>
       <import plugin="org.palladiosimulator.metricspec"/>
-      <import plugin="org.palladiosimulator.pcm.edp2.measuringpoint" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.pcm.edp2.measuringpoint"/>
       <import plugin="org.palladiosimulator.commons"/>
-      <import plugin="org.palladiosimulator.spd" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.spd"/>
       <import plugin="org.eclipse.m2m.qvt.oml.runtime"/>
    </requires>
 

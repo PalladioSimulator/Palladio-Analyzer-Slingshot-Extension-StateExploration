@@ -15,5 +15,5 @@ Require-Bundle: org.eclipse.debug.ui,
  org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events,
  org.palladiosimulator.analyzer.slingshot.stateexploration.workflow,
  de.uka.ipd.sdq.codegen.simucontroller,
- de.uka.ipd.sdq.simucomframework;bundle-version="5.1.0",
+ de.uka.ipd.sdq.simucomframework,
  org.palladiosimulator.analyzer.workflow

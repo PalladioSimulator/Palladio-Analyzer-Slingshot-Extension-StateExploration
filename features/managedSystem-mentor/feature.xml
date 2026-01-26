@@ -25,9 +25,9 @@
          version="0.0.0"/>
 
    <requires>
-      <import plugin="org.palladiosimulator.analyzer.slingshot.networking.data" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.spd" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.analyzer.slingshot.core" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.networking.data"/>
+      <import plugin="org.palladiosimulator.spd"/>
+      <import plugin="org.palladiosimulator.analyzer.slingshot.core"/>
       <import plugin="org.palladiosimulator.analyzer.slingshot.behavior.spd.data"/>
       <import plugin="org.apache.log4j"/>
       <import plugin="com.google.gson"/>
@@ -45,27 +45,27 @@
       <import plugin="org.palladiosimulator.recorderframework.edp2"/>
       <import plugin="org.palladiosimulator.experimentautomation.application"/>
       <import plugin="org.jscience"/>
-      <import plugin="org.palladiosimulator.analyzer.workflow" version="5.1.0" match="greaterOrEqual"/>
-      <import plugin="de.uka.ipd.sdq.workflow.mdsd.blackboard" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.analyzer.workflow"/>
+      <import plugin="de.uka.ipd.sdq.workflow.mdsd.blackboard"/>
       <import plugin="org.palladiosimulator.analyzer.slingshot.ui.events"/>
       <import plugin="org.eclipse.core.runtime" version="3.10.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.emf.ecore" version="2.12.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.emf.cdo"/>
       <import plugin="org.eclipse.emf.ecore.xmi" version="2.12.0" match="greaterOrEqual"/>
-      <import plugin="de.uka.ipd.sdq.identifier" version="2.1.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.metricspec" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.pcm" version="4.1.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.monitorrepository" version="2.0.0" match="greaterOrEqual"/>
-      <import plugin="de.uka.ipd.sdq.probfunction" version="2.1.0" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.identifier"/>
+      <import plugin="org.palladiosimulator.metricspec"/>
+      <import plugin="org.palladiosimulator.pcm"/>
+      <import plugin="org.palladiosimulator.monitorrepository"/>
+      <import plugin="de.uka.ipd.sdq.probfunction"/>
       <import plugin="org.palladiosimulator.spd.semantic"/>
-      <import plugin="de.uka.ipd.sdq.stoex" version="2.2.0" match="greaterOrEqual"/>
-      <import plugin="de.uka.ipd.sdq.units" version="2.1.0" match="greaterOrEqual"/>
+      <import plugin="de.uka.ipd.sdq.stoex"/>
+      <import plugin="de.uka.ipd.sdq.units"/>
       <import plugin="org.scaledl.usageevolution"/>
-      <import plugin="org.palladiosimulator.edp2" version="2.0.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.edp2.edit" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.pcm.edp2.measuringpoint" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.pcm.edp2.measuringpoint.edit" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.palladiosimulator.edp2.dao" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.palladiosimulator.edp2"/>
+      <import plugin="org.palladiosimulator.edp2.edit"/>
+      <import plugin="org.palladiosimulator.pcm.edp2.measuringpoint"/>
+      <import plugin="org.palladiosimulator.pcm.edp2.measuringpoint.edit"/>
+      <import plugin="org.palladiosimulator.edp2.dao"/>
       <import plugin="tools.descartes.dlim.generator" version="0.14.10" match="greaterOrEqual"/>
    </requires>
 
