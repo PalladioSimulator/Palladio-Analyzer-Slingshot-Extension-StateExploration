@@ -2,7 +2,7 @@
 <?pde version="3.8"?>
 <target name="org.palladiosimulator.analyzer.slingshot.targetplatform" sequenceNumber="1">
 <locations>
-		<location type="Target" uri="mvn:org.palladiosimulator:palladio-target-platforms:6.0.0-SNAPSHOT:target:palladio-2025-12"/>
+		<location type="Target" uri="mvn:org.palladiosimulator:palladio-target-platforms:6.0.0:target:palladio-2025-12"/>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 		<repository location="https://updatesite.palladio-simulator.com/palladio-build-updatesite/releases/5.1.0/"/>
 		<unit id="tools.descartes.dlim.feature.feature.group" version="0.0.0"/>
