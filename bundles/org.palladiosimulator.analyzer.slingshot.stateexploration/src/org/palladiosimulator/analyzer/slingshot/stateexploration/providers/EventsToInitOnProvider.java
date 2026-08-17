@@ -1,7 +1,7 @@
 package org.palladiosimulator.analyzer.slingshot.stateexploration.providers;
 
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 /**
  * Provides the event to init the next simulation run on.

@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.snapshot;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.behavior.usageevolution.events.IntervalPassed;

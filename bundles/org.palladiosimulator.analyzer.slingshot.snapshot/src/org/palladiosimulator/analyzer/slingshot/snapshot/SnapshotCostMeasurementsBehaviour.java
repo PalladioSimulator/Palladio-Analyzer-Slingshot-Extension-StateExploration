@@ -3,7 +3,7 @@ package org.palladiosimulator.analyzer.slingshot.snapshot;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.annotations.Nullable;

@@ -1,6 +1,6 @@
 package org.palladiosimulator.analyzer.slingshot.managedsystem;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.core.events.SimulationStarted;

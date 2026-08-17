@@ -2,7 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.stateexploration.explorer.netwo
 
 import java.lang.reflect.Type;
 
-import javax.inject.Named;
+import jakarta.inject.Named;
 
 import org.palladiosimulator.analyzer.slingshot.converter.events.StateExploredEventMessage;
 import org.palladiosimulator.analyzer.slingshot.core.extension.AbstractSlingshotExtension;
