@@ -2,8 +2,8 @@ package org.palladiosimulator.analyzer.slingshot.managedsystem.utility.converter
 
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EObject;

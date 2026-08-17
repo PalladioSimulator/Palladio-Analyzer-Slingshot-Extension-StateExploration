@@ -2,7 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.managedsystem.export.data;
 
 import java.util.HashMap;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * TODO : ensure thread safety.

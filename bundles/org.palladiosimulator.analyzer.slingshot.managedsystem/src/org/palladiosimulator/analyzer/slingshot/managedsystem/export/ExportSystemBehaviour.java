@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import javax.measure.quantity.Duration;
 
 import org.apache.log4j.Logger;

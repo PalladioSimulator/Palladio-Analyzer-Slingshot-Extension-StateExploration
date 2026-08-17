@@ -2,7 +2,7 @@ package org.palladiosimulator.analyzer.slingshot.managedsystem.data;
 
 import java.util.UUID;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import org.apache.log4j.Logger;
 import org.palladiosimulator.analyzer.slingshot.common.events.SystemEvent;
