@@ -4,7 +4,7 @@ Bundle-Name: Stateexploration Workflow
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.workflow;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.workflow
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uka.ipd.sdq.workflow,
  de.uka.ipd.sdq.workflow.mdsd.blackboard,
  org.palladiosimulator.analyzer.slingshot.core,

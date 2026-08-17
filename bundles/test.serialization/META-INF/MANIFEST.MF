@@ -4,7 +4,7 @@ Bundle-Name: TestSerialization
 Bundle-SymbolicName: test.serialization
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: test.serialization
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: com.google.gson,
  org.palladiosimulator.pcm,
  org.palladiosimulator.analyzer.slingshot.common,

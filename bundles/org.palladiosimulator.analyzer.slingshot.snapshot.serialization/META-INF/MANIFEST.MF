@@ -4,7 +4,7 @@ Bundle-Name: SnapshotSerialization
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.snapshot.serialization
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.snapshot.serialization
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.palladiosimulator.analyzer.slingshot.snapshot.serialization.adapters,
  org.palladiosimulator.analyzer.slingshot.snapshot.serialization.factories,
  org.palladiosimulator.analyzer.slingshot.snapshot.serialization.util
