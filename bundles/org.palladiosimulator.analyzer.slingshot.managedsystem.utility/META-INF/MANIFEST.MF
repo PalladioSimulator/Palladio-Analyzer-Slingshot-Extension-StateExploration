@@ -4,7 +4,7 @@ Bundle-Name: Managed System Utility
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.managedsystem.utility;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.injection.utility
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.palladiosimulator.spd,
  org.palladiosimulator.monitorrepository,
  org.palladiosimulator.servicelevelobjective,

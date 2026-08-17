@@ -4,7 +4,7 @@ Bundle-Name: StateExploration Application
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.application;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.application
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.eclipse.equinox.app,
  org.eclipse.core.runtime,
  de.uka.ipd.sdq.workflow,

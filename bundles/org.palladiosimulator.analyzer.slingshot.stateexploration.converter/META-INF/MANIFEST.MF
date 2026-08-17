@@ -4,7 +4,7 @@ Bundle-Name: StateexplorationConverter
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.converter
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.converter
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.palladiosimulator.analyzer.slingshot.converter,
  org.palladiosimulator.analyzer.slingshot.converter.data,
  org.palladiosimulator.analyzer.slingshot.converter.events

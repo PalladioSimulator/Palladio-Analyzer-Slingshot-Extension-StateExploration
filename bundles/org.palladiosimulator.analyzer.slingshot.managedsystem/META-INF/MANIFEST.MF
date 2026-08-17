@@ -4,7 +4,7 @@ Bundle-Name: Managed System
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.managedsystem;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.injection
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.palladiosimulator.analyzer.slingshot.networking.data,
  org.palladiosimulator.spd,
  org.palladiosimulator.analyzer.slingshot.core,

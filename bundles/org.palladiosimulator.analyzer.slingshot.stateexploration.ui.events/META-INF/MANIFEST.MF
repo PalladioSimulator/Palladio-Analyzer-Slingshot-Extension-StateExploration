@@ -4,6 +4,6 @@ Bundle-Name: Events
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.palladiosimulator.analyzer.slingshot.common
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.ui.events

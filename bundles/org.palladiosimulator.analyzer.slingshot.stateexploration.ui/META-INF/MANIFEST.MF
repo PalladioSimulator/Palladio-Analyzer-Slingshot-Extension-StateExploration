@@ -4,7 +4,7 @@ Bundle-Name: Stateexploration Ui
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.ui;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.ui
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.eclipse.debug.ui,
  org.eclipse.swt,
  org.palladiosimulator.analyzer.slingshot.core,

@@ -4,7 +4,7 @@ Bundle-Name: Data
 Bundle-SymbolicName: org.palladiosimulator.analyzer.slingshot.stateexploration.data
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.palladiosimulator.analyzer.slingshot.stateexploration.data
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.palladiosimulator.analyzer.slingshot.stateexploration.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.change.api,
  org.palladiosimulator.analyzer.slingshot.stateexploration.controller.events,
