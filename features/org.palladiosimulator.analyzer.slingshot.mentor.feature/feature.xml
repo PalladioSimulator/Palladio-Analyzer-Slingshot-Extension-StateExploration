@@ -73,7 +73,7 @@
       <import plugin="de.uka.ipd.sdq.stoex"/>
       <import plugin="de.uka.ipd.sdq.units"/>
       <import plugin="org.slf4j.api" version="1.7.30" match="greaterOrEqual"/>
-      <import plugin="javax.inject"/>
+      <import plugin="jakarta.inject.jakarta.inject-api"/>
       <import plugin="org.eclipse.emf.cdo"/>
       <import plugin="org.palladiosimulator.pcm"/>
       <import plugin="org.palladiosimulator.monitorrepository"/>

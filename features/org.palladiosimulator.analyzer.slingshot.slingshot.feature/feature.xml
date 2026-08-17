@@ -45,7 +45,7 @@
       <import plugin="com.google.inject" version="5.0.1" match="greaterOrEqual"/>
       <import plugin="ca.umontreal.iro.simul.ssj" version="3.3.1" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi"/>
-      <import plugin="javax.inject"/>
+      <import plugin="jakarta.inject.jakarta.inject-api"/>
       <import plugin="org.reactivestreams" version="1.0.2" match="greaterOrEqual"/>
       <import plugin="org.eclipse.jdt.apt.core" version="3.7.50" match="greaterOrEqual"/>
       <import plugin="org.eclipse.jdt.core" version="3.28.0" match="greaterOrEqual"/>
